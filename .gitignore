@@ -1,0 +1,17 @@
+dist/*
+!dist/.gitkeep
+**/__pycache__/
+**/*.py[cod]
+.project-review/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+*.egg-info/
+build/
+.DS_Store
+Thumbs.db
