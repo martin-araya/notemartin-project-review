@@ -200,7 +200,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
-## F01 — Esqueleto de `SKILL.md` y validador de skill
+## F01 — Esqueleto de `SKILL.md` y validador de skill ✅
 
 **Objetivo:** un `SKILL.md` válido en los tres runtimes desde el día uno, y una herramienta que lo valide siempre.
 **Depende de:** F00
@@ -236,9 +236,9 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 **Entregables:** `SKILL.md` esqueleto, `dev/tools/validate_skill.py`, tests.
 
 **Criterios de aceptación:**
-- [ ] `python dev/tools/validate_skill.py skills/notemartin-project-review` termina con código 0.
-- [ ] Tests cubren al menos: nombre inválido, nombre ≠ carpeta, description > 1024, cuerpo > 5000 tokens, enlace roto, ruta absoluta, secreto; todos fallan como se espera.
-- [ ] La `description` contiene disparadores en español e inglés (≥ 6 frases distintas).
+- [x] `python dev/tools/validate_skill.py skills/notemartin-project-review` termina con código 0.
+- [x] Tests cubren al menos: nombre inválido, nombre ≠ carpeta, description > 1024, cuerpo > 5000 tokens, enlace roto, ruta absoluta, secreto; todos fallan como se espera.
+- [x] La `description` contiene disparadores en español e inglés (≥ 6 frases distintas).
 
 ---
 

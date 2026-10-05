@@ -7,7 +7,7 @@ Estado por fase de la skill `notemartin-project-review` y registro de avance.
 | Fase | Estado | Fecha | Evidencia | Notas |
 |---|---|---|---|---|
 | F00 | HECHA | 2026-10-05 | pytest 1 passed; validate_skill OK; árbol coincide con §10 de AGENTS; 6/7 criterios cumplidos, 1 eliminado por D-108 (CI GitHub Actions prohibido) | Commit `F00: estructura base` (cb7a9ca) + commit de actualización D-108 |
-| F01 | PENDIENTE | | | |
+| F01 | HECHA | 2026-10-05 | pytest 25 passed (24 nuevos + 1 smoke); validate_skill sobre skill real → OK; description 830/1024; cuerpo 142/5000 tokens; 8 disparadores ES + 6 EN | Commit `F01: SKILL.md esqueleto y validador` |
 | F02 | PENDIENTE | | | |
 | F03 | PENDIENTE | | | |
 | F04 | PENDIENTE | | | |
@@ -102,32 +102,24 @@ Estados válidos: `PENDIENTE`, `EN CURSO`, `HECHA`, `BLOQUEADA`, `REABIERTA`.
 
 - Fecha y hora: 2026-10-05
 - Agente / modelo / runtime: Kilo / MiniMax-M3 / code mode local
-- Fase(s) en curso y estado: F00 HECHA; F01–F88 PENDIENTE
+- Fase(s) en curso y estado: F00 HECHA; F01 HECHA; F02–F88 PENDIENTE
 - Hecho en esta sesión (con commits):
-  - Árbol completo de `notemartin-project-review-skill/` (raíz del repo).
-  - `LICENSE` (MIT), `.gitignore`, `pyproject.toml`, `dev/requirements-dev.txt`.
-  - `PROGRESS.md` con 89 filas F00..F88, secciones Relevo y Preguntas para el dueño.
-  - `DECISIONS.md` con D-001..D-014 (copiadas de AGENTS §16) + D-100..D-107 nuevas.
-  - Placeholders de la skill: `SKILL.md`, `README.md`, `INSTRUCCIONES.md`, `scripts/npr.py`, `scripts/.npr-marker`, `scripts/npr/__init__.py`, `scripts/npr/cli.py`.
-  - `dev/tests/test_smoke.py` (1 test que pasa).
-  - 7 placeholders ejecutables en `dev/tools/`.
-  - `dev/holdout/SPEC.md` (placeholder).
-  - ~~`.github/workflows/ci.yml`~~ (eliminado por D-108 — prohibido CI en GitHub Actions).
-  - Commit `F00: estructura base` (sin push).
-  - Commit de actualización por D-108: eliminar `.github/`, actualizar AGENTS §3/§10/§28 y ROADMAP F00.
+  - F00 (commit `cb7a9ca`): árbol completo de `notemartin-project-review-skill/`, LICENSE MIT, .gitignore, pyproject.toml, dev/requirements-dev.txt, PROGRESS.md (89 filas), DECISIONS.md (D-001..D-014 + D-100..D-107), 7 placeholders en dev/tools/, dev/tests/test_smoke.py, dev/holdout/SPEC.md, .github/workflows/ci.yml.
+  - F00 update D-108 (commit `62bf3cc`): eliminó `.github/`, actualizó AGENTS §3/§10/§28 y ROADMAP F00; prohibió CI en GitHub Actions.
+  - F01 (próximo commit): reescritura de `skills/notemartin-project-review/SKILL.md` con frontmatter literal del roadmap (description 830 chars, 8 disparadores ES + 6 EN) y 9 secciones placeholder; reescritura completa de `dev/tools/validate_skill.py` (≈ 320 líneas) con las 7 reglas; creación de `dev/tests/test_validate_skill.py` con 24 tests que cubren todos los criterios del roadmap.
 - A medias (archivo → estado exacto → qué falta): nada.
 - Subagentes en vuelo (id, ruta del brief, qué devolverán, dónde escribirán): ninguno.
 - Comandos para verificar el estado:
-  - `python -m pytest`
-  - `python dev/tools/validate_skill.py skills/notemartin-project-review`
-  - `find . -maxdepth 4 -type d | sort`
-  - `wc -l PROGRESS.md DECISIONS.md`
-- Siguiente acción exacta: F01 — Esqueleto de `SKILL.md` y validador de skill.
-- Decisiones tomadas (D-NNN): D-100..D-108 (D-108 elimina el CI en GitHub Actions).
+  - `python -m pytest` → 25 passed (24 nuevos + 1 smoke)
+  - `python dev/tools/validate_skill.py skills/notemartin-project-review` → OK (código 0)
+  - `python dev/tools/validate_skill.py skills/notemartin-project-review --json` → `{"ok": true, ...}`
+- Siguiente acción exacta: F02 — Investigación y referencia de adaptadores por runtime.
+- Decisiones tomadas (D-NNN): D-100..D-114 (D-108 CI prohibido; D-109..D-114 decisiones técnicas del validador).
 - Riesgos y bloqueos:
-  - R1 — ~~El CI en GitHub Actions solo se ejecuta tras subir el repo; F00 reabre si falla al primer push.~~ Resuelto por D-108 (CI prohibido).
-  - R2 — Convención de marca de fase en `ROADMAP.md` no estaba definida; se usó ✅ y se verificó visualmente.
+  - R1 — Resuelto por D-108.
+  - R2 — Resuelto (✅ visible en ROADMAP).
   - R3 — `LICENSE` lleva copyright placeholder; el dueño puede ajustarlo.
+  - R4 — El parser YAML propio es robusto para el subset usado (mapas 2 niveles, listas inline, folded block `>-`); si en el futuro se añaden anchors/tags, D-109 obliga a instalar PyYAML.
 
 ## Preguntas para el dueño
 

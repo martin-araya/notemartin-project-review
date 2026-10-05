@@ -103,6 +103,54 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas consideradas: dejar el workflow vivo pero no requerido (rechazado: el dueño prohíbe la integración en sí); usar CI en otro servicio externo (rechazado: la prohibición es contra todo servicio externo).
 - Consecuencias: AGENTS y ROADMAP se alinean con la preferencia. El commit `F00: estructura base` (cb7a9ca) queda parcialmente obsoleto por la presencia del workflow eliminado; el siguiente commit documenta el cambio. F00 sigue `HECHA` con 6 de los 7 criterios cumplidos y 1 explícitamente eliminado por D-108.
 
+### D-109 — Parser YAML: PyYAML con fallback propio
+
+- Fecha · Fase · Estado: 2026-10-05 · F01 · vigente
+- Contexto: el validador necesita parsear el frontmatter sin añadir dependencias de runtime (AGENTS §17). El roadmap de F01 autoriza explícitamente el fallback a "parser mínimo propio para el subconjunto usado si no hay PyYAML".
+- Decisión: `_yaml_load(text)` intenta `import yaml; yaml.safe_load(text)`. Si `ImportError`, cae a `_minimal_yaml_load`. El parser propio soporta mapas anidados a 2 niveles, listas con `- ` y block scalars folded (`>-`, `>`). No soporta anchors, tags, comillas con escape ni listas inline complejas (la `tags` queda como string).
+- Alternativas consideradas: usar `tomllib` o `configparser` (rechazado: no parsean YAML); depender siempre de PyYAML (rechazado: viola AGENTS §17).
+- Consecuencias: cualquier futura ampliación del frontmatter (listas inline, multilínea con `|`, anchors) obliga a instalar PyYAML. La regla está en el roadmap de F01.
+
+### D-110 — Estimación de tokens = `len(texto) // 4`
+
+- Fecha · Fase · Estado: 2026-10-05 · F01 · vigente
+- Contexto: el roadmap de F01 fija "estimación de tokens del cuerpo (caracteres / 4) ≤ 5000".
+- Decisión: `len(body) // 4`. Truncamiento entero (no redondeo). El cuerpo se toma como el texto posterior al segundo `---`.
+- Alternativas consideradas: usar el promedio 0.75 palabras/token (rechazado: más complejo y la fórmula exacta del roadmap es `chars / 4`).
+- Consecuencias: holgura amplia sobre la SKILL.md real (142 tokens).
+
+### D-111 — Patrones de detección de secretos (6)
+
+- Fecha · Fase · Estado: 2026-10-05 · F01 · vigente
+- Contexto: AGENTS §29 prohíbe secretos en cualquier archivo; el validador debe detectar los más comunes.
+- Decisión: 6 regex — `AKIA[0-9A-Z]{16}` (AWS), `gh[pousr]_[A-Za-z0-9]{36,}` (GitHub PAT), `glpat-[A-Za-z0-9_-]{20,}` (GitLab), `xox[abprs]-[A-Za-z0-9-]{10,}` (Slack), `sk-[A-Za-z0-9]{20,}` (OpenAI), `sk-ant-[A-Za-z0-9-]{20,}` (Anthropic). Se aplican a `SKILL.md`, `references/**/*.md` y `templates/**/*.md`; **no** a `scripts/` (los patrones dentro de código fuente son normales, p.ej. `sk-` como prefijo de variable).
+- Alternativas consideradas: detector genérico de "alta entropía" (rechazado: añade ruido y complejidad).
+- Consecuencias: falsos positivos aceptables por diseño; el linter específico de secretos en F62 los endurece.
+
+### D-112 — Rutas absolutas del desarrollador prohibidas
+
+- Fecha · Fase · Estado: 2026-10-05 · F01 · vigente
+- Contexto: cualquier ejemplo o comentario en la skill que contenga una ruta absoluta del desarrollador filtra información del entorno.
+- Decisión: 3 regex — `(?<![A-Za-z]):?/(?:Users|home)/[^\\s)]+`, `C:\\Users\\[^\\s)]+`. Solo se aplican a archivos `.md` de la skill (no a scripts). Se reporta `archivo:línea:match`.
+- Alternativas consideradas: detectar también rutas UNC `\\\\` (rechazado: el roadmap solo menciona `/Users/`, `/home/` y `C:\Users\`).
+- Consecuencias: si el dueño quiere permitir ejemplos con rutas reales (p.ej. en `INSTRUCCIONES.md`), F01 reabre.
+
+### D-113 — Validación de enlaces relativos
+
+- Fecha · Fase · Estado: 2026-10-05 · F01 · vigente
+- Contexto: el validador debe garantizar que todo `[texto](destino)` apunte a un archivo existente en la skill.
+- Decisión: regex `\[(?P<text>[^\]]*)\]\((?P<target>[^)\s]+)\)` sobre `SKILL.md`, `references/**/*.md` y `templates/**/*.md`. Si el target empieza por `http://`, `https://`, `mailto:` o `#`, se ignora. En otro caso se resuelve relativo al archivo y se exige que exista.
+- Alternativas consideradas: resolver también URLs vía HEAD (rechazado: AGENTS §17 prohíbe red desde los scripts de la skill).
+- Consecuencias: enlaces a sitios externos nunca se validan (asume responsabilidad del dueño).
+
+### D-114 — Códigos de salida del validador
+
+- Fecha · Fase · Estado: 2026-10-05 · F01 · vigente
+- Contexto: el validador debe integrarse con pytest y con el eventual orquestador de F05.
+- Decisión: `0` todo OK, `2` validación fallida, `1` error de uso. Sin niveles intermedios. Cada fallo imprime a stderr con la regla, archivo y línea cuando aplique. Sin warnings: toda regla falla o pasa, sin grises.
+- Alternativas consideradas: distinguir entre errores y warnings (rechazado: complica CI y la política de la skill es binaria).
+- Consecuencias: pytest puede marcar el validador como binario; los linters futuros (F64) usan el mismo criterio.
+
 ## Plantilla para nuevas decisiones
 
 ```
