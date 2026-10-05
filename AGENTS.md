@@ -80,6 +80,7 @@ prompt reconstruido, los archivos y las líneas.
 - **Subagentes siempre contemplados**: tanto al construir (§22) como dentro de la skill (§21).
 - **Sin estimaciones de tiempo**: no escribas timelines en semanas o meses; el avance se mide en fases cumplidas.
 - **Idioma**: documentación, guías, plantillas, reportes y mensajes de error en **español** por defecto (los reportes aceptan `--lang`). Identificadores de código, nombres de módulos de scripts y claves JSON en inglés. Nombres de archivos de `references/` y `templates/` en español.
+- **Sin CI en GitHub Actions**: el proyecto no usa `.github/workflows/`, ni integración con GitHub Actions ni con ningún servicio externo de CI. La verificación es local (pytest + validadores) y se documenta como evidencia en `PROGRESS.md`. Ninguna fase debe depender de un job remoto para considerarse HECHA.
 
 ---
 
@@ -265,7 +266,6 @@ notemartin-project-review-skill/
 ├── CHANGELOG.md
 ├── LICENSE
 ├── pyproject.toml                    (solo config de pytest)
-├── .github/workflows/ci.yml          (Linux, macOS, Windows)
 ├── skills/
 │   └── notemartin-project-review/    ← LO QUE SE DISTRIBUYE
 │       ├── SKILL.md
@@ -709,6 +709,7 @@ Formato de `PROGRESS.md`:
 13. `SKILL.md` siempre ≤ 5k tokens; si crece, mover detalle a `references/`.
 14. No usar un número de calidad distinto al de `thresholds.json`.
 15. No terminar una sesión sin Relevo actualizado.
+16. No crear `.github/workflows/` ni configurar CI en GitHub Actions ni en ningún servicio externo de CI. La verificación se ejecuta localmente y queda registrada en `PROGRESS.md`.
 
 ## 29. Seguridad, privacidad y ética de la skill
 

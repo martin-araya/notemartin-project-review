@@ -155,7 +155,6 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
   ├── DECISIONS.md                    (registro de decisiones D-NNN)
   ├── README.md                       (placeholder; se completa en F87)
   ├── LICENSE
-  ├── .github/workflows/ci.yml        (pytest + validadores en Linux, macOS y Windows)
   ├── skills/
   │   └── notemartin-project-review/  (lo que se instala en los runtimes)
   │       ├── SKILL.md
@@ -183,7 +182,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
   - Sección `## Relevo` con la plantilla de `AGENTS.md` §14.
   - Sección `## Preguntas para el dueño` (vacía).
 - `DECISIONS.md` con las decisiones iniciales D-001 a D-014 de `AGENTS.md` §16 y la plantilla para nuevas.
-- `.github/workflows/ci.yml`: matriz `ubuntu-latest`, `macos-latest`, `windows-latest` × Python 3.10 y la última estable; ejecuta `pytest`, `validate_skill.py` y (desde F07) `overfit_guard.py` y `check_thresholds.py`.
+- **Sin CI en GitHub Actions.** La verificación es local (pytest + validadores) y se documenta como evidencia en `PROGRESS.md` (ver `AGENTS.md` §3 y §28 regla 16, decisión D-108).
 - `.gitignore` (dist/, `__pycache__`, `.project-review/`, entornos virtuales).
 - `dev/requirements-dev.txt` con `pytest` y dependencias opcionales de desarrollo (no de runtime).
 - `pyproject.toml` mínimo solo para configurar pytest (`testpaths = ["dev/tests"]`).
@@ -195,7 +194,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 - [x] `python -m pytest` se ejecuta sin errores de colección (0 tests o un test trivial que pasa).
 - [x] `PROGRESS.md` lista las 89 fases (F00–F88) y contiene las secciones `Relevo` y `Preguntas para el dueño`.
 - [x] `DECISIONS.md` contiene D-001 a D-014.
-- [x] El workflow de CI corre (verde) en las 3 plataformas.
+- [ ] ~~El workflow de CI corre (verde) en las 3 plataformas.~~ **Eliminado por D-108** (prohibido CI en GitHub Actions; la verificación es local).
 - [x] La carpeta distribuible se llama exactamente `skills/notemartin-project-review/` (compatibilidad con `npx skills add`).
 - [x] Commit `F00: estructura base` creado.
 

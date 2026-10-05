@@ -6,7 +6,7 @@ Estado por fase de la skill `notemartin-project-review` y registro de avance.
 
 | Fase | Estado | Fecha | Evidencia | Notas |
 |---|---|---|---|---|
-| F00 | HECHA | 2026-10-05 | pytest 1 passed; validate_skill OK; árbol coincide con §10 de AGENTS | Commit `F00: estructura base` (sin push) |
+| F00 | HECHA | 2026-10-05 | pytest 1 passed; validate_skill OK; árbol coincide con §10 de AGENTS; 6/7 criterios cumplidos, 1 eliminado por D-108 (CI GitHub Actions prohibido) | Commit `F00: estructura base` (cb7a9ca) + commit de actualización D-108 |
 | F01 | PENDIENTE | | | |
 | F02 | PENDIENTE | | | |
 | F03 | PENDIENTE | | | |
@@ -112,8 +112,9 @@ Estados válidos: `PENDIENTE`, `EN CURSO`, `HECHA`, `BLOQUEADA`, `REABIERTA`.
   - `dev/tests/test_smoke.py` (1 test que pasa).
   - 7 placeholders ejecutables en `dev/tools/`.
   - `dev/holdout/SPEC.md` (placeholder).
-  - `.github/workflows/ci.yml` con matriz 3 OS × 2 Python.
+  - ~~`.github/workflows/ci.yml`~~ (eliminado por D-108 — prohibido CI en GitHub Actions).
   - Commit `F00: estructura base` (sin push).
+  - Commit de actualización por D-108: eliminar `.github/`, actualizar AGENTS §3/§10/§28 y ROADMAP F00.
 - A medias (archivo → estado exacto → qué falta): nada.
 - Subagentes en vuelo (id, ruta del brief, qué devolverán, dónde escribirán): ninguno.
 - Comandos para verificar el estado:
@@ -122,9 +123,9 @@ Estados válidos: `PENDIENTE`, `EN CURSO`, `HECHA`, `BLOQUEADA`, `REABIERTA`.
   - `find . -maxdepth 4 -type d | sort`
   - `wc -l PROGRESS.md DECISIONS.md`
 - Siguiente acción exacta: F01 — Esqueleto de `SKILL.md` y validador de skill.
-- Decisiones tomadas (D-NNN): D-100..D-107 (registradas en `DECISIONS.md`).
+- Decisiones tomadas (D-NNN): D-100..D-108 (D-108 elimina el CI en GitHub Actions).
 - Riesgos y bloqueos:
-  - R1 — El CI en GitHub Actions solo se ejecuta tras subir el repo; F00 reabre si falla al primer push.
+  - R1 — ~~El CI en GitHub Actions solo se ejecuta tras subir el repo; F00 reabre si falla al primer push.~~ Resuelto por D-108 (CI prohibido).
   - R2 — Convención de marca de fase en `ROADMAP.md` no estaba definida; se usó ✅ y se verificó visualmente.
   - R3 — `LICENSE` lleva copyright placeholder; el dueño puede ajustarlo.
 
