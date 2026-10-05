@@ -222,6 +222,62 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   - **D-129** — Kilo: la ruta heredada `~/.kilocode/skills/` no aparece en la docs vigente de Skills; `KILO_DISABLE_EXTERNAL_SKILLS` y `KILO_DISABLE_SKILL_SHELL` son kill switches de seguridad nuevos.
 - Consecuencias: AGENTS §4 sigue siendo la fuente de verdad (D-117); las correcciones se aplican cuando se reescriba §4 en una fase futura.
 
+### D-130 — Orden de evaluación de patrones de cita
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: los 5 patrones (`RANGE_SYMBOL`, `RANGE`, `LINE`, `GIT`, `DYN`) pueden solaparse si se prueban en el orden incorrecto: `[@src/cli.py:10-25#main]` matchea `RANGE` si se prueba ese primero.
+- Decisión: probar `RANGE_SYMBOL` → `RANGE` → `LINE` → `GIT` → `DYN` y aceptar el primer `fullmatch`. El más específico primero.
+- Alternativas consideradas: union de regexes con prioridad en el motor (rechazado: `re` no soporta prioridad nativa); construir un único regex con grupos nombrados (rechazado: ilegible).
+- Consecuencias: el parser es O(n·m) por texto, donde n=citas y m=5 patrones. Para reportes típicos (<10k citas) es despreciable.
+
+### D-131 — `PATH = [A-Za-z0-9_./-]+`
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: la gramática exige rutas relativas a la raíz del repo, sin espacios ni caracteres Unicode.
+- Decisión: `[A-Za-z0-9_./-]+`. Las rutas con espacios se rechazan; AGENTS §17 ya prohíbe rutas con espacios en salidas (convención).
+- Alternativas consideradas: aceptar cualquier carácter excepto `:` y `]` (rechazado: demasiado permisivo; abre la puerta a inyecciones).
+- Consecuencias: si un repo real tiene un path con espacio, el parser lo rechaza y la cita queda como inválida. La skill lo documenta en el `.md` de principios.
+
+### D-132 — `SYMBOL = [A-Za-z_][A-Za-z0-9_.]*`
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: el roadmap pide un símbolo "Símbolo" sin definirlo formalmente.
+- Decisión: identificador estilo código: empieza por letra o guion bajo, seguido de letras, dígitos, guion bajo o punto. Acepta `Foo.bar`, `_priv`, `parse_args`.
+- Alternativas consideradas: aceptar cualquier carácter excepto `#` y `]` (rechazado: símbolos reales siempre son identificadores).
+- Consecuencias: cubre Python, JS/TS, Go, Rust, Java, Kotlin. Lenguajes con caracteres especiales (C++ con `::`, Haskell con `→`) quedan fuera; se documenta en F61.
+
+### D-133 — `SHA = [0-9a-fA-F]{7,40}` con normalización a minúsculas
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: `git log --abbrev=7` produce SHAs cortos; `git rev-parse HEAD` produce SHA completos.
+- Decisión: aceptar hex en mayúsculas o minúsculas, 7 a 40 caracteres. Normalizar a minúsculas en `__post_init__`.
+- Alternativas consideradas: solo minúsculas (rechazado: rompe con usuarios que pegan SHAs de GitHub que aparecen en mayúsculas en algunas vistas).
+- Consecuencias: el parser es robusto a copiado-pegado.
+
+### D-134 — `Citation` dataclass inmutable con normalización
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: el parser se usa desde varios linters y herramientas; la inmutabilidad evita efectos colaterales.
+- Decisión: `@dataclass(frozen=True)` con `kind`, `raw`, `path`, `start`, `end`, `symbol`, `sha`, `dyn_id`. `__post_init__` valida que `kind in CITATION_KIND`, normaliza path (`./` solo si es el prefijo literal `./`), normaliza SHA a minúsculas, rechaza paths absolutos y rangos invertidos.
+- Alternativas consideradas: namedtuple (rechazado: no permite validación ni normalización en `__post_init__`).
+- Consecuencias: los linters futuros pueden asumir invariantes sin revalidar.
+
+### D-135 — Las 8 leyes como reglas verificables con gate/linter nombrado
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: AGENTS §6 dice que las 8 leyes "se aplican a la skill y también al agente constructor", y la columna "Cómo se hace cumplir" ya nombra los gates/linters.
+- Decisión: cada ley en el `.md` lleva un bloque `**Cumplida por**: <gate o linter> (<fase>)`. Verificación de F03: las 8 leyes tienen ese bloque y el nombre corresponde a un comando real del roadmap.
+- Alternativas consideradas: dejar las leyes sin gate (rechazado: hace la ley no verificable, contradice AGENTS §6).
+- Consecuencias: el test `test_30_doc_contains_eight_laws_with_cumplida_por` falla si una ley omite el bloque.
+
+### D-136 — Ejemplos válidos e inválidos en el `.md` parseados por el propio parser
+
+- Fecha · Fase · Estado: 2026-10-05 · F03 · vigente
+- Contexto: el criterio de aceptación 1 exige que los ejemplos válidos parseen todos y los inválidos ninguno, probado por un test que lee el propio `.md`.
+- Decisión: los ejemplos se delimitan con fences ` ```valido` y ` ```invalido`. El test extrae los fences (info-string exacto, no sub-string), limpia comentarios `// ...` al final de cada línea, y comprueba la coincidencia exacta.
+- Alternativas consideradas: lista CSV de ejemplos en `templates/` (rechazado: separa la documentación del test, dificulta mantener ambos sincronizados).
+- Consecuencias: el `.md` y el parser están acoplados por el test; cualquier cambio en uno requiere revisar el otro.
+
 ## Plantilla para nuevas decisiones
 
 ```

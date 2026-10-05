@@ -277,7 +277,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
-## F03 — Principios, reglas de evidencia y gramática de citas
+## F03 — Principios, reglas de evidencia y gramática de citas ✅
 
 **Objetivo:** fijar las reglas que hacen que la skill no sea superficial.
 **Depende de:** F01
@@ -305,9 +305,9 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 **Entregables:** `references/00-principios.md`, `scripts/npr/citations.py`, tests.
 
 **Criterios de aceptación:**
-- [ ] Los ejemplos válidos del documento parsean todos y los inválidos ninguno (test que lee el propio `.md`).
-- [ ] `parse_citations` devuelve ruta, rango, símbolo y tipo correctos en ≥ 20 casos de prueba.
-- [ ] Las 8 leyes están redactadas como reglas verificables (cada una dice qué gate o linter la hace cumplir).
+- [x] Los ejemplos válidos del documento parsean todos y los inválidos ninguno (test que lee el propio `.md`).
+- [x] `parse_citations` devuelve ruta, rango, símbolo y tipo correctos en ≥ 20 casos de prueba.
+- [x] Las 8 leyes están redactadas como reglas verificables (cada una dice qué gate o linter la hace cumplir).
 
 ---
 
