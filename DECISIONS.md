@@ -151,6 +151,77 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas consideradas: distinguir entre errores y warnings (rechazado: complica CI y la política de la skill es binaria).
 - Consecuencias: pytest puede marcar el validador como binario; los linters futuros (F64) usan el mismo criterio.
 
+### D-115 — Subagentes investigadores en paralelo (uno por runtime)
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: el roadmap marca F02 como paralelizable con F03 y F04, y asigna "un subagente investigador por runtime".
+- Decisión: lanzar 3 subagentes en paralelo con `subagent_type: general`, uno por runtime (Hermes, Cline, Kilo Code). Cada subagente escribe a `dev/evals/drafts/runtime-<slug>.md` y devuelve un resumen con líneas, secciones, fuentes y OQ abiertas.
+- Alternativas consideradas: investigar los 3 runtimes secuencialmente en el mismo agente (rechazado: 3× más lento); un solo subagente que cubra los 3 (rechazado: el contexto se acercaría al límite y la calidad baja).
+- Consecuencias: F02 termina más rápido; los borradores quedan en `dev/evals/drafts/` para auditoría y re-fusión.
+
+### D-116 — Carpeta `dev/evals/drafts/` para borradores de investigación
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: separar la investigación del entregable final permite auditar cada fuente.
+- Decisión: cada subagente investigador escribe su borrador en `dev/evals/drafts/runtime-<slug>.md`; el agente principal fusiona en `references/22-adaptadores-runtime.md`. La carpeta `dev/evals/` ya existe por F00.
+- Alternativas consideradas: escribir directamente en el destino final (rechazado: sin auditoría por fuente).
+- Consecuencias: AGENTS §27 prohíbe commitear lotes de holdout antes de F82; esta carpeta no es holdout, es investigación en curso. Se commitea normalmente.
+
+### D-117 — Jerarquía AGENTS §4 vs documentación externa
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: el subagente investigador puede encontrar contradicciones entre la documentación actual de un runtime y la información preliminar de AGENTS §4.
+- Decisión: predomina AGENTS §4. Si la doc actual contradice, se respeta AGENTS y se anota la divergencia en `DECISIONS.md` como `D-NNN` con la sección "contradicciones con AGENTS §4". Si la doc añade información no presente en AGENTS, se incorpora con su fuente.
+- Alternativas consideradas: actualizar AGENTS §4 con cada corrección (rechazado: AGENTS solo se modifica en cambios mayores; cada corrección se registra como decisión).
+- Consecuencias: el documento F02 lleva una sección "Notas sobre contradicciones con AGENTS §4" que enlaza a las decisiones D-122..D-129.
+
+### D-118 — Formato de fuentes con supra-índice `[N]` y bloque final
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: el criterio de aceptación exige "cada afirmación tiene una fuente con URL y fecha de consulta".
+- Decisión: bloque final del documento con un item por fuente, formato `- [N] <proveedor> — <url> (consulta YYYY-MM-DD)`. Cada afirmación en el cuerpo lleva supra-índice `[N]`. Sin excepciones.
+- Alternativas consideradas: usar notas al pie HTML (rechazado: complica el render en GitHub y rompe el `validate_skill`); referencias numéricas inline sin bloque final (rechazado: no se puede verificar la fecha).
+- Consecuencias: el validador no verifica citas (queda para F61 linter de citas); la estructura es estable.
+
+### D-119 — Modo secuencial de respaldo con disciplina de disco
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: AGENTS §8 ley 5 ("Ley del disco") exige que todo hallazgo se escriba en disco antes de seguir; cuando el runtime no expone subagentes, el orquestador principal ejecuta el rol de cada subagente uno por uno.
+- Decisión: 6 pasos explícitos: leer brief de disco → ejecutar rol → escribir resultado a disco → actualizar ledger → repetir → si el contexto se acerca al límite, ejecutar `npr resume`.
+- Alternativas consideradas: dejar el modo secuencial a criterio del orquestador (rechazado: la disciplina debe estar escrita, no implícita).
+- Consecuencias: el documento de F02 contiene la sección "Modo secuencial de respaldo" con los 6 pasos.
+
+### D-120 — Algoritmo `Resolver SKILL_DIR` por runtime
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: el criterio del roadmap exige documentar cómo el agente conoce la ruta de la skill. Hermes expone `HERMES_HOME`; Cline y Kilo no exponen variable propia.
+- Decisión: algoritmo de 5 pasos con prioridad: `NPR_HOME` env → `--skill-dir` CLI → variable del runtime (`HERMES_HOME/skills/...`) → rutas canónicas en orden de precedencia (proyecto, global, heredadas, Windows) → error `NPR-E101`. Cada ruta se valida con `.npr-marker`.
+- Alternativas consideradas: depender solo de la posición de `__file__` (rechazado: falla si el script se invoca desde otro cwd).
+- Consecuencias: el script `npr.py` (F05) implementa este algoritmo.
+
+### D-121 — Fecha de consulta ≥ 2026-08-01
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: AGENTS §28 regla 12 exige verificar documentación vigente con cita y fecha.
+- Decisión: cada fuente consultada debe llevar fecha `2026-MM-DD` con día no anterior a 2026-08-01. Si una fuente no se ha podido consultar en ese plazo, se marca `[?]` con `OQ-NNN` abierta.
+- Alternativas consideradas: aceptar cualquier fecha de 2026 (rechazado: documentación desactualizada en menos de 2 meses).
+- Consecuencias: todos los 23 fuentes de F02 llevan `2026-10-05`.
+
+### D-122..D-129 — Contradicciones detectadas entre AGENTS §4 y la documentación vigente
+
+- Fecha · Fase · Estado: 2026-10-05 · F02 · vigente
+- Contexto: los 3 subagentes investigadores detectaron divergencias entre el "punto de partida conocido" de AGENTS §4 y la documentación actual de los runtimes.
+- Decisión: cada divergencia se registra como una decisión individual:
+  - **D-122** — Hermes: el comando de instalación exacto de la docs es `<owner>/<repo>/<ruta>` o `<owner>/<repo>.git`, no `<owner>/<repo>/<nombre>` como sugiere AGENTS §4.
+  - **D-123** — Hermes: Windows nativo en `%LOCALAPPDATA%\hermes\` con instalador PowerShell, no mencionado en AGENTS §4.
+  - **D-124** — Hermes: la categoría es una subcarpeta libre, no requiere registro; AGENTS §4 sugería una "categoría propuesta".
+  - **D-125** — Hermes: la concurrencia de subagentes se gobierna por `delegation.max_concurrent_children` y `delegation.max_spawn_depth`, no por `subagents.max_parallel` (AGENTS §13).
+  - **D-126** — Cline: los subagentes son **read-only**, no pueden editar archivos ni usar MCP ni anidar subagentes. AGENTS §21 implica capacidad de escritura.
+  - **D-127** — Cline: la ruta `.claude/skills/` también se carga como tercera ruta de proyecto, no solo en Kilo.
+  - **D-128** — Kilo: NO existen directorios específicos por modo (`skills-<modo>/`); todo va a un pool común filtrado por `description`. AGENTS §4 está desactualizado en este punto.
+  - **D-129** — Kilo: la ruta heredada `~/.kilocode/skills/` no aparece en la docs vigente de Skills; `KILO_DISABLE_EXTERNAL_SKILLS` y `KILO_DISABLE_SKILL_SHELL` son kill switches de seguridad nuevos.
+- Consecuencias: AGENTS §4 sigue siendo la fuente de verdad (D-117); las correcciones se aplican cuando se reescriba §4 en una fase futura.
+
 ## Plantilla para nuevas decisiones
 
 ```

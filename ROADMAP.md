@@ -242,7 +242,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
-## F02 — Investigación y referencia de adaptadores por runtime
+## F02 — Investigación y referencia de adaptadores por runtime ✅
 
 **Objetivo:** documentar con fuentes actuales cómo se instala, descubre, activa y ejecuta la skill en Hermes Agent, Cline y Kilo Code, y **cómo lanzar subagentes en cada uno**.
 **Depende de:** F01
@@ -270,10 +270,10 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 **Entregables:** `references/22-adaptadores-runtime.md`.
 
 **Criterios de aceptación:**
-- [ ] Para cada runtime hay: ruta global, ruta de proyecto, mecanismo de activación, mecanismo de subagentes (o "no disponible" con fuente), cómo ejecutar scripts, cómo resolver `SKILL_DIR`.
-- [ ] Cada afirmación tiene una fuente con URL y fecha de consulta.
-- [ ] El modo secuencial de respaldo está descrito paso a paso.
-- [ ] `validate_skill.py` sigue en verde (enlaces válidos).
+- [x] Para cada runtime hay: ruta global, ruta de proyecto, mecanismo de activación, mecanismo de subagentes (o "no disponible" con fuente), cómo ejecutar scripts, cómo resolver `SKILL_DIR`.
+- [x] Cada afirmación tiene una fuente con URL y fecha de consulta.
+- [x] El modo secuencial de respaldo está descrito paso a paso.
+- [x] `validate_skill.py` sigue en verde (enlaces válidos).
 
 ---
 
