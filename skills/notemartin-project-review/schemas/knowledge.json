@@ -1,0 +1,27 @@
+{
+  "$comment": "Export completo del conocimiento del repo (knowledge.json).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_at", "repo", "summary"],
+  "properties": {
+    "schema_version": {"type": "integer", "minimum": 1, "description": "Version del formato."},
+    "generated_at": {"type": "string", "description": "Fecha ISO 8601 de generacion."},
+    "repo": {"type": "string", "description": "Ruta del repo."},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["languages", "files", "features", "open_questions"],
+      "properties": {
+        "languages": {"type": "array", "items": {"type": "string"}, "description": "Lenguajes detectados."},
+        "files": {"type": "integer", "minimum": 0, "description": "Total de archivos analizados."},
+        "features": {"type": "integer", "minimum": 0, "description": "Total de features."},
+        "open_questions": {"type": "integer", "minimum": 0, "description": "Preguntas abiertas."}
+      },
+      "description": "Resumen ejecutivo."
+    },
+    "modules": {"type": "array", "items": {"type": "object"}, "description": "Referencias a modulos."},
+    "features": {"type": "array", "items": {"type": "object"}, "description": "Referencias a features."},
+    "surfaces": {"type": "array", "items": {"type": "object"}, "description": "Referencias a superficies."},
+    "open_questions": {"type": "array", "items": {"type": "string", "pattern": "^OQ-[0-9]+$"}, "description": "IDs de preguntas abiertas."}
+  }
+}

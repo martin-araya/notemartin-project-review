@@ -1,0 +1,9 @@
+{
+  "id": "FEAT-007",
+  "name": "switch-mode",
+  "user_description": "User switches mode.",
+  "entrypoints": ["src/cli/switch-mode.ts"],
+  "modules": ["MOD-modes"],
+  "flows": ["FL-015"],
+  "status": "fictional"
+}

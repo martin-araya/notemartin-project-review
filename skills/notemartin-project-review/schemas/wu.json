@@ -1,0 +1,39 @@
+{
+  "$comment": "Una unidad de trabajo asignada a un subagente lector.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "files", "priority", "wave"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^WU-[0-9]+$", "description": "Identificador unico de la WU."},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "policy"],
+        "properties": {
+          "path": {"type": "string", "description": "Ruta del archivo."},
+          "policy": {"type": "string", "enum": ["full", "skim", "metadata", "reverse"], "description": "Politica de lectura."},
+          "chunks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["start", "end"],
+              "properties": {
+                "start": {"type": "integer", "minimum": 1, "description": "Linea inicial."},
+                "end": {"type": "integer", "minimum": 1, "description": "Linea final."}
+              }
+            },
+            "description": "Rangos de lectura si la politica es skim."
+          }
+        }
+      },
+      "description": "Archivos que cubre la WU."
+    },
+    "neighbors": {"type": "array", "items": {"type": "string"}, "description": "WU adyacentes (para dependencias)."},
+    "priority": {"type": "integer", "description": "Prioridad numerica (menor = mas urgente)."},
+    "wave": {"type": "integer", "minimum": 0, "description": "Ola de ejecucion."},
+    "glossary": {"type": "array", "items": {"type": "string"}, "description": "Terminos del glosario relevantes para esta WU."}
+  }
+}

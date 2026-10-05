@@ -1,0 +1,23 @@
+{
+  "$comment": "Estadisticas agregadas de la historia git del repo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["commits_total", "first_commit", "last_commit", "contributors"],
+  "properties": {
+    "commits_total": {"type": "integer", "minimum": 0, "description": "Numero total de commits."},
+    "first_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "SHA del primer commit."},
+    "last_commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "SHA del HEAD."},
+    "contributors": {"type": "integer", "minimum": 0, "description": "Numero de contribuidores unicos."},
+    "active_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"type": "string", "description": "Fecha ISO 8601 del primer commit."},
+        "to": {"type": "string", "description": "Fecha ISO 8601 del ultimo commit."}
+      },
+      "description": "Rango temporal de actividad."
+    },
+    "by_kind": {"type": "object", "description": "Conteos agregados por categoria (feat, fix, docs, ...)."}
+  }
+}

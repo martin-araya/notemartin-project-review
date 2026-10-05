@@ -1,0 +1,6 @@
+{
+  "process": "myapp",
+  "entry": "bin/server.py",
+  "kind": "kindergarten",
+  "args": []
+}

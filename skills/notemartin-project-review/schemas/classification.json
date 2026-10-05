@@ -1,0 +1,12 @@
+{
+  "$comment": "Clasificacion de un archivo y politica de analisis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "category", "policy", "reason"],
+  "properties": {
+    "path": {"type": "string", "pattern": "^[A-Za-z0-9_./-]+$", "description": "Ruta relativa al repo."},
+    "category": {"type": "string", "description": "Categoria semantica (code, doc, test, config, build, asset, generated, vendored, ...)."},
+    "policy": {"type": "string", "enum": ["full", "skim", "metadata", "reverse", "excluded"], "description": "Politica de lectura."},
+    "reason": {"type": "string", "description": "Justificacion de la politica."}
+  }
+}

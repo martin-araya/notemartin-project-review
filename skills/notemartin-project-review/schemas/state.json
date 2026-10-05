@@ -1,0 +1,16 @@
+{
+  "$comment": "Estado del workspace .project-review/. Una instancia por repo analizado.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["repo", "commit", "branch", "created_at", "skill_version", "mode", "stage", "config"],
+  "properties": {
+    "repo": {"type": "string", "description": "Ruta absoluta del repositorio analizado."},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "SHA del HEAD en el momento del init."},
+    "branch": {"type": "string", "description": "Rama activa al iniciar el analisis."},
+    "created_at": {"type": "string", "description": "Fecha ISO 8601 de creacion del workspace."},
+    "skill_version": {"type": "string", "description": "Version de la skill que realizo el analisis."},
+    "mode": {"type": "string", "enum": ["completo", "pregunta", "feature", "reanudar", "actualizar", "comparar"], "description": "Modo de operacion."},
+    "stage": {"type": "string", "enum": ["A", "B", "C", "D", "E", "F", "G", "G2", "H", "I", "J", "K", "L"], "description": "Etapa actual del pipeline."},
+    "config": {"type": "object", "description": "Configuracion efectiva del analisis (overrides sobre defaults.json)."}
+  }
+}

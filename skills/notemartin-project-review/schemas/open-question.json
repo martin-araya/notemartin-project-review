@@ -1,0 +1,16 @@
+{
+  "$comment": "Una pregunta abierta registrada en state/openq.jsonl.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "question", "status"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^OQ-[0-9]+$", "description": "Identificador unico."},
+    "question": {"type": "string", "description": "Pregunta formulada."},
+    "context": {"type": "string", "description": "Contexto relevante."},
+    "searched": {"type": "array", "items": {"type": "string"}, "description": "Donde se busco."},
+    "hypotheses": {"type": "array", "items": {"type": "string"}, "description": "Hipotesis consideradas."},
+    "status": {"type": "string", "enum": ["open", "resolved", "closed"], "description": "Estado actual."},
+    "resolution": {"type": "string", "description": "Resolucion si status=resolved."},
+    "needs": {"type": "string", "description": "Que haria falta para avanzar."}
+  }
+}

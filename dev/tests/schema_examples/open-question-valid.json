@@ -1,0 +1,9 @@
+{
+  "id": "OQ-001",
+  "question": "How does the orchestrator pick subagents?",
+  "context": "src/orchestrator/dispatch.ts",
+  "searched": ["src/orchestrator/"],
+  "hypotheses": ["random", "round-robin"],
+  "status": "open",
+  "needs": "trace through dispatch.ts"
+}

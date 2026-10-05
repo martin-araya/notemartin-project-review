@@ -1,0 +1,7 @@
+{
+  "from": "src/orchestrator/index.ts",
+  "to": "src/parser/index.ts",
+  "external": false,
+  "kind": "static",
+  "line": 3
+}

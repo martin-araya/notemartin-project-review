@@ -1,0 +1,30 @@
+{
+  "$comment": "Una traza de flujo documentada (sequence of steps).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "feature", "trigger", "steps"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^FL-[0-9]+$", "description": "Identificador unico del flujo."},
+    "feature": {"type": "string", "pattern": "^FEAT-[0-9]+$", "description": "Feature a la que pertenece."},
+    "trigger": {"type": "string", "description": "Disparador del flujo (entrada del usuario, evento, etc.)."},
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["n", "what", "cite"],
+        "properties": {
+          "n": {"type": "integer", "minimum": 1, "description": "Numero de paso."},
+          "what": {"type": "string", "description": "Descripcion del paso."},
+          "cite": {"type": "string", "description": "Cita [@path:linea] o [@path:ini-fin#symbol]."},
+          "data_in": {"type": "string", "description": "Datos de entrada al paso."},
+          "data_out": {"type": "string", "description": "Datos de salida del paso."},
+          "boundary": {"type": "string", "description": "Frontera atravesada (UI, red, BD, externo)."}
+        }
+      },
+      "description": "Pasos de la traza en orden."
+    },
+    "errors": {"type": "array", "items": {"type": "string", "pattern": "^ERR-[0-9]+$"}, "description": "Errores asociados al flujo."},
+    "effects": {"type": "array", "items": {"type": "string"}, "description": "Efectos observables del flujo."}
+  }
+}

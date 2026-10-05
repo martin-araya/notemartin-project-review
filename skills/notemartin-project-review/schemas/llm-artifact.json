@@ -1,0 +1,15 @@
+{
+  "$comment": "Artefacto LLM: prompt, herramienta, modo, skill o loop del agente.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["kind", "name"],
+  "properties": {
+    "kind": {"type": "string", "enum": ["prompt", "tool", "mode", "skill", "loop"], "description": "Tipo de artefacto LLM."},
+    "name": {"type": "string", "description": "Nombre del artefacto."},
+    "path": {"type": "string", "description": "Archivo donde se define (si aplica)."},
+    "handler": {"type": "string", "description": "Funcion o simbolo que implementa el artefacto."},
+    "tools": {"type": "array", "items": {"type": "string"}, "description": "Herramientas expuestas o usadas."},
+    "models": {"type": "array", "items": {"type": "string"}, "description": "Modelos compatibles o requeridos."},
+    "conditions": {"type": "object", "description": "Condiciones de activacion (variables, modos, etc.)."}
+  }
+}

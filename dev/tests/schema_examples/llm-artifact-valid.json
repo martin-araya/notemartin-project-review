@@ -1,0 +1,7 @@
+{
+  "kind": "prompt",
+  "name": "plan-mode-system",
+  "path": "src/prompts/plan.md",
+  "tools": ["read", "grep"],
+  "models": ["claude-opus-4.1", "gpt-5"]
+}

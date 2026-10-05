@@ -1,0 +1,14 @@
+{
+  "$comment": "Arista del grafo de imports o inclusiones.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["from", "to", "external", "kind"],
+  "properties": {
+    "from": {"type": "string", "description": "Origen de la dependencia (path interno o nombre de paquete externo)."},
+    "to": {"type": "string", "description": "Destino de la dependencia."},
+    "external": {"type": "boolean", "description": "True si el destino esta fuera del repo."},
+    "kind": {"type": "string", "enum": ["static", "dynamic", "type", "reexport", "include"], "description": "Tipo de la arista."},
+    "line": {"type": "integer", "minimum": 1, "description": "Linea donde aparece la declaracion."},
+    "unresolved_reason": {"type": "string", "description": "Razon por la que el destino no se resolvio estaticamente."}
+  }
+}

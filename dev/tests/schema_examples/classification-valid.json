@@ -1,0 +1,6 @@
+{
+  "path": "src/main.py",
+  "category": "code",
+  "policy": "full",
+  "reason": "entry point of the CLI"
+}

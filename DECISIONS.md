@@ -278,6 +278,54 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas consideradas: lista CSV de ejemplos en `templates/` (rechazado: separa la documentación del test, dificulta mantener ambos sincronizados).
 - Consecuencias: el `.md` y el parser están acoplados por el test; cualquier cambio en uno requiere revisar el otro.
 
+### D-137 — JSON Schema "casero" subconjunto Draft 2020-12
+
+- Fecha · Fase · Estado: 2026-10-05 · F04 · vigente
+- Contexto: AGENTS §17 prohíbe dependencias de runtime fuera de stdlib; el validador `schema.py` debe ser puro.
+- Decisión: implementar solo las 10 keywords que el roadmap fija (`type`, `required`, `properties`, `additionalProperties`, `items`, `enum`, `pattern`, `minimum`, `maximum`, `$ref`). Sin `oneOf`, `allOf`, `anyOf`, `format`, `not`, `if/then/else`.
+- Alternativas consideradas: usar `jsonschema` (rechazado: dependencia de runtime); implementar Draft completo (rechazado: trabajo inabordable y la skill no necesita más).
+- Consecuencias: si una fase futura necesita una keyword adicional, reabre F04 y extiende el validador.
+
+### D-138 — Esquemas como archivos JSON independientes sin `$id`
+
+- Fecha · Fase · Estado: 2026-10-05 · F04 · vigente
+- Contexto: los 19 esquemas viven cada uno en su archivo y se referencian por nombre.
+- Decisión: `schemas/<name>.json` sin `$id`, sin URL, sin `$schema`. Solo `$ref` local `#/definitions/<X>` dentro del mismo archivo. Esto evita la complejidad de resolución cross-file y mantiene los esquemas portables.
+- Alternativas consideradas: un solo archivo monolítico con todos los esquemas (rechazado: ilegible); esquemas con `$ref` cross-file (rechazado: ciclo de carga + parser más complejo).
+- Consecuencias: si dos esquemas necesitan la misma sub-forma, se duplica. Aceptable porque la duplicación es pequeña y local.
+
+### D-139 — Ejemplos como archivos sueltos `<nombre>-valid.json` y `<nombre>-invalid.json`
+
+- Fecha · Fase · Estado: 2026-10-05 · F04 · vigente
+- Contexto: el criterio exige "un ejemplo válido y uno inválido por esquema".
+- Decisión: `dev/tests/schema_examples/<nombre>-valid.json` y `<nombre>-invalid.json`, cada uno un único objeto JSON (no envuelto). Los tests parametrizados iteran sobre la convención.
+- Alternativas consideradas: un directorio `valid/` y otro `invalid/` (rechazado: dos directorios paralelos hacen que el par quede disperso); un único archivo con dos secciones (rechazado: complica el parseo).
+- Consecuencias: agregar un esquema nuevo es agregar 2 archivos y añadir su nombre a la lista en el test.
+
+### D-140 — Validador expone `load_schema`, `validate`, `check` y CLI
+
+- Fecha · Fase · Estado: 2026-10-05 · F04 · vigente
+- Contexto: el validador lo usarán scripts, linters y tests.
+- Decisión: API `load_schema(name) -> dict`, `validate(instance, schema, path="$", definitions=None) -> list[str]` (lista vacía = OK), `check(instance, schema)` que lanza `SchemaError`, y CLI `python -m npr.schema <name> <archivo>` con códigos 0/2.
+- Alternativas consideradas: solo `validate` y devolver `bool` (rechazado: se pierde el path del campo en el error).
+- Consecuencias: cualquier consumidor puede usar la API; el CLI sirve para inspección humana y para CI local.
+
+### D-141 — `type=integer` rechaza `bool` y distingue `number`
+
+- Fecha · Fase · Estado: 2026-10-05 · F04 · vigente
+- Contexto: en Python, `isinstance(True, int) == True` por compatibilidad con bool.
+- Decisión: `integer` = `int and not bool`; `number` = `(int or float) and not bool`. El bool nunca pasa como integer ni como number.
+- Alternativas consideradas: aceptar bool como int (rechazado: sorprende al usuario y oculta bugs).
+- Consecuencias: los esquemas que esperan enteros no admiten accidentalmente `True`/`False`. Documentado en el test `test_45`.
+
+### D-142 — `$ref` solo local con prefijo `#/definitions/`
+
+- Fecha · Fase · Estado: 2026-10-05 · F04 · vigente
+- Contexto: el roadmap fija `$ref local` como una de las keywords.
+- Decisión: solo se acepta `#/definitions/<X>`. Cualquier otro prefijo (`http://`, `file://`, `#/properties/...`, otro archivo) levanta `SchemaError`.
+- Alternativas consideradas: aceptar cualquier path JSON Pointer (rechazado: aumenta la superficie de ataque); los schemes pueden usar `#/properties/<X>` como shortcut (rechazado: complica la lectura).
+- Consecuencias: el validador es estricto; los esquemas están obligados a registrar sub-formas en `definitions`.
+
 ## Plantilla para nuevas decisiones
 
 ```

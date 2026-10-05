@@ -1,0 +1,10 @@
+{
+  "id": "FEAT-007",
+  "name": "switch-mode",
+  "user_description": "User types /switch-mode and the agent switches between modes.",
+  "entrypoints": ["src/cli/switch-mode.ts"],
+  "modules": ["MOD-modes", "MOD-cli"],
+  "flows": ["FL-015"],
+  "config": [{"key": "KILO_MODE", "kind": "env", "source": "src/config.ts"}],
+  "status": "traced"
+}

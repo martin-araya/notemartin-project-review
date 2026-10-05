@@ -1,0 +1,9 @@
+{
+  "name": "flask",
+  "spec": "^3.0.0",
+  "ecosystem": "pypi",
+  "manifest": "pyproject.toml",
+  "scope": "prod",
+  "line": 12,
+  "partial": false
+}

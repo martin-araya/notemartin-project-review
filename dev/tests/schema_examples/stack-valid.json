@@ -1,0 +1,5 @@
+{
+  "languages": [{"name": "python", "version": "3.12", "files": 50, "lines": 5000}],
+  "frameworks": [{"name": "flask", "version": "3.0", "ecosystem": "pypi"}],
+  "platforms": [{"name": "linux", "kind": "server"}]
+}

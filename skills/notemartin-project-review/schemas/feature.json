@@ -1,0 +1,28 @@
+{
+  "$comment": "Una feature descubierta en el repo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "user_description", "status"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^FEAT-[0-9]+$", "description": "Identificador unico."},
+    "name": {"type": "string", "description": "Nombre corto de la feature."},
+    "user_description": {"type": "string", "description": "Descripcion desde el punto de vista del usuario."},
+    "entrypoints": {"type": "array", "items": {"type": "string"}, "description": "Paths de entry points relacionados."},
+    "modules": {"type": "array", "items": {"type": "string"}, "description": "Modulos que participan."},
+    "flows": {"type": "array", "items": {"type": "string", "pattern": "^FL-[0-9]+$"}, "description": "Identificadores de flujos trazados."},
+    "config": {"type": "array", "items": {"$ref": "#/definitions/config-ref"}, "description": "Items de configuracion relevantes."},
+    "status": {"type": "string", "enum": ["draft", "active", "traced", "documented"], "description": "Estado del analisis de la feature."}
+  },
+  "definitions": {
+    "config-ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "kind"],
+      "properties": {
+        "key": {"type": "string", "description": "Nombre de la variable o clave."},
+        "kind": {"type": "string", "enum": ["env", "file", "flag", "secret", "setting"], "description": "Tipo de configuracion."},
+        "source": {"type": "string", "description": "Archivo donde se declara."}
+      }
+    }
+  }
+}

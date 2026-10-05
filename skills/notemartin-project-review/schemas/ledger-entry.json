@@ -1,0 +1,14 @@
+{
+  "$comment": "Una entrada del ledger de cobertura concurrente.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "state", "by", "ts"],
+  "properties": {
+    "path": {"type": "string", "description": "Ruta del archivo cubierto."},
+    "state": {"type": "string", "enum": ["pending", "reading", "done", "skipped", "excluded"], "description": "Estado de cobertura."},
+    "by": {"type": "string", "description": "Quien hizo la cobertura (orchestrator, subagente:id, ...)."},
+    "ts": {"type": "string", "description": "Marca temporal ISO 8601."},
+    "note_path": {"type": "string", "description": "Ruta del archivo de notas asociado."},
+    "reason": {"type": "string", "description": "Razon del skip o exclusion si aplica."}
+  }
+}

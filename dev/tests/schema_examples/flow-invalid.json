@@ -1,0 +1,6 @@
+{
+  "id": "flow-15",
+  "feature": "FEAT-007",
+  "trigger": "/switch-mode",
+  "steps": []
+}

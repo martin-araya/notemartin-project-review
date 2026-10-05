@@ -1,0 +1,8 @@
+{
+  "name": "main",
+  "kind": "magic",
+  "file": "src/cli.py",
+  "start": 10,
+  "end": 25,
+  "exported": true
+}

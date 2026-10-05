@@ -1,0 +1,7 @@
+{
+  "key": "DATABASE_URL",
+  "kind": "env",
+  "source": "src/config.py",
+  "default": null,
+  "required": true
+}

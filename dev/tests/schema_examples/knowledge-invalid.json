@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-05T10:00:00Z",
+  "repo": "/path/to/repo",
+  "summary": {
+    "languages": ["python"],
+    "files": 100,
+    "features": 5,
+    "open_questions": 1
+  },
+  "open_questions": ["question-1"]
+}

@@ -1,0 +1,10 @@
+{
+  "id": "FL-015",
+  "feature": "FEAT-007",
+  "trigger": "/switch-mode",
+  "steps": [
+    {"n": 1, "what": "parse slash command", "cite": "[@src/cli/switch-mode.ts:1-10#handleSlash]", "data_in": "/switch-mode plan", "data_out": "{mode: 'plan'}", "boundary": "UI"}
+  ],
+  "errors": [],
+  "effects": ["mode changed"]
+}

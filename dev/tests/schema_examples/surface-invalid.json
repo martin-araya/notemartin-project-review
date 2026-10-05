@@ -1,0 +1,8 @@
+{
+  "id": "SRF-mqtt-user-update",
+  "kind": "mqtt",
+  "name": "user update",
+  "handler": "onUserUpdate",
+  "file": "src/handlers/user.py",
+  "line": 10
+}

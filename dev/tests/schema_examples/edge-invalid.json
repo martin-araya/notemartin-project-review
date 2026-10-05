@@ -1,0 +1,7 @@
+{
+  "from": "src/index.ts",
+  "to": "lodash",
+  "external": true,
+  "kind": "magic",
+  "line": 1
+}

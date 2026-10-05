@@ -1,0 +1,10 @@
+{
+  "id": "WU-001",
+  "files": [
+    {"path": "src/orchestrator/wu.ts", "policy": "full"}
+  ],
+  "neighbors": ["WU-002"],
+  "priority": 1,
+  "wave": 1,
+  "glossary": ["WU", "subagente"]
+}

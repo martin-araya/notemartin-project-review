@@ -1,0 +1,15 @@
+{
+  "$comment": "Una superficie expuesta: endpoint HTTP, comando CLI, mensaje, evento, IPC, etc.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "name"],
+  "properties": {
+    "id": {"type": "string", "description": "Identificador estable de la superficie."},
+    "kind": {"type": "string", "enum": ["http", "cli", "command", "message", "event", "ipc", "schema", "ws", "queue", "tool"], "description": "Tipo de superficie."},
+    "name": {"type": "string", "description": "Nombre legible de la superficie."},
+    "handler": {"type": "string", "description": "Funcion o simbolo que la maneja."},
+    "file": {"type": "string", "description": "Archivo donde se declara la superficie."},
+    "line": {"type": "integer", "minimum": 1, "description": "Linea dentro del archivo."},
+    "pair": {"type": "object", "description": "Superficie par (request/response, send/receive, produce/consume)."}
+  }
+}

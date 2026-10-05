@@ -1,0 +1,8 @@
+{
+  "id": "SRF-http-users-get",
+  "kind": "http",
+  "name": "GET /users/{id}",
+  "handler": "getUser",
+  "file": "src/routes/users.py",
+  "line": 42
+}

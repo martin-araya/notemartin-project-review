@@ -1,0 +1,6 @@
+{
+  "key": "DATABASE_URL",
+  "kind": "environ",
+  "source": "src/config.py",
+  "required": true
+}

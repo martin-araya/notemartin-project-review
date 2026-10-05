@@ -1,0 +1,50 @@
+{
+  "$comment": "Stack detectado: lenguajes, frameworks y plataformas.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["languages", "frameworks", "platforms"],
+  "properties": {
+    "languages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "files", "lines"],
+        "properties": {
+          "name": {"type": "string", "description": "Nombre del lenguaje (python, typescript, ...)."},
+          "version": {"type": "string", "description": "Version detectada (opcional)."},
+          "files": {"type": "integer", "minimum": 0, "description": "Cantidad de archivos en este lenguaje."},
+          "lines": {"type": "integer", "minimum": 0, "description": "Total de lineas de codigo en este lenguaje."}
+        }
+      },
+      "description": "Lenguajes detectados con metricas."
+    },
+    "frameworks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "ecosystem"],
+        "properties": {
+          "name": {"type": "string", "description": "Nombre del framework."},
+          "version": {"type": "string", "description": "Version detectada."},
+          "ecosystem": {"type": "string", "description": "Ecosistema de procedencia (npm, pypi, maven, ...)."}
+        }
+      },
+      "description": "Frameworks detectados."
+    },
+    "platforms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "kind"],
+        "properties": {
+          "name": {"type": "string", "description": "Nombre de la plataforma."},
+          "kind": {"type": "string", "description": "Tipo (web, desktop, mobile, cli, server, embedded)."}
+        }
+      },
+      "description": "Plataformas objetivo."
+    }
+  }
+}

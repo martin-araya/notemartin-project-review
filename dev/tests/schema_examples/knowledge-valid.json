@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-05T10:00:00Z",
+  "repo": "/path/to/repo",
+  "summary": {
+    "languages": ["python", "typescript"],
+    "files": 250,
+    "features": 12,
+    "open_questions": 3
+  },
+  "modules": [],
+  "features": [],
+  "surfaces": [],
+  "open_questions": ["OQ-001", "OQ-002"]
+}

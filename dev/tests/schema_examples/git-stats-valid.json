@@ -1,0 +1,8 @@
+{
+  "commits_total": 1500,
+  "first_commit": "abc1234",
+  "last_commit": "def5678",
+  "contributors": 12,
+  "active_range": {"from": "2020-01-01", "to": "2026-10-05"},
+  "by_kind": {"feat": 200, "fix": 300, "docs": 100}
+}

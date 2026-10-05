@@ -1,0 +1,10 @@
+{
+  "name": "main",
+  "kind": "function",
+  "file": "src/cli.py",
+  "start": 10,
+  "end": 25,
+  "exported": true,
+  "signature": "def main() -> int",
+  "parent": "module"
+}

@@ -1,0 +1,11 @@
+{
+  "path": "src/cli.py",
+  "size": "not a number",
+  "sha1": "0123456789abcdef0123456789abcdef01234567",
+  "lines": 100,
+  "is_binary": false,
+  "ext": ".py",
+  "encoding": "utf-8",
+  "is_symlink": false,
+  "ignored": false
+}

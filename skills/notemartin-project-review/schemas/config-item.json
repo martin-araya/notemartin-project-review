@@ -1,0 +1,14 @@
+{
+  "$comment": "Una variable de entorno, clave de configuracion o flag del repo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["key", "kind", "source"],
+  "properties": {
+    "key": {"type": "string", "description": "Nombre de la variable o clave."},
+    "kind": {"type": "string", "enum": ["env", "file", "flag", "secret", "setting"], "description": "Tipo de configuracion."},
+    "source": {"type": "string", "description": "Archivo o modulo donde se declara."},
+    "default": {"description": "Valor por defecto (tipo libre segun el kind)."},
+    "required": {"type": "boolean", "description": "True si la app no arranca sin esta clave."},
+    "values": {"type": "array", "description": "Valores aceptados (enum) si aplica."}
+  }
+}

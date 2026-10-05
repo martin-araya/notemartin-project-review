@@ -1,0 +1,17 @@
+{
+  "$comment": "Una entrada del inventario de archivos del repo.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["path", "size", "sha1", "lines", "is_binary", "ext", "encoding", "is_symlink", "ignored"],
+  "properties": {
+    "path": {"type": "string", "pattern": "^[A-Za-z0-9_./-]+$", "description": "Ruta relativa al repo."},
+    "size": {"type": "integer", "minimum": 0, "description": "Tamano en bytes."},
+    "sha1": {"type": "string", "pattern": "^[0-9a-f]{40}$", "description": "Hash SHA-1 del contenido."},
+    "lines": {"type": "integer", "minimum": 0, "description": "Conteo de lineas (0 si binario)."},
+    "is_binary": {"type": "boolean", "description": "True si el archivo es binario."},
+    "ext": {"type": "string", "description": "Extension sin punto (puede ser vacia)."},
+    "encoding": {"type": "string", "description": "Encoding detectado (utf-8, latin-1, etc.)."},
+    "is_symlink": {"type": "boolean", "description": "True si es un enlace simbolico."},
+    "ignored": {"type": "boolean", "description": "True si .gitignore lo excluye."}
+  }
+}

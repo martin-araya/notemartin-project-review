@@ -1,0 +1,27 @@
+{
+  "$comment": "Resultado de una ejecucion de `npr claims check` sobre un documento.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "checked_at", "claims", "result"],
+  "properties": {
+    "schema_version": {"type": "integer", "minimum": 1, "description": "Version del formato del reporte."},
+    "checked_at": {"type": "string", "description": "Fecha ISO 8601 del analisis."},
+    "claims": {"type": "integer", "minimum": 0, "description": "Numero de afirmaciones revisadas."},
+    "result": {"type": "string", "enum": ["pass", "fail", "warning"], "description": "Veredicto agregado."},
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "rule", "msg"],
+        "properties": {
+          "path": {"type": "string", "description": "Ruta del documento revisado."},
+          "rule": {"type": "string", "description": "Regla que fallo."},
+          "msg": {"type": "string", "description": "Mensaje legible."},
+          "where": {"type": "string", "description": "Ubicacion dentro del documento."}
+        }
+      },
+      "description": "Lista detallada de errores."
+    }
+  }
+}

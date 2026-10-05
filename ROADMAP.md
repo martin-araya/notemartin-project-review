@@ -311,7 +311,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
-## F04 — Esquemas de datos del workspace
+## F04 — Esquemas de datos del workspace ✅
 
 **Objetivo:** contratos de datos estables entre scripts, subagentes y reportes.
 **Depende de:** F01
@@ -329,9 +329,9 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 **Entregables:** esquemas, validador, ejemplos, tests.
 
 **Criterios de aceptación:**
-- [ ] Todos los ejemplos válidos validan y todos los inválidos fallan con un mensaje que indica el campo.
-- [ ] No hay dependencias fuera de la stdlib en `schema.py`.
-- [ ] Cada esquema tiene `description` en cada propiedad.
+- [x] Todos los ejemplos válidos validan y todos los inválidos fallan con un mensaje que indica el campo.
+- [x] No hay dependencias fuera de la stdlib en `schema.py`.
+- [x] Cada esquema tiene `description` en cada propiedad.
 
 ---
 

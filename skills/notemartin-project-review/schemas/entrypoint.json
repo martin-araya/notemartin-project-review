@@ -1,0 +1,13 @@
+{
+  "$comment": "Punto de entrada de un proceso detectado.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["process", "entry", "kind"],
+  "properties": {
+    "process": {"type": "string", "description": "Nombre logico del proceso."},
+    "entry": {"type": "string", "description": "Ruta del archivo o comando de entrada."},
+    "kind": {"type": "string", "enum": ["cli", "server", "daemon", "script", "web", "test"], "description": "Tipo de proceso."},
+    "args": {"type": "array", "items": {"type": "string"}, "description": "Argumentos por defecto."},
+    "env": {"type": "object", "description": "Variables de entorno relevantes."}
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "$comment": "Una dependencia declarada en un manifiesto.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "spec", "ecosystem", "manifest", "scope"],
+  "properties": {
+    "name": {"type": "string", "description": "Nombre del paquete."},
+    "spec": {"type": "string", "description": "Especificacion declarada (^1.2.3, ~2.0, >=3, ...)."},
+    "resolved": {"type": "string", "description": "Version resuelta por el lockfile (opcional)."},
+    "scope": {"type": "string", "enum": ["dev", "prod", "peer", "optional", "build"], "description": "Alcance de la dependencia."},
+    "ecosystem": {"type": "string", "description": "Ecosistema (npm, pypi, maven, cargo, go, ...)."},
+    "manifest": {"type": "string", "description": "Ruta del manifiesto donde aparece."},
+    "line": {"type": "integer", "minimum": 1, "description": "Linea dentro del manifiesto."},
+    "partial": {"type": "boolean", "description": "True si la declaracion esta fragmentada o es ambigua."}
+  }
+}

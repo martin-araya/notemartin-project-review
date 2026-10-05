@@ -1,0 +1,7 @@
+{
+  "process": "myapp-server",
+  "entry": "bin/server.py",
+  "kind": "server",
+  "args": ["--port", "8080"],
+  "env": {"PORT": "8080"}
+}

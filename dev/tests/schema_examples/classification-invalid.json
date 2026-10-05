@@ -1,0 +1,6 @@
+{
+  "path": "src/main.py",
+  "category": "code",
+  "policy": "everything",
+  "reason": "entry point"
+}

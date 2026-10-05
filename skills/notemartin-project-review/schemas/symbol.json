@@ -1,0 +1,16 @@
+{
+  "$comment": "Un simbolo detectado por el indice de simbolos.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "kind", "file", "start", "end", "exported"],
+  "properties": {
+    "name": {"type": "string", "description": "Nombre del simbolo."},
+    "kind": {"type": "string", "enum": ["function", "class", "method", "variable", "constant", "module", "interface", "type", "enum", "trait", "struct"], "description": "Tipo de simbolo."},
+    "file": {"type": "string", "description": "Ruta del archivo que contiene el simbolo."},
+    "start": {"type": "integer", "minimum": 1, "description": "Linea de inicio."},
+    "end": {"type": "integer", "minimum": 1, "description": "Linea de fin."},
+    "exported": {"type": "boolean", "description": "True si el simbolo es visible fuera de su modulo."},
+    "signature": {"type": "string", "description": "Firma textual del simbolo (para funciones y metodos)."},
+    "parent": {"type": "string", "description": "Nombre del simbolo contenedor (para metodos, campos, etc.)."}
+  }
+}
