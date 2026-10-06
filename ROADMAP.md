@@ -127,7 +127,7 @@ La skill:
 Grafo de dependencias resumido:
 
 ```
-F00 → F01 → F02,F03,F04 → F05 → F06 → F07
+F00 → F01 → F02,F03,F04 → F05 → F06a → F06a2 → F07
 F05 → F08 → F09 → {F10,F11,F13} → F12 → F14 → F15 → F16 → {F17,F18,F19,F20,F21} → F22 → F23 → F24 → F25
 F25 → F26 → F27 → {F28..F32} → F33 → F34 → F35 → F36 → {F37..F41, F43..F45} ; F34 → F42 → F46 ; {F35,F36} → F47
 F27 → {F48..F59} ; {F31,F36,F51} → F60
@@ -370,130 +370,1071 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
+# F06 — Matriz de fixtures multi-ecosistema
+ 
+## Mapa de la fase
+ 
+| Grupo | Fases | Fixtures |
+|---|---|---|
+| Base | F06a ✅, F06a2 | `fx-python-cli`, verificador y harness multi-ecosistema |
+| Ya planificados (completados aquí) | F06b–F06f | `fx-ts-agent-extension`, `fx-java-micronaut`, `fx-monorepo`, `fx-minified`, `fx-polyglot` |
+| Frontend web | F06g–F06l | React, Next.js, JS vanilla/jQuery, Vue/Nuxt, SvelteKit, Angular + NgRx |
+| Backend | F06m–F06w | Spring Boot, Kotlin/Ktor, ASP.NET Core, Django, FastAPI, NestJS, Go, Rust/Axum, Laravel, Rails, Elixir/Phoenix |
+| Nativo y sistemas | F06x–F06z | C++/CMake, C embebido, C++/Qt |
+| Móvil y Apple | F06aa–F06ae | Swift iOS, Swift en servidor/paquetes, Kotlin Android, Flutter, React Native |
+| Escritorio | F06af–F06ag | Electron, C#/WPF |
+| Datos y bases de datos | F06ah–F06am | PostgreSQL, Oracle PL/SQL, SQL Server T-SQL, dbt + Airflow, ML con notebooks, Scala/Spark |
+| Empresarial legacy | F06an–F06ap | Oracle ADF/SOA/BPM, Java EE/Spring XML, COBOL/JCL |
+| Infraestructura y DevOps | F06aq–F06as | Terraform + Ansible, Kubernetes/Helm, CI/CD + Docker |
+| Scripting | F06at–F06au | Shell, PowerShell |
+| Videojuegos | F06av–F06aw | Unity/C#, Godot/GDScript |
+| Contratos de API | F06ax–F06ay | gRPC/Protobuf, GraphQL |
+| Otros runtimes | F06az–F06ba | WebAssembly, Solidity |
+| Lenguajes de cola larga | F06bb–F06bg | Lua, Haskell, R, Perl, Zig, Clojure |
+| Transversales | F06bh–F06bl | Escala, build roto, historia git, codificaciones/i18n, documentación contradictoria |
+| Cierre | F06-cierre | Validación de la matriz completa |
+ 
+**Dependencias:** todos los fixtures desde F06b dependen de F06a2. Entre ellos no hay dependencias, salvo las indicadas.
+**Subagentes:** uno por fixture. Todos los fixtures de F06b a F06bl son paralelizables entre sí.
+ 
+---
+ 
+## Criterios comunes a todos los fixtures (CC)
+ 
+Cada fixture de F06b en adelante cumple **todos** estos criterios, además de los específicos de su fase:
+ 
+- [ ] **CC-01** Código en `dev/fixtures/<fx>/`, generado desde `dev/fixtures/_template/`.
+- [ ] **CC-02** `build-history.sh` reproducible con ≥ 8 commits que construyen las features de forma incremental.
+- [ ] **CC-03** ≥ 3 features (o las que indique la fase), cada una con ≥ 6 R-NN.
+- [ ] **CC-04** Las 6 trampas específicas del paquete por feature, plantadas y documentadas.
+- [ ] **CC-05** ≥ 3 trampas superficiales documentadas con su resolución.
+- [ ] **CC-06** Las **6 trampas del ecosistema** que define su fase, plantadas y documentadas en el ground truth con su referencia exacta.
+- [ ] **CC-07** Ground truth en `dev/ground-truth/<fx>/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}`.
+- [ ] **CC-08** Por cada feature, el ground truth incluye el **flujo esperado** (nodos y aristas, desde el punto de entrada hasta los efectos) y los **resultados posibles** (éxito, errores y ramas), para verificar el diagrama de flujo y los resultados que genera la skill.
+- [ ] **CC-09** `check_ground_truth.py` pasa con 0 referencias rotas.
+- [ ] **CC-10** Los tests propios del fixture pasan con `make -C dev/fixtures/<fx> test`, en su contenedor (`Dockerfile.test`) o en macOS si la fase lo indica.
+- [ ] **CC-11** Ningún archivo de `dev/fixtures/<fx>/` menciona el ground truth (en ninguna sintaxis de comentario del lenguaje).
+- [ ] **CC-12** Tests en `dev/tests/test_<fx>_ground_truth.py`.
+- [ ] **CC-13** Entrada en `dev/fixtures/target_matrix.yml` con lenguajes, frameworks, sistema de build, tipo de proyecto y toolchain.
+---
+ 
 ## F06a — Fixture `fx-python-cli` (split de F06) ✅
-
+ 
 **Objetivo:** primer fixture de F06 con paquete por feature completo (≥3 features con ≥6 R-NN cada una y las 6 trampas específicas del paquete plantadas), verificador que valida archivo:línea, historia git reproducible. Los otros 5 fixtures pasan a F06b..F06f.
 **Depende de:** F05
 **Subagentes:** uno (F06a es un fixture pequeño; F06b..F06f paralelizables).
-
+ 
 **Tareas (resumidas; ver commit F06a para el plan completo):**
 - Crear `dev/fixtures/fx-python-cli/`: CLI `fxnotes` (argparse + entry points + SQLite + config TOML/env + bus de eventos + import dinámico + código muerto) con 4 features (`add`, `list`, `delete`, `export`), 3+ trampas superficiales, 6 trampas específicas del paquete, tests pytest propios, `build-history.sh` con 8 commits, `unique_tokens.txt`.
 - Ground truth en `dev/ground-truth/fx-python-cli/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
 - Endurecer `dev/tools/check_ground_truth.py` para validar cada `archivo:línea` con símbolo opcional.
 - Tests en `dev/tests/test_fxnotes_ground_truth.py`.
-
 **Criterios de aceptación:** (los del roadmap F06 aplicados solo a este fixture)
 - [x] `check_ground_truth.py` pasa para `fx-python-cli` (0 referencias rotas).
 - [x] `fx-python-cli` tiene ≥ 3 trampas superficiales documentadas con resolución.
 - [x] Los tests del fixture pasan.
 - [x] Ningún archivo en `dev/fixtures/fx-python-cli/` menciona el ground truth.
 - [x] Las 4 features tienen ≥ 6 R-NN y las 6 trampas específicas del paquete están plantadas y documentadas.
-
 ---
-
+ 
 ## F06a2 — Verificador y harness multi-ecosistema ✅
-
-**Objetivo:** que el verificador, los tests y la plantilla soporten todos los tipos de archivo y
-toolchains de la matriz antes de crear los fixtures. Tras esta fase, F06b–F06f pueden usar el
-mismo verificador sin parches ad hoc.
+  
+**Objetivo:** que el verificador, los tests y la plantilla soporten todos los tipos de archivo y toolchains de la matriz antes de crear los fixtures.
 **Depende de:** F06a
 **Subagentes:** uno.
-
+  
 **Tareas:**
-- Extender `check_ground_truth.py` con los formatos de referencia:
-  `archivo:línea`, `archivo:inicio-fin`, `archivo:línea#símbolo`, `archivo:línea:columna`,
-  `contenedor!/ruta/interna:línea`, `notebook.ipynb#celda-N:línea`, `archivo#xpath`,
-  `archivo#yaml-path`, `binario#offset|símbolo`. Despachador con orden
-  explícito para desambiguar `arch#simbolo` entre `texto`, `yaml` y `binario`
-  (las extensiones binarias conocidas fuerzan la rama binaria).
-- Tabla de sintaxis de comentarios por extensión y nombre de archivo
-  (`dev/tools/comment_syntax.json`, ~80 entradas: `#`, `//`, `/* */`, `--`, `<!-- -->`,
-  `;`, `%`, `*>`, `{- -}`, `REM`, etc.) y validación **CC-11** (sin menciones
-  embebidas en comentarios). `dev/tools/comment_syntax.py` con `detect()` y
-  `mask_comments()` que preserva saltos de línea y longitudes.
-- Detección de codificación por archivo (`dev/tools/encoding.py`): BOM (UTF-8/16/32 LE/BE),
-  UTF-8, Latin-1/CP1252, Shift-JIS; `read_lines()` consistente con un editor en LF, CRLF y CR.
-- `dev/tools/run_fixture_tests.py`: ejecuta `test_cmd` de cada fixture desde su `manifest.yml`;
-  respeta `requires:` (plataformas) y `container:` (Docker opcional). Soporta
-  `--all` y `--fixture <fx>`, `--report <json>`, `--platform auto|linux|macos|windows`.
-- `dev/fixtures/_template/` con `README.md`, `manifest.yml`, `Makefile`, `Dockerfile.test`,
-  `build-history.sh`, `unique_tokens.txt`, `.gitignore`, `pyproject.toml` y
-  `ground-truth/ground_truth.json.example` (esqueleto válido para `check_ground_truth.py`).
-- `dev/fixtures/target_matrix.yml`: lista objetivo de lenguajes, frameworks, sistemas de build,
-  tipos de archivo y contenedores.
-- `dev/tools/fixtures_matrix.py`: descubre fixtures, calcula ejes cubiertos por cada uno
-  (extensiones, manifiestos, archivos clave de frameworks, contenedores) y compara contra
-  `target_matrix.yml`. Genera `dev/fixtures/MATRIX.md` y soporta `--check`.
-- Tests ampliados en `dev/tests/test_check_ground_truth.py` (57 tests), `test_encoding.py`
-  (19), `test_comment_syntax.py` (20), `test_run_fixture_tests.py` (16),
-  `test_fixtures_matrix.py` (9).
-
+- Extender `check_ground_truth.py` con nuevos formatos de referencia:
+  - `archivo:línea` y `archivo:línea@símbolo` (ya existentes);
+  - `archivo:línea:columna` (bundles minificados, líneas muy largas);
+  - `contenedor!/ruta/interna:línea` (`.asar`, `.jar`, `.zip`, `.apk`);
+  - `notebook.ipynb#celda-N:línea` (Jupyter);
+  - `archivo#xpath` para XML declarativo (ADF, SOA, Android, XAML, `.ui`);
+  - `archivo#yaml-path` para YAML y escenas (`.unity`, `.tscn`, Helm, CI);
+  - `binario#offset` o `binario#símbolo` para binarios sin fuente.
+- Tabla de sintaxis de comentarios por extensión (`#`, `//`, `/* */`, `--`, `<!-- -->`, `;`, `%`, `*>` COBOL, `{- -}` Haskell, `REM`, etc.) para validar CC-11.
+- Detección de codificación por archivo (UTF-8, UTF-16, Latin-1, Shift-JIS, con o sin BOM, CRLF) para calcular líneas correctas.
+- `dev/tools/run_fixture_tests.py`: ejecuta `make test` de cada fixture en su `Dockerfile.test`; los fixtures con `requires: macos` o `requires: windows` se ejecutan solo en ese sistema y se marcan como omitidos en los demás.
+- `dev/fixtures/_template/` con `Makefile`, `Dockerfile.test`, `build-history.sh`, `unique_tokens.txt` y ground truth vacío.
+- `dev/fixtures/target_matrix.yml` con la lista objetivo de lenguajes, frameworks, sistemas de build y tipos de proyecto (ver F06-cierre).
+- `dev/tools/fixtures_matrix.py`: genera `dev/fixtures/MATRIX.md` y valida la cobertura contra `target_matrix.yml`.
 **Criterios de aceptación:**
-- [x] `check_ground_truth.py` valida los formatos exigidos, con tests de casos válidos y rotos
-      (≥ 14 casos cubriendo todos los formatos).
-- [x] La validación de CC-11 detecta menciones en todas las sintaxis de comentario
-      (probado en `#`, `//`, `/* */`).
-- [x] Los números de línea son correctos en archivos UTF-8, UTF-16 LE/BE, Latin-1, con BOM
-      y con CRLF.
-- [x] `fx-python-cli` sigue pasando sin cambios (`git diff dev/fixtures/fx-python-cli
-      dev/ground-truth/fx-python-cli` limpio, `check_ground_truth.py` exit 0).
-- [x] `run_fixture_tests.py` ejecuta `fx-python-cli` (estado `error (no manifest)` esperado
-      en F06a2: el manifest se introduce en F06b) y omite correctamente un fixture de prueba
-      marcado `requires: macos` en Linux.
-- [x] `_template/`, `target_matrix.yml`, `fixtures_matrix.py` y `MATRIX.md` existen y son
-      válidos; `fixtures_matrix.py` genera el Markdown de cobertura.
-
+- [x] `check_ground_truth.py` valida los 9 formatos de referencia (los 7 exigidos + `archivo:inicio-fin` y el formato binario decimal), con tests de casos válidos y rotos para cada uno (57 tests en `test_check_ground_truth.py`).
+- [x] La validación de CC-11 detecta menciones en todas las sintaxis de comentario de la tabla (probado en `#`, `//`, `/* */`, `--`, `<!-- -->`, `*>`, `{- -}`, `=begin`/`=end`; 20 tests en `test_comment_syntax.py`).
+- [x] Los números de línea son correctos en archivos UTF-8, UTF-8-sig, UTF-16 LE/BE, Latin-1, CP1252, Shift-JIS, con BOM y con CRLF/CR/LF (19 tests en `test_encoding.py`).
+- [x] `fx-python-cli` sigue pasando sin cambios (`git diff dev/fixtures/fx-python-cli dev/ground-truth/fx-python-cli` limpio; `check_ground_truth.py dev/ground-truth/fx-python-cli` → OK).
+- [x] `run_fixture_tests.py` ejecuta fixtures y omite correctamente un fixture de prueba marcado `requires: macos` en Linux (16 tests en `test_run_fixture_tests.py`; `fx-python-cli` se reporta `error (no manifest)` porque el manifest se introduce con F06b, no en F06a2).
+- [x] `_template/` con 9 archivos (README, manifest.yml, Makefile, Dockerfile.test, build-history.sh, unique_tokens.txt, .gitignore, pyproject.toml, ground-truth example) y `target_matrix.yml` con 13 lenguajes, 10 frameworks, 8 builds, 10 file kinds, 7 containers existen y parsean.
+- [x] `fixtures_matrix.py` genera `dev/fixtures/MATRIX.md` con la cobertura real (9 tests en `test_fixtures_matrix.py`); el gate `--check` se cierra tras F06-cierre.
+- [x] `pytest` total 260 passed (139 previos + 121 nuevos); `validate_skill.py` y `overfit_guard.py` siguen verdes.
 ---
-
-## F06b — Fixture `fx-ts-agent-extension` (F06)
-
+ 
+# Fixtures ya planificados (completados)
+ 
+## F06b — Fixture `fx-ts-agent-extension`
+ 
 **Objetivo:** extensión tipo VS Code (TypeScript) que imita la arquitectura de un agente de código: proceso de extensión + webview con protocolo de mensajes tipado, **modos** (`plan`, `code`, `ask`) con prompts distintos y grupos de herramientas permitidas, **carga de skills** desde `~/.fxagent/skills/` y `.fxagent/skills/` con precedencia y parseo de frontmatter, herramienta `use_skill`, loop de agente con llamadas a herramientas y aprobación, abstracción de proveedores LLM, cliente MCP simulado, condensación de contexto, i18n de la UI. Un archivo de > 5.000 líneas.
-**Depende de:** F06a (verificador endurecido).
-
-**Criterios mínimos:**
-- 3 modos, 6 herramientas, 1 cargador de skills con 2 rutas y precedencia, 12 tipos de mensajes webview.
-- ≥3 features con ≥6 R-NN y 6 trampas específicas del paquete.
-- `check_ground_truth.py` pasa.
-
+**Stack:** TypeScript, Node, API de VS Code (simulada), esbuild, webview React.
+**Features:** `cambiar-modo`, `cargar-skill`, `ejecutar-herramienta-con-aprobación`, `condensar-contexto`.
+**Trampas del ecosistema:**
+1. Comandos y activación declarados en `package.json` (`contributes.commands`, `activationEvents`), sin llamada explícita en el código.
+2. Mensajes del webview despachados por `type` string en un `switch` dentro del archivo de > 5.000 líneas.
+3. Precedencia de skills: proyecto sobre usuario, con merge parcial de frontmatter.
+4. Herramientas habilitadas por modo mediante un objeto de configuración de grupos, no por condicionales.
+5. Claves i18n construidas en runtime (`` t(`mode.${id}.title`) ``).
+6. Proveedor LLM elegido por factory con `import()` dinámico.
+**Toolchain de tests:** Node 22 + vitest, en contenedor.
+**Criterios específicos:**
+- [ ] 3 modos, 6 herramientas, 1 cargador de skills con 2 rutas y precedencia, 12 tipos de mensajes webview.
+## F06c — Fixture `fx-java-micronaut`
+ 
+**Objetivo:** servicio REST Micronaut con controladores, servicios, repositorios, cliente HTTP declarativo, `application.yml` con entornos, DI en tiempo de compilación, migraciones y tareas programadas.
+**Stack:** Java 21, Micronaut 4, Micronaut Data JDBC, Flyway, Gradle (Kotlin DSL).
+**Features:** `alta-cliente`, `consulta-score-externo`, `cierre-diario-programado`, `notificar-evento`.
+**Trampas del ecosistema:**
+1. Beans condicionales (`@Requires(env = ...)`, `@Requires(property = ...)`, `@Factory`): el bean activo depende del entorno.
+2. `@Client` declarativo: la interfaz no tiene implementación en el código fuente.
+3. Precedencia `application.yml` < `application-dev.yml` < variables de entorno.
+4. `ApplicationEventPublisher` + `@EventListener`: emisor y receptor desacoplados.
+5. `@Scheduled(cron = "${...}")` con la expresión en la configuración.
+6. Columnas agregadas por migración Flyway que solo usa una `@Query` nativa.
+**Toolchain de tests:** JDK 21 + JUnit 5 + H2, en contenedor.
+ 
+## F06d — Fixture `fx-monorepo`
+ 
+**Objetivo:** workspace pnpm con frontend Angular (standalone + signals), API Node y librería compartida, orquestado con Nx o Turborepo.
+**Stack:** TypeScript, Angular, Fastify, pnpm workspaces, Nx/Turborepo.
+**Features:** `login`, `listado-con-filtros`, `exportar-reporte`.
+**Trampas del ecosistema:**
+1. Alias de `tsconfig.paths` + protocolo `workspace:*`.
+2. Librería compartida con `exports` condicionales en `package.json` (`import`/`require`/`types`).
+3. Rutas lazy (`loadComponent`), guards e interceptors funcionales registrados con `provideHttpClient(withInterceptors(...))`.
+4. `effect()` de signals con efectos secundarios que disparan llamadas HTTP.
+5. `fileReplacements` de environments en el build.
+6. `proxy.conf.json` es el único lugar donde se conecta `/api` con el backend.
+**Toolchain de tests:** Node 22 + Jest/Vitest + Karma headless, en contenedor.
+ 
+## F06e — Fixture `fx-minified`
+ 
+**Objetivo:** artefactos sin código fuente legible: bundle JS minificado con sourcemap, bundle sin sourcemap, `.asar`, `.pyc`, `.jar` sin fuentes y binario Go con símbolos eliminados.
+**Stack:** JS (esbuild/terser), Electron asar, CPython bytecode, JVM bytecode, Go.
+**Features:** las mismas 3 features implementadas en cada artefacto (`calcular-tarifa`, `validar-licencia`, `sincronizar`).
+**Trampas del ecosistema:**
+1. Referencias `archivo:línea:columna` que se resuelven a la fuente original vía sourcemap.
+2. Sin sourcemap: nombres alterados; las features se identifican por literales, rutas y mensajes.
+3. `.asar` que hay que extraer y mapear con `contenedor!/ruta`.
+4. `.pyc` de una versión concreta de CPython (magic number) sin `.py`.
+5. `.jar` solo con `.class`; una feature registrada por `META-INF/services`.
+6. Código eliminado por tree-shaking: existe en el sourcemap pero no en el bundle (la skill debe distinguirlo).
+**Toolchain de tests:** tests que verifican la extracción y el comportamiento de cada artefacto, en contenedor.
+ 
+## F06f — Fixture `fx-polyglot`
+ 
+**Objetivo:** Go + Rust + script shell que se comunican por stdin/stdout con JSON.
+**Stack:** Go, Rust, Bash.
+**Features:** `ingesta`, `transformación`, `reporte`.
+**Trampas del ecosistema:**
+1. Contrato JSON implícito, sin schema, con campos opcionales distintos en cada lado.
+2. `//go:build` tags que cambian la implementación.
+3. Cargo features que cambian el formato del protocolo.
+4. Orquestador shell con `set -euo pipefail`, `trap` y elección de binario según `uname`.
+5. Códigos de salida usados como protocolo de error.
+6. `init()` de Go que registra handlers.
+**Toolchain de tests:** Go + Rust + bats, en contenedor.
+ 
 ---
-
-## F06c — Fixture `fx-java-micronaut` (F06)
-
-**Objetivo:** servicio REST Micronaut (controladores, servicios, repositorios, cliente HTTP declarativo, `application.yml` con entornos, DI en tiempo de compilación, migraciones).
-**Depende de:** F06a.
-
-**Criterios:** análogos a F06b.
-
+ 
+# Frontend web
+ 
+## F06g — Fixture `fx-react-spa`
+ 
+**Objetivo:** SPA React moderna con router de datos, estado global, caché de servidor, formularios validados e i18n.
+**Stack:** React 19, TypeScript, Vite, React Router (data routers), Redux Toolkit + RTK Query, React Hook Form + Zod, i18next, Tailwind.
+**Features:** `autenticación`, `catálogo-y-carrito`, `checkout`, `panel-de-pedidos`.
+**Trampas del ecosistema:**
+1. `loader`/`action` de rutas lazy: la lógica de datos vive en el router, no en el componente.
+2. Hooks autogenerados por `createApi` (`useGetProductsQuery`) que no tienen definición literal.
+3. Providers anidados en `main.tsx` que cambian el comportamiento de todo el árbol.
+4. Cadenas de `useEffect` cuyas dependencias disparan efectos encadenados.
+5. Variables `import.meta.env.VITE_*` resueltas en build.
+6. Componentes exportados envueltos en `memo`/`forwardRef`/HOC con otro nombre, más `Suspense` + `ErrorBoundary` que definen rutas de error.
+**Toolchain de tests:** Vitest + Testing Library + MSW, en contenedor.
+ 
+## F06h — Fixture `fx-nextjs-fullstack`
+ 
+**Objetivo:** aplicación full-stack con Next.js App Router.
+**Stack:** Next.js (App Router), React Server Components, Server Actions, Route Handlers, `middleware.ts`, Prisma, Auth.js.
+**Features:** `registro`, `publicar-artículo`, `comentarios`, `panel-admin`.
+**Trampas del ecosistema:**
+1. Límite servidor/cliente definido por la directiva `'use client'` al inicio del archivo.
+2. Server Actions (`'use server'`) invocadas desde `<form action>` sin `fetch` explícito.
+3. Rutas por sistema de archivos: route groups `(marketing)`, segmentos `[id]`, parallel routes `@modal`, intercepting routes `(.)`.
+4. `middleware.ts` que reescribe o redirige según cookie o cabecera.
+5. Caché y revalidación (`revalidateTag`, `export const revalidate`, `fetch` con `next.tags`).
+6. Relaciones definidas solo en `schema.prisma`, con cliente generado.
+**Toolchain de tests:** Vitest + Playwright (contra `next start`) + SQLite, en contenedor.
+ 
+## F06i — Fixture `fx-vanilla-js-legacy`
+ 
+**Objetivo:** aplicación web legacy sin framework moderno, con backend Express antiguo.
+**Stack:** JavaScript ES5, jQuery + plugins, HTML/CSS/SCSS, Gulp, Node + Express con CommonJS.
+**Features:** `búsqueda`, `formulario-de-contacto`, `galería`.
+**Trampas del ecosistema:**
+1. El orden de los `<script>` en el HTML define las dependencias.
+2. Delegación de eventos `$(document).on('click', '.sel', ...)` lejos del HTML.
+3. Handlers inline (`onclick="App.x()"`) en el HTML.
+4. Mutación de prototipos (`Array.prototype.x`) y monkey patching de un plugin jQuery.
+5. Llamadas dinámicas por string (`window[name]()`, `eval`, `new Function`).
+6. HTML generado por concatenación de strings y features ocultas por clases CSS.
+**Toolchain de tests:** Jest + jsdom + supertest, en contenedor.
+ 
+## F06j — Fixture `fx-vue-nuxt`
+ 
+**Objetivo:** aplicación Nuxt 3 con Vue 3 y Pinia.
+**Stack:** Vue 3 (`<script setup>`), Nuxt 3, Pinia, Nitro (rutas de servidor).
+**Features:** `reservas`, `perfil`, `notificaciones`.
+**Trampas del ecosistema:**
+1. Auto-imports de componentes y composables, sin `import`.
+2. Middleware de rutas declarado con `definePageMeta`.
+3. Plugins que inyectan `$algo` con `provide`.
+4. Rutas de servidor por nombre de archivo y método (`server/api/booking.post.ts`).
+5. `defineModel` y `emits` en componentes con `v-model` personalizado.
+6. Stores de Pinia cuyas acciones llaman a otros stores.
+**Toolchain de tests:** Vitest + @nuxt/test-utils, en contenedor.
+ 
+## F06k — Fixture `fx-sveltekit`
+ 
+**Objetivo:** aplicación SvelteKit con Svelte 5.
+**Stack:** Svelte 5 (runes), SvelteKit, adaptador Node.
+**Features:** `tareas`, `etiquetas`, `compartir`.
+**Trampas del ecosistema:**
+1. Convención de archivos `+page.svelte`, `+page.server.ts`, `+layout.ts`, `+server.ts`.
+2. `load` universal frente a `load` de servidor.
+3. Form actions con nombre (`?/delete`) y `use:enhance`.
+4. `hooks.server.ts` con `handle`, que intercepta todas las peticiones.
+5. Runes `$state`, `$derived` y `$effect` con reactividad derivada.
+6. Alias `$lib` y `$env/static/private`.
+**Toolchain de tests:** Vitest + Playwright, en contenedor.
+ 
+## F06l — Fixture `fx-angular-ngrx`
+ 
+**Objetivo:** aplicación Angular empresarial con NgModules, NgRx y RxJS intensivo, en migración parcial a standalone y signals.
+**Stack:** Angular, NgModules + standalone, NgRx (store, effects, entity), RxJS, formularios reactivos, i18n.
+**Features:** `gestión-de-solicitudes`, `aprobaciones`, `reportes`.
+**Trampas del ecosistema:**
+1. Flujo acción → effect → servicio → acción, sin llamadas directas.
+2. Nombres de acciones generados por `createActionGroup`.
+3. Operadores RxJS (`switchMap`, `mergeMap`, `exhaustMap`) que cambian la cancelación.
+4. Providers en módulos lazy (`forRoot`/`forChild`) que crean instancias distintas.
+5. `HTTP_INTERCEPTORS` con `multi: true`, donde el orden importa.
+6. Pipes personalizados y directivas estructurales que contienen lógica.
+**Toolchain de tests:** Jest + jasmine-marbles, en contenedor.
+ 
 ---
-
-## F06d — Fixture `fx-monorepo` (F06)
-
-**Objetivo:** workspace pnpm con frontend Angular (standalone + signals), API Node y librería compartida.
-**Depende de:** F06a.
-
-**Criterios:** análogos a F06b.
-
+ 
+# Backend
+ 
+## F06m — Fixture `fx-spring-boot`
+ 
+**Objetivo:** API Spring Boot con persistencia, seguridad, eventos y procesos asíncronos.
+**Stack:** Java 21, Spring Boot 3, Spring Data JPA, Spring Security, Lombok, Maven.
+**Features:** `cuentas`, `transferencias`, `auditoría`, `notificaciones-asíncronas`.
+**Trampas del ecosistema:**
+1. Auto-configuración y `@ConditionalOnProperty`.
+2. Proxies AOP (`@Transactional`, `@Cacheable`, `@Async`) con un bug de auto-invocación plantado.
+3. Consultas derivadas por nombre de método en repositorios sin implementación.
+4. `SecurityFilterChain` que define el acceso de todas las rutas en un único bean.
+5. `@TransactionalEventListener(phase = AFTER_COMMIT)`.
+6. Getters, builders y constructores generados por Lombok, que no están en el código fuente.
+**Toolchain de tests:** JDK 21 + JUnit 5 + Testcontainers (PostgreSQL), en contenedor.
+ 
+## F06n — Fixture `fx-kotlin-ktor`
+ 
+**Objetivo:** servicio Ktor con corrutinas.
+**Stack:** Kotlin, Ktor, Koin, Exposed, kotlinx.serialization, Gradle (Kotlin DSL).
+**Features:** `inventario`, `reservas-de-stock`, `alertas`.
+**Trampas del ecosistema:**
+1. DSL de routing anidado con extension functions repartidas en varios archivos.
+2. Plugins instalados (`install(Auth)`, `install(StatusPages)`) que definen el pipeline.
+3. Extension functions y properties sobre tipos de otros módulos.
+4. Corrutinas lanzadas en el scope de la aplicación y `Flow`.
+5. `sealed class` + `when` exhaustivo como máquina de estados.
+6. Propiedades delegadas (`by lazy`, `by inject()`).
+**Toolchain de tests:** JUnit 5 + ktor-server-test-host, en contenedor.
+ 
+## F06o — Fixture `fx-csharp-aspnet`
+ 
+**Objetivo:** API ASP.NET Core con CQRS.
+**Stack:** C#, .NET 9, ASP.NET Core (minimal APIs + controllers), EF Core, MediatR, `BackgroundService`.
+**Features:** `pedidos`, `facturación`, `reintentos-en-segundo-plano`.
+**Trampas del ecosistema:**
+1. MediatR: el handler se resuelve por el tipo de la request.
+2. Convenciones de EF Core + configuración Fluent en `OnModelCreating` + migraciones.
+3. Código generado por source generators (no está en el repositorio).
+4. `partial class` repartidas en varios archivos.
+5. El orden del pipeline de middleware en `Program.cs`.
+6. Métodos de extensión de registro (`AddFeatureX()`) y escaneo por reflexión (`Assembly.GetTypes()`).
+**Toolchain de tests:** xUnit + WebApplicationFactory + SQLite, en contenedor.
+ 
+## F06p — Fixture `fx-python-django`
+ 
+**Objetivo:** proyecto Django con API REST y tareas asíncronas.
+**Stack:** Python, Django, Django REST Framework, Celery, settings por entorno.
+**Features:** `matrículas`, `pagos`, `certificados`, `acciones-de-admin`.
+**Trampas del ecosistema:**
+1. Signals (`post_save`) conectados en `apps.py` → `ready()`.
+2. `include()` de URLconf anidados y routers de DRF que generan rutas.
+3. Managers y querysets personalizados.
+4. Settings divididos (`base`/`dev`/`prod`) según `DJANGO_SETTINGS_MODULE`.
+5. Acciones de admin como features que no tienen ruta pública.
+6. Template tags personalizados y context processors.
+**Toolchain de tests:** pytest-django + SQLite, en contenedor.
+ 
+## F06q — Fixture `fx-python-fastapi`
+ 
+**Objetivo:** API FastAPI asíncrona.
+**Stack:** Python, FastAPI, Pydantic v2, SQLAlchemy 2 async, Alembic, arq/Celery.
+**Features:** `usuarios`, `suscripciones`, `webhooks`.
+**Trampas del ecosistema:**
+1. Cadenas de `Depends` con `yield` (setup y teardown).
+2. Validadores de Pydantic que contienen lógica de negocio.
+3. `include_router` con prefijos y dependencias a nivel de router.
+4. Eventos de `lifespan`.
+5. Decoradores propios que registran rutas.
+6. Migraciones de Alembic que también migran datos.
+**Toolchain de tests:** pytest + httpx + SQLite async, en contenedor.
+ 
+## F06r — Fixture `fx-node-nestjs`
+ 
+**Objetivo:** backend NestJS modular con colas y microservicios.
+**Stack:** TypeScript, NestJS, TypeORM, BullMQ, transporte de microservicios.
+**Features:** `órdenes`, `envíos`, `notificaciones`.
+**Trampas del ecosistema:**
+1. Módulos y DI por decoradores (`@Module` imports/providers/exports).
+2. Guards e interceptors globales registrados con `APP_GUARD`/`APP_INTERCEPTOR`.
+3. Decoradores propios con metadata leída por `Reflector`.
+4. Colas de BullMQ: productor y consumidor unidos solo por el nombre de la cola.
+5. `@EventPattern`/`@MessagePattern` de microservicios.
+6. `ConfigModule` con namespaces y validación.
+**Toolchain de tests:** Jest + supertest, en contenedor (Redis en servicio).
+ 
+## F06s — Fixture `fx-go-service`
+ 
+**Objetivo:** servicio HTTP en Go con workers concurrentes.
+**Stack:** Go, chi, sqlc, wire, `embed`.
+**Features:** `ingesta-de-eventos`, `agregación`, `exportación`.
+**Trampas del ecosistema:**
+1. Interfaces implícitas (sin `implements`).
+2. `init()` y blank imports (`_ "driver"`) que registran drivers.
+3. Código generado por `//go:generate` (sqlc, wire, mockgen).
+4. Worker pool con goroutines, canales y `select` con timeout.
+5. Build tags.
+6. `//go:embed` de plantillas y migraciones.
+**Toolchain de tests:** `go test ./...` con race detector, en contenedor.
+ 
+## F06t — Fixture `fx-rust-axum`
+ 
+**Objetivo:** servicio Rust asíncrono en workspace multi-crate.
+**Stack:** Rust, Axum, tokio, sqlx, serde, thiserror.
+**Features:** `catálogo`, `precios`, `sincronización`.
+**Trampas del ecosistema:**
+1. Proc macro derive propia que genera `impl`.
+2. Implementaciones genéricas *blanket* de traits.
+3. `#[cfg(feature = "...")]` controlado por cargo features.
+4. Extractors de Axum como argumentos que definen el comportamiento del handler.
+5. Flujo de errores implícito con `?` y conversiones `From`.
+6. `build.rs` que genera código y un bloque `unsafe` con FFI.
+**Toolchain de tests:** `cargo test --workspace` (sqlx offline), en contenedor.
+ 
+## F06u — Fixture `fx-php-laravel`
+ 
+**Objetivo:** aplicación Laravel con MySQL.
+**Stack:** PHP, Laravel, Eloquent, Blade, colas, MySQL.
+**Features:** `inmuebles`, `visitas`, `contratos`.
+**Trampas del ecosistema:**
+1. Facades: llamadas estáticas resueltas por el contenedor.
+2. Magia de Eloquent: accessors/mutators, scopes, relaciones y `__call`.
+3. Bindings registrados en service providers.
+4. Events → listeners por auto-discovery, y observers de modelos.
+5. Grupos de middleware y route model binding en `routes/web.php`.
+6. Comandos y tareas programadas en `routes/console.php`.
+**Toolchain de tests:** PHPUnit/Pest + SQLite, en contenedor.
+ 
+## F06v — Fixture `fx-ruby-rails`
+ 
+**Objetivo:** aplicación Rails con jobs y Hotwire.
+**Stack:** Ruby, Rails, ActiveRecord, Sidekiq, Hotwire.
+**Features:** `proyectos`, `facturas`, `recordatorios`.
+**Trampas del ecosistema:**
+1. Convención sobre configuración: controlador ↔ vista ↔ ruta implícitos.
+2. Callbacks `before_save`/`after_commit`.
+3. Concerns con `included do`.
+4. Métodos sin definición literal (`method_missing`, `define_method`).
+5. STI con columna `type`.
+6. Monkey patches en `config/initializers`.
+**Toolchain de tests:** RSpec + SQLite, en contenedor.
+ 
+## F06w — Fixture `fx-elixir-phoenix`
+ 
+**Objetivo:** aplicación Phoenix con procesos OTP.
+**Stack:** Elixir, Phoenix, LiveView, Ecto, Oban.
+**Features:** `chat`, `presencia`, `moderación`.
+**Trampas del ecosistema:**
+1. Árbol de supervisión en `application.ex` que define qué procesos existen.
+2. Mensajes entre procesos (`send`/`handle_info`) en lugar de llamadas directas.
+3. Macros `use` que inyectan funciones.
+4. Funciones con varias cláusulas y pattern matching como ramas lógicas.
+5. PubSub con `broadcast`/`subscribe` por tópico string.
+6. `handle_event` de LiveView por nombre de evento definido en la plantilla.
+**Toolchain de tests:** ExUnit + PostgreSQL de servicio, en contenedor.
+ 
 ---
-
-## F06e — Fixture `fx-minified` (F06)
-
-**Objetivo:** un bundle JS minificado con sourcemap y otro sin sourcemap; un `.asar` pequeño; un `.pyc`.
-**Depende de:** F06a.
-
-**Criterios:** análogos a F06b.
-
+ 
+# Nativo y sistemas
+ 
+## F06x — Fixture `fx-cpp-cmake`
+ 
+**Objetivo:** motor de procesamiento en C++ con plugins.
+**Stack:** C++20, CMake, Conan o vcpkg, hilos, `dlopen`.
+**Features:** `cargar-plugin`, `pipeline-de-filtros`, `exportar-resultados`.
+**Trampas del ecosistema:**
+1. Registro estático con constructores globales (`static Registrar r{...}`), sin llamada explícita.
+2. Templates, CRTP, SFINAE y concepts: el código ejecutado depende de la instanciación.
+3. X-macros que generan clases y funciones.
+4. Headers generados por CMake (`configure_file` + `#cmakedefine`).
+5. Plugins cargados con `dlopen` y un símbolo `extern "C"` resuelto por nombre.
+6. Dispatch virtual en una jerarquía, con un bug de orden de inicialización estática plantado.
+**Toolchain de tests:** GoogleTest + CTest, en contenedor (GCC y Clang).
+ 
+## F06y — Fixture `fx-c-embedded`
+ 
+**Objetivo:** firmware en C para microcontrolador, testeable en host.
+**Stack:** C99, Makefile con flags de compilación cruzada, linker script, HAL.
+**Features:** `lectura-de-sensores`, `protocolo-de-comandos-uart`, `modo-bajo-consumo`.
+**Trampas del ecosistema:**
+1. Tabla de vectores de interrupción: funciones que llama el hardware.
+2. Símbolos `__attribute__((weak))` sobrescritos por otro archivo.
+3. Tablas de punteros a función como dispatch de comandos.
+4. Secciones ubicadas por el linker script.
+5. `#ifdef BOARD_X` que cambia el comportamiento por placa.
+6. Registros MMIO accedidos con macros de dirección `volatile`.
+**Toolchain de tests:** Unity/Ceedling en host, en contenedor (QEMU opcional).
+ 
+## F06z — Fixture `fx-cpp-qt`
+ 
+**Objetivo:** aplicación de escritorio Qt con Widgets y QML.
+**Stack:** C++, Qt 6 (Widgets + QML), moc, `.ui`, `.qrc`, CMake.
+**Features:** `editor`, `preferencias`, `exportar`.
+**Trampas del ecosistema:**
+1. Conexiones `connect` de señales y slots (llamadas indirectas).
+2. Conexiones automáticas por nombre (`on_<objectName>_<signal>`).
+3. Widgets definidos en archivos `.ui` (XML).
+4. `Q_PROPERTY`/`Q_INVOKABLE` expuestos a QML y bindings declarativos.
+5. Recursos `.qrc` con rutas `:/`.
+6. Código generado por moc a partir de `Q_OBJECT`.
+**Toolchain de tests:** Qt Test con `QT_QPA_PLATFORM=offscreen`, en contenedor.
+ 
 ---
-
-## F06f — Fixture `fx-polyglot` (F06)
-
-**Objetivo:** Go + Rust + script shell con comunicación por stdin/JSON.
-**Depende de:** F06a.
-
-**Criterios:** análogos a F06b.
-
+ 
+# Móvil y Apple
+ 
+## F06aa — Fixture `fx-swift-ios`
+ 
+**Objetivo:** app iOS con SwiftUI, UIKit heredado, un módulo Objective-C y una extensión de widget.
+**Stack:** Swift, SwiftUI, UIKit, Objective-C (bridging header), async/await, actors, Combine, SwiftData, SPM, `.xcodeproj`, `xcconfig`.
+**Features:** `onboarding`, `lista-de-gastos`, `sincronización-icloud`, `widget-de-resumen`.
+**Trampas del ecosistema:**
+1. Property wrappers (`@State`, `@Published`, `@AppStorage`, `@Environment` y uno propio).
+2. Result builders de SwiftUI y navegación por tipo con `navigationDestination(for:)`.
+3. Extensiones de protocolo con implementación por defecto, repartidas en varios archivos.
+4. Interoperabilidad con Objective-C: `#selector`, `@objc dynamic`, `NotificationCenter`, KVO.
+5. `#if os(iOS)`/`#if DEBUG`, configuraciones de build y schemes.
+6. Deep links y URL schemes en `Info.plist` + `onOpenURL`, y la extensión de widget que comparte datos por App Group.
+**Toolchain de tests:** `xcodebuild test` con simulador iOS. **requires: macos.**
+ 
+## F06ab — Fixture `fx-swift-server`
+ 
+**Objetivo:** paquete Swift multiplataforma con servidor Vapor, CLI y macros.
+**Stack:** Swift 6, SPM, Vapor, Fluent, swift-argument-parser, Swift macros, build tool plugins.
+**Features:** `api-de-notas`, `cli-de-importación`, `auditoría`.
+**Trampas del ecosistema:**
+1. Macros (`@attached`, `@freestanding`) que generan código.
+2. Build tool plugins de SPM que generan fuentes.
+3. Rutas registradas con `RouteCollection` en `boot`.
+4. Modelos Fluent con `@Field`/`@Parent` y migraciones.
+5. Actors y `Sendable`.
+6. `#if canImport(...)` que cambia el comportamiento entre Linux y macOS.
+**Toolchain de tests:** `swift test`, en contenedor Swift para Linux.
+ 
+## F06ac — Fixture `fx-kotlin-android`
+ 
+**Objetivo:** app Android con Compose y vistas XML heredadas.
+**Stack:** Kotlin, Jetpack Compose, Views + ViewBinding, Hilt, Room, WorkManager, Navigation, Gradle con flavors.
+**Features:** `escaneo-de-productos`, `historial`, `sincronización-en-segundo-plano`, `función-premium`.
+**Trampas del ecosistema:**
+1. `AndroidManifest.xml` declara activities, receivers, services e intent filters: puntos de entrada que no se llaman desde el código.
+2. Código generado por Hilt: `@Inject` y módulos.
+3. DAO de Room con `@Query` en SQL.
+4. Flavors y build types con source sets distintos (una feature solo existe en `paid`).
+5. Recursos `R.*` y layouts XML con atributos `onClick`.
+6. WorkManager, `BroadcastReceiver` y deep links del grafo de navegación.
+**Toolchain de tests:** tests JVM + Robolectric, en contenedor con Android SDK.
+ 
+## F06ad — Fixture `fx-flutter-dart`
+ 
+**Objetivo:** app Flutter con canales a código nativo.
+**Stack:** Dart, Flutter, Riverpod, go_router, freezed/json_serializable (build_runner), platform channels a Kotlin y Swift.
+**Features:** `lector-de-documentos`, `favoritos`, `ajustes`.
+**Trampas del ecosistema:**
+1. Código generado `.g.dart`/`.freezed.dart`.
+2. Providers de Riverpod que dependen de otros por `ref.watch`.
+3. Platform channels: métodos invocados por string en Kotlin y Swift.
+4. Redirects de go_router.
+5. Flavors con `--dart-define`.
+6. Widgets que se construyen distinto según la plataforma.
+**Toolchain de tests:** `flutter test`, en contenedor.
+ 
+## F06ae — Fixture `fx-react-native`
+ 
+**Objetivo:** app React Native con módulos nativos.
+**Stack:** TypeScript, React Native (Expo bare), React Navigation, Redux, módulo nativo Kotlin/Swift.
+**Features:** `pagos-con-nfc`, `historial`, `notificaciones-push`.
+**Trampas del ecosistema:**
+1. Módulos nativos resueltos por nombre a través del bridge o TurboModules.
+2. Archivos por plataforma (`.ios.tsx`/`.android.tsx`) resueltos por el bundler.
+3. Config plugins de Expo que modifican los proyectos nativos en `prebuild`.
+4. Configuración de deep linking.
+5. Alias en la configuración de Metro.
+6. Handlers de notificaciones en segundo plano.
+**Toolchain de tests:** Jest + React Native Testing Library, en contenedor.
+ 
 ---
-
-## F07 — Umbrales canónicos, anti-sobreajuste y especificación de fixtures reservados
+ 
+# Escritorio
+ 
+## F06af — Fixture `fx-electron`
+ 
+**Objetivo:** app Electron con código fuente (complementa el `.asar` de F06e).
+**Stack:** TypeScript, Electron (main, preload, renderer), electron-builder.
+**Features:** `abrir-proyecto`, `exportar-pdf`, `actualización-automática`.
+**Trampas del ecosistema:**
+1. Canales IPC por string (`ipcMain.handle`/`ipcRenderer.invoke`).
+2. API expuesta con `contextBridge` como `window.api`.
+3. Menú nativo con atajos que disparan features.
+4. Procesos utility y workers.
+5. Protocolo personalizado (`app://`).
+6. Configuración de electron-builder (`asarUnpack`, `extraResources`) con archivos fuera del asar.
+**Toolchain de tests:** Vitest para main/preload, en contenedor.
+ 
+## F06ag — Fixture `fx-csharp-wpf`
+ 
+**Objetivo:** app de escritorio WPF con MVVM.
+**Stack:** C#, WPF, XAML, CommunityToolkit.Mvvm (source generators).
+**Features:** `clientes`, `cotizaciones`, `impresión`.
+**Trampas del ecosistema:**
+1. Bindings en XAML por string de propiedad.
+2. Comandos y propiedades generados por `[RelayCommand]`/`[ObservableProperty]`.
+3. `DataTemplate` implícitos por `DataType` que eligen la vista.
+4. Value converters.
+5. Styles y triggers con lógica.
+6. Merged dictionaries en `App.xaml`.
+**Toolchain de tests:** xUnit sobre los ViewModels (proyecto `net9.0` multiplataforma) en contenedor; la UI requiere Windows. **requires: windows** (solo para tests de UI).
+ 
+---
+ 
+# Datos y bases de datos
+ 
+## F06ah — Fixture `fx-sql-postgres`
+ 
+**Objetivo:** repositorio de base de datos donde las features son procesos de negocio en la base.
+**Stack:** PostgreSQL, Flyway, PL/pgSQL, pg_cron.
+**Features:** `facturación`, `auditoría`, `multi-tenant`.
+**Trampas del ecosistema:**
+1. Triggers con efectos secundarios (auditoría, recálculo de totales).
+2. Políticas RLS que cambian lo que ve cada rol.
+3. SQL dinámico con `EXECUTE format(...)`.
+4. Orden de migraciones versionadas y repetibles (`R__`).
+5. `ON DELETE CASCADE` y foreign keys diferidas.
+6. Vistas materializadas refrescadas por pg_cron, y vistas de soft-delete.
+**Toolchain de tests:** pgTAP en contenedor PostgreSQL.
+ 
+## F06ai — Fixture `fx-sql-oracle-plsql`
+ 
+**Objetivo:** esquema Oracle con lógica en paquetes PL/SQL.
+**Stack:** Oracle Database, PL/SQL, Liquibase.
+**Features:** `apertura-de-cuenta`, `cálculo-de-intereses`, `cierre-de-mes`.
+**Trampas del ecosistema:**
+1. Spec frente a body: procedimientos privados que solo existen en el body.
+2. Sinónimos públicos que redirigen objetos.
+3. `EXECUTE IMMEDIATE` con nombres construidos.
+4. `PRAGMA AUTONOMOUS_TRANSACTION`.
+5. Triggers compuestos e `INSTEAD OF` sobre vistas.
+6. Jobs de `DBMS_SCHEDULER` y DB links a una base remota.
+**Toolchain de tests:** utPLSQL en contenedor Oracle Database Free.
+ 
+## F06aj — Fixture `fx-sql-tsql`
+ 
+**Objetivo:** base SQL Server con proyecto SSDT.
+**Stack:** SQL Server, T-SQL, proyecto `.sqlproj`.
+**Features:** `inventario`, `conciliación`, `reportes`.
+**Trampas del ecosistema:**
+1. Procedimientos almacenados con `sp_executesql`.
+2. `MERGE` con cláusula `OUTPUT`.
+3. Triggers `AFTER` e `INSTEAD OF`.
+4. CTE recursivas.
+5. Tablas temporales compartidas entre procedimientos anidados.
+6. Scripts de jobs de SQL Agent.
+**Toolchain de tests:** tSQLt en contenedor SQL Server.
+ 
+## F06ak — Fixture `fx-dbt-airflow`
+ 
+**Objetivo:** pipeline analítico.
+**Stack:** dbt (SQL + Jinja), Airflow (Python), DuckDB.
+**Features:** `ingesta-de-ventas`, `modelo-de-clientes`, `métricas-diarias`.
+**Trampas del ecosistema:**
+1. Linaje definido solo por `ref()` y `source()`.
+2. Macros Jinja que generan SQL.
+3. Ramas `is_incremental()` en modelos incrementales.
+4. Materialización configurada por carpeta en `dbt_project.yml`.
+5. DAG de Airflow generado dinámicamente desde YAML.
+6. XCom que pasa datos entre tareas de forma implícita.
+**Toolchain de tests:** `dbt build` sobre DuckDB + test de importación de DAGs, en contenedor.
+ 
+## F06al — Fixture `fx-python-ml`
+ 
+**Objetivo:** proyecto de ML con notebooks, pipeline y servicio de inferencia.
+**Stack:** Python, Jupyter, scikit-learn/PyTorch, Hydra, DVC, MLflow, FastAPI.
+**Features:** `entrenamiento`, `evaluación`, `inferencia`.
+**Trampas del ecosistema:**
+1. Estado oculto en notebooks: celdas ejecutadas fuera de orden.
+2. Composición de configuraciones Hydra con overrides.
+3. Etapas definidas en `dvc.yaml`.
+4. Modelos registrados por nombre en MLflow y cargados por nombre.
+5. Feature engineering duplicado entre notebook y `src/`, con diferencias.
+6. Semillas y aleatoriedad que cambian los resultados.
+**Toolchain de tests:** pytest sobre `src/` + nbval, en contenedor.
+ 
+## F06am — Fixture `fx-scala-spark`
+ 
+**Objetivo:** jobs Spark en Scala.
+**Stack:** Scala, Apache Spark, sbt multi-módulo, Typesafe Config.
+**Features:** `deduplicación`, `enriquecimiento`, `agregados`.
+**Trampas del ecosistema:**
+1. Implicits/givens y conversiones implícitas.
+2. Evaluación perezosa: transformaciones frente a acciones.
+3. UDFs registradas por nombre y usadas dentro de strings SQL.
+4. Configuración de sbt y estrategia de merge de assembly.
+5. `sealed trait` + pattern matching.
+6. `application.conf` con `include`.
+**Toolchain de tests:** `sbt test` con Spark local, en contenedor.
+ 
+---
+ 
+# Empresarial legacy
+ 
+## F06an — Fixture `fx-oracle-adf-soa`
+ 
+**Objetivo:** aplicación JDeveloper con ADF y composite SOA/BPM.
+**Stack:** Java, Oracle ADF (ADF BC, ADF Faces, task flows), SOA Suite (composite, BPEL, Mediator, XSLT, WSDL/XSD, JCA DB adapter), BPM (BPMN, human tasks), workspace `.jws`/`.jpr`.
+**Features:** `formulario-de-apertura`, `validación-y-aprobación`, `alta-en-core`.
+**Trampas del ecosistema:**
+1. Navegación en task flows XML (`control-flow-case`), no en Java.
+2. PageDef y EL (`#{bindings.X.inputValue}`) que conectan la UI con los View Objects.
+3. Validaciones en Entity Objects declaradas en XML y expresiones Groovy.
+4. Managed beans declarados en XML con scope (`pageFlowScope`).
+5. `composite.xml` que conecta componentes, y transformaciones `assign`/XSLT en BPEL.
+6. Configuración JCA (`.jca`) que apunta a datasources JNDI fuera del repositorio, y reglas de asignación de human tasks.
+**Toolchain de tests:** sin runtime WebLogic; validación XML/XSD con xmllint y JUnit sobre managed beans y clases Java, en contenedor.
+ 
+## F06ao — Fixture `fx-java-ee-legacy`
+ 
+**Objetivo:** aplicación Java EE con configuración XML.
+**Stack:** Java 8, Spring con XML, JSF o Struts, JSP, EJB, JAX-WS, Hibernate (`hbm.xml`), Ant.
+**Features:** `consulta-de-pólizas`, `endoso`, `servicio-soap`.
+**Trampas del ecosistema:**
+1. Wiring de beans en `applicationContext.xml`.
+2. Servlets y filtros mapeados en `web.xml`.
+3. Mapeos de Hibernate en `hbm.xml`.
+4. Scriptlets JSP y taglibs.
+5. Lookup de EJB por JNDI con un string.
+6. Stubs JAX-WS generados con `wsimport` desde un WSDL.
+**Toolchain de tests:** JUnit 4 vía Ant, en contenedor JDK 8.
+ 
+## F06ap — Fixture `fx-cobol-mainframe`
+ 
+**Objetivo:** sistema batch y online estilo mainframe.
+**Stack:** COBOL, copybooks, JCL, CICS (BMS), DB2 embebido, VSAM.
+**Features:** `cierre-batch`, `consulta-online`, `actualización-de-saldos`.
+**Trampas del ecosistema:**
+1. Estructuras definidas en copybooks (`COPY`).
+2. JCL que define el orden de los pasos y los datasets (`DD`).
+3. `CALL` dinámico por variable.
+4. `REDEFINES`.
+5. `EXEC SQL` y `EXEC CICS` embebidos.
+6. Flujo con `PERFORM THRU` y `GO TO`.
+**Toolchain de tests:** GnuCOBOL para los programas batch con archivos de ejemplo, en contenedor; las partes CICS y DB2 se validan de forma estática.
+ 
+---
+ 
+# Infraestructura y DevOps
+ 
+## F06aq — Fixture `fx-terraform-ansible`
+ 
+**Objetivo:** infraestructura como código para varios entornos.
+**Stack:** Terraform (HCL), Ansible (YAML + Jinja2).
+**Features:** `red`, `cluster-de-aplicación`, `base-de-datos-gestionada`.
+**Trampas del ecosistema:**
+1. Módulos anidados con outputs encadenados.
+2. Recursos generados con `for_each`, `count` y bloques `dynamic`.
+3. Workspaces y `.tfvars` por entorno.
+4. `terraform_remote_state` entre stacks.
+5. Precedencia de variables de Ansible (`group_vars`, `host_vars`, defaults de roles).
+6. Handlers notificados por nombre.
+**Toolchain de tests:** `terraform validate` + tflint + `terraform test` con mocks; ansible-lint + `--check` contra un contenedor, todo en contenedor.
+ 
+## F06ar — Fixture `fx-k8s-helm`
+ 
+**Objetivo:** despliegue en Kubernetes con un operador propio.
+**Stack:** Helm, Kustomize, YAML, CRD + controlador.
+**Features:** `despliegue-web`, `job-de-migración`, `recurso-personalizado`.
+**Trampas del ecosistema:**
+1. Helpers en `_helpers.tpl` incluidos en varias plantillas.
+2. `values-prod.yaml` que sobrescribe valores base.
+3. Overlays de Kustomize con patches.
+4. Configuración consumida por ConfigMap o Secret vía env o volumen: solo aparece en los manifiestos.
+5. Hooks de Helm (job `pre-install`).
+6. CRD con bucle de reconciliación.
+**Toolchain de tests:** `helm lint`/`helm template` + kubeconform (kind opcional), en contenedor.
+ 
+## F06as — Fixture `fx-ci-docker`
+ 
+**Objetivo:** pipelines de CI/CD y contenedores.
+**Stack:** GitHub Actions, GitLab CI, Jenkinsfile (Groovy) con shared library, Dockerfile multi-stage, docker-compose, Makefile.
+**Features:** `build-y-test`, `release`, `despliegue-por-entorno`.
+**Trampas del ecosistema:**
+1. Workflows reutilizables (`workflow_call`) y composite actions.
+2. Anchors YAML y `extends` en GitLab CI.
+3. Shared library de Jenkins (`vars/*.groovy`).
+4. Targets y `ARG` en un Dockerfile multi-stage.
+5. Profiles y archivos override de docker-compose.
+6. Condiciones `if:` por rama y por rutas.
+**Toolchain de tests:** actionlint, hadolint, `docker build --target` y validación de YAML, en contenedor.
+ 
+---
+ 
+# Scripting
+ 
+## F06at — Fixture `fx-shell-automation`
+ 
+**Objetivo:** automatización de operaciones en shell.
+**Stack:** Bash (compatible con zsh), awk, sed, cron, units de systemd.
+**Features:** `respaldo`, `rotación-de-logs`, `aprovisionamiento`.
+**Trampas del ecosistema:**
+1. `source` dinámico (`. "$DIR/lib/$mod.sh"`).
+2. Funciones definidas en archivos cargados con `source`.
+3. `eval` y expansión indirecta `${!var}`.
+4. `trap` de `EXIT` y `ERR`.
+5. Timers de systemd y cron como puntos de entrada fuera del código.
+6. Heredocs que generan archivos de configuración.
+**Toolchain de tests:** bats-core, en contenedor.
+ 
+## F06au — Fixture `fx-powershell`
+ 
+**Objetivo:** módulo PowerShell de administración.
+**Stack:** PowerShell 7, `.psd1`/`.psm1`, clases, Pester.
+**Features:** `usuarios`, `inventario-de-equipos`, `reportes`.
+**Trampas del ecosistema:**
+1. `FunctionsToExport` en el manifiesto `.psd1`.
+2. Dot-sourcing de `Public/` y `Private/`.
+3. Parameter binding por pipeline (`ValueFromPipelineByPropertyName`).
+4. Aliases.
+5. Parámetros dinámicos.
+6. Splatting e `Invoke-Expression`.
+**Toolchain de tests:** Pester en contenedor `pwsh`.
+ 
+---
+ 
+# Videojuegos
+ 
+## F06av — Fixture `fx-unity-csharp`
+ 
+**Objetivo:** proyecto Unity donde buena parte del wiring está en escenas y assets.
+**Stack:** C#, Unity (escenas `.unity` en YAML, prefabs, ScriptableObjects, Addressables, `.asmdef`).
+**Features:** `movimiento-del-jugador`, `inventario`, `guardado`.
+**Trampas del ecosistema:**
+1. Métodos de ciclo de vida que llama el motor (`Awake`, `Start`, `Update`, `OnTriggerEnter`).
+2. UnityEvents y botones conectados en la escena YAML, con referencias por GUID en `.meta`.
+3. Campos `[SerializeField]` asignados en el inspector.
+4. ScriptableObjects como datos y configuración.
+5. `SendMessage` e `Invoke` por string.
+6. Dependencias entre ensamblados definidas en `.asmdef`.
+**Toolchain de tests:** lógica pura en un proyecto .NET separado + script que valida las referencias GUID de la escena, en contenedor (Unity Test Runner es opcional y requiere licencia).
+ 
+## F06aw — Fixture `fx-godot-gdscript`
+ 
+**Objetivo:** juego Godot con el wiring en escenas.
+**Stack:** GDScript, Godot 4 (`.tscn`, `.tres`, `project.godot`).
+**Features:** `combate`, `diálogos`, `progresión`.
+**Trampas del ecosistema:**
+1. Señales conectadas en `.tscn`.
+2. Singletons de autoload en `project.godot`.
+3. Grupos y `call_group`.
+4. `@onready` con `$NodePath`.
+5. Callbacks `_process` e `_input`.
+6. Recursos `.tres`.
+**Toolchain de tests:** GUT con Godot headless, en contenedor.
+ 
+---
+ 
+# Contratos de API
+ 
+## F06ax — Fixture `fx-grpc-protobuf`
+ 
+**Objetivo:** servicios gRPC con clientes en varios lenguajes.
+**Stack:** Protobuf, buf, gRPC (servidor Go, clientes Python y TypeScript), grpc-gateway.
+**Features:** `cuentas`, `movimientos-en-streaming`, `gateway-http`.
+**Trampas del ecosistema:**
+1. Código generado en tres lenguajes que hay que mapear al `.proto`.
+2. Campos `oneof`, `reserved` y `deprecated`.
+3. Interceptors de autenticación.
+4. Streaming bidireccional.
+5. Versiones `v1` y `v2` del paquete conviviendo.
+6. Anotaciones HTTP de grpc-gateway.
+**Toolchain de tests:** `buf lint` + `buf breaking` + `go test` + pytest, en contenedor.
+ 
+## F06ay — Fixture `fx-graphql`
+ 
+**Objetivo:** API GraphQL con cliente generado.
+**Stack:** TypeScript, Apollo Server (schema-first), DataLoader, subscriptions, GraphQL Code Generator, Apollo Client.
+**Features:** `catálogo`, `reseñas`, `notificaciones-en-vivo`.
+**Trampas del ecosistema:**
+1. Resolvers mapeados al schema por nombre de campo.
+2. Resolvers de tipo y resolvers por defecto.
+3. Batching con DataLoader.
+4. Directivas propias (`@auth`) que transforman el schema.
+5. Federation con `@key` y subgraphs.
+6. Hooks de cliente generados por codegen.
+**Toolchain de tests:** Jest, en contenedor.
+ 
+---
+ 
+# Otros runtimes
+ 
+## F06az — Fixture `fx-wasm`
+ 
+**Objetivo:** módulo Rust compilado a WebAssembly usado desde una web.
+**Stack:** Rust, wasm-bindgen, wasm-pack, TypeScript, Vite, Web Workers.
+**Features:** `procesamiento-de-imágenes`, `compresión`, `fallback-js`.
+**Trampas del ecosistema:**
+1. Funciones `#[wasm_bindgen]` llamadas desde JavaScript.
+2. Glue JS generado.
+3. Memoria compartida y punteros entre JS y WASM.
+4. `postMessage` con un worker.
+5. Detección de soporte con fallback a JavaScript.
+6. Integración de wasm-pack con un plugin de Vite.
+**Toolchain de tests:** `wasm-pack test --node` + Vitest, en contenedor.
+ 
+## F06ba — Fixture `fx-solidity`
+ 
+**Objetivo:** contratos inteligentes actualizables con indexador off-chain.
+**Stack:** Solidity, Foundry, proxy UUPS, indexador TypeScript.
+**Features:** `token`, `staking`, `gobernanza`.
+**Trampas del ecosistema:**
+1. Proxy: la lógica está en la implementación y el storage en el proxy.
+2. Modifiers que ocultan validaciones.
+3. Herencia múltiple y su orden de linearización.
+4. `using X for Y`.
+5. `fallback` y `receive`.
+6. Eventos consumidos por el indexador TypeScript.
+**Toolchain de tests:** `forge test` + Vitest para el indexador, en contenedor.
+ 
+---
+ 
+# Lenguajes de cola larga
+ 
+## F06bb — Fixture `fx-lua-neovim`
+ 
+**Objetivo:** plugin de Neovim.
+**Stack:** Lua, API de Neovim.
+**Features:** `buscador-de-archivos`, `resaltado`, `comandos`.
+**Trampas del ecosistema:**
+1. Metatables con `__index`.
+2. Autocommands por evento.
+3. Keymaps que disparan features.
+4. Carga perezosa por comando.
+5. `pcall(require, ...)` para dependencias opcionales.
+6. Callbacks de `vim.api`.
+**Toolchain de tests:** busted/plenary con Neovim headless, en contenedor.
+ 
+## F06bc — Fixture `fx-haskell`
+ 
+**Objetivo:** API web tipada.
+**Stack:** Haskell, Cabal, Servant, mtl, lens, Template Haskell.
+**Features:** `usuarios`, `pedidos`, `reportes`.
+**Trampas del ecosistema:**
+1. API definida a nivel de tipos con Servant.
+2. Instancias de type classes en módulos distintos (incluidas huérfanas).
+3. Stacks de monad transformers.
+4. Template Haskell que genera código (lenses, JSON).
+5. Evaluación perezosa.
+6. Extensiones de lenguaje por archivo (`{-# LANGUAGE ... #-}`).
+**Toolchain de tests:** `cabal test`, en contenedor.
+ 
+## F06bd — Fixture `fx-r-analysis`
+ 
+**Objetivo:** paquete R con app Shiny.
+**Stack:** R, paquete con S3/S4/R6, tidyverse, Shiny, targets.
+**Features:** `limpieza`, `modelado`, `dashboard`.
+**Trampas del ecosistema:**
+1. Dispatch S3 por nombre (`print.miclase`).
+2. Clases S4 y R6.
+3. Non-standard evaluation del tidyverse.
+4. Reactives y observers de Shiny.
+5. Pipeline definido en `_targets.R`.
+6. `NAMESPACE` con exports e imports.
+**Toolchain de tests:** testthat, en contenedor.
+ 
+## F06be — Fixture `fx-perl-legacy`
+ 
+**Objetivo:** aplicación web Perl heredada.
+**Stack:** Perl 5, Mojolicious, módulos CPAN.
+**Features:** `tickets`, `búsqueda`, `exportación-csv`.
+**Trampas del ecosistema:**
+1. `AUTOLOAD`.
+2. Typeglobs.
+3. `local` con alcance dinámico.
+4. Expresiones regulares complejas con lógica de negocio.
+5. Contexto escalar frente a lista.
+6. Rutas de Mojolicious con placeholders.
+**Toolchain de tests:** `prove`, en contenedor.
+ 
+## F06bf — Fixture `fx-zig`
+ 
+**Objetivo:** herramienta de línea de comandos en Zig con interop C.
+**Stack:** Zig, `build.zig`, interop con C.
+**Features:** `parseo`, `compresión`, `salida-formateada`.
+**Trampas del ecosistema:**
+1. `comptime` que genera código.
+2. Error unions y `try`.
+3. `@cImport` de una librería C.
+4. Allocators pasados explícitamente.
+5. Opciones de build en `build.zig`.
+6. Dispatch con `inline else` sobre uniones etiquetadas.
+**Toolchain de tests:** `zig build test`, en contenedor.
+ 
+## F06bg — Fixture `fx-clojure`
+ 
+**Objetivo:** servicio web Clojure.
+**Stack:** Clojure, deps.edn, Ring, Compojure, core.async.
+**Features:** `catálogo`, `colas-de-trabajo`, `reportes`.
+**Trampas del ecosistema:**
+1. Macros que generan código.
+2. Multimethods con dispatch por función.
+3. Protocols.
+4. Rutas de Compojure.
+5. Canales de core.async.
+6. Middleware de Ring componiendo handlers.
+**Toolchain de tests:** `clojure -X:test`, en contenedor.
+ 
+---
+ 
+# Transversales
+ 
+## F06bh — Fixture `fx-scale-huge`
+ 
+**Objetivo:** repositorio muy grande, generado por script (no se commitea el resultado), para probar que la skill no trunca ni pierde features.
+**Stack:** mezcla de TypeScript, Python y Go.
+**Features:** 5 features repartidas en directorios profundos y archivos de miles de líneas.
+**Trampas del ecosistema:**
+1. ~20.000 archivos y > 1M de líneas.
+2. Módulos casi idénticos con diferencias mínimas.
+3. Dependencias vendorizadas (`node_modules/`, `vendor/`) que deben ignorarse.
+4. Directorios de código generado.
+5. Symlinks (incluido un ciclo) y submódulos git.
+6. Punteros de Git LFS en lugar de archivos reales.
+**Toolchain de tests:** script de generación determinista + tests de integridad, en contenedor.
+ 
+## F06bi — Fixture `fx-broken-build`
+ 
+**Objetivo:** proyecto que no compila, a mitad de una migración.
+**Stack:** TypeScript + Java.
+**Features:** `facturación` (dos implementaciones, vieja y nueva), `reportes`, `notificaciones` (stub).
+**Trampas del ecosistema:**
+1. Dependencias faltantes y lockfile incompatible.
+2. Errores de sintaxis en algunos archivos.
+3. Dos implementaciones de la misma feature durante una migración.
+4. Stubs con `TODO` y `throw new UnsupportedOperationException()`.
+5. Feature flags que hacen inalcanzable una rama.
+6. Tests deshabilitados (`@Disabled`, `it.skip`).
+**Toolchain de tests:** los tests verifican que el fixture **falla** de la forma esperada, en contenedor.
+ 
+## F06bj — Fixture `fx-git-history`
+ 
+**Objetivo:** historia git compleja que la skill debe interpretar.
+**Stack:** Python.
+**Features:** `exportación` (eliminada y reintroducida), `búsqueda` (renombrada), `sincronización` (revertida).
+**Trampas del ecosistema:**
+1. Archivos renombrados y movidos.
+2. Una feature revertida.
+3. Merges de ramas y squash merges.
+4. Tags de releases.
+5. Una feature eliminada del código que sigue descrita en el README y el CHANGELOG.
+6. Commits con co-autores.
+**Toolchain de tests:** tests sobre la historia generada por `build-history.sh` (≥ 20 commits en este fixture), en contenedor.
+ 
+## F06bk — Fixture `fx-encodings-i18n`
+ 
+**Objetivo:** archivos en codificaciones y finales de línea distintos, con varios idiomas.
+**Stack:** Java + Python + Dart, con archivos de traducción `.po`, `.xliff`, `.arb` y `.properties`.
+**Features:** `saludo-localizado`, `formato-de-moneda`, `ordenación-por-idioma`.
+**Trampas del ecosistema:**
+1. Archivos en Latin-1, Shift-JIS y UTF-16.
+2. Finales de línea CRLF y mezclados.
+3. BOM en algunos archivos.
+4. Comentarios en español, chino y árabe.
+5. Identificadores Unicode.
+6. Textos de derecha a izquierda (RTL) en los archivos de traducción.
+**Toolchain de tests:** tests de comportamiento + verificación de líneas, en contenedor.
+ 
+## F06bl — Fixture `fx-docs-vs-code`
+ 
+**Objetivo:** documentación que contradice al código; la skill debe reportar las discrepancias.
+**Stack:** TypeScript + OpenAPI + Markdown (README, ADRs).
+**Features:** `usuarios`, `pagos`, `webhooks`.
+**Trampas del ecosistema:**
+1. Endpoint en OpenAPI que no está implementado.
+2. Endpoint implementado que no está en OpenAPI.
+3. ADR "aceptado" que el código no sigue.
+4. README con comandos de instalación obsoletos.
+5. Comentarios JSDoc que describen parámetros que ya no existen.
+6. Diagrama de arquitectura en Markdown (Mermaid) con un componente que no existe.
+**Toolchain de tests:** tests que confirman cada discrepancia, en contenedor.
+ 
+---
+ 
+## F06-cierre — Validación de la matriz completa
+ 
+**Objetivo:** confirmar que la matriz de fixtures cubre todo el objetivo y que todo pasa junto.
+**Depende de:** F06b–F06bl.
+**Subagentes:** uno.
+ 
+**Tareas:**
+- Ejecutar `run_fixture_tests.py` sobre todos los fixtures (Linux en contenedores, `requires: macos` en macOS, `requires: windows` en Windows).
+- Ejecutar `check_ground_truth.py` sobre todos los fixtures.
+- Generar `dev/fixtures/MATRIX.md` con `fixtures_matrix.py`.
+- Agregar un job de CI que ejecute todo lo anterior.
+**`target_matrix.yml` debe cubrir como mínimo:**
+- **Lenguajes:** Python, TypeScript, JavaScript, Java, Kotlin, Scala, Groovy, C#, Go, Rust, C, C++, Swift, Objective-C, Dart, PHP, Ruby, Elixir, SQL (PostgreSQL, PL/SQL, T-SQL, MySQL), HCL, YAML, Bash, PowerShell, GDScript, Solidity, Lua, Haskell, R, Perl, Zig, Clojure, COBOL, HTML, CSS/SCSS, Protobuf, GraphQL, XML declarativo, Jinja, XAML.
+- **Frameworks:** React, Next.js, Vue/Nuxt, Svelte/SvelteKit, Angular (NgModules y standalone), jQuery, Spring Boot, Micronaut, Ktor, ASP.NET Core, Django, FastAPI, NestJS, Express/Fastify, Axum, Laravel, Rails, Phoenix, Qt, SwiftUI, UIKit, Vapor, Jetpack Compose, Flutter, React Native, Electron, WPF, Oracle ADF/SOA/BPM, Java EE, Spark, dbt, Airflow, Unity, Godot.
+- **Sistemas de build:** pip/uv, npm/pnpm, Vite, esbuild, Gradle, Maven, Ant, sbt, MSBuild, Cargo, Go modules, CMake, Make, SPM, Xcode, Mix, Bundler, Composer, Cabal, `build.zig`, Foundry, Helm.
+- **Tipos de proyecto:** CLI, API REST, API gRPC, API GraphQL, SPA, full-stack, móvil, escritorio, librería, extensión de editor, firmware, base de datos, pipeline de datos, ML, infraestructura, CI/CD, videojuego, contratos inteligentes, monorepo, políglota, artefactos sin fuente, legacy.
+**Criterios de aceptación:**
+- [ ] `fixtures_matrix.py` reporta 100 % de cobertura de `target_matrix.yml`.
+- [ ] Todos los fixtures cumplen CC-01 a CC-13.
+- [ ] `check_ground_truth.py` pasa para todos los fixtures con 0 referencias rotas.
+- [ ] Todos los tests de fixtures pasan en su sistema; los omitidos lo están solo por `requires:` y pasan en su sistema.
+- [ ] El job de CI ejecuta la matriz completa.
+ 
 
 ---
 
