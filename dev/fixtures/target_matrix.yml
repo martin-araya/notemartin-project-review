@@ -47,6 +47,8 @@ axes:
     - prisma
     - jquery
     - nuxt
+    - ngrx
+    - angular-material
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

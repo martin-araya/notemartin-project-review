@@ -1,0 +1,16 @@
+# Metadata del fixture F06l: fx-angular-ngrx
+# Aplicacion Angular 17 con NgModules + standalone, NgRx (store, effects,
+# entity) y RxJS intensivo. Ver referencias a las trampas del ecosistema
+# y del paquete en dev/ground-truth/fx-angular-ngrx/ground_truth.json.
+name: fx-angular-ngrx
+description: App Angular 17 con NgRx store/effects/entity y RxJS intensivo, en migracion parcial a standalone (F06l)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: npm test -- --runInBand
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-angular-ngrx
+  enabled: true
+ground_truth_format_version: 1

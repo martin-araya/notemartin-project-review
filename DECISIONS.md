@@ -1192,3 +1192,69 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   cubiertos por fx-sveltekit. `fixtures_matrix.py --check` sigue
   con gaps en otros ejes (F06l pendiente, no parte de este
   trabajo).
+
+### D-204 — Stack del fixture F06l: Angular 17 + NgRx 17 + RxJS 7 + adapter-node-style standalone (F06l)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06l · vigente
+- Contexto: el fixture debe representar un frontend Angular
+  empresarial con NgRx, NgModules + standalone, y RxJS intensivo.
+  La eleccion del stack afecta a que trampas se pueden plantar
+  (action -> effect -> service, createActionGroup, operadores
+  RxJS, forRoot/forChild, HTTP_INTERCEPTORS multi, pipes/
+  directivas custom).
+- Decision: Angular 17 (no 19 como fx-monorepo; las convenciones
+  NgModules/forRoot/forChild son mas visibles en Angular 17 y
+  las apps en migracion suelen quedarse en LTS largo), NgModules
+  + standalone mixto (`bootstrapApplication` con
+  `importProvidersFrom` para los modulos legacy), RxJS 7.8,
+  `@ngrx/store` 17, `@ngrx/effects` 17, `@ngrx/entity` 17,
+  `@ngrx/store-devtools` 17, `@angular/material` 17, `@angular/localize`
+  17. Formularios reactivos. Vitest 2.1 para tests estaticos
+  (los tests de Angular TestBed requieren jest-preset-angular
+  en el contenedor; fuera de aqui se valida con grep).
+- Alternativas: (a) Angular 19 con signals (descartado: el plan
+  pide NgModules + standalone, no signals); (b) Karma + Jasmine
+  (descartado: Angular CLI lo soporta pero el resto del repo
+  usa Vitest/Jest); (c) NgRx 18 con standalone puro (descartado:
+  las convenciones NgModules son la trampa que se quiere
+  demostrar).
+- Consecuencias: los tests de Angular que requieren TestBed
+  (e.g. interceptors) son sensibles a jest-preset-angular y
+  no se pueden correr con vitest puro. Aqui se usan solo tests
+  estaticos via grep sobre el codigo. El contenedor del fixture
+  instala `jest` + `jest-preset-angular` por si se quiere
+  agregar tests runtime mas adelante.
+
+### D-205 — Naming: prefijo `NPRGT-FXANGULAR-` para los unique tokens de F06l (F06l)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06l · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture. F06b..F06k usan
+  `FXTS/FXJAVA/FXMONO/FXMIN/FXPOLY/FXREACT/FXNEXT/FXVANILLA/
+  FXVUE/FXSVELTE`.
+- Decision: prefijo `FXANGULAR` y exactamente 28 tokens. Ninguno
+  aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXNGRX` (descartado: confunde con el
+  paquete homonimo); (b) `FXANG` (descartado: demasiado corto).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de estos
+  tokens aparece en `skills/`. Se anade al allowlist si fuera
+  necesario.
+
+### D-206 — Actualizacion de `target_matrix.yml` y `fixtures_matrix.py` para cubrir ngrx y angular-material (F06l)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06l · vigente
+- Contexto: AGENTS §15 dice que relajar o ampliar un umbral del
+  Anexo C requiere al dueno. Anadir `ngrx` y `angular-material`
+  a `target_matrix.yml` cambia el alcance de la matriz objetivo.
+- Decision: anadir `frameworks: [ngrx, angular-material]` a
+  `dev/fixtures/target_matrix.yml`. Extender
+  `dev/tools/fixtures_matrix.py` con `@ngrx/store` y
+  `@angular/material` en `PACKAGE_JSON_MARKERS`. `angular` ya
+  esta cubierto por fx-monorepo; este fixture lo refuerza.
+- Alternativas: (a) no tocar `target_matrix.yml` (descartado: la
+  matriz quedaria artificialmente incompleta); (b) esperar a
+  F06-cierre (descartado: cierra brechas reales ya existentes).
+- Consecuencias: `MATRIX.md` muestra `ngrx` y `angular-material`
+  cubiertos por fx-angular-ngrx. `angular` queda con dos
+  fixtures.

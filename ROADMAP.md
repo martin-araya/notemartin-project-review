@@ -759,8 +759,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `sveltekit` (framework) y `svelte.config.js` en FRAMEWORK_FILES.
 - [x] Commit `F06k: fixture fx-sveltekit con paquete por feature`.
 
-## F06l — Fixture `fx-angular-ngrx`
- 
+## F06l — Fixture `fx-angular-ngrx` ✅
+
 **Objetivo:** aplicación Angular empresarial con NgModules, NgRx y RxJS intensivo, en migración parcial a standalone y signals.
 **Stack:** Angular, NgModules + standalone, NgRx (store, effects, entity), RxJS, formularios reactivos, i18n.
 **Features:** `gestión-de-solicitudes`, `aprobaciones`, `reportes`.
@@ -772,9 +772,24 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. `HTTP_INTERCEPTORS` con `multi: true`, donde el orden importa.
 6. Pipes personalizados y directivas estructurales que contienen lógica.
 **Toolchain de tests:** Jest + jasmine-marbles, en contenedor.
- 
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`gestion-de-solicitudes`, `aprobaciones`, `reportes`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: action_effect_service, create_action_group, rxjs_operators, forRoot_forChild, http_interceptors_multi, pipe_directive_custom (CC-06).
+- [x] 6 trampas del paquete plantadas: empty_observable (of([])), auth_interceptor_ssr (window.localStorage), pipe_not_pure, entity_adapter_no_selectId, provide_store_duplicate, directive_memory_leak (CC-04).
+- [x] 3 trampas superficiales: API_BASE_URL dead, SolicitudesActions dead-import, ContadorDirective @Input public sin uso (CC-05).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones del ground truth en comentarios) en verde.
+- [x] Suite Vitest 27 tests passed (6 archivos: acciones 3, reducer 4, interceptors 5, traps_ecosystem 6, traps_package 6, traps_superficial 3).
+- [x] `dev/tests/test_fx_angular_ngrx_ground_truth.py` agregado y verde (64 tests).
+- [x] `MATRIX.md` muestra `ngrx` y `angular-material` cubiertos por fx-angular-ngrx.
+- [x] `pytest` total 716 passed (652 anteriores + 64 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot,react-spa,nextjs-fullstack,vanilla-js-legacy,vue-nuxt,sveltekit}.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `ngrx` y `angular-material` como frameworks.
+- [x] Commit `F06l: fixture fx-angular-ngrx con paquete por feature`.
+
 ---
- 
+
 # Backend
  
 ## F06m — Fixture `fx-spring-boot`

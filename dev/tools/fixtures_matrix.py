@@ -120,6 +120,10 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "nuxt": {"nuxt"},
     # SvelteKit: la dep ``@sveltejs/kit`` indica SvelteKit (F06k).
     "@sveltejs/kit": {"sveltekit"},
+    # NgRx 17: la dep ``@ngrx/store`` indica NgRx (F06l).
+    "@ngrx/store": {"ngrx"},
+    # Angular Material: la dep ``@angular/material`` indica Angular Material (F06l).
+    "@angular/material": {"angular-material"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.

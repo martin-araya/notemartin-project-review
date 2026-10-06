@@ -1,0 +1,48 @@
+{
+  "name": "fx-angular-ngrx",
+  "version": "1.0.0",
+  "description": "Fixture F06l: app Angular 17 con NgRx store/effects/entity y RxJS intensivo, en migracion parcial a standalone. 3 features con 7 R-NN cada una, 6 trampas del ecosistema, 6 del paquete y 3 superficiales.",
+  "private": true,
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "test": "jest --runInBand",
+    "test:e2e": "echo 'e2e not configured'"
+  },
+  "dependencies": {
+    "@angular/animations": "^17.3.0",
+    "@angular/cdk": "^17.3.0",
+    "@angular/common": "^17.3.0",
+    "@angular/compiler": "^17.3.0",
+    "@angular/core": "^17.3.0",
+    "@angular/forms": "^17.3.0",
+    "@angular/localize": "^17.3.0",
+    "@angular/material": "^17.3.0",
+    "@angular/platform-browser": "^17.3.0",
+    "@angular/platform-browser-dynamic": "^17.3.0",
+    "@angular/router": "^17.3.0",
+    "@ngrx/effects": "^17.1.0",
+    "@ngrx/entity": "^17.1.0",
+    "@ngrx/store": "^17.1.0",
+    "@ngrx/store-devtools": "^17.1.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zod": "^3.23.8",
+    "zone.js": "~0.14.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^17.3.0",
+    "@angular/cli": "^17.3.0",
+    "@angular/compiler-cli": "^17.3.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.0.0",
+    "jasmine-core": "~5.1.0",
+    "jasmine-marbles": "^0.9.2",
+    "jest": "^29.7.0",
+    "jest-preset-angular": "^14.1.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "~5.4.0"
+  }
+}

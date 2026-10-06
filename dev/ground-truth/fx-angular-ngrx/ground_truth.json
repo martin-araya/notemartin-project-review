@@ -1,0 +1,204 @@
+{
+  "fixture": "fx-angular-ngrx",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-angular-json", "artifact": "angular.json", "file": "angular.json"},
+    {"id": "EP-main", "artifact": "src/main.ts", "file": "src/main.ts"},
+    {"id": "EP-app-component", "artifact": "src/app/app.component.ts", "file": "src/app/app.component.ts"},
+    {"id": "EP-app-config", "artifact": "src/app/app.config.ts", "file": "src/app/app.config.ts"},
+    {"id": "EP-core-module", "artifact": "src/app/core/core.module.ts", "file": "src/app/core/core.module.ts"},
+    {"id": "EP-store", "artifact": "src/app/solicitudes/store/reducer.ts", "file": "src/app/solicitudes/store/reducer.ts"},
+    {"id": "EP-effects", "artifact": "src/app/solicitudes/store/effects.ts", "file": "src/app/solicitudes/store/effects.ts"}
+  ],
+  "modules": [
+    {"id": "MOD-app-component", "path": "src/app/app.component.ts", "summary": "Componente raiz standalone con router-outlet y navegacion"},
+    {"id": "MOD-app-config", "path": "src/app/app.config.ts", "summary": "ApplicationConfig con provideStore global, importProvidersFrom y HTTP_INTERCEPTORS"},
+    {"id": "MOD-app-routes", "path": "src/app/app.routes.ts", "summary": "Rutas raiz con loadChildren lazy para los 3 features"},
+    {"id": "MOD-core-module", "path": "src/app/core/core.module.ts", "summary": "NgModule con forRoot, HTTP_INTERCEPTORS multi: true"},
+    {"id": "MOD-api-service", "path": "src/app/core/services/api.service.ts", "summary": "Servicio base con seed hardcoded y listAll que retorna of([])"},
+    {"id": "MOD-auth-interceptor", "path": "src/app/core/interceptors/auth.interceptor.ts", "summary": "HTTP_INTERCEPTORS multi: true; usa window.localStorage"},
+    {"id": "MOD-logging-interceptor", "path": "src/app/core/interceptors/logging.interceptor.ts", "summary": "HTTP_INTERCEPTORS multi: true; tap sobre HttpResponse"},
+    {"id": "MOD-monto-pipe", "path": "src/app/core/pipes/monto.pipe.ts", "summary": "Pipe personalizado que formatea numeros como moneda"},
+    {"id": "MOD-contador-directive", "path": "src/app/core/directives/contador.directive.ts", "summary": "Directiva estructural con setInterval sin cleanup"},
+    {"id": "MOD-solicitudes-actions", "path": "src/app/solicitudes/store/actions.ts", "summary": "createActionGroup con source 'Solicitudes'"},
+    {"id": "MOD-solicitudes-reducer", "path": "src/app/solicitudes/store/reducer.ts", "summary": "createReducer + createEntityAdapter<Item>"},
+    {"id": "MOD-solicitudes-effects", "path": "src/app/solicitudes/store/effects.ts", "summary": "Effects con switchMap (load), exhaustMapSafe (create), mergeMap (update)"},
+    {"id": "MOD-solicitudes-module", "path": "src/app/solicitudes/solicitudes.module.ts", "summary": "NgModule con StoreModule.forFeature + EffectsModule.forFeature"},
+    {"id": "MOD-solicitudes-routes", "path": "src/app/solicitudes/solicitudes.routes.ts", "summary": "Rutas lazy: lista, nueva, [id]"},
+    {"id": "MOD-lista-component", "path": "src/app/solicitudes/pages/lista-solicitudes.component.ts", "summary": "Componente standalone con selectAllItems y MontoPipe"},
+    {"id": "MOD-nueva-component", "path": "src/app/solicitudes/pages/nueva-solicitud.component.ts", "summary": "Formulario reactivo standalone"},
+    {"id": "MOD-detalle-component", "path": "src/app/solicitudes/pages/detalle-solicitud.component.ts", "summary": "Detalle por route param con *ngIf y selectItemEntities"},
+    {"id": "MOD-aprobaciones-actions", "path": "src/app/aprobaciones/store/actions.ts", "summary": "createActionGroup con source 'Aprobaciones'"},
+    {"id": "MOD-aprobaciones-reducer", "path": "src/app/aprobaciones/store/reducer.ts", "summary": "Reducer con approveSuccess y rejectSuccess"},
+    {"id": "MOD-aprobaciones-effects", "path": "src/app/aprobaciones/store/effects.ts", "summary": "Effects cross-feature: approve dispara SolicitudesActions.update"},
+    {"id": "MOD-aprobaciones-module", "path": "src/app/aprobaciones/aprobaciones.module.ts", "summary": "NgModule con forFeature"},
+    {"id": "MOD-cola-component", "path": "src/app/aprobaciones/pages/cola-aprobaciones.component.ts", "summary": "Lista de items pendientes con approve/reject"},
+    {"id": "MOD-reportes-module", "path": "src/app/reportes/reportes.module.ts", "summary": "NgModule que importa RouterModule.forChild"},
+    {"id": "MOD-reportes-component", "path": "src/app/reportes/pages/reportes.component.ts", "summary": "Componente con selector computado y MontoPipe"},
+    {"id": "MOD-env", "path": "src/environments/environment.ts", "summary": "Configuracion de apiBase por entorno"},
+    {"id": "MOD-main", "path": "src/main.ts", "summary": "bootstrapApplication con appConfig"}
+  ],
+  "dependencies": [
+    {"name": "@angular/animations", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/cdk", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/common", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/compiler", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/core", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/forms", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/material", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular/router", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@ngrx/effects", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@ngrx/entity", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@ngrx/store", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@ngrx/store-devtools", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "rxjs", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "zone.js", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@angular-devkit/build-angular", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@angular/cli", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "jasmine-marbles", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "jest", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "jest-preset-angular", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "ts-jest", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "typescript", "scope": "dev", "manifest": "package.json (devDependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "gestion-de-solicitudes",
+      "user_description": "El usuario ve una lista de items, crea uno nuevo, actualiza el estado y filtra por estado. La app usa NgRx store con createEntityAdapter y effects que llaman a ApiService.",
+      "traces": [
+        {"n": 1, "what": "User abre /solicitudes/lista; LoadComponent lazy carga ListaComponent", "cite": "src/app/solicitudes/solicitudes.routes.ts:7", "data_in": "ruta", "data_out": "componente"},
+        {"n": 2, "what": "ngOnInit dispatch SolicitudesActions.load()", "cite": "src/app/solicitudes/pages/lista-solicitudes.component.ts:38", "data_in": "-", "data_out": "action"},
+        {"n": 3, "what": "Effect load$ con switchMap llama ApiService.listAll()", "cite": "src/app/solicitudes/store/effects.ts:19", "data_in": "load action", "data_out": "Observable"},
+        {"n": 4, "what": "ApiService.listAll retorna of([]).pipe(delay(10)) (trampa: nunca emite el seed)", "cite": "src/app/core/services/api.service.ts:32", "data_in": "-", "data_out": "Observable<[]>"},
+        {"n": 5, "what": "loadSuccess dispatch con items=[]; reducer.setAll reemplaza", "cite": "src/app/solicitudes/store/reducer.ts:27", "data_in": "items", "data_out": "state"},
+        {"n": 6, "what": "selectAllItems emite [] al template", "cite": "src/app/solicitudes/pages/lista-solicitudes.component.ts:34", "data_in": "state", "data_out": "DOM"},
+        {"n": 7, "what": "User crea nuevo via NuevaSolicitudComponent.onSubmit -> dispatch create", "cite": "src/app/solicitudes/pages/nueva-solicitud.component.ts:37", "data_in": "form", "data_out": "action create"},
+        {"n": 8, "what": "Effect create$ con exhaustMapSafe (trampa paquete #5: createEntityAdapter sin selectId)", "cite": "src/app/solicitudes/store/effects.ts:32", "data_in": "create", "data_out": "createSuccess"},
+        {"n": 9, "what": "Reducer addOne agrega el item al entity state", "cite": "src/app/solicitudes/store/reducer.ts:31", "data_in": "item", "data_out": "state"},
+        {"n": 10, "what": "selectAllItems emite el nuevo item al template", "cite": "src/app/solicitudes/pages/lista-solicitudes.component.ts:34", "data_in": "state", "data_out": "DOM"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/app/solicitudes/store/effects.ts", "line": 22, "kind": "rxjs_op", "condition_text": "ofType(load) + switchMap (cancela request anterior)", "branches": [{"label": "loadSuccess", "target_line": 24}, {"label": "loadFailure", "target_line": 25}]},
+        {"id": "DP-002", "file": "src/app/core/services/api.service.ts", "line": 33, "kind": "backend_sim", "condition_text": "listAll retorna of([])", "branches": [{"label": "[] (UI muestra vacio)", "target_line": 33}, {"label": "error", "target_line": 38}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /api/items (via ApiService.listAll)", "user_sees": "Lista vacia (trampa: el servicio retorna of([]) en vez del seed)", "side_effects": ["SolicitudesActions.load", "SolicitudesActions.loadSuccess"], "reversible": true, "final_state": "rendered (vacio)"},
+        {"id": "R-02", "category": "success_create", "conditions": "POST form valido", "user_sees": "Item aparece en la lista con id incremental", "side_effects": ["SolicitudesActions.create", "ApiService.create", "SolicitudesActions.createSuccess"], "reversible": true, "final_state": "item added"},
+        {"id": "R-03", "category": "success_update", "conditions": "PATCH o update action", "user_sees": "Item actualizado en la lista", "side_effects": ["SolicitudesActions.update", "SolicitudesActions.updateSuccess"], "reversible": true, "final_state": "item updated"},
+        {"id": "R-04", "category": "error_validation_zod", "conditions": "form con nombre vacio o monto negativo", "user_sees": "Boton disabled (Validators)", "side_effects": [], "reversible": true, "final_state": "no submit"},
+        {"id": "R-05", "category": "error_load_failure", "conditions": "ApiService.listAll tira error", "user_sees": "Mensaje de error del catchError", "side_effects": ["SolicitudesActions.loadFailure"], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "success_filter", "conditions": "User selecciona estado en filtro", "user_sees": "Items filtrados por estado", "side_effects": ["SolicitudesActions.filter"], "reversible": true, "final_state": "filtered"},
+        {"id": "R-07", "category": "error_save_duplicate", "conditions": "POST con id que ya existe (no se valida en backend)", "user_sees": "Item duplicado en la lista (entity adapter acepta)", "side_effects": ["createSuccess con id duplicado"], "reversible": false, "final_state": "duplicate"}
+      ],
+      "config": [
+        {"key": "seedSize", "kind": "literal", "default": "5", "effect": "ApiService.seed tiene 5 items hardcoded"},
+        {"key": "api.listAll.delay", "kind": "literal", "default": "10ms", "effect": "simula latencia de backend"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "aprobaciones",
+      "user_description": "El usuario ve una cola de items pendientes y puede aprobar o rechazar cada uno. El modulo de aprobaciones tiene un cross-feature effect que propaga el cambio de estado al modulo principal.",
+      "traces": [
+        {"n": 1, "what": "User abre /aprobaciones; LoadComponent lazy carga ColaComponent", "cite": "src/app/aprobaciones/aprobaciones.routes.ts:5", "data_in": "ruta", "data_out": "componente"},
+        {"n": 2, "what": "ngOnInit subscribe a selectAllItems y dispatch SolicitudesActions.load()", "cite": "src/app/aprobaciones/pages/cola-aprobaciones.component.ts:38", "data_in": "-", "data_out": "items[]"},
+        {"n": 3, "what": "Filter solo items con estado='pendiente' en el componente", "cite": "src/app/aprobaciones/pages/cola-aprobaciones.component.ts:40", "data_in": "items", "data_out": "pendientes[]"},
+        {"n": 4, "what": "User click Aprobar -> dispatch AprobacionesActions.approve", "cite": "src/app/aprobaciones/pages/cola-aprobaciones.component.ts:46", "data_in": "item", "data_out": "action approve"},
+        {"n": 5, "what": "Effect approveAndPropagate$ con withLatestFrom + mergeMap", "cite": "src/app/aprobaciones/store/effects.ts:23", "data_in": "approve + items", "data_out": "SolicitudesActions.update + AprobacionesActions.approveSuccess"},
+        {"n": 6, "what": "Cross-feature: dispatch SolicitudesActions.update sobre el store principal", "cite": "src/app/aprobaciones/store/effects.ts:43", "data_in": "id + changes", "data_out": "update dispatched"},
+        {"n": 7, "what": "SolicitudesReducer.updateSuccess hace upsertOne del item", "cite": "src/app/solicitudes/store/reducer.ts:33", "data_in": "item", "data_out": "state"},
+        {"n": 8, "what": "SolicitudesActions.loadSuccess propaga el cambio a ColaComponent via selectAllItems", "cite": "src/app/solicitudes/store/reducer.ts:27", "data_in": "items", "data_out": "items actualizados"},
+        {"n": 9, "what": "ColaComponent detecta cambio y filtra pendientes (ahora vacio si el item se aprobo)", "cite": "src/app/aprobaciones/pages/cola-aprobaciones.component.ts:39", "data_in": "items", "data_out": "pendientes (reducido)"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/app/aprobaciones/store/effects.ts", "line": 27, "kind": "cross_feature", "condition_text": "items.find(itemId) && estado === 'pendiente'", "branches": [{"label": "ok -> update + approveSuccess", "target_line": 43}, {"label": "already_decided", "target_line": 30}, {"label": "not_found", "target_line": 30}]},
+        {"id": "DP-004", "file": "src/app/aprobaciones/store/effects.ts", "line": 59, "kind": "validation", "condition_text": "comentario presente y >=3 chars", "branches": [{"label": "ok -> rejectSuccess", "target_line": 67}, {"label": "comentario_required", "target_line": 62}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /api/items", "user_sees": "Cola con items pendientes (filtrado en cliente)", "side_effects": ["SolicitudesActions.load"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_approve", "conditions": "User hace click Aprobar sobre item pendiente", "user_sees": "Item desaparece de la cola (estado cambia a aprobado)", "side_effects": ["SolicitudesActions.update", "AprobacionesActions.approveSuccess"], "reversible": false, "final_state": "item approved"},
+        {"id": "R-03", "category": "error_already_approved", "conditions": "User hace click Aprobar sobre item ya aprobado", "user_sees": "Mensaje de error 'already_decided' (si se renderiza)", "side_effects": ["AprobacionesActions.failure"], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "success_reject", "conditions": "User hace click Rechazar con comentario >=3 chars", "user_sees": "Item se marca como rechazado con comentario", "side_effects": ["SolicitudesActions.update", "AprobacionesActions.rejectSuccess"], "reversible": false, "final_state": "item rejected"},
+        {"id": "R-05", "category": "success_filter", "conditions": "Store principal tiene items en varios estados", "user_sees": "Cola solo con items pendientes", "side_effects": [], "reversible": true, "final_state": "filtered"},
+        {"id": "R-06", "category": "error_cross_store_race", "conditions": "Dos usuarios aprueban el mismo item casi simultaneamente", "user_sees": "El segundo click produce 'already_decided' (el effect valida estado)", "side_effects": ["AprobacionesActions.failure"], "reversible": true, "final_state": "no double action"},
+        {"id": "R-07", "category": "success_redirect", "conditions": "User navega a otra pagina despues de aprobar", "user_sees": "Browser navega a la nueva ruta", "side_effects": ["navigation"], "reversible": true, "final_state": "navigated"}
+      ],
+      "config": [
+        {"key": "comentario.minLength", "kind": "literal", "default": "3", "effect": "rechazo requiere comentario >= 3 chars"},
+        {"key": "aprobaciones.idPrefix", "kind": "literal", "default": "'ap-' + Date.now()", "effect": "id unico basado en timestamp"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "reportes",
+      "user_description": "El usuario ve un reporte agregado con totales por estado, suma monetaria y filtro por fecha. El componente usa un selector computado sobre el store principal.",
+      "traces": [
+        {"n": 1, "what": "User abre /reportes; ReportesRoutes carga ReportesComponent", "cite": "src/app/reportes/reportes.routes.ts:5", "data_in": "ruta", "data_out": "componente"},
+        {"n": 2, "what": "ngOnInit dispatch SolicitudesActions.load()", "cite": "src/app/reportes/pages/reportes.component.ts:51", "data_in": "-", "data_out": "action"},
+        {"n": 3, "what": "reporte$ es un selector que agrega items por estado", "cite": "src/app/reportes/pages/reportes.component.ts:43", "data_in": "items", "data_out": "Reporte"},
+        {"n": 4, "what": "Si items.length === 0 -> reporte.vacio=true", "cite": "src/app/reportes/pages/reportes.component.ts:45", "data_in": "items", "data_out": "vacio"},
+        {"n": 5, "what": "Si hay items -> calcula total, pendientes, aprobados, rechazados, montoTotal", "cite": "src/app/reportes/pages/reportes.component.ts:51", "data_in": "items", "data_out": "Reporte"},
+        {"n": 6, "what": "Template renderiza con MontoPipe para montoTotal", "cite": "src/app/reportes/pages/reportes.component.ts:33", "data_in": "Reporte", "data_out": "DOM"},
+        {"n": 7, "what": "User click Exportar CSV -> metodo exportarCSV() (no implementado, no genera CSV real)", "cite": "src/app/reportes/pages/reportes.component.ts:58", "data_in": "-", "data_out": "noop"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/app/reportes/pages/reportes.component.ts", "line": 45, "kind": "empty_state", "condition_text": "items.length === 0", "branches": [{"label": "vacio", "target_line": 46}, {"label": "computed", "target_line": 51}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load", "conditions": "items tiene >=1 elementos", "user_sees": "Reporte con total, pendientes, aprobados, rechazados, monto", "side_effects": ["SolicitudesActions.load"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_filter_by_date", "conditions": "User selecciona rango de fechas (no implementado en este fixture; placeholder)", "user_sees": "Reporte filtrado por fecha", "side_effects": [], "reversible": true, "final_state": "filtered (placeholder)"},
+        {"id": "R-03", "category": "error_empty_data", "conditions": "items.length === 0", "user_sees": "'Sin datos'", "side_effects": [], "reversible": true, "final_state": "vacio"},
+        {"id": "R-04", "category": "success_export_csv", "conditions": "User click Exportar CSV", "user_sees": "Nada (metodo no implementado)", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-05", "category": "error_export_timeout", "conditions": "Selector lento (no implementado)", "user_sees": "Timeout", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-06", "category": "success_pipe_monto", "conditions": "montoTotal > 0", "user_sees": "Monto formateado como 'EUR 123.45'", "side_effects": [], "reversible": true, "final_state": "rendered"},
+        {"id": "R-07", "category": "error_permission_denied", "conditions": "Usuario sin role 'reporter' (no implementado en este fixture)", "user_sees": "Sin mensaje (no hay guard)", "side_effects": [], "reversible": true, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "monto.currency", "kind": "literal", "default": "'EUR'", "effect": "MontoPipe prepende EUR"},
+        {"key": "csv.export", "kind": "literal", "default": "noop", "effect": "exportarCSV no genera CSV real (dead)"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "action_effect_service", "where": "src/app/solicitudes/store/effects.ts:19-29 + src/app/core/services/api.service.ts:32-34", "resolution": "El flujo canonico de NgRx es action -> effect -> service -> action. Aqui load$ escucha SolicitudesActions.load, llama a ApiService.listAll() y dispara loadSuccess o loadFailure. La trampa: la funcion listAll() retorna of([]).pipe(delay(10)) en vez del seed, asi que la lista siempre queda vacia."},
+    {"id": "TRAP-E02", "kind": "create_action_group", "where": "src/app/solicitudes/store/actions.ts:9-23 + src/app/aprobaciones/store/actions.ts:5-16", "resolution": "createActionGroup genera automaticamente las acciones bajo un namespace (source). Aqui el namespace es 'Solicitudes' y 'Aprobaciones'. Los nombres como 'Load', 'Load Success' se derivan del objeto events. La skill debe notar que las acciones son strings del tipo '[Solicitudes] Load'."},
+    {"id": "TRAP-E03", "kind": "rxjs_operators", "where": "src/app/solicitudes/store/effects.ts:22, 35, 46", "resolution": "Los effects usan switchMap (load$), exhaustMapSafe (create$), mergeMap (update$). Cada operador tiene semantica diferente: switchMap cancela el request anterior si llega uno nuevo; exhaustMap ignora clicks adicionales mientras hay uno en vuelo; mergeMap reintenta automaticamente. La skill debe notar la diferencia y entender que cambiar uno por otro rompe el comportamiento."},
+    {"id": "TRAP-E04", "kind": "forRoot_forChild", "where": "src/app/core/core.module.ts:24-32 + src/app/solicitudes/solicitudes.module.ts:11-16 + src/app/app.config.ts:31", "resolution": "CoreModule.forRoot() se importa via importProvidersFrom en app.config.ts; provee HTTP_INTERCEPTORS con multi: true. SolicitudesModule.forChild (en realidad via StoreModule.forFeature) registra el feature state. La trampa: si CoreModule.forRoot() se importa dos veces, los interceptors se duplican y cada peticion se procesa 2 veces. El check con @Optional()@SkipSelf() en el constructor evita esto."},
+    {"id": "TRAP-E05", "kind": "http_interceptors_multi", "where": "src/app/core/core.module.ts:28-29 + src/app/core/interceptors/{auth,logging}.interceptor.ts", "resolution": "AuthInterceptor y LoggingInterceptor se declaran ambos con { provide: HTTP_INTERCEPTORS, useClass, multi: true }. El orden de declaracion determina el orden de ejecucion: auth primero, luego logging. Si se invierte, logging ve el header Authorization sin el Bearer ya agregado por auth."},
+    {"id": "TRAP-E06", "kind": "pipe_directive_custom", "where": "src/app/core/pipes/monto.pipe.ts + src/app/core/directives/contador.directive.ts", "resolution": "MontoPipe formatea numeros como moneda; ContadorDirective aplica una clase CSS en funcion del contador. Trampa: el pipe lee una variable global mutable (_currency) que se redefine en cada ciclo de deteccion de cambios. La directiva tiene un setInterval que nunca se limpia (no implementa OnDestroy), generando memory leak."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "empty_observable", "where": "src/app/core/services/api.service.ts:32-34", "resolution": "ApiService.listAll retorna of([]).pipe(delay(10)) en vez del seed. La UI nunca recibe los 5 items hardcoded, mostrando 'sin datos' aunque hay datos. La trampa es que of([]) emite un array vacio y luego completa, y el reducer hace setAll([]) que limpia el state."},
+    {"id": "TRAP-P02", "kind": "auth_interceptor_ssr", "where": "src/app/core/interceptors/auth.interceptor.ts:12-14", "resolution": "AuthInterceptor accede directamente a window.localStorage. En SSR (Angular Universal), window no existe; el codigo 'arregla' el problema con typeof window !== 'undefined' devolviendo 'ssr-token', pero la API no se autentica correctamente. La trampa: en produccion la app no se rompe, pero el token es siempre 'ssr-token' sin importar la sesion real."},
+    {"id": "TRAP-P03", "kind": "pipe_not_pure", "where": "src/app/core/pipes/monto.pipe.ts:11-15", "resolution": "MontoPipe lee this._currency de una variable de instancia mutable. En Angular 17 pure es true por defecto, asi que el pipe se ejecuta solo cuando cambian las referencias de input. Pero al leer this._currency (no parte del input), se produce un side effect que el ChangeDetector no puede rastrear, lo que lleva a re-renders innecesarios."},
+    {"id": "TRAP-P04", "kind": "entity_adapter_no_selectId", "where": "src/app/solicitudes/store/reducer.ts:16", "resolution": "createEntityAdapter<Item>() se declara sin selectId custom. Por defecto usa la propiedad 'id' del item, que aqui coincide. Pero hay entidades (e.g. Comentario) que usan 'comentarioId'; la skill debe notar que crear una nueva entidad sin selectId custom puede causar duplicados silenciosos en el entity state."},
+    {"id": "TRAP-P05", "kind": "provide_store_duplicate", "where": "src/app/app.config.ts:27, 31", "resolution": "provideStore({ [SOLICITUDES_FEATURE_KEY]: solicitudesReducer }) registra el state globalmente, y luego importProvidersFrom(SolicitudesModule) hace StoreModule.forFeature con el MISMO key. NgRx 17 con provideStore NO permite registrar el mismo feature key dos veces; produce un error silencioso en runtime. La trampa: el selector retorna el state vacio del provideStore global, no los datos del modulo."},
+    {"id": "TRAP-P06", "kind": "directive_memory_leak", "where": "src/app/core/directives/contador.directive.ts:13-19", "resolution": "ContadorDirective implementa OnInit pero NO OnDestroy. El setInterval creado en ngOnInit nunca se limpia con clearInterval, asi que el callback se sigue ejecutando cada 5 segundos aunque el componente haya sido destruido. La skill debe notar la falta de ngOnDestroy y proponer la implementacion correcta."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_export", "where": "src/app/core/services/api.service.ts:48", "resolution": "API_BASE_URL se exporta como constante pero ninguna feature la usa. Cada feature tiene su propio servicio que hardcodea la URL. La skill debe notar que la constante es codigo muerto y deberia eliminarse o consolidarse."},
+    {"id": "TRAP-S02", "kind": "dead_import", "where": "src/app/reportes/pages/reportes.component.ts:11", "resolution": "ReportesComponent importa SolicitudesActions pero solo lo usa en el comentario y en el ngOnInit. La trampa es la linea 'this.store.dispatch(SolicitudesActions.load())' que SI usa la import, pero el codigo podria simplificarse."},
+    {"id": "TRAP-S03", "kind": "dead_directive_input", "where": "src/app/core/directives/contador.directive.ts:10", "resolution": "ContadorDirective expone @Input() fxContador publico, pero el componente padre (ListaComponent) lo usa como [fxContador]='0' sin leer nunca su valor desde fuera. La trampa es que el @Input existe pero el consumidor nunca lo usa."}
+  ],
+  "surfaces": [
+    {"id": "SRF-page-index", "kind": "page", "name": "/", "handler": "src/app/app.component.ts:5", "file": "src/app/app.component.ts"},
+    {"id": "SRF-route-solicitudes", "kind": "route", "name": "/solicitudes", "handler": "src/app/app.routes.ts:7", "file": "src/app/app.routes.ts"},
+    {"id": "SRF-route-solicitudes-lista", "kind": "route", "name": "/solicitudes/lista", "handler": "src/app/solicitudes/solicitudes.routes.ts:7", "file": "src/app/solicitudes/solicitudes.routes.ts"},
+    {"id": "SRF-route-solicitudes-nueva", "kind": "route", "name": "/solicitudes/nueva", "handler": "src/app/solicitudes/solicitudes.routes.ts:12", "file": "src/app/solicitudes/solicitudes.routes.ts"},
+    {"id": "SRF-route-solicitudes-id", "kind": "route", "name": "/solicitudes/:id", "handler": "src/app/solicitudes/solicitudes.routes.ts:16", "file": "src/app/solicitudes/solicitudes.routes.ts"},
+    {"id": "SRF-route-aprobaciones", "kind": "route", "name": "/aprobaciones", "handler": "src/app/aprobaciones/aprobaciones.routes.ts:5", "file": "src/app/aprobaciones/aprobaciones.routes.ts"},
+    {"id": "SRF-route-reportes", "kind": "route", "name": "/reportes", "handler": "src/app/reportes/reportes.routes.ts:5", "file": "src/app/reportes/reportes.routes.ts"},
+    {"id": "SRF-action-load", "kind": "action", "name": "[Solicitudes] Load", "handler": "src/app/solicitudes/store/actions.ts:12", "file": "src/app/solicitudes/store/actions.ts"},
+    {"id": "SRF-action-load-success", "kind": "action", "name": "[Solicitudes] Load Success", "handler": "src/app/solicitudes/store/actions.ts:13", "file": "src/app/solicitudes/store/actions.ts"},
+    {"id": "SRF-action-approve", "kind": "action", "name": "[Aprobaciones] Approve", "handler": "src/app/aprobaciones/store/actions.ts:10", "file": "src/app/aprobaciones/store/actions.ts"},
+    {"id": "SRF-effect-load", "kind": "effect", "name": "load$", "handler": "src/app/solicitudes/store/effects.ts:19", "file": "src/app/solicitudes/store/effects.ts"},
+    {"id": "SRF-effect-create", "kind": "effect", "name": "create$", "handler": "src/app/solicitudes/store/effects.ts:32", "file": "src/app/solicitudes/store/effects.ts"},
+    {"id": "SRF-effect-approve-and-propagate", "kind": "effect", "name": "approveAndPropagate$", "handler": "src/app/aprobaciones/store/effects.ts:23", "file": "src/app/aprobaciones/store/effects.ts"},
+    {"id": "SRF-interceptor-auth", "kind": "interceptor", "name": "AuthInterceptor", "handler": "src/app/core/interceptors/auth.interceptor.ts:10", "file": "src/app/core/interceptors/auth.interceptor.ts"},
+    {"id": "SRF-interceptor-logging", "kind": "interceptor", "name": "LoggingInterceptor", "handler": "src/app/core/interceptors/logging.interceptor.ts:12", "file": "src/app/core/interceptors/logging.interceptor.ts"},
+    {"id": "SRF-pipe-monto", "kind": "pipe", "name": "MontoPipe", "handler": "src/app/core/pipes/monto.pipe.ts:8", "file": "src/app/core/pipes/monto.pipe.ts"},
+    {"id": "SRF-directive-contador", "kind": "directive", "name": "ContadorDirective", "handler": "src/app/core/directives/contador.directive.ts:9", "file": "src/app/core/directives/contador.directive.ts"},
+    {"id": "SRF-service-api", "kind": "service", "name": "ApiService", "handler": "src/app/core/services/api.service.ts:20", "file": "src/app/core/services/api.service.ts"}
+  ]
+}
