@@ -730,8 +730,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `nuxt` (framework) y `nuxt.config.ts` en FRAMEWORK_FILES.
 - [x] Commit `F06j: fixture fx-vue-nuxt con paquete por feature`.
 
-## F06k — Fixture `fx-sveltekit`
- 
+## F06k — Fixture `fx-sveltekit` ✅
+
 **Objetivo:** aplicación SvelteKit con Svelte 5.
 **Stack:** Svelte 5 (runes), SvelteKit, adaptador Node.
 **Features:** `tareas`, `etiquetas`, `compartir`.
@@ -743,7 +743,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Runes `$state`, `$derived` y `$effect` con reactividad derivada.
 6. Alias `$lib` y `$env/static/private`.
 **Toolchain de tests:** Vitest + Playwright, en contenedor.
- 
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`tareas`, `etiquetas`, `compartir`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: file_conventions, load_universal_vs_server, form_actions_enhance, hooks_handle, runes, alias_lib (CC-06).
+- [x] 6 trampas del paquete plantadas: dead_code_composable (formatDate), store_cross_call_semantic, handle_no_auth_check, effect_memory_leak, action_not_found_silent, load_with_side_effect (CC-04).
+- [x] 3 trampas superficiales: formatDate, seedTareasExtra, HiddenPremium import explícito (CC-05).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones del ground truth en comentarios) en verde.
+- [x] Suite Vitest 29 tests passed (6 archivos: tasks 5, tags 4, share 4, traps_ecosystem 7, traps_package 6, traps_superficial 3).
+- [x] `dev/tests/test_fx_sveltekit_ground_truth.py` agregado y verde (63 tests).
+- [x] `MATRIX.md` muestra `sveltekit` y `svelte-spa` cubiertos por fx-sveltekit.
+- [x] `pytest` total 652 passed (589 anteriores + 63 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot,react-spa,nextjs-fullstack,vanilla-js-legacy,vue-nuxt}.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `sveltekit` (framework) y `svelte.config.js` en FRAMEWORK_FILES.
+- [x] Commit `F06k: fixture fx-sveltekit con paquete por feature`.
+
 ## F06l — Fixture `fx-angular-ngrx`
  
 **Objetivo:** aplicación Angular empresarial con NgModules, NgRx y RxJS intensivo, en migración parcial a standalone y signals.

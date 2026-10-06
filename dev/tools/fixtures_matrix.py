@@ -94,6 +94,8 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     "vite.config.ts": {"react-spa", "vite"},
     # Nuxt 3: la presencia de nuxt.config.ts indica una app Nuxt.
     "nuxt.config.ts": {"nuxt"},
+    # SvelteKit: la presencia de svelte.config.js indica una app SvelteKit.
+    "svelte.config.js": {"sveltekit"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -116,6 +118,8 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "jquery": {"jquery"},
     # Nuxt 3 como dep de runtime: app fullstack con auto-imports (F06j).
     "nuxt": {"nuxt"},
+    # SvelteKit: la dep ``@sveltejs/kit`` indica SvelteKit (F06k).
+    "@sveltejs/kit": {"sveltekit"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.

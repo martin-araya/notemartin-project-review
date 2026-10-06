@@ -1,0 +1,17 @@
+# Metadata del fixture F06k: fx-sveltekit
+# Aplicacion SvelteKit con Svelte 5 (runes), adapter-node y file-based
+# routing (+page.svelte, +page.server.ts, +server.ts). Ver referencias a
+# las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-sveltekit/ground_truth.json.
+name: fx-sveltekit
+description: App SvelteKit con Svelte 5 runes, form actions, hooks.server.ts y stores cross-call (F06k)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: npm test -- --run
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-sveltekit
+  enabled: true
+ground_truth_format_version: 1

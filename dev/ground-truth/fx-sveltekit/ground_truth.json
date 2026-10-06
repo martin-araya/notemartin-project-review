@@ -1,0 +1,192 @@
+{
+  "fixture": "fx-sveltekit",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-svelte-config", "artifact": "svelte.config.js", "file": "svelte.config.js"},
+    {"id": "EP-app-html", "artifact": "src/app.html", "file": "src/app.html"},
+    {"id": "EP-layout", "artifact": "src/routes/+layout.svelte", "file": "src/routes/+layout.svelte"},
+    {"id": "EP-page-tareas", "artifact": "src/routes/tareas/+page.svelte", "file": "src/routes/tareas/+page.svelte"},
+    {"id": "EP-page-compartir", "artifact": "src/routes/compartir/+page.svelte", "file": "src/routes/compartir/+page.svelte"},
+    {"id": "EP-server-db", "artifact": "src/lib/server/db.ts", "file": "src/lib/server/db.ts"},
+    {"id": "EP-hooks", "artifact": "src/hooks.server.ts", "file": "src/hooks.server.ts"}
+  ],
+  "modules": [
+    {"id": "MOD-server-db", "path": "src/lib/server/db.ts", "summary": "Store en memoria con seed (12 tareas + 5 etiquetas + 2 shares) y seedTareasExtra dead code"},
+    {"id": "MOD-server-auth", "path": "src/lib/server/auth.ts", "summary": "Stub de sesion: mapea cookie fx_session a usuarioId"},
+    {"id": "MOD-server-types", "path": "src/lib/server/types.ts", "summary": "Interfaces Tarea, Etiqueta, Share"},
+    {"id": "MOD-store-tasks", "path": "src/lib/stores/tasks.svelte.ts", "summary": "Store Svelte 5 con rune $state: items, loading, remove (sin owner check)"},
+    {"id": "MOD-store-tags", "path": "src/lib/stores/tags.svelte.ts", "summary": "Store Svelte 5 con rune $state: catalogo solo lectura"},
+    {"id": "MOD-store-share", "path": "src/lib/stores/share.svelte.ts", "summary": "Store Svelte 5 con rune $state: cross-store a tasks.remove"},
+    {"id": "MOD-comp-task-card", "path": "src/lib/components/TaskCard.svelte", "summary": "Tarjeta con defineProps + clase premium-hide + form action ?/delete"},
+    {"id": "MOD-comp-task-form", "path": "src/lib/components/TaskForm.svelte", "summary": "Form con use:enhance y form action ?/create"},
+    {"id": "MOD-comp-tag-picker", "path": "src/lib/components/TagPicker.svelte", "summary": "Selector con $state, $derived y $effect (memory leak)"},
+    {"id": "MOD-comp-share-button", "path": "src/lib/components/ShareButton.svelte", "summary": "Form con form action ?/compartir"},
+    {"id": "MOD-comp-hidden-premium", "path": "src/lib/components/HiddenPremium.svelte", "summary": "Render condicional premium (dead-import)"},
+    {"id": "MOD-util-formatDate", "path": "src/lib/utils/formatDate.ts", "summary": "formatDate() no usado"},
+    {"id": "MOD-util-slugify", "path": "src/lib/utils/slugify.ts", "summary": "slugify() helper"},
+    {"id": "MOD-route-layout", "path": "src/routes/+layout.svelte", "summary": "Layout raiz con nav y slot"},
+    {"id": "MOD-route-layout-server", "path": "src/routes/+layout.server.ts", "summary": "LayoutServerLoad con side effect (seedTareasExtra)"},
+    {"id": "MOD-route-page", "path": "src/routes/+page.svelte", "summary": "Landing con dead-import de HiddenPremium"},
+    {"id": "MOD-route-tareas-server", "path": "src/routes/tareas/+page.server.ts", "summary": "PageServerLoad + actions {create, delete} con zod"},
+    {"id": "MOD-route-tareas", "path": "src/routes/tareas/+page.svelte", "summary": "Listado con TaskCard y TaskForm"},
+    {"id": "MOD-route-tareas-id-server", "path": "src/routes/tareas/[id]/+page.server.ts", "summary": "PageServerLoad: getTareaById + throw 404 si no existe"},
+    {"id": "MOD-route-tareas-id", "path": "src/routes/tareas/[id]/+page.svelte", "summary": "Detalle de un item por route param"},
+    {"id": "MOD-route-etiquetas-server", "path": "src/routes/etiquetas/+page.server.ts", "summary": "PageServerLoad: getEtiquetas + getTareas del user"},
+    {"id": "MOD-route-etiquetas", "path": "src/routes/etiquetas/+page.svelte", "summary": "Lista con TagPicker y filtro $derived"},
+    {"id": "MOD-route-compartir-server", "path": "src/routes/compartir/+page.server.ts", "summary": "Actions.compartir con zod + redirect 303"},
+    {"id": "MOD-route-compartir", "path": "src/routes/compartir/+page.svelte", "summary": "Lista con ShareButton por item"},
+    {"id": "MOD-hooks-server", "path": "src/hooks.server.ts", "summary": "Handle global que inyecta locals.user sin validar"},
+    {"id": "MOD-styles-main", "path": "src/styles/main.scss", "summary": "Entry point de estilos"},
+    {"id": "MOD-styles-hidden", "path": "src/styles/_hidden.scss", "summary": "Clases premium-hide, no-print, archived"}
+  ],
+  "dependencies": [
+    {"name": "@sveltejs/kit", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@sveltejs/adapter-node", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@sveltejs/vite-plugin-svelte", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "svelte", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "zod", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@sveltejs/adapter-auto", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@playwright/test", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@testing-library/svelte", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "happy-dom", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "sass", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "svelte-check", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "typescript", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "vite", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "vitest", "scope": "dev", "manifest": "package.json (devDependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "tareas",
+      "user_description": "El usuario ve una lista de items, puede crear uno nuevo con un form y borrar cualquiera con un form action.",
+      "traces": [
+        {"n": 1, "what": "User abre /tareas; SvelteKit ejecuta +layout.server.ts (load raiz)", "cite": "src/routes/+layout.server.ts:9", "data_in": "cookies", "data_out": "{user, tareas}"},
+        {"n": 2, "what": "User page load: filtra tareas del usuario", "cite": "src/routes/tareas/+page.server.ts:13", "data_in": "parent data", "data_out": "{tareas, user}"},
+        {"n": 3, "what": "Render con TaskCard por cada item; premium-hide si premium y no u-1", "cite": "src/lib/components/TaskCard.svelte:9", "data_in": "tarea", "data_out": "<li>"},
+        {"n": 4, "what": "Click en 'Borrar' envia POST a ?/delete", "cite": "src/lib/components/TaskCard.svelte:13", "data_in": "id", "data_out": "form submit"},
+        {"n": 5, "what": "Server action delete: valida id, llama removeTarea", "cite": "src/routes/tareas/+page.server.ts:34", "data_in": "form data", "data_out": "{ok: true} o fail(404)"},
+        {"n": 6, "what": "Form de creacion con use:enhance", "cite": "src/lib/components/TaskForm.svelte:9", "data_in": "titulo", "data_out": "POST ?/create"},
+        {"n": 7, "what": "Server action create: zod safeParse + addTarea", "cite": "src/routes/tareas/+page.server.ts:20", "data_in": "form data", "data_out": "{ok: true, tarea}"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/routes/tareas/+page.server.ts", "line": 22, "kind": "validation", "condition_text": "schema.safeParse(body)", "branches": [{"label": "ok -> 200", "target_line": 26}, {"label": "fail -> 400", "target_line": 24}]},
+        {"id": "DP-002", "file": "src/routes/tareas/+page.server.ts", "line": 36, "kind": "lookup", "condition_text": "id presente", "branches": [{"label": "400 id_required", "target_line": 37}, {"label": "lookup", "target_line": 38}]},
+        {"id": "DP-003", "file": "src/routes/tareas/+page.server.ts", "line": 38, "kind": "lookup", "condition_text": "removeTarea(id)", "branches": [{"label": "ok -> 200", "target_line": 40}, {"label": "fail -> 404", "target_line": 39}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /tareas con usuario autenticado", "user_sees": "Lista de 8 items del usuario con id, titulo, estado", "side_effects": ["+layout.server.ts load"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_create", "conditions": "POST ?/create con titulo valido", "user_sees": "Form se cierra, item aparece en la lista", "side_effects": ["+layout.server.ts reload"], "reversible": true, "final_state": "item added"},
+        {"id": "R-03", "category": "success_delete", "conditions": "POST ?/delete con id existente", "user_sees": "Item desaparece de la lista, header ok", "side_effects": ["+layout.server.ts reload"], "reversible": false, "final_state": "item removed"},
+        {"id": "R-04", "category": "error_delete_not_found", "conditions": "POST ?/delete con id inexistente", "user_sees": "400 con error: not_found", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-05", "category": "error_action_not_found", "conditions": "POST a ?/foo (action inexistente)", "user_sees": "404 silencioso de SvelteKit", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_validation_zod", "conditions": "POST ?/create con titulo vacio o > 120 chars", "user_sees": "400 con issues: validation_failed", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "success_hidden_premium", "conditions": "Tarea con premium=true y usuario no u-1", "user_sees": "Item oculto por clase premium-hide", "side_effects": [], "reversible": true, "final_state": "premium hidden"}
+      ],
+      "config": [
+        {"key": "titulo.maxLength", "kind": "literal", "default": "120", "effect": "zod string max en POST /tareas"},
+        {"key": "seedTareasExtra.probability", "kind": "literal", "default": "0.05", "effect": "side effect en +layout.server.ts (5% por peticion)"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "etiquetas",
+      "user_description": "El usuario ve un catalogo de 5 clasificaciones y filtra items por titulo con un campo de busqueda.",
+      "traces": [
+        {"n": 1, "what": "User abre /etiquetas; +layout.server.ts provee parent data", "cite": "src/routes/+layout.server.ts:9", "data_in": "cookies", "data_out": "{user, tareas}"},
+        {"n": 2, "what": "+page.server.ts devuelve catalogo + items del user", "cite": "src/routes/etiquetas/+page.server.ts:5", "data_in": "parent data", "data_out": "{etiquetas, tareas}"},
+        {"n": 3, "what": "Render del input bind:filtro y del catalogo TagPicker", "cite": "src/routes/etiquetas/+page.svelte:18-24", "data_in": "data", "data_out": "DOM"},
+        {"n": 4, "what": "$derived recalcula tareasFiltradas cuando filtro cambia", "cite": "src/routes/etiquetas/+page.svelte:7", "data_in": "filtro", "data_out": "tareasFiltradas[]"},
+        {"n": 5, "what": "TagPicker emite selected via export let value", "cite": "src/lib/components/TagPicker.svelte:31", "data_in": "click", "data_out": "selected[]"},
+        {"n": 6, "what": "$effect con setInterval (memory leak)", "cite": "src/lib/components/TagPicker.svelte:16", "data_in": "mount", "data_out": "interval id"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "src/routes/etiquetas/+page.svelte", "line": 7, "kind": "filter", "condition_text": "filtro no vacio", "branches": [{"label": "filtra por titulo", "target_line": 8}, {"label": "todos", "target_line": 10}]},
+        {"id": "DP-005", "file": "src/lib/components/TagPicker.svelte", "line": 16, "kind": "effect", "condition_text": "$effect (mount)", "branches": [{"label": "setInterval", "target_line": 17}, {"label": "cleanup", "target_line": 22}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /etiquetas", "user_sees": "Catalogo con 5 clasificaciones y boton buscar", "side_effects": ["+layout.server.ts load"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_assign", "conditions": "Click en una etiqueta del TagPicker", "user_sees": "Etiqueta aparece en 'selected'", "side_effects": [], "reversible": true, "final_state": "selected updated"},
+        {"id": "R-03", "category": "success_filter", "conditions": "Usuario escribe en el input de busqueda", "user_sees": "Solo items cuyo titulo contiene el filtro", "side_effects": [], "reversible": true, "final_state": "filtered"},
+        {"id": "R-04", "category": "error_tag_not_found", "conditions": "Acceso a etiqueta con id inexistente via backend", "user_sees": "undefined devuelto por getEtiquetaById", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-05", "category": "error_unassign_no_permission", "conditions": "Cross-store intenta borrar item sin owner check", "user_sees": "Item borrado aunque el caller no es dueno", "side_effects": ["taskStore.remove(id)"], "reversible": false, "final_state": "indeterminado"},
+        {"id": "R-06", "category": "success_picker_render", "conditions": "TagPicker renderiza catalogo filtrado", "user_sees": "Botones por cada etiqueta no seleccionada", "side_effects": [], "reversible": true, "final_state": "rendered"},
+        {"id": "R-07", "category": "success_effect_cleanup", "conditions": "Componente se desmonta", "user_sees": "Interval se limpia solo si el padre desmonta al hijo", "side_effects": ["clearInterval"], "reversible": true, "final_state": "memory leak (bug)"}
+      ],
+      "config": [
+        {"key": "etiquetas.catalogo", "kind": "literal", "default": "['urgente','hogar','trabajo','personal','salud']", "effect": "items del seed"},
+        {"key": "effect.intervalMs", "kind": "literal", "default": "5000", "effect": "heartbeat sin cleanup en TagPicker"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "compartir",
+      "user_description": "El usuario envia un item por email usando un form action con validacion; el servidor crea un share y redirige a /tareas.",
+      "traces": [
+        {"n": 1, "what": "User abre /compartir; +page.server.ts devuelve tareas", "cite": "src/routes/compartir/+page.server.ts:15", "data_in": "-", "data_out": "{tareas: getTareas()}"},
+        {"n": 2, "what": "Render con ShareButton por item", "cite": "src/routes/compartir/+page.svelte:17", "data_in": "tareas", "data_out": "DOM"},
+        {"n": 3, "what": "User completa email y submit; form action ?/compartir", "cite": "src/lib/components/ShareButton.svelte:11", "data_in": "tareaId, email", "data_out": "POST"},
+        {"n": 4, "what": "Server action: zod safeParse -> 400 si invalido", "cite": "src/routes/compartir/+page.server.ts:22", "data_in": "form data", "data_out": "fail(400) o redirect"},
+        {"n": 5, "what": "Server action: target check, addShare, redirect 303", "cite": "src/routes/compartir/+page.server.ts:29", "data_in": "parsed", "data_out": "throw redirect"},
+        {"n": 6, "what": "Client store compartir (cross-store) llama a tasks.remove", "cite": "src/lib/stores/share.svelte.ts:26", "data_in": "tareaId", "data_out": "DELETE logico"}
+      ],
+      "decision_points": [
+        {"id": "DP-006", "file": "src/routes/compartir/+page.server.ts", "line": 22, "kind": "validation", "condition_text": "schema.safeParse(form data)", "branches": [{"label": "ok -> addShare + redirect", "target_line": 31}, {"label": "fail -> 400", "target_line": 27}]},
+        {"id": "DP-007", "file": "src/routes/compartir/+page.server.ts", "line": 29, "kind": "lookup", "condition_text": "target existe", "branches": [{"label": "ok -> addShare", "target_line": 31}, {"label": "404 target_not_found", "target_line": 30}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_share", "conditions": "POST ?/compartir con tareaId existente y email valido", "user_sees": "Redirect 303 a /tareas; nuevo share en backend", "side_effects": ["addShare en db"], "reversible": false, "final_state": "share created"},
+        {"id": "R-02", "category": "error_validation_email", "conditions": "POST ?/compartir con email invalido", "user_sees": "400 con issues: email invalido", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-03", "category": "success_cross_store", "conditions": "shareStore.compartir llama a tasks.remove con el mismo id", "user_sees": "Item desaparece del store principal; share se crea en backend", "side_effects": ["tasks.remove(id)"], "reversible": false, "final_state": "indeterminado"},
+        {"id": "R-04", "category": "success_redirect", "conditions": "Action devuelve throw redirect(303, /tareas)", "user_sees": "Browser navega a /tareas", "side_effects": ["navigation"], "reversible": true, "final_state": "navigated"},
+        {"id": "R-05", "category": "error_share_target_not_found", "conditions": "POST ?/compartir con tareaId inexistente", "user_sees": "404 con error: target_not_found", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_rate_limit", "conditions": "Mas de 5 POSTs en 1 minuto (no implementado)", "user_sees": "Cada POST pasa; no hay rate limit real", "side_effects": ["addShare por cada POST"], "reversible": true, "final_state": "unbounded"},
+        {"id": "R-07", "category": "success_use_enhance", "conditions": "Form submit con use:enhance (no usado aqui; la documentacion lo nombra)", "user_sees": "Submit sin recargar la pagina", "side_effects": [], "reversible": true, "final_state": "no reload"}
+      ],
+      "config": [
+        {"key": "rateLimit.declarado", "kind": "literal", "default": "5/min", "effect": "documentado pero no implementado"},
+        {"key": "schema.email", "kind": "literal", "default": "zod email validator", "effect": "rechaza emails invalidos con 400"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "file_conventions", "where": "src/routes/{+layout.svelte,+layout.server.ts,+page.svelte,tareas/+page.svelte,tareas/+page.server.ts,tareas/[id]/+page.svelte,tareas/[id]/+page.server.ts,etiquetas/+page.svelte,etiquetas/+page.server.ts,compartir/+page.svelte,compartir/+page.server.ts}", "resolution": "SvelteKit usa convenciones: +page.svelte y +page.server.ts para paginas con su server load y actions; +layout.svelte y +layout.server.ts para layout compartido; +server.ts (no usado aqui) para endpoints API puros. La skill debe derivar las rutas y los handlers del nombre de archivo y del sufijo .server.ts."},
+    {"id": "TRAP-E02", "kind": "load_universal_vs_server", "where": "src/routes/+layout.server.ts:9", "resolution": "El layout define un load que corre solo en server (LayoutServerLoad) y devuelve user + tareas. Las paginas pueden tener su propio load (universal) que recibe parent data. La trampa: el load del layout tiene un side effect (seedTareasExtra) que rompe el principio de no-side-effects en load."},
+    {"id": "TRAP-E03", "kind": "form_actions_enhance", "where": "src/routes/tareas/+page.server.ts:19-41 + src/lib/components/TaskForm.svelte:9", "resolution": "Las paginas declaran `actions = { create, delete }` en +page.server.ts y los forms usan `method='POST' action='?/create'` con `use:enhance` para evitar recarga. Trampa: action `?/foo` (inexistente) devuelve 404 silencioso sin redirigir ni mostrar mensaje."},
+    {"id": "TRAP-E04", "kind": "hooks_handle", "where": "src/hooks.server.ts:8-20", "resolution": "El hook global `handle` se ejecuta en CADA peticion. Aqui inyecta locals.user y anade el header x-fx-auth: always. Trampa: nunca falla, asi que cualquier peticion (incluso sin sesion valida) parece 'autenticada'."},
+    {"id": "TRAP-E05", "kind": "runes", "where": "src/lib/components/TagPicker.svelte:10,13,16 + src/routes/etiquetas/+page.svelte:7", "resolution": "Svelte 5 introduce runes ($state, $derived, $effect) que reemplazan a `let` reactivo. Trampa: la etiqueta usa `let` viejo en otra variable que no se actualiza al cambiar $state."},
+    {"id": "TRAP-E06", "kind": "alias_lib", "where": "src/lib/stores/tags.svelte.ts:5 + todos los imports del fixture", "resolution": "SvelteKit provee alias `$lib` (mapea a src/lib), `$env/static/private` para variables de entorno, `$app/forms` (enhance) y `$app/stores` (page). La skill debe notar que `$lib` es un alias y no una convencion propia."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "dead_code_composable", "where": "src/lib/utils/formatDate.ts", "resolution": "Exporta formatDate() que ninguna pagina ni componente invoca. El grep en routes/ y components/ lo confirma."},
+    {"id": "TRAP-P02", "kind": "store_cross_call_semantic", "where": "src/lib/stores/share.svelte.ts:26-44", "resolution": "shareStore.compartir llama a tasks.remove(id) en lugar de notificar o crear un share en el store local. La cross-store semantica es incorrecta: la accion publica borra el item del modulo principal, en vez de crear un nuevo share."},
+    {"id": "TRAP-P03", "kind": "handle_no_auth_check", "where": "src/hooks.server.ts:8-20", "resolution": "El handle inyecta locals.user sin validar la sesion. Cualquier peticion llega al endpoint como 'autenticada'."},
+    {"id": "TRAP-P04", "kind": "effect_memory_leak", "where": "src/lib/components/TagPicker.svelte:16-23", "resolution": "$effect registra un setInterval con cleanup return, pero el cleanup solo se ejecuta al desmontar. El componente se monta muchas veces (en cada ruta que lo usa) y rara vez se desmonta, asi que el interval se queda colgado."},
+    {"id": "TRAP-P05", "kind": "action_not_found_silent", "where": "src/routes/tareas/+page.server.ts:19-41", "resolution": "El bloque `actions = { create, delete }` no incluye una action catch-all ni un redirect. Si el cliente envia a `?/foo`, SvelteKit devuelve 404 sin redirigir ni mostrar mensaje."},
+    {"id": "TRAP-P06", "kind": "load_with_side_effect", "where": "src/routes/+layout.server.ts:14-16", "resolution": "El load del layout llama a seedTareasExtra(1) con probabilidad 0.05 en cada peticion. Esto provoca escrituras inmutables en la base de datos cada vez que el usuario navega."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_code_util", "where": "src/lib/utils/formatDate.ts", "resolution": "formatDate() existe pero nadie lo invoca. El grep en routes/ y components/ lo confirma."},
+    {"id": "TRAP-S02", "kind": "dead_code_function", "where": "src/lib/server/db.ts:80-90", "resolution": "seedTareasExtra(count) existe pero la app no la invoca en su modulo publico. Solo el load del layout la usa como side effect (trampa paquete P06)."},
+    {"id": "TRAP-S03", "kind": "explicit_import_breaks_convention", "where": "src/routes/+page.svelte:6", "resolution": "HiddenPremium se importa con path explicito '$lib/components/HiddenPremium.svelte'. La convencion de SvelteKit es importar desde '$lib/components/HiddenPremium.svelte' (que es lo mismo) pero el dead-import en +page.svelte es explicito."}
+  ],
+  "surfaces": [
+    {"id": "SRF-page-index", "kind": "page", "name": "/", "handler": "src/routes/+page.svelte", "file": "src/routes/+page.svelte"},
+    {"id": "SRF-page-tareas", "kind": "page", "name": "/tareas", "handler": "src/routes/tareas/+page.svelte", "file": "src/routes/tareas/+page.svelte"},
+    {"id": "SRF-page-tareas-id", "kind": "page", "name": "/tareas/:id", "handler": "src/routes/tareas/[id]/+page.svelte", "file": "src/routes/tareas/[id]/+page.svelte"},
+    {"id": "SRF-page-etiquetas", "kind": "page", "name": "/etiquetas", "handler": "src/routes/etiquetas/+page.svelte", "file": "src/routes/etiquetas/+page.svelte"},
+    {"id": "SRF-page-compartir", "kind": "page", "name": "/compartir", "handler": "src/routes/compartir/+page.svelte", "file": "src/routes/compartir/+page.svelte"},
+    {"id": "SRF-action-tareas-create", "kind": "form_action", "name": "POST ?/create", "handler": "src/routes/tareas/+page.server.ts:20", "file": "src/routes/tareas/+page.server.ts"},
+    {"id": "SRF-action-tareas-delete", "kind": "form_action", "name": "POST ?/delete", "handler": "src/routes/tareas/+page.server.ts:34", "file": "src/routes/tareas/+page.server.ts"},
+    {"id": "SRF-action-compartir", "kind": "form_action", "name": "POST ?/compartir", "handler": "src/routes/compartir/+page.server.ts:20", "file": "src/routes/compartir/+page.server.ts"},
+    {"id": "SRF-hook-handle", "kind": "middleware", "name": "hooks.server.ts:handle", "handler": "src/hooks.server.ts:8", "file": "src/hooks.server.ts"},
+    {"id": "SRF-store-tasks", "kind": "store", "name": "tasksStore", "handler": "src/lib/stores/tasks.svelte.ts:12", "file": "src/lib/stores/tasks.svelte.ts"},
+    {"id": "SRF-store-tags", "kind": "store", "name": "tagsStore", "handler": "src/lib/stores/tags.svelte.ts:7", "file": "src/lib/stores/tags.svelte.ts"},
+    {"id": "SRF-store-share", "kind": "store", "name": "shareStore", "handler": "src/lib/stores/share.svelte.ts:15", "file": "src/lib/stores/share.svelte.ts"},
+    {"id": "SRF-comp-task-card", "kind": "component", "name": "TaskCard", "handler": "src/lib/components/TaskCard.svelte:1", "file": "src/lib/components/TaskCard.svelte"},
+    {"id": "SRF-comp-task-form", "kind": "component", "name": "TaskForm", "handler": "src/lib/components/TaskForm.svelte:1", "file": "src/lib/components/TaskForm.svelte"},
+    {"id": "SRF-comp-tag-picker", "kind": "component", "name": "TagPicker", "handler": "src/lib/components/TagPicker.svelte:1", "file": "src/lib/components/TagPicker.svelte"},
+    {"id": "SRF-comp-share-button", "kind": "component", "name": "ShareButton", "handler": "src/lib/components/ShareButton.svelte:1", "file": "src/lib/components/ShareButton.svelte"},
+    {"id": "SRF-comp-hidden-premium", "kind": "component", "name": "HiddenPremium", "handler": "src/lib/components/HiddenPremium.svelte:1", "file": "src/lib/components/HiddenPremium.svelte"}
+  ]
+}

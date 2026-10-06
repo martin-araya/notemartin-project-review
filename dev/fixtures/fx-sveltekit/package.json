@@ -1,0 +1,33 @@
+{
+  "name": "fx-sveltekit",
+  "version": "1.0.0",
+  "description": "Fixture F06k: app SvelteKit con Svelte 5 runes, form actions, hooks.server.ts y stores cross-call. 3 features con 7 R-NN cada una, 6 trampas del ecosistema, 6 del paquete y 3 superficiales.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "check": "svelte-kit sync && svelte-check"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-node": "^5.2.0",
+    "@sveltejs/kit": "^2.5.0",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "svelte": "^5.0.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "@sveltejs/adapter-auto": "^3.2.0",
+    "@testing-library/svelte": "^5.2.0",
+    "happy-dom": "^15.7.4",
+    "sass": "^1.77.8",
+    "svelte-check": "^4.0.0",
+    "typescript": "^5.6.0",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}

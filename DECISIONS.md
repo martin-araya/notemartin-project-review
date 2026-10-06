@@ -1130,3 +1130,65 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: `MATRIX.md` muestra `nuxt` y `vue-spa` cubiertos
   por fx-vue-nuxt. `fixtures_matrix.py --check` sigue con gaps en
   otros ejes (F06k..F06l pendientes, no parte de este trabajo).
+
+### D-201 — Stack del fixture F06k: SvelteKit 2 + Svelte 5 (runes) + adapter-node (F06k)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06k · vigente
+- Contexto: el fixture debe representar un frontend SvelteKit
+  con file-based routing, form actions, hooks y stores Svelte 5
+  con runes. La eleccion del stack afecta a que trampas se
+  pueden plantar (convention de archivos, load universal vs
+  server, form actions con `?/`, hooks.server.ts, $state/$derived/
+  $effect, alias $lib).
+- Decision: SvelteKit 2.5 con Svelte 5 (runes `$state`, `$derived`,
+  `$effect`), `@sveltejs/adapter-node` 5.2 para SSR, TypeScript
+  5.6, Vitest 2.1 + `@testing-library/svelte` 5.2 + `happy-dom`
+  15.7, zod 3.23 para validacion en form actions, sass 1.77.
+- Alternativas: (a) Svelte 4 con stores writable (descartado: el
+  fixture es 2024+ y debe mostrar las runes); (b) Vite puro sin
+  SvelteKit (descartado: se pierden las convenciones de routing);
+  (c) `@sveltejs/adapter-static` (descartado: queremos SSR via
+  adapter-node para mostrar el `hooks.server.ts`).
+- Consecuencias: el fixture requiere `svelte-kit sync` antes de
+  correr los tests para generar `.svelte-kit/`. El paquete
+  `@sveltejs/vite-plugin-svelte` exporta `svelte` (no
+  `sveltekit`); el plugin SvelteKit vive en `@sveltejs/kit/vite`.
+
+### D-202 — Naming: prefijo `NPRGT-FXSVELTE-` para los unique tokens de F06k (F06k)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06k · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture. F06b..F06j usan
+  `FXTS/FXJAVA/FXMONO/FXMIN/FXPOLY/FXREACT/FXNEXT/FXVANILLA/
+  FXVUE`.
+- Decision: prefijo `FXSVELTE` y exactamente 28 tokens. Ninguno
+  aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXKIT` (descartado: ambiguo); (b) `FXSVELTE5`
+  (descartado: demasiado especifico a la version).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de estos
+  tokens aparece en `skills/`. Se anade al allowlist si fuera
+  necesario.
+
+### D-203 — Actualizacion de `target_matrix.yml` y `fixtures_matrix.py` para cubrir sveltekit (F06k)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06k · vigente
+- Contexto: AGENTS §15 dice que relajar o ampliar un umbral del
+  Anexo C requiere al dueno. Anadir `sveltekit` a
+  `target_matrix.yml` cambia el alcance de la matriz objetivo.
+  Ademas, `fixtures_matrix.py` no detectaba `svelte.config.js`
+  ni la dep `@sveltejs/kit` en `package.json`.
+- Decision: anadir `frameworks: [sveltekit]` a
+  `dev/fixtures/target_matrix.yml`. Extender
+  `dev/tools/fixtures_matrix.py` con `@sveltejs/kit` en
+  `PACKAGE_JSON_MARKERS` y `svelte.config.js` en
+  `FRAMEWORK_FILES`. `svelte-spa` sigue en el target (cubre
+  como derivado de SvelteKit).
+- Alternativas: (a) no tocar `target_matrix.yml` (descartado: la
+  matriz quedaria artificialmente incompleta cuando el fixture ya
+  cubre SvelteKit); (b) esperar a F06-cierre (descartado: cierra
+  brechas reales ya existentes).
+- Consecuencias: `MATRIX.md` muestra `sveltekit` y `svelte-spa`
+  cubiertos por fx-sveltekit. `fixtures_matrix.py --check` sigue
+  con gaps en otros ejes (F06l pendiente, no parte de este
+  trabajo).
