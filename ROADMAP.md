@@ -672,8 +672,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` sigue verde.
 - [x] Commit `F06h: fixture fx-nextjs-fullstack con paquete por feature`.
  
-## F06i — Fixture `fx-vanilla-js-legacy`
- 
+## F06i — Fixture `fx-vanilla-js-legacy` ✅
+
 **Objetivo:** aplicación web legacy sin framework moderno, con backend Express antiguo.
 **Stack:** JavaScript ES5, jQuery + plugins, HTML/CSS/SCSS, Gulp, Node + Express con CommonJS.
 **Features:** `búsqueda`, `formulario-de-contacto`, `galería`.
@@ -685,6 +685,21 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Llamadas dinámicas por string (`window[name]()`, `eval`, `new Function`).
 6. HTML generado por concatenación de strings y features ocultas por clases CSS.
 **Toolchain de tests:** Jest + jsdom + supertest, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`busqueda`, `formulario-de-contacto`, `galeria`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: script order, event delegation, inline handlers, prototype mutation, string dispatch, html-concat+css-hide (CC-06).
+- [x] 6 trampas del paquete plantadas y documentadas: registry case mismatch, sanitize unused, XSS via concat, whitelist mismatch, colorbox race, multer threshold mismatch (CC-04).
+- [x] 3 trampas superficiales: deadCode lodash, plugin debounce no usado, getGalleryAsCSV no invocado (CC-05).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones del ground truth en comentarios) en verde.
+- [x] Suite Jest 39 tests passed (8 archivos: api, search, contact, gallery, dispatch, traps_ecosystem, traps_package, traps_superficial + setup).
+- [x] `dev/tests/test_fx_vanilla_js_legacy_ground_truth.py` agregado y verde (74 tests).
+- [x] `MATRIX.md` muestra `jquery` y `gulp` cubiertos por fx-vanilla-js-legacy.
+- [x] `pytest` total 521 passed (447 anteriores + 74 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot,react-spa,nextjs-fullstack}.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `jquery` (framework) y `gulp` (build_system).
+- [x] Commit `F06i: fixture fx-vanilla-js-legacy con paquete por feature`.
  
 ## F06j — Fixture `fx-vue-nuxt`
  

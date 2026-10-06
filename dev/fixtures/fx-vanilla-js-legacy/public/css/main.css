@@ -1,0 +1,39 @@
+/* public/css/main.css */
+* { box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #111827;
+  background: #f9fafb;
+}
+
+header.fx-top {
+  background: #1f2937;
+  color: #fff;
+  padding: 1rem;
+}
+header.fx-top a { color: #fff; text-decoration: none; margin-right: 1rem; }
+header.fx-top button {
+  background: #fff;
+  color: #1f2937;
+  border: 0;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}
+
+main { padding: 1rem; }
+
+footer { padding: 1rem; text-align: center; color: #777; }
+
+ul.fx-results, ul#fx-gallery-list { list-style: none; padding: 0; }
+ul.fx-results li, ul#fx-gallery-list li { padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+
+p.error  { color: #b91c1c; }
+p.ok     { color: #047857; }
+p.info   { color: #0369a1; }
+
+.is-premium { display: none; }
+.no-print   { display: none; }
+.is-archived { opacity: 0.4; }

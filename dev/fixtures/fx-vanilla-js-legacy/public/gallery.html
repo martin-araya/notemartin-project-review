@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>fx-vanilla-js-legacy - Galeria</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="fx-top">
+    <a href="/index.html">Inicio</a>
+    <a href="/search.html">Buscar</a>
+    <a href="/gallery.html">Galeria</a>
+    <a href="/contact.html">Contacto</a>
+  </header>
+
+  <main>
+    <h1>Galeria</h1>
+    <label>Categoria:
+      <select id="fx-gallery-filter">
+        <option value="">Todas</option>
+        <option value="paisajes">Paisajes</option>
+        <option value="urbano">Urbano</option>
+        <option value="detalles">Detalles</option>
+        <option value="premium">Premium</option>
+      </select>
+    </label>
+    <div id="fx-gallery-status"></div>
+    <ul id="fx-gallery-list"></ul>
+  </main>
+
+  <script src="/js/jquery-3.7.1.min.js"></script>
+  <script src="/js/plugins/jquery.colorbox.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/gallery.js"></script>
+</body>
+</html>

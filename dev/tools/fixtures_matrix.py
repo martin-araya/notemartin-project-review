@@ -69,6 +69,7 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
     "go.mod": {"go-modules"},
     "Makefile": {"make"},
     "Dockerfile": {"docker"},
+    "gulpfile.js": {"gulp"},
 }
 
 # Archivos clave de frameworks
@@ -109,6 +110,8 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     # Next.js App Router: ``next`` ya cubre nextjs; anadimos next-auth para
     # distinguir Next.js fullstack de SPA.
     "next-auth": {"nextjs"},
+    # jQuery como dep de runtime: frontend legacy con jQuery (F06i).
+    "jquery": {"jquery"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.

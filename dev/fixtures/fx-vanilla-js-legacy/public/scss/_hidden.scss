@@ -1,0 +1,7 @@
+// public/scss/_hidden.scss
+// Clases que aplican visibilidad reducida a features premium o
+// contenido archivado. La skill debe cruzar el CSS con el JS que
+// las aplica para descubrir el flujo.
+.is-premium { display: none; }
+.no-print   { display: none; }
+.is-archived { opacity: 0.4; }

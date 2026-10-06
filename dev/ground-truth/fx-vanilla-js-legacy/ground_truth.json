@@ -1,0 +1,190 @@
+{
+  "fixture": "fx-vanilla-js-legacy",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-html-index", "artifact": "index.html", "file": "public/index.html"},
+    {"id": "EP-server", "artifact": "server/index.js", "file": "server/index.js"},
+    {"id": "EP-jquery", "artifact": "jquery.min.js", "file": "public/js/jquery-3.7.1.min.js"},
+    {"id": "EP-colorbox", "artifact": "jquery.colorbox.js", "file": "public/js/plugins/jquery.colorbox.js"},
+    {"id": "EP-app", "artifact": "app.js", "file": "public/js/app.js"},
+    {"id": "EP-gulpfile", "artifact": "gulpfile.js", "file": "gulpfile.js"}
+  ],
+  "modules": [
+    {"id": "MOD-server-index", "path": "server/index.js", "summary": "Bootstrap Express: sirve /public, monta /api/{search,contact,gallery}, expone /api/health"},
+    {"id": "MOD-route-search", "path": "server/routes/search.js", "summary": "GET /api/search con ramas full/partial y deteccion de inyeccion"},
+    {"id": "MOD-route-contact", "path": "server/routes/contact.js", "summary": "POST /api/contact con multer, valida email y size de adjunto"},
+    {"id": "MOD-route-gallery", "path": "server/routes/gallery.js", "summary": "GET /api/gallery y /api/gallery/csv con filtro por categoria"},
+    {"id": "MOD-registry", "path": "server/plugins/registry.js", "summary": "Registro de handlers con claves kebab-case (send-email, search, list-gallery)"},
+    {"id": "MOD-handler-send-email", "path": "server/plugins/handlers/sendEmail.js", "summary": "Handler registrado como 'send-email' pero contact.js busca 'sendEmail'"},
+    {"id": "MOD-handler-search", "path": "server/plugins/handlers/searchItems.js", "summary": "Handler de busqueda sobre data/items"},
+    {"id": "MOD-handler-gallery", "path": "server/plugins/handlers/listGallery.js", "summary": "Handler de galeria sobre data/gallery"},
+    {"id": "MOD-data-items", "path": "server/data/items.js", "summary": "20 productos con flag premium"},
+    {"id": "MOD-data-gallery", "path": "server/data/gallery.js", "summary": "12 imagenes en 4 categorias (paisajes, urbano, detalles, premium)"},
+    {"id": "MOD-sanitize", "path": "server/lib/sanitize.js", "summary": "escapeHtml (utilizado solo en la rama full de search)"},
+    {"id": "MOD-deadcode", "path": "server/lib/deadCode.js", "summary": "Reexporta 4 funciones de lodash que nadie invoca"},
+    {"id": "MOD-jquery-colorbox", "path": "public/js/plugins/jquery.colorbox.js", "summary": "Plugin jQuery: anade Array.prototype.shuffle y $.fn.colorbox"},
+    {"id": "MOD-jquery-debounce", "path": "public/js/plugins/jquery.debounce.js", "summary": "Plugin jQuery no usado: $.fn.debounce"},
+    {"id": "MOD-app", "path": "public/js/app.js", "summary": "window.App con whitelist camelCase (openSearch, loadGallery, submitContact)"},
+    {"id": "MOD-search-js", "path": "public/js/search.js", "summary": "Busqueda con delegacion en document y toggle de .is-premium"},
+    {"id": "MOD-contact-js", "path": "public/js/contact.js", "summary": "POST /api/contact por fetch y submitContact global"},
+    {"id": "MOD-gallery-js", "path": "public/js/gallery.js", "summary": "Render de galeria con $.fn.colorbox y filtro por categoria"},
+    {"id": "MOD-dispatch-js", "path": "public/js/dispatch.js", "summary": "AppCall con whitelist y exposicion de AppKnownActions"},
+    {"id": "MOD-hidden-scss", "path": "public/scss/_hidden.scss", "summary": "Clases que ocultan features (.is-premium, .no-print, .is-archived)"}
+  ],
+  "dependencies": [
+    {"name": "express", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "jquery", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "jquery-colorbox", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "lodash", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "multer", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "validator", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "gulp", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "gulp-rename", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "gulp-sass", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "gulp-uglify", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "jest", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "jest-environment-jsdom", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "sass", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "supertest", "scope": "dev", "manifest": "package.json (devDependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "busqueda",
+      "user_description": "El usuario escribe un termino en el formulario y ve una lista de productos coincidentes; los productos premium se ocultan visualmente.",
+      "traces": [
+        {"n": 1, "what": "User submits #fx-search-form (delegado en document)", "cite": "public/js/search.js:8", "data_in": "q string", "data_out": "submit event"},
+        {"n": 2, "what": "search.js preventDefault y lee q del input", "cite": "public/js/search.js:9-11", "data_in": "form values", "data_out": "q string"},
+        {"n": 3, "what": "Validacion local: q vacio -> mensaje de error inline", "cite": "public/js/search.js:13-15", "data_in": "q empty", "data_out": "error message"},
+        {"n": 4, "what": "GET /api/search?q= -> handler de busqueda", "cite": "public/js/search.js:17", "data_in": "q", "data_out": "JSON {html, count}"},
+        {"n": 5, "what": "Rama full: items.match con sanitize.escapeHtml", "cite": "server/routes/search.js:38-41", "data_in": "items[]", "data_out": "<li> escapado"},
+        {"n": 6, "what": "Rama partial (<3 chars): items.match con concatenacion directa", "cite": "server/routes/search.js:24-33", "data_in": "items[]", "data_out": "<li> sin escape"},
+        {"n": 7, "what": "Render en #fx-search-output y toggle de title en li.is-premium", "cite": "public/js/search.js:22-25", "data_in": "html", "data_out": "DOM con ul.fx-results"},
+        {"n": 8, "what": "Click en #fx-open-search-link -> window.App.run('open-search')", "cite": "public/js/search.js:35-40", "data_in": "click", "data_out": "unknown_action sentinel"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "public/js/search.js", "line": 13, "kind": "validation", "condition_text": "q vacio o solo espacios", "branches": [{"label": "render error inline", "target_line": 14}, {"label": "continuar a GET", "target_line": 17}]},
+        {"id": "DP-002", "file": "server/routes/search.js", "line": 24, "kind": "length", "condition_text": "lower.length < 3", "branches": [{"label": "partial (sin escape)", "target_line": 25}, {"label": "full (con escape)", "target_line": 35}]},
+        {"id": "DP-003", "file": "public/js/app.js", "line": 19, "kind": "whitelist", "condition_text": "name in AppActions (camelCase)", "branches": [{"label": "ejecuta handler", "target_line": 20}, {"label": "unknown_action", "target_line": 22}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_results", "conditions": "q tiene 3+ caracteres y matchea productos", "user_sees": "Lista de productos con nombre, precio EUR y (ocultos) los premium", "side_effects": ["GET /api/search"], "reversible": true, "final_state": "results rendered"},
+        {"id": "R-02", "category": "success_empty", "conditions": "q de 3+ chars sin coincidencias", "user_sees": "Lista vacia, count=0", "side_effects": [], "reversible": true, "final_state": "empty results"},
+        {"id": "R-03", "category": "success_partial", "conditions": "q de menos de 3 caracteres", "user_sees": "HTML inline con resultados parciales (sin escape)", "side_effects": ["GET /api/search?mode=partial"], "reversible": true, "final_state": "partial html"},
+        {"id": "R-04", "category": "error_xss_attempt", "conditions": "q contiene <, > o \"", "user_sees": "Status 400, error: q_invalid", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-05", "category": "error_validation_q_missing", "conditions": "q vacio o solo espacios", "user_sees": "Mensaje 'Escribe un termino.' (frontend) o 400 q_missing (backend)", "side_effects": [], "reversible": true, "final_state": "validation shown"},
+        {"id": "R-06", "category": "error_server_500", "conditions": "Server error no controlado", "user_sees": "Mensaje 'Error de red' en el frontend", "side_effects": [], "reversible": true, "final_state": "error visible"},
+        {"id": "R-07", "category": "success_hidden_premium", "conditions": "q matchea un producto con premium=true", "user_sees": "El <li> aparece en el HTML pero con clase is-premium (oculto por CSS)", "side_effects": [], "reversible": true, "final_state": "premium hidden"}
+      ],
+      "config": [
+        {"key": "limits.q.maxLength", "kind": "implicit", "default": "ilimitado", "effect": "q se acepta sin tope explicito"},
+        {"key": "partialThreshold", "kind": "literal", "default": "3", "effect": "longitud minima para activar la rama full (con escape)"},
+        {"key": "injectionRegex", "kind": "literal", "default": "/[<\">]/", "effect": "bloquea caracteres potencialmente peligrosos"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "formulario-de-contacto",
+      "user_description": "El usuario envia un email con un mensaje y opcionalmente un adjunto; el servidor lo procesa con multer y valida el tamano.",
+      "traces": [
+        {"n": 1, "what": "User submits #fx-contact-form (delegado en document)", "cite": "public/js/contact.js:8", "data_in": "email, message, attachment", "data_out": "submit event"},
+        {"n": 2, "what": "Frontend construye FormData y hace POST /api/contact", "cite": "public/js/contact.js:9-14", "data_in": "FormData", "data_out": "fetch request"},
+        {"n": 3, "what": "Backend valida email con validator.isEmail", "cite": "server/routes/contact.js:20", "data_in": "body.email", "data_out": "boolean"},
+        {"n": 4, "what": "Backend busca handler en registry por 'sendEmail' (camelCase)", "cite": "server/routes/contact.js:27", "data_in": "string key", "data_out": "function|null"},
+        {"n": 5, "what": "Registry no encuentra 'sendEmail'; devuelve 500 handler_not_found", "cite": "server/routes/contact.js:28-31", "data_in": "null", "data_out": "500 error"},
+        {"n": 6, "what": "Si hay adjunto: comprueba size > 500 KB", "cite": "server/routes/contact.js:34-37", "data_in": "file.size", "data_out": "413 attachment_too_large_v2"},
+        {"n": 7, "what": "Si multer rechazo el archivo (>1MB), la peticion no llega al handler", "cite": "server/routes/contact.js:11", "data_in": "fileSize limit", "data_out": "multer error"},
+        {"n": 8, "what": "Sin adjunto: responde 200 no_attachment", "cite": "server/routes/contact.js:38-40", "data_in": "no file", "data_out": "200 ok"},
+        {"n": 9, "what": "Frontend muestra el mensaje del servidor con clase ok/error/info", "cite": "public/js/contact.js:16-20", "data_in": "response JSON", "data_out": "<p> con mensaje"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "server/routes/contact.js", "line": 20, "kind": "validation", "condition_text": "validator.isEmail(body.email)", "branches": [{"label": "400 invalid_email", "target_line": 21}, {"label": "continuar", "target_line": 27}]},
+        {"id": "DP-005", "file": "server/routes/contact.js", "line": 27, "kind": "lookup", "condition_text": "registry.get('sendEmail')", "branches": [{"label": "500 handler_not_found", "target_line": 30}, {"label": "ejecuta handler", "target_line": 34}]},
+        {"id": "DP-006", "file": "server/routes/contact.js", "line": 34, "kind": "size", "condition_text": "file.size > 500*1024", "branches": [{"label": "413 attachment_too_large_v2", "target_line": 35}, {"label": "continuar", "target_line": 38}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_submit", "conditions": "email valido, sin adjunto", "user_sees": "Mensaje 200 con mode=no_attachment", "side_effects": ["POST /api/contact"], "reversible": true, "final_state": "submitted"},
+        {"id": "R-02", "category": "success_with_attachment", "conditions": "email valido, adjunto <= 500 KB", "user_sees": "Mensaje 200 con mode=with_attachment y size", "side_effects": ["POST /api/contact"], "reversible": true, "final_state": "submitted"},
+        {"id": "R-03", "category": "error_invalid_email", "conditions": "email vacio o formato invalido", "user_sees": "Status 400, error: invalid_email", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "error_attachment_too_large_v2", "conditions": "adjunto entre 500 KB y 1 MB", "user_sees": "Status 413, error: attachment_too_large_v2, 'Adjunto excede 500 KB'", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-05", "category": "error_attachment_too_large_v1", "conditions": "adjunto > 1 MB", "user_sees": "Status 413 devuelto por multer antes del handler", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "success_eval_branch", "conditions": "data-action='eval-test' provoca eval() controlado", "user_sees": "Resultado del eval, en este caso unknown_action", "side_effects": ["eval()"], "reversible": true, "final_state": "noop"},
+        {"id": "R-07", "category": "error_handler_not_found", "conditions": "registry no contiene 'sendEmail'", "user_sees": "Status 500, error: handler_not_found, 'Handler sendEmail no registrado'", "side_effects": [], "reversible": false, "final_state": "server error"}
+      ],
+      "config": [
+        {"key": "multer.limits.fileSize", "kind": "literal", "default": "1048576", "effect": "1 MB; multer rechaza antes del handler"},
+        {"key": "internal.sizeThreshold", "kind": "literal", "default": "512000", "effect": "500 KB; validacion secundaria en el handler"},
+        {"key": "registry.sendEmailKey", "kind": "literal", "default": "'sendEmail'", "effect": "clave buscada (no coincide con 'send-email' registrada)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "galeria",
+      "user_description": "El usuario ve una cuadricula de imagenes con filtro por categoria; al hacer click se abre un lightbox.",
+      "traces": [
+        {"n": 1, "what": "User abre gallery.html y DOMContentLoaded dispara $(document).ready", "cite": "public/js/gallery.js:24", "data_in": "DOM", "data_out": "ready handler"},
+        {"n": 2, "what": "Validacion: $.fn.colorbox es funcion", "cite": "public/js/gallery.js:25-27", "data_in": "$.fn", "data_out": "boolean"},
+        {"n": 3, "what": "Si no: render mensaje 'Gallery no disponible' y abort", "cite": "public/js/gallery.js:26", "data_in": "false", "data_out": "DOM update"},
+        {"n": 4, "what": "Si si: GET /api/gallery y render de la lista", "cite": "public/js/gallery.js:30-33", "data_in": "items[]", "data_out": "<li> con <img>"},
+        {"n": 5, "what": "colorbox() engancha el evento click en cada anchor", "cite": "public/js/gallery.js:32", "data_in": "anchor elements", "data_out": "click handlers"},
+        {"n": 6, "what": "User cambia filtro de categoria", "cite": "public/js/gallery.js:37-42", "data_in": "category", "data_out": "GET /api/gallery?category=..."},
+        {"n": 7, "what": "Re-render de la lista sin re-enganchar colorbox", "cite": "public/js/gallery.js:40", "data_in": "filtered items", "data_out": "new <li>s"},
+        {"n": 8, "what": "Click en anchor dispara el custom event fxcolorbox:open", "cite": "public/js/plugins/jquery.colorbox.js:21-26", "data_in": "click", "data_out": "CustomEvent"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "public/js/gallery.js", "line": 25, "kind": "feature_detection", "condition_text": "typeof $.fn.colorbox === 'function'", "branches": [{"label": "mostrar 'Gallery no disponible'", "target_line": 26}, {"label": "continuar a GET", "target_line": 30}]},
+        {"id": "DP-008", "file": "server/routes/gallery.js", "line": 21, "kind": "filter", "condition_text": "category query param", "branches": [{"label": "filtra items por categoria", "target_line": 22}, {"label": "devuelve todos", "target_line": 22}]},
+        {"id": "DP-009", "file": "public/js/gallery.js", "line": 37, "kind": "event_delegation", "condition_text": "change en #fx-gallery-filter", "branches": [{"label": "GET con category", "target_line": 39}, {"label": "GET sin category", "target_line": 39}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load", "conditions": "GET /api/gallery devuelve 12 items", "user_sees": "Cuadricula con 12 imagenes y colorbox enganchado", "side_effects": ["GET /api/gallery"], "reversible": true, "final_state": "gallery loaded"},
+        {"id": "R-02", "category": "success_filter_category", "conditions": "Usuario selecciona 'premium'", "user_sees": "Lista filtrada a 3 imagenes de la categoria premium", "side_effects": ["GET /api/gallery?category=premium"], "reversible": true, "final_state": "filtered"},
+        {"id": "R-03", "category": "success_colorbox_open", "conditions": "Usuario hace click en un anchor con $.fn.colorbox cargado", "user_sees": "Disparo del custom event fxcolorbox:open (lightbox simulado)", "side_effects": ["CustomEvent"], "reversible": true, "final_state": "lightbox opened"},
+        {"id": "R-04", "category": "success_hidden_premium", "conditions": "Categoria 'premium' seleccionada", "user_sees": "Imagenes mostradas sin clase (no estan dentro de fx-search-output)", "side_effects": [], "reversible": true, "final_state": "premium visible"},
+        {"id": "R-05", "category": "error_colorbox_not_loaded", "conditions": "Plugin jQuery no esta cargado (reorden de scripts)", "user_sees": "Mensaje 'Gallery no disponible (plugin no cargado).'", "side_effects": [], "reversible": true, "final_state": "feature disabled"},
+        {"id": "R-06", "category": "success_csv_branch_noop", "conditions": "Acceso a /api/gallery/csv", "user_sees": "Texto CSV con id,src,alt por linea", "side_effects": ["GET /api/gallery/csv"], "reversible": true, "final_state": "csv downloaded"},
+        {"id": "R-07", "category": "error_image_404", "conditions": "Imagen con src que no existe en /public/img/", "user_sees": "Cuadricula con <img> roto (placeholder nativo del navegador)", "side_effects": ["404 implicit"], "reversible": true, "final_state": "broken image"}
+      ],
+      "config": [
+        {"key": "categories", "kind": "literal", "default": "['paisajes','urbano','detalles','premium']", "effect": "conjunto de filtros disponibles en el <select>"},
+        {"key": "colorbox_event", "kind": "literal", "default": "'fxcolorbox:open'", "effect": "evento disparado por el plugin; lo escucha app.js"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "script_order", "where": "public/index.html:30-37", "resolution": "El orden de los <script> (jquery -> colorbox -> app -> gallery) es obligatorio. Si un bundler ingenuo los reordena, $.fn.colorbox queda undefined y la galeria falla con 'Gallery no disponible'. La skill debe leer los <script> en orden y comprobar dependencias."},
+    {"id": "TRAP-E02", "kind": "event_delegation", "where": "public/js/search.js:8 + public/js/gallery.js:37", "resolution": "Los handlers de submit y change estan enganchados a document con selectores lejanos (#fx-search-form, #fx-gallery-filter), no a los elementos directamente. Buscar handlers en el HTML no los encuentra."},
+    {"id": "TRAP-E03", "kind": "inline_handlers", "where": "public/index.html:16", "resolution": "El boton superior usa onclick='window.App.run(\"loadGallery\")'. El handler es un string en el HTML, no un .addEventListener. La skill debe parsear atributos onclick."},
+    {"id": "TRAP-E04", "kind": "prototype_mutation", "where": "public/js/plugins/jquery.colorbox.js:7-15", "resolution": "El plugin anade Array.prototype.shuffle (modifica el prototipo global) y $.fn.colorbox (anade a todos los jQuery objects). Cualquier analisis de 'metodos disponibles' debe considerar monkey-patching."},
+    {"id": "TRAP-E05", "kind": "string_dispatch", "where": "public/js/dispatch.js:11-19 + public/js/app.js:18-23", "resolution": "AppCall(name) y App.run(name) resuelven nombres de funciones por string. La whitelist usa camelCase (openSearch, loadGallery, submitContact); el HTML usa data-action en kebab-case (open-search). App.run('open-search') devuelve 'unknown_action'."},
+    {"id": "TRAP-E06", "kind": "html_concat_css_hide", "where": "public/scss/_hidden.scss:5 + public/js/search.js:23 + server/routes/search.js:29,39", "resolution": "El backend anade la clase is-premium a <li> de productos premium. El CSS en _hidden.scss define .is-premium { display: none }. El JS en search.js anade un title='Contenido premium' a esos <li>. La skill debe cruzar SCSS, JS de cliente y la respuesta JSON del backend."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "registry_case_mismatch", "where": "server/plugins/registry.js:9 + server/routes/contact.js:27", "resolution": "El handler se registra bajo 'send-email' (kebab) pero contact.js lo busca como 'sendEmail' (camel). El handler real nunca se invoca; la peticion cae en el bloque 500 handler_not_found."},
+    {"id": "TRAP-P02", "kind": "sanitize_unused", "where": "server/lib/sanitize.js + server/routes/search.js:24-33", "resolution": "lib/sanitize.js exporta escapeHtml y la rama full de search la usa, pero la rama partial (lower.length < 3) concatena HTML sin escapar. Un termino corto con <script> se refleja en el HTML devuelto."},
+    {"id": "TRAP-P03", "kind": "xss_via_concat", "where": "server/routes/search.js:29-30", "resolution": "En la rama partial, it.name se concatena directamente. La sanitizacion solo se aplica en la rama full. La skill debe notar la inconsistencia."},
+    {"id": "TRAP-P04", "kind": "whitelist_mismatch", "where": "public/js/app.js:12-16 + public/index.html:24", "resolution": "El whitelist AppActions usa camelCase (openSearch, loadGallery, submitContact); el HTML usa data-action en kebab-case (open-search). App.run('open-search') devuelve 'unknown_action'."},
+    {"id": "TRAP-P05", "kind": "colorbox_race", "where": "public/js/gallery.js:25-28", "resolution": "gallery.js valida typeof $.fn.colorbox antes de usarlo. Si el orden de scripts cambia y el plugin no esta cargado, se muestra 'Gallery no disponible' y la feature queda inerte."},
+    {"id": "TRAP-P06", "kind": "multer_threshold_mismatch", "where": "server/routes/contact.js:11,34", "resolution": "multer acepta hasta 1 MB (linea 11) pero la validacion interna rechaza > 500 KB (linea 34). Hay un gap entre 500 KB y 1 MB donde multer deja pasar pero el handler rechaza con attachment_too_large_v2."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_code", "where": "server/lib/deadCode.js", "resolution": "Reexporta uniqueId, deburr, template, shuffle de lodash. Ninguna ruta ni modulo las invoca."},
+    {"id": "TRAP-S02", "kind": "unused_plugin", "where": "public/js/plugins/jquery.debounce.js", "resolution": "Define $.fn.debounce. El grep en public/ (tests/traps_superficial.test.js) confirma que ningun archivo lo invoca."},
+    {"id": "TRAP-S03", "kind": "dead_endpoint_export", "where": "server/routes/gallery.js:15-18", "resolution": "getGalleryAsCSV() existe y se exporta en module.exports, pero index.js solo monta galleryModule.router. La funcion queda accesible para quien importe el modulo, pero nadie lo hace."}
+  ],
+  "surfaces": [
+    {"id": "SRF-api-health", "kind": "http", "name": "GET /api/health", "handler": "server/index.js:25-28", "file": "server/index.js"},
+    {"id": "SRF-api-search", "kind": "http", "name": "GET /api/search", "handler": "server/routes/search.js:15", "file": "server/routes/search.js"},
+    {"id": "SRF-api-contact", "kind": "http", "name": "POST /api/contact", "handler": "server/routes/contact.js:16", "file": "server/routes/contact.js"},
+    {"id": "SRF-api-gallery", "kind": "http", "name": "GET /api/gallery", "handler": "server/routes/gallery.js:20", "file": "server/routes/gallery.js"},
+    {"id": "SRF-api-gallery-csv", "kind": "http", "name": "GET /api/gallery/csv", "handler": "server/routes/gallery.js:26", "file": "server/routes/gallery.js"},
+    {"id": "SRF-page-index", "kind": "page", "name": "/index.html", "handler": "public/index.html", "file": "public/index.html"},
+    {"id": "SRF-page-search", "kind": "page", "name": "/search.html", "handler": "public/search.html", "file": "public/search.html"},
+    {"id": "SRF-page-contact", "kind": "page", "name": "/contact.html", "handler": "public/contact.html", "file": "public/contact.html"},
+    {"id": "SRF-page-gallery", "kind": "page", "name": "/gallery.html", "handler": "public/gallery.html", "file": "public/gallery.html"},
+    {"id": "SRF-event-colorbox", "kind": "event", "name": "fxcolorbox:open", "handler": "public/js/plugins/jquery.colorbox.js:25", "file": "public/js/plugins/jquery.colorbox.js"},
+    {"id": "SRF-event-delegated-click", "kind": "event", "name": "click [data-action]", "handler": "public/js/app.js:33-36", "file": "public/js/app.js"},
+    {"id": "SRF-event-delegated-submit-search", "kind": "event", "name": "submit #fx-search-form", "handler": "public/js/search.js:8-27", "file": "public/js/search.js"},
+    {"id": "SRF-event-delegated-submit-contact", "kind": "event", "name": "submit #fx-contact-form", "handler": "public/js/contact.js:8-25", "file": "public/js/contact.js"}
+  ]
+}

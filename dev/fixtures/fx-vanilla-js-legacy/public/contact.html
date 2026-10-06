@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>fx-vanilla-js-legacy - Contacto</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <header class="fx-top">
+    <a href="/index.html">Inicio</a>
+    <a href="/search.html">Buscar</a>
+    <a href="/gallery.html">Galeria</a>
+    <a href="/contact.html">Contacto</a>
+  </header>
+
+  <main>
+    <h1>Contacto</h1>
+    <form id="fx-contact-form" action="/api/contact" method="post" enctype="multipart/form-data">
+      <label>Email: <input type="email" name="email" required></label><br>
+      <label>Mensaje: <textarea name="message" required></textarea></label><br>
+      <label>Adjunto (opcional): <input type="file" name="attachment"></label><br>
+      <button type="submit">Enviar</button>
+    </form>
+    <div id="fx-contact-output"></div>
+  </main>
+
+  <script src="/js/jquery-3.7.1.min.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/contact.js"></script>
+</body>
+</html>

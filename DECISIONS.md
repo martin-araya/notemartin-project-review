@@ -1017,3 +1017,54 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas consideradas:
 - Consecuencias:
 ```
+### D-195 — Stack del fixture F06i: Node 22 + Express 4 CommonJS + jQuery 3.7 (F06i)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06i · vigente
+- Contexto: el fixture debe representar un frontend legacy ES5 + jQuery con
+  backend Express. La eleccion del stack afecta a que trampas se pueden
+  plantar.
+- Decisión: Node 22 LTS, Express 4.x en CommonJS (sin `"type": "module"`),
+  jQuery 3.7.1 servido como estatico (no se require), plugin colorbox
+  custom (no el paquete npm) que hace monkey-patching, plugin debounce
+  custom no usado, validator para emails, multer 1.x para adjuntos,
+  lodash 4.x con 4 funciones reexportadas y ninguna usada.
+- Alternativas: (a) Yarn pnp (descartado: añade complejidad sin valor);
+  (b) Vite como bundler (descartado: el fixture es legacy, no debe
+  compilarse); (c) jQuery UI (descartado: solo queremos $.fn.colorbox
+  custom para plantar la trampa de monkey-patching).
+- Consecuencias: la suite de tests usa Jest 29 + jest-environment-jsdom
+  + supertest. `tests/api.test.js` declara `@jest-environment node` para
+  evitar problemas con TextEncoder en jsdom.
+
+### D-196 — Naming: prefijo `NPRGT-FXVANILLA-` para los unique tokens de F06i (F06i)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06i · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-` para los
+  unique tokens de cada fixture. F06b..F06h usan `FXTS`, `FXJAVA`,
+  `FXMONO`, `FXMIN`, `FXPOLY`, `FXREACT`, `FXNEXT`.
+- Decisión: prefijo `FXVANILLA` y exactamente 28 tokens. Ninguno aparece
+  en el codigo del fixture (verificado por `TestUniqueTokensFile`).
+- Alternativas: (a) `FXJQUERY` (descartado: el fixture cubre Express
+  ademas de jQuery); (b) `FXLEGACY` (descartado: generico y facil de
+  colisionar con F06bj `fx-git-history`).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de estos tokens
+  aparece en `skills/`. Se anade al allowlist si fuera necesario (D-198).
+
+### D-197 — Actualizacion de `target_matrix.yml` y `fixtures_matrix.py` para cubrir jquery y gulp (F06i)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06i · vigente
+- Contexto: AGENTS §15 dice que relajar o ampliar un umbral del Anexo C
+  requiere al dueno. Anadir `jquery` y `gulp` a `target_matrix.yml`
+  cambia el alcance de la matriz objetivo.
+- Decisión: anadir `frameworks: [jquery]` y `build_systems: [gulp]` a
+  `dev/fixtures/target_matrix.yml`. Extender
+  `dev/tools/fixtures_matrix.py` para detectar `gulpfile.js` (via
+  `MANIFEST_BUILD`) y `jquery` (via `PACKAGE_JSON_MARKERS`).
+- Alternativas: (a) no tocar `target_matrix.yml` y reportar `jquery` y
+  `gulp` como gaps conocidos (descartado: la matriz quedaria
+  artificialmente incompleta cuando el fixture ya los cubre); (b)
+  esperar a F06-cierre (descartado: cierra brechas reales ya
+  existentes).
+- Consecuencias: `MATRIX.md` muestra `jquery` y `gulp` cubiertos por
+  fx-vanilla-js-legacy. `fixtures_matrix.py --check` sigue con 20 gaps
+  en otros ejes (F06g..F06l pendientes, no parte de este trabajo).

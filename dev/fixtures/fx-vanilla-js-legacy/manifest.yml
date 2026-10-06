@@ -1,0 +1,16 @@
+# Metadata del fixture F06i: fx-vanilla-js-legacy
+# Aplicacion web legacy sin framework moderno: ES5 + jQuery + plugins + HTML/CSS/SCSS
+# + Gulp, con backend Express en CommonJS. Ver referencias a las trampas del
+# ecosistema y del paquete en dev/ground-truth/fx-vanilla-js-legacy/ground_truth.json.
+name: fx-vanilla-js-legacy
+description: App web legacy ES5 + jQuery + Express con 6 trampas de orden, delegacion, monkey-patching y string dispatch (F06i)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: npm test -- --runInBand --verbose
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-vanilla-js-legacy
+  enabled: true
+ground_truth_format_version: 1
