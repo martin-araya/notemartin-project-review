@@ -1,0 +1,13 @@
+node_modules/
+.turbo/
+.pnpm-store/
+dist/
+.angular/
+coverage/
+*.log
+.DS_Store
+
+# pnpm install artifacts
+node_modules/
+.pnpm-store/
+.turbo/

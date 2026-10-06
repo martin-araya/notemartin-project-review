@@ -1,0 +1,16 @@
+# Metadata del fixture F06d: fx-monorepo
+# Workspace pnpm con Angular (apps/web), Fastify (apps/api) y libreria compartida
+# (libs/shared), orquestado con Turborepo. Toda la verificacion se hace en
+# contenedor node:22-bookworm-slim.
+name: fx-monorepo
+description: Monorepo pnpm con Angular + Fastify + libreria compartida, orquestado con Turborepo (F06d)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: pnpm test --filter @fx-mono/shared --filter @fx-mono/api --filter @fx-mono/web
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-monorepo
+  enabled: true
+ground_truth_format_version: 1

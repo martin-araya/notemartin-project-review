@@ -608,6 +608,92 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: `MATRIX.md` ahora muestra `micronaut` cubierto por
   `fx-java-micronaut`, alineado con la realidad.
 
+### D-174 — Stack del fixture F06d: pnpm 9 + Angular 19 + Fastify 5 + Turborepo 2
+
+- Fecha · Fase · Estado: 2026-10-06 · F06d · vigente
+- Contexto: F06d requiere workspace pnpm con Angular (standalone + signals),
+  Fastify (Node API) y libreria compartida, orquestado con Nx o Turborepo.
+- Decisión: stack = pnpm 9 (workspaces), Angular 19, Fastify 5, Turborepo 2
+  (no Nx, mas compatible), Vitest 1, zod 3, js-yaml (solo runtime de apps/api).
+  Imagen `node:22-bookworm-slim` con corepack + pnpm 9.12.0.
+- Alternativas: (a) Nx (descartado: mas complejo, mismo resultado);
+  (b) Turborepo basico (descartado: nos da tasks y cache, suficiente);
+  (c) Yarn workspaces (descartado: pnpm es el estandar de la comunidad
+  Angular y mas rapido). Descartado: pnpm + Turbo es el combo mas
+  representativo.
+- Consecuencias: el harness `run_fixture_tests.py` corre con
+  `container.enabled: true` y `--container` flag; el host de desarrollo
+  no necesita node/pnpm/turbo.
+
+### D-175 — Smoke tests para Angular en vez de Karma + Chromium (F06d)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06d · vigente
+- Contexto: F06d tiene una app Angular 19 completa. El spec menciona
+  "Jest/Vitest + Karma headless" pero Karma requiere un browser
+  (Chromium/Firefox) en el contenedor, lo que suma ~500MB a la imagen.
+- Decisión: usar Vitest con smoke tests que importan los modulos Angular
+  via Node (sin TestBed, sin browser). Los tests verifican la existencia
+  de clases, anotaciones (`@Component`, `CanActivateFn`, `HttpInterceptorFn`),
+  declaraciones de `loadComponent`/`withInterceptors`/`effect()`, y el
+  contenido del codigo fuente. No renderizan componentes.
+- Alternativas: (a) `@analogjs/vitest-angular` con TestBed (descartado:
+  requiere un browser para algunas operaciones); (b) Angular CLI +
+  Karma headless con Chromium (descartado: peso y complejidad).
+  Descartado: los smoke tests cubren las 6 trampas del ecosistema y
+  las 6 de paquete sin browser.
+- Consecuencias: el contenedor no necesita Chromium; la suite corre en
+  ~1s vs ~30s con Angular TestBed.
+
+### D-176 — `fastify-plugin` para escapar el encapsulamiento de Fastify (F06d)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06d · vigente
+- Contexto: Fastify 5 encapsula los plugins por defecto. Si registras
+  un plugin en el root y luego registras una ruta con `prefix`, el hook
+  del plugin no se aplica a esa ruta. Esto rompe el `authPlugin` que
+  setea `userId` en cada request.
+- Decisión: usar `fastify-plugin` (wrapper oficial) para que el
+  `authPlugin` aplique a TODAS las rutas registradas posteriormente.
+  El plugin declara `userId` en la request y agrega un `onRequest` hook
+  que lee `Authorization` y setea `userId` deterministico.
+- Alternativas: (a) declarar el hook en cada route file (descartado:
+  duplicacion); (b) usar `app.addHook` directamente en `main.ts` (descartado:
+  queda fuera del plugin y se pierde la composicion).
+  Descartado: `fastify-plugin` es la forma canonica.
+- Consecuencias: el plugin de auth es reusable y se testea de forma
+  aislada con `app.inject`.
+
+### D-177 — `z.coerce.number()` para query params (F06d)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06d · vigente
+- Contexto: Fastify parsea los query params como strings (no como numeros).
+  Si el schema de zod declara `z.number()`, la validacion falla con
+  "expected number, received string".
+- Decisión: usar `z.coerce.number()` en `listingFiltersSchema` y
+  `exportRequestSchema` para que los strings de query se conviertan
+  automaticamente. La coercion es explicita y no tiene side-effects.
+- Alternativas: (a) `preValidation` hook que convierta `request.query`
+  antes del schema (descartado: mas codigo y menos legible); (b) hacer
+  la coercion manual con `Number()` (descartado: fragil con NaN).
+  Descartado: `z.coerce.number()` es el patron estandar de zod.
+- Consecuencias: las rutas aceptan `?minPrice=100000&maxPrice=300000`
+  directamente; el error rate es menor.
+
+### D-178 — `ts` cubre `javascript` en el detector de `fixtures_matrix.py`
+
+- Fecha · Fase · Estado: 2026-10-06 · F06d · vigente
+- Contexto: F06d es TypeScript puro. No emite `.js` (el build de
+  Angular CLI no se ejecuta en el fixture). El detector original de
+  `fixtures_matrix.py` solo reconocia `.js` como `javascript`, por lo que
+  `MATRIX.md` mostraba `javascript` como "falta" para F06d.
+- Decisión: agregar `javascript` a la lista de lenguajes que cubre `.ts`
+  en `EXT_LANG`. TypeScript compila a JavaScript y un proyecto TS es
+  un superset del ecosistema JS; tiene sentido que cubra ambos.
+- Alternativas: (a) requerir un `.js` generado en el fixture (descartado:
+  anadiria un archivo compilado al repo); (b) aceptar el `falta` (descartado:
+  confunde a la matriz de cobertura). Descartado.
+- Consecuencias: `MATRIX.md` ahora muestra `javascript` cubierto por
+  `fx-monorepo` y `fx-ts-agent-extension`.
+
 ## Plantilla para nuevas decisiones
 
 ```

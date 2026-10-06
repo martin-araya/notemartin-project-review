@@ -1,0 +1,192 @@
+{
+  "fixture": "fx-monorepo",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-api", "file": "apps/api/src/main.ts", "line": 24, "function": "listen", "kind": "script"},
+    {"id": "EP-web", "file": "apps/web/src/main.ts", "line": 11, "function": "bootstrap", "kind": "script"}
+  ],
+  "modules": [
+    {"id": "MOD-api-main", "path": "apps/api/src/main.ts", "summary": "Fastify bootstrap con register de plugins y rutas"},
+    {"id": "MOD-api-login", "path": "apps/api/src/routes/login.ts", "summary": "POST /api/login con validacion zod"},
+    {"id": "MOD-api-listings", "path": "apps/api/src/routes/listings.ts", "summary": "GET /api/listings con filtros"},
+    {"id": "MOD-api-export", "path": "apps/api/src/routes/export.ts", "summary": "POST /api/export con filtros"},
+    {"id": "MOD-api-auth", "path": "apps/api/src/plugins/auth.ts", "summary": "Fastify plugin: lee Authorization y setea userId"},
+    {"id": "MOD-api-schemas", "path": "apps/api/src/schemas.ts", "summary": "zod schemas reutilizables"},
+    {"id": "MOD-web-main", "path": "apps/web/src/main.ts", "summary": "Angular bootstrap entry point"},
+    {"id": "MOD-web-config", "path": "apps/web/src/app/app.config.ts", "summary": "appConfig con providers (withInterceptors)"},
+    {"id": "MOD-web-routes", "path": "apps/web/src/app/app.routes.ts", "summary": "Routes con loadComponent lazy"},
+    {"id": "MOD-web-auth-guard", "path": "apps/web/src/app/core/auth.guard.ts", "summary": "CanActivateFn: authGuard + guestOnlyGuard"},
+    {"id": "MOD-web-auth-interceptor", "path": "apps/web/src/app/core/auth.interceptor.ts", "summary": "HttpInterceptorFn: authInterceptor + loggingInterceptor"},
+    {"id": "MOD-web-login-page", "path": "apps/web/src/app/features/login/login.page.ts", "summary": "LoginPage con signals y effect()"},
+    {"id": "MOD-web-listings-page", "path": "apps/web/src/app/features/listings/listings.page.ts", "summary": "ListingsPage con filters y effect()"},
+    {"id": "MOD-web-login-service", "path": "apps/web/src/app/features/login/login.service.ts", "summary": "LoginService con HttpClient stub"},
+    {"id": "MOD-shared-index", "path": "libs/shared/src/index.ts", "summary": "Barrel de la libreria compartida"},
+    {"id": "MOD-shared-types", "path": "libs/shared/src/types/index.ts", "summary": "Types: User, Listing, Report"},
+    {"id": "MOD-shared-format", "path": "libs/shared/src/utils/format.ts", "summary": "formatCurrency, formatNumber, formatDate"},
+    {"id": "MOD-shared-validate", "path": "libs/shared/src/utils/validate.ts", "summary": "isEmail, isDocument"}
+  ],
+  "dependencies": [
+    {"name": "turbo", "scope": "dev_root", "manifest": "package.json (devDependencies)"},
+    {"name": "typescript", "scope": "dev_root", "manifest": "package.json (devDependencies)"},
+    {"name": "vitest", "scope": "dev_root", "manifest": "package.json (devDependencies)"},
+    {"name": "fastify", "scope": "apps_api", "manifest": "apps/api/package.json (dependencies)"},
+    {"name": "fastify-plugin", "scope": "apps_api", "manifest": "apps/api/package.json (dependencies)"},
+    {"name": "zod", "scope": "apps_api", "manifest": "apps/api/package.json (dependencies)"},
+    {"name": "@fx-mono/shared", "scope": "workspaces", "manifest": "apps/api/package.json + apps/web/package.json (workspace:*)"},
+    {"name": "@angular/core", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"},
+    {"name": "@angular/router", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"},
+    {"name": "@angular/common", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"},
+    {"name": "@angular/platform-browser", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"},
+    {"name": "rxjs", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"},
+    {"name": "zone.js", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"},
+    {"name": "tslib", "scope": "apps_web", "manifest": "apps/web/package.json (dependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "login",
+      "user_description": "User submits credentials; the API validates and returns a token; the web app stores it and routes to /listings.",
+      "traces": [
+        {"n": 1, "what": "User submits LoginPage form", "cite": "apps/web/src/app/features/login/login.page.ts:33", "data_in": "username, password", "data_out": "login() call"},
+        {"n": 2, "what": "LoginService.login()", "cite": "apps/web/src/app/features/login/login.service.ts:19", "data_in": "email, password", "data_out": "Observable<LoginResponse>"},
+        {"n": 3, "what": "POST /api/login", "cite": "apps/api/src/routes/login.ts:12", "data_in": "LoginRequest", "data_out": "LoginResponse or 401"},
+        {"n": 4, "what": "zod validation", "cite": "apps/api/src/schemas.ts:7", "data_in": "request.body", "data_out": "valid LoginRequest or 400"},
+        {"n": 5, "what": "user lookup + token gen", "cite": "apps/api/src/routes/login.ts:24", "data_in": "email, password", "data_out": "token, user, expiresAt"},
+        {"n": 6, "what": "effect() on token change", "cite": "apps/web/src/app/features/login/login.page.ts:30", "data_in": "token signal", "data_out": "GET /api/login/me (logged only in fixture)"},
+        {"n": 7, "what": "route to /listings", "cite": "apps/web/src/app/features/login/login.page.ts:42", "data_in": "token set", "data_out": "navigate to /listings"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "apps/web/src/app/features/login/login.page.ts", "line": 35, "kind": "validation", "condition_text": "this.username && this.password", "branches": [{"label": "proceed", "target_line": 37}, {"label": "missing_credentials", "target_line": 35}]},
+        {"id": "DP-002", "file": "apps/api/src/routes/login.ts", "line": 19, "kind": "lookup", "condition_text": "u && u.password === password", "branches": [{"label": "ok", "target_line": 24}, {"label": "401", "target_line": 21}]},
+        {"id": "DP-003", "file": "apps/api/src/schemas.ts", "line": 7, "kind": "validation", "condition_text": "loginRequestSchema.safeParse", "branches": [{"label": "ok", "target_line": 17}, {"label": "400", "target_line": 18}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "valid credentials (admin@example.com / admin123)", "user_sees": "200 + token + user + role=admin; navigated to /listings", "side_effects": ["token saved", "ClienteAltaEvent triggered (n/a here)", "effect() logs to /api/login/me"], "reversible": true, "final_state": "authenticated", "tests": ["apps/api/tests/login.test.ts:retorna 200 + token con credenciales validas"]},
+        {"id": "R-02", "category": "error_credentials", "conditions": "wrong password", "user_sees": "401 invalid_credentials; error shown", "side_effects": ["no token", "no navigation"], "reversible": false, "final_state": "unauthenticated", "tests": ["apps/api/tests/login.test.ts:retorna 401 con password incorrecto"]},
+        {"id": "R-03", "category": "error_validation", "conditions": "empty password", "user_sees": "400 invalid_payload with issues; no token", "side_effects": ["no token", "no navigation"], "reversible": false, "final_state": "unauthenticated", "tests": ["apps/api/tests/login.test.ts:retorna 400 con payload invalido (password vacio)"]},
+        {"id": "R-04", "category": "no_op_validation", "conditions": "missing username or password in form", "user_sees": "missing_credentials error shown; no API call", "side_effects": ["no API call"], "reversible": true, "final_state": "form has error", "tests": []},
+        {"id": "R-05", "category": "effect_side_effect", "conditions": "token is set", "user_sees": "effect() logs '[effect] token changed, would GET /api/login/me'", "side_effects": ["GET /api/login/me (in production)"], "reversible": false, "final_state": "effect re-runs on next token change", "tests": ["apps/web/tests/smoke.test.ts:trap #4: effect() usado en login.page"]},
+        {"id": "R-06", "category": "validation_trap", "conditions": "client sends null email", "user_sees": "isEmail(null) returns true in libs/shared (package trap #5); no validation", "side_effects": ["form passes validation but fails server-side"], "reversible": false, "final_state": "form continues with null", "tests": ["libs/shared/tests/validate.test.ts:retorna true para null (package trap #5)"]}
+      ],
+      "errors": [
+        {"id": "ERR-001", "type": "invalid_credentials", "origin": "apps/api/src/routes/login.ts:21", "message": "invalid credentials", "propagation": [{"layer": "route", "action": "reply 401", "cite": "apps/api/src/routes/login.ts:21"}], "handled_at": "client (HttpClient)", "user_sees": "401 error", "outcome": "R-02"},
+        {"id": "ERR-002", "type": "invalid_payload", "origin": "apps/api/src/schemas.ts:7", "message": "zod parse failed", "propagation": [{"layer": "zod", "action": "throw", "cite": "apps/api/src/schemas.ts:7"}], "handled_at": "route", "user_sees": "400 with issues", "outcome": "R-03"}
+      ],
+      "config": [
+        {"key": "FXMONO_API_URL", "kind": "env", "default": "/api", "effect": "Override apiBaseUrl"}
+      ],
+      "states": [{"name": "guest", "description": "no token"}, {"name": "authed", "description": "valid token in memory"}],
+      "telemetry": [{"event": "user/login", "payload": {"email": "string"}, "emitted_at": "apps/web/src/app/features/login/login.service.ts:19"}],
+      "interactions": [{"feature": "FEAT-002", "kind": "shares token; needs auth guard to navigate"}],
+      "callgraph": ["apps/web/src/app/features/login/login.page.ts:submit -> apps/web/src/app/features/login/login.service.ts:login", "apps/web/src/app/features/login/login.service.ts:login -> POST /api/login", "apps/api/src/routes/login.ts:POST / -> apps/api/src/schemas.ts:loginRequestSchema"]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "listado-con-filtros",
+      "user_description": "User navigates to /listings; the page loads filtered listings; updating filters triggers a re-fetch via effect().",
+      "traces": [
+        {"n": 1, "what": "Router loads /listings via loadComponent", "cite": "apps/web/src/app/app.routes.ts:21", "data_in": "authGuard passes", "data_out": "ListingsPage mounted"},
+        {"n": 2, "what": "ListingsPage.attachEffect()", "cite": "apps/web/src/app/features/listings/listings.page.ts:23", "data_in": "first mount", "data_out": "effectRef() called"},
+        {"n": 3, "what": "effectRef() logs GET /api/listings", "cite": "apps/web/src/app/features/listings/listings.page.ts:26", "data_in": "this.filters", "data_out": "console.log"},
+        {"n": 4, "what": "GET /api/listings with filters", "cite": "apps/api/src/routes/listings.ts:42", "data_in": "ListingFilters", "data_out": "PaginatedListings"},
+        {"n": 5, "what": "zod query parsing", "cite": "apps/api/src/schemas.ts:11", "data_in": "request.query", "data_out": "valid ListingFilters or 400"},
+        {"n": 6, "what": "applyFilters in memory (package trap #6)", "cite": "apps/api/src/routes/listings.ts:30", "data_in": "filters", "data_out": "filtered listings"},
+        {"n": 7, "what": "user updates filter via updateFilter()", "cite": "apps/web/src/app/features/listings/listings.page.ts:36", "data_in": "key, value", "data_out": "effect re-runs"},
+        {"n": 8, "what": "effect re-fires (N+1, package trap #3)", "cite": "apps/web/src/app/features/listings/listings.page.ts:23", "data_in": "any signal change", "data_out": "GET /api/listings again"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "apps/web/src/app/features/listings/listings.page.ts", "line": 31, "kind": "filter_change", "condition_text": "updateFilter key=value", "branches": [{"label": "re-fetch", "target_line": 23}]},
+        {"id": "DP-005", "file": "apps/api/src/routes/listings.ts", "line": 33, "kind": "filter_check", "condition_text": "f.status && l.status !== f.status", "branches": [{"label": "exclude", "target_line": 34}, {"label": "include", "target_line": 35}]},
+        {"id": "DP-006", "file": "apps/api/src/routes/listings.ts", "line": 38, "kind": "validation", "condition_text": "listingFiltersSchema.safeParse", "branches": [{"label": "ok", "target_line": 42}, {"label": "400", "target_line": 39}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "no filters", "user_sees": "ListingsPage loaded with 5 items (all listings)", "side_effects": ["GET /api/listings"], "reversible": true, "final_state": "items populated", "tests": ["apps/api/tests/listings.test.ts:retorna todos los listings activos sin filtros"]},
+        {"id": "R-02", "category": "success", "conditions": "status=active", "user_sees": "2 items, all status=active", "side_effects": ["GET /api/listings?status=active"], "reversible": true, "final_state": "filtered items", "tests": ["apps/api/tests/listings.test.ts:filtra por status=active"]},
+        {"id": "R-03", "category": "success", "conditions": "minPrice=100000&maxPrice=300000", "user_sees": "items in price range", "side_effects": ["GET /api/listings?minPrice=...&maxPrice=..."], "reversible": true, "final_state": "filtered items", "tests": ["apps/api/tests/listings.test.ts:filtra por rango de precio (minPrice/maxPrice)"]},
+        {"id": "R-04", "category": "not_found", "conditions": "id=NOPE", "user_sees": "404 not_found", "side_effects": [], "reversible": false, "final_state": "no data", "tests": ["apps/api/tests/listings.test.ts:retorna 404 para id desconocido"]},
+        {"id": "R-05", "category": "effect_n_plus_one", "conditions": "user changes any filter", "user_sees": "new fetch; UI flicker; performance degrades (package trap #3)", "side_effects": ["GET /api/listings"], "reversible": true, "final_state": "items refreshed", "tests": ["apps/web/tests/smoke.test.ts:trap P3: ListingsPage effect() depende de this completo"]},
+        {"id": "R-06", "category": "no_op_filter", "conditions": "no filter changes", "user_sees": "no fetch; cached items", "side_effects": ["none"], "reversible": false, "final_state": "items unchanged", "tests": []}
+      ],
+      "errors": [
+        {"id": "ERR-003", "type": "invalid_filters", "origin": "apps/api/src/schemas.ts:11", "message": "zod parse failed", "propagation": [{"layer": "zod", "action": "throw", "cite": "apps/api/src/schemas.ts:11"}], "handled_at": "route", "user_sees": "400 with issues", "outcome": "R-error"}
+      ],
+      "config": [
+        {"key": "pageSize", "kind": "query", "default": 20, "values": ["1..100"]},
+        {"key": "page", "kind": "query", "default": 1}
+      ],
+      "states": [{"name": "loading", "description": "loading=true"}, {"name": "loaded", "description": "lastResult populated"}],
+      "telemetry": [{"event": "listings/filter-change", "payload": {"key": "string", "value": "any"}, "emitted_at": "apps/web/src/app/features/listings/listings.page.ts:36"}],
+      "interactions": [{"feature": "FEAT-001", "kind": "requires auth guard"}],
+      "callgraph": ["apps/web/src/app/app.routes.ts:loadComponent -> apps/web/src/app/features/listings/listings.page.ts:ListingsPage", "apps/web/src/app/features/listings/listings.page.ts:attachEffect -> GET /api/listings", "apps/api/src/routes/listings.ts:GET / -> apps/api/src/schemas.ts:listingFiltersSchema", "apps/api/src/routes/listings.ts:applyFilters -> filter listings[]"]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "exportar-reporte",
+      "user_description": "User clicks 'Export' on ListingsPage; the API returns a presigned URL to download CSV/JSON.",
+      "traces": [
+        {"n": 1, "what": "User clicks Export", "cite": "apps/web/src/app/features/listings/listings.page.ts:5", "data_in": "current filters, format", "data_out": "POST /api/export"},
+        {"n": 2, "what": "POST /api/export", "cite": "apps/api/src/routes/export.ts:23", "data_in": "ExportRequest", "data_out": "ExportResponse or 401/400/413"},
+        {"n": 3, "what": "auth check", "cite": "apps/api/src/routes/export.ts:24", "data_in": "request.userId", "data_out": "boolean"},
+        {"n": 4, "what": "zod validation", "cite": "apps/api/src/schemas.ts:23", "data_in": "request.body", "data_out": "valid ExportRequest or 400"},
+        {"n": 5, "what": "size check (package trap #4)", "cite": "apps/api/src/routes/export.ts:32", "data_in": "filters.pageSize", "data_out": "413 if > 1000"},
+        {"n": 6, "what": "build response", "cite": "apps/api/src/routes/export.ts:36", "data_in": "request", "data_out": "ExportResponse"},
+        {"n": 7, "what": "Client downloads CSV/JSON", "cite": "apps/web/src/app/features/listings/listings.page.ts:5", "data_in": "url", "data_out": "browser download"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "apps/api/src/routes/export.ts", "line": 24, "kind": "auth", "condition_text": "request.userId", "branches": [{"label": "ok", "target_line": 28}, {"label": "401", "target_line": 24}]},
+        {"id": "DP-008", "file": "apps/api/src/routes/export.ts", "line": 28, "kind": "validation", "condition_text": "exportRequestSchema.safeParse", "branches": [{"label": "ok", "target_line": 32}, {"label": "400", "target_line": 28}]},
+        {"id": "DP-009", "file": "apps/api/src/routes/export.ts", "line": 32, "kind": "size", "condition_text": "filters.pageSize > 1000", "branches": [{"label": "413", "target_line": 33}, {"label": "ok", "target_line": 36}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "auth + valid payload + pageSize <= 1000", "user_sees": "202 + url + format + rows + expiresAt", "side_effects": ["file generated (stub)"], "reversible": false, "final_state": "user has download URL", "tests": ["apps/api/tests/export.test.ts:retorna 202 con Authorization y payload valido"]},
+        {"id": "R-02", "category": "error_unauthorized", "conditions": "no Authorization header", "user_sees": "401 unauthorized", "side_effects": ["no file"], "reversible": false, "final_state": "no download", "tests": ["apps/api/tests/export.test.ts:retorna 401 sin Authorization header"]},
+        {"id": "R-03", "category": "error_validation", "conditions": "format=xml (invalid)", "user_sees": "400 invalid_payload with issues", "side_effects": ["no file"], "reversible": false, "final_state": "no download", "tests": ["apps/api/tests/export.test.ts:retorna 400 con format invalido"]},
+        {"id": "R-04", "category": "error_too_many_rows", "conditions": "pageSize > 1000", "user_sees": "413 too_many_rows with limit", "side_effects": ["no file"], "reversible": false, "final_state": "no download", "tests": []},
+        {"id": "R-05", "category": "success_csv", "conditions": "format=csv", "user_sees": "url ending in .csv", "side_effects": ["CSV file generated (stub)"], "reversible": false, "final_state": "URL with .csv extension", "tests": []},
+        {"id": "R-06", "category": "success_json", "conditions": "format=json", "user_sees": "url ending in .json", "side_effects": ["JSON file generated (stub)"], "reversible": false, "final_state": "URL with .json extension", "tests": []}
+      ],
+      "errors": [
+        {"id": "ERR-004", "type": "invalid_payload", "origin": "apps/api/src/schemas.ts:23", "message": "zod parse failed", "propagation": [{"layer": "zod", "action": "throw", "cite": "apps/api/src/schemas.ts:23"}], "handled_at": "route", "user_sees": "400 with issues", "outcome": "R-03"}
+      ],
+      "config": [
+        {"key": "maxExportRows", "kind": "hardcoded", "default": 1000, "effect": "package trap #4: protects against OOM"}
+      ],
+      "states": [],
+      "telemetry": [{"event": "export/request", "payload": {"format": "string", "filters": "object"}, "emitted_at": "apps/api/src/routes/export.ts:42"}],
+      "interactions": [{"feature": "FEAT-002", "kind": "reuses filters from ListingsPage"}],
+      "callgraph": ["apps/web POST /api/export -> apps/api/src/routes/export.ts:POST /", "apps/api/src/routes/export.ts:POST / -> apps/api/src/schemas.ts:exportRequestSchema"]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-http-post-login", "kind": "http", "name": "POST /api/login", "handler": "apps/api/src/routes/login.ts:12", "file": "apps/api/src/routes/login.ts", "line": 12, "pair": "LoginResponse"},
+    {"id": "SRF-http-get-me", "kind": "http", "name": "GET /api/login/me", "handler": "apps/api/src/routes/login.ts:36", "file": "apps/api/src/routes/login.ts", "line": 36, "pair": "userId"},
+    {"id": "SRF-http-get-listings", "kind": "http", "name": "GET /api/listings", "handler": "apps/api/src/routes/listings.ts:42", "file": "apps/api/src/routes/listings.ts", "line": 42, "pair": "PaginatedListings"},
+    {"id": "SRF-http-get-listing-id", "kind": "http", "name": "GET /api/listings/:id", "handler": "apps/api/src/routes/listings.ts:54", "file": "apps/api/src/routes/listings.ts", "line": 54, "pair": "Listing or 404"},
+    {"id": "SRF-http-post-export", "kind": "http", "name": "POST /api/export", "handler": "apps/api/src/routes/export.ts:25", "file": "apps/api/src/routes/export.ts", "line": 25, "pair": "ExportResponse or 401/400/413"},
+    {"id": "SRF-http-get-health", "kind": "http", "name": "GET /api/health", "handler": "apps/api/src/main.ts:20", "file": "apps/api/src/main.ts", "line": 20, "pair": "{status: UP}"},
+    {"id": "SRF-web-login", "kind": "page", "name": "/login", "handler": "apps/web/src/app/features/login/login.page.ts:LoginPage", "file": "apps/web/src/app/features/login/login.page.ts", "line": 5, "pair": "LoginService"},
+    {"id": "SRF-web-listings", "kind": "page", "name": "/listings", "handler": "apps/web/src/app/features/listings/listings.page.ts:ListingsPage", "file": "apps/web/src/app/features/listings/listings.page.ts", "line": 5, "pair": "GET /api/listings"}
+  ],
+  "config": [
+    {"key": "FXMONO_API_URL", "kind": "env", "default": "/api", "effect": "Override apiBaseUrl"},
+    {"key": "FXMONO_PORT", "kind": "env", "default": 3000, "effect": "API port"},
+    {"key": "FXMONO_HOST", "kind": "env", "default": "0.0.0.0", "effect": "API host"},
+    {"key": "LOG_LEVEL", "kind": "env", "default": "info", "effect": "Fastify log level"}
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "tsconfig_paths_workspace_protocol", "where": "apps/web/tsconfig.app.json + apps/{api,web}/package.json", "resolution": "El frontend importa @fx-mono/shared via path alias en tsconfig; el package.json usa workspace:* para que pnpm resuelva la version correcta."},
+    {"id": "TRAP-E02", "kind": "conditional_exports", "where": "libs/shared/package.json (exports)", "resolution": "Las entradas types/import/require apuntan a artefactos distintos (./dist/index.d.ts, ./dist/index.js, ./dist/index.cjs). El scanner que solo lee 'main' se equivoca."},
+    {"id": "TRAP-E03", "kind": "lazy_routes_functional_guards_interceptors", "where": "apps/web/src/app/app.routes.ts + app.config.ts + core/auth.guard.ts + core/auth.interceptor.ts", "resolution": "loadComponent con import() dinamico; CanActivateFn y HttpInterceptorFn son funciones (no clases). Registrados via provideHttpClient(withInterceptors([...]))."},
+    {"id": "TRAP-E04", "kind": "effect_signal_http", "where": "apps/web/src/app/features/login/login.page.ts:30", "resolution": "El effect() depende de this.token; cuando cambia, dispara un GET a /api/login/me. El scanner debe razonar sobre la dependencia signal -> HTTP."},
+    {"id": "TRAP-E05", "kind": "file_replacements_environments", "where": "apps/web/angular.json (build.configurations.{development,production}.fileReplacements)", "resolution": "Las configs development/production reemplazan src/environments/environment.ts por sus variantes. La trampa: el codigo fuente es uno solo, pero el binario cambia segun la build configuration."},
+    {"id": "TRAP-E06", "kind": "proxy_frontend_backend", "where": "apps/web/proxy.conf.json", "resolution": "El proxy es el unico lugar donde /api (frontend) se redirige a http://localhost:3000 (backend). El codigo de las paginas solo conoce /api/*."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "feature": "FEAT-001", "kind": "missing_validation_input", "where": "apps/web/src/app/core/auth.interceptor.ts (readToken + Authorization header)", "resolution": "El interceptor agrega Authorization: Bearer ${token} sin verificar que el token no este vacio. Combinacion: el caller envia token='' y el backend recibe un header basura."},
+    {"id": "TRAP-P02", "feature": "FEAT-001", "kind": "missing_cleanup", "where": "apps/web/src/app/features/login/login.service.ts (pendingLogin observable)", "resolution": "El LoginService no implementa cleanup (sin Subject, sin takeUntilDestroyed, sin unsubscribe). El observable sigue emitiendo aunque el componente se destruya. Memory leak en apps de larga vida."},
+    {"id": "TRAP-P03", "feature": "FEAT-002", "kind": "over_fired_effect", "where": "apps/web/src/app/features/listings/listings.page.ts:23 (attachEffect)", "resolution": "El effect lee this completo, no solo this.filters. Cambia loading, error, lastResult o filters y el effect se vuelve a ejecutar. Renders innecesarios."},
+    {"id": "TRAP-P04", "feature": "FEAT-003", "kind": "missing_size_limit", "where": "apps/api/src/routes/export.ts:37 (pageSize check)", "resolution": "Aunque hay un limit de 1000 rows (MAX_ROWS), el filtro de entrada no se valida ANTES de serializar. Un pageSize=2000 devuelve 413, pero un pageSize=999 con 999 coincidencias genera un CSV de 100MB."},
+    {"id": "TRAP-P05", "feature": "FEAT-001", "kind": "null_returns_true", "where": "libs/shared/src/utils/validate.ts (isEmail)", "resolution": "isEmail(null) y isEmail(undefined) retornan true (combinacion de tipos string | null | undefined con la falta de check explicito). El formulario acepta emails nulos."},
+    {"id": "TRAP-P06", "feature": "FEAT-002", "kind": "in_memory_filtering_n_plus_one", "where": "apps/api/src/routes/listings.ts:30 (applyFilters)", "resolution": "Los filtros se aplican en memoria despues de cargar TODOS los listings. Con 10k items, el filter+sort es O(n) por cada request. En produccion deberia delegar a SQL."}
+  ]
+}

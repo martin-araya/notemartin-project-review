@@ -38,12 +38,14 @@ MATRIX_OUT = FIXTURES_DIR / "MATRIX.md"
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-# Extensiones -> lenguajes que cubren
+# Extensiones -> lenguajes que cubren. ``.ts`` cubre tanto ``typescript``
+# como ``javascript`` porque TypeScript compila a JS y un proyecto TS es
+# un superset del ecosistema JS.
 EXT_LANG: Dict[str, Set[str]] = {
     ".py": {"python"}, ".pyi": {"python"}, ".pyw": {"python"},
     ".js": {"javascript"}, ".mjs": {"javascript"}, ".cjs": {"javascript"},
     ".jsx": {"javascript"},
-    ".ts": {"typescript"}, ".tsx": {"typescript"},
+    ".ts": {"typescript", "javascript"}, ".tsx": {"typescript", "javascript"},
     ".java": {"java"},
     ".kt": {"kotlin"}, ".kts": {"kotlin"},
     ".go": {"go"},
@@ -71,7 +73,7 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
 
 # Archivos clave de frameworks
 FRAMEWORK_FILES: Dict[str, Set[str]] = {
-    "angular.json": {"angular"},
+    "angular.json": {"angular", "javascript"},
     "nest-cli.json": {"node-express"},
     "micronaut-cli.yml": {"micronaut"},
     "settings.gradle": {"gradle"}, "settings.gradle.kts": {"gradle"},
@@ -141,9 +143,13 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
         if (fixture_dir / manifest).is_file():
             covered["build_systems"] |= builds
 
-    # Archivos clave de frameworks en la raiz o un nivel
+    # Archivos clave de frameworks en la raiz o un nivel (o recursivo si
+    # es un monorepo: angular.json vive en apps/web/).
     for fname, frameworks in FRAMEWORK_FILES.items():
         if (fixture_dir / fname).is_file() or (fixture_dir.parent / fname).is_file():
+            covered["frameworks"] |= frameworks
+        # Para monorepos: buscar en cualquier subdirectorio.
+        if any(fixture_dir.rglob(fname)):
             covered["frameworks"] |= frameworks
 
     # package.json -> electron y node-express y pnpm-monorepo

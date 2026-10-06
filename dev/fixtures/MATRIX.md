@@ -4,6 +4,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 ## Fixtures detectados
 - `fx-java-micronaut`
+- `fx-monorepo`
 - `fx-python-cli`
 - `fx-ts-agent-extension`
 
@@ -12,13 +13,13 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | Item | Estado | Cubierto por |
 |---|---|---|
 | `python` | cubierto | fx-python-cli |
-| `typescript` | cubierto | fx-ts-agent-extension |
-| `javascript` | **falta** | _(ninguno)_ |
+| `typescript` | cubierto | fx-monorepo, fx-ts-agent-extension |
+| `javascript` | cubierto | fx-monorepo, fx-ts-agent-extension |
 | `java` | cubierto | fx-java-micronaut |
 | `kotlin` | cubierto | fx-java-micronaut |
 | `go` | **falta** | _(ninguno)_ |
 | `rust` | **falta** | _(ninguno)_ |
-| `shell` | cubierto | fx-java-micronaut, fx-python-cli, fx-ts-agent-extension |
+| `shell` | cubierto | fx-java-micronaut, fx-monorepo, fx-python-cli, fx-ts-agent-extension |
 | `dart` | **falta** | _(ninguno)_ |
 | `swift` | **falta** | _(ninguno)_ |
 | `csharp` | **falta** | _(ninguno)_ |
@@ -30,10 +31,10 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | Item | Estado | Cubierto por |
 |---|---|---|
 | `vscode-extension` | cubierto | fx-ts-agent-extension |
-| `angular` | **falta** | _(ninguno)_ |
+| `angular` | cubierto | fx-monorepo |
 | `micronaut` | cubierto | fx-java-micronaut |
 | `node-express` | **falta** | _(ninguno)_ |
-| `pnpm-monorepo` | **falta** | _(ninguno)_ |
+| `pnpm-monorepo` | cubierto | fx-monorepo |
 | `electron` | **falta** | _(ninguno)_ |
 | `gradle` | cubierto | fx-java-micronaut |
 | `maven` | **falta** | _(ninguno)_ |
@@ -45,19 +46,19 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | Item | Estado | Cubierto por |
 |---|---|---|
 | `pyproject` | cubierto | fx-python-cli |
-| `pnpm` | **falta** | _(ninguno)_ |
+| `pnpm` | cubierto | fx-monorepo |
 | `maven` | **falta** | _(ninguno)_ |
 | `gradle` | cubierto | fx-java-micronaut |
 | `cargo` | **falta** | _(ninguno)_ |
 | `go-modules` | **falta** | _(ninguno)_ |
-| `make` | cubierto | fx-java-micronaut, fx-ts-agent-extension |
+| `make` | cubierto | fx-java-micronaut, fx-monorepo, fx-ts-agent-extension |
 | `docker` | **falta** | _(ninguno)_ |
 
 ## Eje: file_kinds
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `source-text` | cubierto | fx-java-micronaut, fx-python-cli, fx-ts-agent-extension |
+| `source-text` | cubierto | fx-java-micronaut, fx-monorepo, fx-python-cli, fx-ts-agent-extension |
 | `minified-js` | **falta** | _(ninguno)_ |
 | `bundle-with-sourcemap` | **falta** | _(ninguno)_ |
 | `bundle-without-sourcemap` | **falta** | _(ninguno)_ |

@@ -515,19 +515,27 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
       content-type del endpoint, pero el endpoint existe y responde
       "UP" en runtime real).
  
-## F06d — Fixture `fx-monorepo`
- 
+## F06d — Fixture `fx-monorepo` ✅
+
 **Objetivo:** workspace pnpm con frontend Angular (standalone + signals), API Node y librería compartida, orquestado con Nx o Turborepo.
-**Stack:** TypeScript, Angular, Fastify, pnpm workspaces, Nx/Turborepo.
+**Stack:** TypeScript, Angular 19, Fastify 5, pnpm workspaces 9, Turborepo 2, Vitest 1, zod 3, imagen `node:22-bookworm-slim` con corepack.
 **Features:** `login`, `listado-con-filtros`, `exportar-reporte`.
-**Trampas del ecosistema:**
-1. Alias de `tsconfig.paths` + protocolo `workspace:*`.
-2. Librería compartida con `exports` condicionales en `package.json` (`import`/`require`/`types`).
-3. Rutas lazy (`loadComponent`), guards e interceptors funcionales registrados con `provideHttpClient(withInterceptors(...))`.
-4. `effect()` de signals con efectos secundarios que disparan llamadas HTTP.
-5. `fileReplacements` de environments en el build.
-6. `proxy.conf.json` es el único lugar donde se conecta `/api` con el backend.
-**Toolchain de tests:** Node 22 + Jest/Vitest + Karma headless, en contenedor.
+**Trampas del ecosistema:** las 6 documentadas en el ground truth.
+**Toolchain de tests:** Node 22 + Vitest 1 (sin Karma/Chromium; smoke tests para Angular).
+
+**Criterios de aceptación:**
+- [x] 3 features con >= 6 R-NN cada una documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas y documentadas (CC-06).
+- [x] 6 trampas del paquete plantadas y documentadas (CC-04).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones en comentarios) en verde.
+- [x] `run_fixture_tests.py --fixture fx-monorepo --container` -> passed.
+- [x] `dev/tests/test_fx_monorepo_ground_truth.py` agregado y verde (24 tests).
+- [x] `MATRIX.md` muestra `javascript`, `angular`, `pnpm-monorepo`, `pnpm` cubiertos.
+- [x] `fx-python-cli`, `fx-ts-agent-extension`, `fx-java-micronaut` sin cambios
+      de comportamiento (fx-ts-agent-extension cambio trivial: ``test_cmd``
+      de ``make test`` a ``npm test`` para no depender de ``make`` en el
+      contenedor ``node:22-slim``).
  
 ## F06e — Fixture `fx-minified`
  

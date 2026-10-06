@@ -1,0 +1,13 @@
+/* Estilos minimos. En produccion este archivo usa CSS variables y un
+   sistema de design tokens. */
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #222;
+  background: #f8f8f8;
+}
+
+a {
+  color: #1976d2;
+}

@@ -17,6 +17,7 @@ Estado por fase de la skill `notemartin-project-review` y registro de avance.
 | F06b | HECHA | 2026-10-06 | pytest 273 passed (13 nuevos: test_fx_ts_agent_extension_ground_truth); vitest 162 passed (162 tests en 11 archivos: modes, skills, tools, providers, context, i18n, mcp, vscode_shim, messages, extension, traps); check_ground_truth OK sobre fx-ts-agent-extension (0 referencias rotas, CC-11 verde); messages.ts con 5.163 lineas (>5.000); 3 modos, 6 tools, 12 mensajes webview, 4 features, 6 R-NN cada una; 6 trampas ecosistema + 6 trampas paquete plantadas y documentadas; run_fixture_tests en contenedor Node 22 -> passed; MATRIX.md cubre vscode-extension y typescript; fx-python-cli sin cambios (regresion F06a verificada); 5 decisiones nuevas D-164..D-168 | Commit `F06b: fixture fx-ts-agent-extension con paquete por feature` |
 | F06c | HECHA | 2026-10-06 | pytest 292 passed (19 nuevos: test_fx_java_micronaut_ground_truth); gradle 38 passed (1 skipped con assumeTrue); check_ground_truth OK sobre fx-java-micronaut (CC-11 verde); 4 features (alta-cliente, consulta-score-externo, cierre-diario-programado, notificar-evento) con 6 R-NN cada una; 6 trampas ecosistema (beans condicionales @Requires, @Client declarativo, precedencia yml, ApplicationEventPublisher + @EventListener, @Scheduled(cron="${...}"), columna Flyway solo en @Query) + 6 trampas paquete plantadas y documentadas; run_fixture_tests en contenedor `gradle:8.10-jdk21-jammy` -> passed (Gradle wrapper no necesario, imagen ya trae gradle); MATRIX.md cubre java + micronaut + gradle; fx-python-cli y fx-ts-agent-extension sin cambios (regresion F06a+F06b verificada); 5 decisiones nuevas D-169..D-173; fixtures_matrix.py ahora detecta Micronaut via el plugin en build.gradle.kts | Commit `F06c: fixture fx-java-micronaut con paquete por feature` |
 | F06c | PENDIENTE | | fx-java-micronaut (REST Micronaut con DI compile-time, application.yml por entorno, migraciones) | |
+| F06d | HECHA | 2026-10-06 | pytest 316 passed (24 nuevos: test_fx_monorepo_ground_truth); vitest 41 passed (11 libs/shared + 10 api + 20 web smoke); check_ground_truth OK sobre fx-monorepo (CC-11 verde); 3 features (login, listado-con-filtros, exportar-reporte) con 6 R-NN cada una; 6 trampas ecosistema (tsconfig.paths+workspace:*, exports condicionales, loadComponent+withInterceptors, effect()+HTTP, fileReplacements, proxy.conf.json) + 6 trampas paquete plantadas y documentadas; run_fixture_tests en contenedor `node:22-bookworm-slim` con corepack+pnpm -> passed; MATRIX.md cubre javascript + angular + pnpm-monorepo + pnpm; fx-python-cli, fx-ts-agent-extension, fx-java-micronaut sin cambios de comportamiento (F06b cambio trivial de test_cmd); 5 decisiones nuevas D-174..D-178; fixtures_matrix.py ahora detecta ``.ts`` como ``javascript`` tambien y busca angular.json recursivo | Commit `F06d: fixture fx-monorepo con paquete por feature` |
 | F06d | PENDIENTE | | fx-monorepo (workspace pnpm con Angular standalone + signals, API Node, libreria) | |
 | F06e | PENDIENTE | | fx-minified (bundle JS con/sin sourcemap, .asar, .pyc) | |
 | F06f | PENDIENTE | | fx-polyglot (Go + Rust + shell con stdin/JSON) | |
@@ -109,24 +110,23 @@ Estados válidos: `PENDIENTE`, `EN CURSO`, `HECHA`, `BLOQUEADA`, `REABIERTA`.
 
 - Fecha y hora: 2026-10-06
 - Agente / modelo / runtime: Kilo / MiniMax-M3 / code mode local
-- Fase(s) en curso y estado: F00–F06c HECHAS; F06d–F06f PENDIENTES; F07–F88 PENDIENTES
+- Fase(s) en curso y estado: F00–F06d HECHAS; F06e–F06f PENDIENTES; F07–F88 PENDIENTES
 - Hecho en esta sesión (con commits):
-  - F06c (próximo commit `F06c: fixture fx-java-micronaut con paquete por feature`): servicio REST Micronaut 4 (Java 21, Gradle Kotlin DSL, Micronaut Data JDBC, Flyway, H2). Estructura: `src/main/java/com/fxmicronaut/{Application.java, config/, controllers/, domain/, repository/, services/, client/, scheduler/, factory/, exceptions/}`. 4 features (alta-cliente, consulta-score-externo, cierre-diario-programado, notificar-evento) cada una con 6 R-NN. 6 trampas ecosistema plantadas: `@Requires(env = ...)` + `@Factory` en DataSourceFactory, `@Client` declarativo en ScoreClient (interface sin implementacion), precedencia application.yml < application-{profile}.yml < env vars, `ApplicationEventPublisher` + `@EventListener` desacoplados, `@Scheduled(cron = "${daily-close.cron}")`, columna V2 (categoria_ajustada) consumida solo por @Query nativa. 6 trampas paquete: timeoutMs=0 sin timeout, try/catch swallow del publisher, sin @Transactional (race condition), scheduler con enabled=false y NPE si config=null, sin validacion de documento vacio, @EventListener registrado con DI lazy. 38 tests JUnit 5 (1 skipped con `assumeTrue` para health; incompatibilidad del HTTP client embebido con la negociacion de content-type). Imagen `gradle:8.10-jdk21-jammy` (no requiere wrapper). `fixtures_matrix.py` ahora detecta Micronaut via el plugin en `build.gradle.kts`. `fx-python-cli` y `fx-ts-agent-extension` sin cambios (regresion F06a+F06b verificada). 5 decisiones nuevas D-169..D-173.
+  - F06d (próximo commit `F06d: fixture fx-monorepo con paquete por feature`): workspace pnpm 9 + Angular 19 + Fastify 5 + Turborepo 2, con tres packages (apps/web, apps/api, libs/shared). Estructura: `apps/web/src/{main.ts, app/{app.config, app.routes, app.component}, app/core/{auth.guard, auth.interceptor}, app/features/{login,listings}/{login,listings}.page + login.service}, environments/{environment,environment.development,environment.production}, proxy.conf.json, angular.json}`. `apps/api/src/{main.ts, routes/{login,listings,export}, plugins/auth, schemas}`. `libs/shared/src/{index, types/{user,listing,report}, utils/{format,validate}}`. 3 features (login, listado-con-filtros, exportar-reporte) cada una con 6 R-NN. 6 trampas ecosistema plantadas: tsconfig.paths + workspace:* (imports de @fx-mono/shared), exports condicionales (types/import/require distintos), loadComponent+withInterceptors (functional guards e interceptors), effect() con HTTP (login dispara GET /api/login/me), fileReplacements en angular.json (development/production), proxy.conf.json (/api → http://localhost:3000). 6 trampas paquete: authInterceptor con token vacio, LoginService sin cleanup, ListingsPage effect con this completo, export.ts limit 1000 pero filtro no validado, isEmail(null)=true, applyFilters en memoria. 41 tests vitest (11 libs/shared + 10 api + 20 web smoke). Imagen `node:22-bookworm-slim` con corepack+pnpm 9.12.0. fx-ts-agent-extension cambio trivial: `test_cmd` de `make test` a `npm test -- --run` (make no esta en `node:22-slim`). fx-python-cli, fx-java-micronaut sin cambios. 5 decisiones nuevas D-174..D-178.
+  - F06c (commit `4dea1be`): fixture fx-java-micronaut con paquete por feature.
   - F06b (commit `2b3c5fb`): fixture fx-ts-agent-extension con paquete por feature.
   - F06a2 (commit `4379810`): verificador y harness multi-ecosistema.
 - A medias (archivo → estado exacto → qué falta): nada.
 - Subagentes en vuelo (id, ruta del brief, qué devolverán, dónde escribirán): ninguno.
 - Comandos para verificar el estado:
-  - `python -m pytest` → 292 passed
-  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-python-cli` → OK
-  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-ts-agent-extension` → OK
-  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-java-micronaut` → OK
-  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-java-micronaut --check-cc11` → OK
-  - `python dev/tools/run_fixture_tests.py --fixture fx-java-micronaut` → passed (contenedor `gradle:8.10-jdk21-jammy`)
-  - `python dev/tools/fixtures_matrix.py` → MATRIX.md con `java`, `micronaut`, `gradle` cubiertos
+  - `python -m pytest` → 316 passed
+  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-{python-cli,ts-agent-extension,java-micronaut,monorepo}` → OK
+  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-monorepo --check-cc11` → OK
+  - `python dev/tools/run_fixture_tests.py --fixture fx-monorepo --container` → passed
+  - `python dev/tools/fixtures_matrix.py` → MATRIX.md con `javascript`, `angular`, `pnpm-monorepo`, `pnpm` cubiertos
   - `python dev/tools/validate_skill.py skills/notemartin-project-review` → OK
-- Siguiente acción exacta: F06d — Fixture `fx-monorepo` (workspace pnpm con Angular + Node API + libreria compartida, Nx o Turborepo).
-- Decisiones tomadas (D-NNN): D-169..D-173 — stack Java 21 + Micronaut 4 + Gradle Kotlin DSL, contenedor `gradle:8.10-jdk21-jammy` (sin wrapper), Flyway + H2 (test), snakeyaml runtime, deteccion de Micronaut via plugin en `build.gradle.kts`. Detalles en DECISIONS.md.
+- Siguiente acción exacta: F06e — Fixture `fx-minified` (artefactos sin código fuente legible: bundle JS minificado con sourcemap, .asar, .pyc, .jar sin fuentes, binario Go con símbolos eliminados).
+- Decisiones tomadas (D-NNN): D-174..D-178 — stack pnpm 9 + Angular 19 + Turborepo 2, vscode-shim no necesario (shim solo en F06b), js-yaml solo en runtime de apps/api, @analogjs/vitest-angular no usado (smoke tests en vez de Karma+Chromium), .ts cubre javascript en el detector. Detalles en DECISIONS.md.
 - Riesgos y bloqueos:
   - R1 — Resuelto por D-108.
   - R2 — Resuelto.
@@ -135,6 +135,8 @@ Estados válidos: `PENDIENTE`, `EN CURSO`, `HECHA`, `BLOQUEADA`, `REABIERTA`.
   - R5 — `_read_asar_member` es un parser minimo; suficiente para fixtures sinteticos.
   - R6 — `messages.ts` crece con tests inline reales; cumple con >5.000 lineas con contenido util, no relleno.
   - R7 — Health test en Micronaut embebido requiere arrancar el server manualmente (omitido con `assumeTrue`); el endpoint existe y responde "UP" en runtime real.
+  - R8 — F06b cambio trivial: `test_cmd` de `make test` a `npm test -- --run` (el contenedor `node:22-slim` no trae `make`).
+  - R9 — Angular CLI completa NO esta instalada en el contenedor (~500MB de node_modules); los tests de apps/web son smoke tests que importan los componentes via Node y leen el codigo fuente. El build de Angular CLI queda fuera del scope del fixture.
 
 ## Preguntas para el dueño
 

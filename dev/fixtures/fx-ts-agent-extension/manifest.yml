@@ -8,7 +8,7 @@ requires:
   - linux
   - macos
   - windows
-test_cmd: make test
+test_cmd: npm test -- --run
 container:
   dockerfile: Dockerfile.test
   image_tag: npr-fx-ts-agent-extension

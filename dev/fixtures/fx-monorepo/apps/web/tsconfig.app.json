@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/app",
+    "types": [],
+    "baseUrl": ".",
+    "paths": {
+      "@fx-mono/shared": ["../../libs/shared/src/index.ts"],
+      "@fx-mono/shared/*": ["../../libs/shared/src/*"]
+    }
+  },
+  "files": [
+    "src/main.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "tests/**/*.spec.ts"
+  ]
+}
