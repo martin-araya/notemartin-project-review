@@ -1,0 +1,86 @@
+{
+  "_comment": "Esqueleto minimo de ground truth valido para check_ground_truth.py. Renombrar este archivo a ground_truth.json y completar al construir el fixture.",
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "Feature de ejemplo 1",
+      "user_description": "Describe la feature desde el punto de vista del usuario.",
+      "entrypoints": ["src/example.py:1"],
+      "modules": ["MOD-example"],
+      "traces": [
+        {
+          "n": 1,
+          "what": "Disparador y primer salto",
+          "cite": "src/example.py:1",
+          "data_in": "input",
+          "data_out": "output",
+          "boundary": "host"
+        },
+        {
+          "n": 2,
+          "what": "Segundo salto",
+          "cite": "src/example.py:1-3",
+          "data_in": "x",
+          "data_out": "y",
+          "boundary": "service"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-001",
+          "file": "src/example.py",
+          "line": 2,
+          "kind": "if",
+          "condition_text": "if x is None",
+          "branches": [
+            {"label": "True", "target_line": 3},
+            {"label": "False", "target_line": 4}
+          ]
+        }
+      ],
+      "outcomes": [
+        {"id": "R-01", "user_sees": "Mensaje de exito 1", "category": "exito_completo"},
+        {"id": "R-02", "user_sees": "Mensaje de exito 2", "category": "exito_parcial"},
+        {"id": "R-03", "user_sees": "Mensaje de advertencia", "category": "exito_con_advertencia"},
+        {"id": "R-04", "user_sees": "Mensaje de validacion", "category": "validacion_de_entrada"},
+        {"id": "R-05", "user_sees": "Mensaje de error de red", "category": "error_de_red_o_servicio_externo"},
+        {"id": "R-06", "user_sees": "Mensaje de error interno", "category": "error_interno_no_controlado"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "Feature de ejemplo 2",
+      "user_description": "Segunda feature para cumplir el minimo de 3.",
+      "traces": [{"n": 1, "what": "x", "cite": "src/example.py:1", "data_in": "i", "data_out": "o", "boundary": "host"}],
+      "decision_points": [],
+      "outcomes": [
+        {"id": "R-01", "user_sees": "a"}, {"id": "R-02", "user_sees": "b"},
+        {"id": "R-03", "user_sees": "c"}, {"id": "R-04", "user_sees": "d"},
+        {"id": "R-05", "user_sees": "e"}, {"id": "R-06", "user_sees": "f"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "Feature de ejemplo 3",
+      "user_description": "Tercera feature para cumplir el minimo de 3.",
+      "traces": [{"n": 1, "what": "x", "cite": "src/example.py:1", "data_in": "i", "data_out": "o", "boundary": "host"}],
+      "decision_points": [],
+      "outcomes": [
+        {"id": "R-01", "user_sees": "a"}, {"id": "R-02", "user_sees": "b"},
+        {"id": "R-03", "user_sees": "c"}, {"id": "R-04", "user_sees": "d"},
+        {"id": "R-05", "user_sees": "e"}, {"id": "R-06", "user_sees": "f"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "T-01", "category": "dead-code", "description": "Codigo muerto de ejemplo.", "resolution": "Eliminar la funcion o marcarla como deprecated."}
+  ],
+  "package_traps": [
+    {"id": "PT-01", "category": "catch-vacio", "description": "try/except que convierte un error en exito silencioso.", "resolution": "Propagar la excepcion o registrar en el log."},
+    {"id": "PT-02", "category": "timeout-retry", "description": "Timeout con reintento que duplica operaciones.", "resolution": "Limitar numero de reintentos y agregar jitter."},
+    {"id": "PT-03", "category": "condicion-carrera", "description": "Condicion de carrera entre dos hilos.", "resolution": "Agregar lock o usar cola thread-safe."},
+    {"id": "PT-04", "category": "rama-muerta", "description": "Rama del if que nunca se ejecuta.", "resolution": "Eliminar la rama o corregir la condicion."},
+    {"id": "PT-05", "category": "rechazo-aprobacion", "description": "Resultado que solo ocurre si el usuario rechaza una aprobacion.", "resolution": "Documentar el flujo de aprobacion explicito."},
+    {"id": "PT-06", "category": "combinacion-settings", "description": "Resultado que solo ocurre con dos settings combinados.", "resolution": "Validar la combinacion al inicio del flujo."}
+  ]
+}

@@ -1,0 +1,20 @@
+# Metadata del fixture. Edita una copia en dev/fixtures/fx-<nombre>/manifest.yml
+name: fx-template
+description: Plantilla de fixture. Renombrar y completar al copiar.
+# Lista de plataformas en las que el fixture puede ejecutarse.
+# Valores validos: linux, macos, windows.
+requires:
+  - linux
+  - macos
+  - windows
+# Comando a ejecutar para correr los tests del fixture (relativo a la raiz del fixture).
+test_cmd: make test
+# Contenedor opcional. Si esta presente, run_fixture_tests.py intentara construir
+# la imagen con `docker build -f Dockerfile.test -t npr-fx-<name> .` y luego
+# `docker run --rm npr-fx-<name> <test_cmd>`.
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-template
+  enabled: false
+# Formato del ground truth (a partir de F06a2: v1).
+ground_truth_format_version: 1

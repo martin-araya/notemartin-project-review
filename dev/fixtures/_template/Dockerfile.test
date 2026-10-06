@@ -1,0 +1,12 @@
+# Plantilla de imagen Docker para ejecutar los tests de un fixture en contenedor.
+# El agente constructor NO usa Docker por defecto; este archivo existe para que
+# `dev/tools/run_fixture_tests.py` pueda levantar el fixture en CI/contenedor
+# cuando el host no tiene la toolchain instalada.
+FROM python:3.11-slim
+
+WORKDIR /fixture
+
+# Copia todo el fixture (el contexto del build es la raiz del repo).
+COPY . /fixture/
+
+CMD ["make", "test"]

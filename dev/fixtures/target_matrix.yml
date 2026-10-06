@@ -1,0 +1,90 @@
+# Matriz objetivo de cobertura de la skill (F06a2).
+# Cada entrada debe estar cubierta por al menos un fixture antes de cerrar la
+# etapa 0. `dev/tools/fixtures_matrix.py` compara la cobertura real contra esta
+# lista y emite `dev/fixtures/MATRIX.md`.
+
+version: 1
+description: >
+  Matriz objetivo de cobertura de la skill. Cada lenguaje, framework o sistema
+  de build debe estar cubierto por al menos un fixture antes de cerrar la etapa
+  0. El gate total se cierra al terminar F06f; durante F06a2..F06e la
+  herramienta reporta progreso.
+
+axes:
+  # Lenguajes (al menos un fixture por lenguaje debe cubrir cada uno)
+  languages:
+    - python
+    - typescript
+    - javascript
+    - java
+    - kotlin
+    - go
+    - rust
+    - shell
+    - dart
+    - swift
+    - csharp
+    - ruby
+    - elixir
+
+  # Frameworks y plataformas (al menos un fixture debe usar cada uno)
+  frameworks:
+    - vscode-extension
+    - angular
+    - micronaut
+    - node-express
+    - pnpm-monorepo
+    - electron
+    - gradle
+    - maven
+    - cargo
+    - go-modules
+
+  # Sistemas de build (al menos un fixture debe usar cada uno)
+  build_systems:
+    - pyproject
+    - pnpm
+    - maven
+    - gradle
+    - cargo
+    - go-modules
+    - make
+    - docker
+
+  # Tipos de archivo y formatos
+  file_kinds:
+    - source-text
+    - minified-js
+    - bundle-with-sourcemap
+    - bundle-without-sourcemap
+    - asar
+    - pyc
+    - notebook-ipynb
+    - xml-declarative
+    - yaml-scene
+    - binary
+
+  # Contenedores y paquetes binarios
+  containers:
+    - asar
+    - jar
+    - zip
+    - apk
+    - vsix
+    - whl
+    - egg
+
+  # Trampas minimas por categoria (referenciadas en F06 y paquete por feature)
+  traps:
+    min_per_fixture:
+      superficial: 3
+      package: 6
+    category_breadth:
+      - dead-code
+      - dynamic-import
+      - string-dispatch
+      - handler-registry
+      - event-bus
+      - readme-mismatch
+      - feature-flag-disable
+      - misleading-name

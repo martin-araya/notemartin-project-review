@@ -1,0 +1,296 @@
+#!/usr/bin/env python3
+"""Generador de la matriz de cobertura de fixtures (F06a2 T7).
+
+Carga ``dev/fixtures/target_matrix.yml`` y compara contra el conjunto real de
+fixtures en ``dev/fixtures/``. Para cada fixture hace un descubrimiento ligero
+(extensiones, manifiestos de dependencias) y determina que entradas de la matriz
+cubre.
+
+CLI::
+
+    python dev/tools/fixtures_matrix.py [--check] [--out <dir>]
+
+Genera ``dev/fixtures/MATRIX.md`` con la tabla legible. Con ``--check``, sale
+con codigo 2 si algun item del ``target_matrix.yml`` no esta cubierto (durante
+F06a2..F06e esto se permite; el gate total se cierra en F06f).
+
+Codigos de salida:
+- 0 OK (cobertura completa o solo advertencia)
+- 1 error de uso
+- 2 cobertura incompleta (solo con --check)
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Set
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+FIXTURES_DIR = REPO_ROOT / "dev" / "fixtures"
+TARGET_PATH = FIXTURES_DIR / "target_matrix.yml"
+MATRIX_OUT = FIXTURES_DIR / "MATRIX.md"
+
+# Asegura que ``import dev.tools...`` funcione cuando el script se ejecuta directo.
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+# Extensiones -> lenguajes que cubren
+EXT_LANG: Dict[str, Set[str]] = {
+    ".py": {"python"}, ".pyi": {"python"}, ".pyw": {"python"},
+    ".js": {"javascript"}, ".mjs": {"javascript"}, ".cjs": {"javascript"},
+    ".jsx": {"javascript"},
+    ".ts": {"typescript"}, ".tsx": {"typescript"},
+    ".java": {"java"},
+    ".kt": {"kotlin"}, ".kts": {"kotlin"},
+    ".go": {"go"},
+    ".rs": {"rust"},
+    ".sh": {"shell"}, ".bash": {"shell"}, ".zsh": {"shell"},
+    ".dart": {"dart"},
+    ".swift": {"swift"},
+    ".cs": {"csharp"},
+    ".rb": {"ruby"},
+    ".ex": {"elixir"}, ".exs": {"elixir"},
+}
+
+# Manifiestos -> sistemas de build
+MANIFEST_BUILD: Dict[str, Set[str]] = {
+    "pyproject.toml": {"pyproject"},
+    "pnpm-lock.yaml": {"pnpm"},
+    "pnpm-workspace.yaml": {"pnpm"},
+    "pom.xml": {"maven"},
+    "build.gradle": {"gradle"}, "build.gradle.kts": {"gradle"},
+    "Cargo.toml": {"cargo"},
+    "go.mod": {"go-modules"},
+    "Makefile": {"make"},
+    "Dockerfile": {"docker"},
+}
+
+# Archivos clave de frameworks
+FRAMEWORK_FILES: Dict[str, Set[str]] = {
+    "angular.json": {"angular"},
+    "nest-cli.json": {"node-express"},
+    "micronaut-cli.yml": {"micronaut"},
+    "settings.gradle": {"gradle"}, "settings.gradle.kts": {"gradle"},
+    ".vscode/extension.js": {"vscode-extension"},
+    # electron: lo detectamos por package.json con dependencia electron
+    "nx.json": {"pnpm-monorepo"},
+    "turbo.json": {"pnpm-monorepo"},
+    "pnpm-workspace.yaml": {"pnpm-monorepo"},
+}
+
+# Tipos de archivo
+FILE_KIND_BY_EXT: Dict[str, Set[str]] = {
+    ".min.js": {"minified-js"},
+    ".bundle.js": {"minified-js", "bundle-without-sourcemap"},
+    ".min.css": {"minified-js"},
+    ".map": {"bundle-with-sourcemap"},
+    ".asar": {"asar"},
+    ".pyc": {"pyc"}, ".pyo": {"pyc"},
+    ".ipynb": {"notebook-ipynb"},
+    ".xml": {"xml-declarative"}, ".xaml": {"xml-declarative"},
+    ".ui": {"xml-declarative"}, ".adf": {"xml-declarative"},
+    ".unity": {"yaml-scene"}, ".tscn": {"yaml-scene"},
+    ".helm.yaml": {"yaml-scene"},
+}
+
+CONTAINER_EXTS: Set[str] = {
+    ".asar", ".jar", ".zip", ".apk", ".vsix", ".whl", ".egg",
+}
+
+
+def _yaml_load(text: str) -> Any:
+    try:
+        import yaml  # type: ignore
+
+        return yaml.safe_load(text)
+    except ImportError:
+        from dev.tools.check_ground_truth import _minimal_yaml_load  # type: ignore
+        return _minimal_yaml_load(text)
+
+
+def _load_target() -> dict:
+    if not TARGET_PATH.is_file():
+        raise FileNotFoundError(f"falta {TARGET_PATH}")
+    return _yaml_load(TARGET_PATH.read_text(encoding="utf-8"))
+
+
+def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
+    """Descubre ejes cubiertos por un fixture mediante extensiones y manifiestos."""
+    covered: Dict[str, Set[str]] = {
+        "languages": set(),
+        "frameworks": set(),
+        "build_systems": set(),
+        "file_kinds": set(),
+        "containers": set(),
+    }
+    if not fixture_dir.is_dir():
+        return covered
+
+    # Manifiestos en la raiz
+    for manifest, builds in MANIFEST_BUILD.items():
+        if (fixture_dir / manifest).is_file():
+            covered["build_systems"] |= builds
+
+    # Archivos clave de frameworks en la raiz o un nivel
+    for fname, frameworks in FRAMEWORK_FILES.items():
+        if (fixture_dir / fname).is_file() or (fixture_dir.parent / fname).is_file():
+            covered["frameworks"] |= frameworks
+
+    # package.json -> electron y node-express y pnpm-monorepo
+    pkg = fixture_dir / "package.json"
+    if pkg.is_file():
+        try:
+            data = json.loads(pkg.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            data = {}
+        deps = {}
+        deps.update(data.get("dependencies", {}) or {})
+        deps.update(data.get("devDependencies", {}) or {})
+        if "electron" in deps:
+            covered["frameworks"].add("electron")
+        if "express" in deps or "@nestjs/core" in deps:
+            covered["frameworks"].add("node-express")
+        if (fixture_dir / "pnpm-workspace.yaml").is_file():
+            covered["frameworks"].add("pnpm-monorepo")
+
+    # Recorrido del arbol para extensiones
+    for path in fixture_dir.rglob("*"):
+        if not path.is_file():
+            continue
+        if any(part.startswith(".") and part not in (".vscode",) for part in path.parts):
+            continue
+        if any(p in path.parts for p in ("node_modules", "__pycache__", "target", "build", "dist", ".git")):
+            continue
+        ext = path.suffix.lower()
+        covered["languages"] |= EXT_LANG.get(ext, set())
+        for specific, kinds in FILE_KIND_BY_EXT.items():
+            if path.name.endswith(specific) or ext == specific:
+                covered["file_kinds"] |= kinds
+        if ext in CONTAINER_EXTS:
+            covered["containers"].add(ext.lstrip("."))
+
+    # Si el fixture tiene archivos de codigo fuente, implica ``source-text``.
+    if covered["languages"]:
+        covered["file_kinds"].add("source-text")
+
+    return covered
+
+
+def _discover_fixtures() -> List[Path]:
+    """Lista los fixtures (subdirs de FIXTURES_DIR que no empiezan con ``_`` o ``.``)."""
+    out: List[Path] = []
+    if not FIXTURES_DIR.is_dir():
+        return out
+    for p in sorted(FIXTURES_DIR.iterdir()):
+        if not p.is_dir():
+            continue
+        if p.name.startswith("_") or p.name.startswith("."):
+            continue
+        out.append(p)
+    return out
+
+
+def _format_md(
+    target: dict,
+    per_fixture: List[tuple],
+    aggregate: Dict[str, Set[str]],
+) -> str:
+    axes = target.get("axes", {})
+    lines: List[str] = []
+    lines.append("# Matriz de cobertura de fixtures")
+    lines.append("")
+    lines.append(
+        "Generada por `dev/tools/fixtures_matrix.py` a partir de "
+        "`dev/fixtures/target_matrix.yml` y de los fixtures presentes en "
+        "`dev/fixtures/`."
+    )
+    lines.append("")
+    lines.append("## Fixtures detectados")
+    if per_fixture:
+        for fx, axes_covered in per_fixture:
+            lines.append(f"- `{fx.name}`")
+    else:
+        lines.append("- _(ninguno)_")
+    lines.append("")
+
+    for axis_name in ("languages", "frameworks", "build_systems", "file_kinds", "containers"):
+        wanted = list(axes.get(axis_name, []) or [])
+        if not wanted:
+            continue
+        covered = aggregate.get(axis_name, set())
+        lines.append(f"## Eje: {axis_name}")
+        lines.append("")
+        lines.append("| Item | Estado | Cubierto por |")
+        lines.append("|---|---|---|")
+        for item in wanted:
+            if item in covered:
+                who = [fx.name for fx, a in per_fixture if item in a.get(axis_name, set())]
+                lines.append(f"| `{item}` | cubierto | {', '.join(who) if who else '—'} |")
+            else:
+                lines.append(f"| `{item}` | **falta** | _(ninguno)_ |")
+        lines.append("")
+
+    traps = axes.get("traps", {})
+    min_super = (traps.get("min_per_fixture") or {}).get("superficial")
+    min_pkg = (traps.get("min_per_fixture") or {}).get("package")
+    if min_super is not None or min_pkg is not None:
+        lines.append("## Trampas minimas por fixture")
+        lines.append("")
+        lines.append(f"- Superficiales: {min_super}")
+        lines.append(f"- De paquete: {min_pkg}")
+        lines.append("")
+
+    return "\n".join(lines) + "\n"
+
+
+def main(argv: List[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Genera la matriz de cobertura de fixtures")
+    parser.add_argument("--check", action="store_true", help="Salir con codigo 2 si hay gaps.")
+    parser.add_argument("--out", type=Path, default=MATRIX_OUT, help="Ruta del Markdown de salida.")
+    args = parser.parse_args(argv)
+
+    try:
+        target = _load_target()
+    except FileNotFoundError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    fixtures = _discover_fixtures()
+    per_fixture: List[tuple] = []
+    aggregate: Dict[str, Set[str]] = {
+        "languages": set(),
+        "frameworks": set(),
+        "build_systems": set(),
+        "file_kinds": set(),
+        "containers": set(),
+    }
+    for fx in fixtures:
+        covered = _fixture_axes(fx)
+        per_fixture.append((fx, covered))
+        for k, v in covered.items():
+            aggregate[k] |= v
+
+    md = _format_md(target, per_fixture, aggregate)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text(md, encoding="utf-8")
+    print(f"OK: {args.out} escrito con {len(per_fixture)} fixture(s).")
+
+    if args.check:
+        axes = target.get("axes", {})
+        gaps: List[str] = []
+        for axis_name in ("languages", "frameworks", "build_systems", "file_kinds", "containers"):
+            for item in axes.get(axis_name, []) or []:
+                if item not in aggregate.get(axis_name, set()):
+                    gaps.append(f"{axis_name}:{item}")
+        if gaps:
+            print(f"Cobertura incompleta ({len(gaps)} gaps). Use sin --check para ver el detalle.", file=sys.stderr)
+            return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

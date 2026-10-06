@@ -1,0 +1,12 @@
+# Lista de tokens unicos del fixture para overfit_guard.py.
+# Pegar aqui al menos 20 identificadores, strings o rutas exclusivos del fixture:
+# nombres de clases, mensajes de error, slugs de modos, claves i18n, etc.
+# Reglas:
+#  - un token por linea
+#  - sin comentarios
+#  - sin espacios
+#  - no repetir tokens
+# Ejemplo (sustituir por los reales):
+# MiClaseUnica
+# ERROR_MI_FIXTURE_001
+# fx-mi-fixture-mode

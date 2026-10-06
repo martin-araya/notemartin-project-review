@@ -113,7 +113,7 @@ La skill:
 
 | Etapa | Fases | Contenido | Paralelizable |
 |---|---|---|---|
-| 0 — Fundaciones | F00–F07 | Repo, SKILL.md esqueleto, adaptadores runtime, reglas de evidencia, esquemas, CLI, fixtures, umbrales canónicos, anti-sobreajuste, especificación de holdout | F02 ∥ F03 ∥ F04; F06 por fixture en paralelo |
+| 0 — Fundaciones | F00–F07a2 | Repo, SKILL.md esqueleto, adaptadores runtime, reglas de evidencia, esquemas, CLI, fixtures, umbrales canónicos, anti-sobreajuste, especificación de holdout, verificador y harness multi-ecosistema | F02 ∥ F03 ∥ F04; F06 por fixture en paralelo; F06a2 tras F06a |
 | 1 — Recon determinista | F08–F25 | Scripts de inventario, clasificación, dependencias, grafo, símbolos, entry points, superficies, config, LLM, git, particionado, ledger | Tras F08–F09: F10–F13 ∥; F16–F21 ∥ |
 | 2 — Protocolo cognitivo | F26–F32 | Pipeline, subagentes, módulos, fichas, arquitectura, trazas, features | F28–F32 ∥ tras F26–F27 |
 | 2B — Paquete por feature | F33–F47 | Diagrama de flujo, resultados posibles, decisión, secuencia/estados, errores, pruebas, datos, llamadas, ejemplos, límites, observabilidad, interacciones, mini-paquete por superficie | F37–F41, F43–F45 ∥ tras F36 |
@@ -388,6 +388,60 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 - [x] Los tests del fixture pasan.
 - [x] Ningún archivo en `dev/fixtures/fx-python-cli/` menciona el ground truth.
 - [x] Las 4 features tienen ≥ 6 R-NN y las 6 trampas específicas del paquete están plantadas y documentadas.
+
+---
+
+## F06a2 — Verificador y harness multi-ecosistema ✅
+
+**Objetivo:** que el verificador, los tests y la plantilla soporten todos los tipos de archivo y
+toolchains de la matriz antes de crear los fixtures. Tras esta fase, F06b–F06f pueden usar el
+mismo verificador sin parches ad hoc.
+**Depende de:** F06a
+**Subagentes:** uno.
+
+**Tareas:**
+- Extender `check_ground_truth.py` con los formatos de referencia:
+  `archivo:línea`, `archivo:inicio-fin`, `archivo:línea#símbolo`, `archivo:línea:columna`,
+  `contenedor!/ruta/interna:línea`, `notebook.ipynb#celda-N:línea`, `archivo#xpath`,
+  `archivo#yaml-path`, `binario#offset|símbolo`. Despachador con orden
+  explícito para desambiguar `arch#simbolo` entre `texto`, `yaml` y `binario`
+  (las extensiones binarias conocidas fuerzan la rama binaria).
+- Tabla de sintaxis de comentarios por extensión y nombre de archivo
+  (`dev/tools/comment_syntax.json`, ~80 entradas: `#`, `//`, `/* */`, `--`, `<!-- -->`,
+  `;`, `%`, `*>`, `{- -}`, `REM`, etc.) y validación **CC-11** (sin menciones
+  embebidas en comentarios). `dev/tools/comment_syntax.py` con `detect()` y
+  `mask_comments()` que preserva saltos de línea y longitudes.
+- Detección de codificación por archivo (`dev/tools/encoding.py`): BOM (UTF-8/16/32 LE/BE),
+  UTF-8, Latin-1/CP1252, Shift-JIS; `read_lines()` consistente con un editor en LF, CRLF y CR.
+- `dev/tools/run_fixture_tests.py`: ejecuta `test_cmd` de cada fixture desde su `manifest.yml`;
+  respeta `requires:` (plataformas) y `container:` (Docker opcional). Soporta
+  `--all` y `--fixture <fx>`, `--report <json>`, `--platform auto|linux|macos|windows`.
+- `dev/fixtures/_template/` con `README.md`, `manifest.yml`, `Makefile`, `Dockerfile.test`,
+  `build-history.sh`, `unique_tokens.txt`, `.gitignore`, `pyproject.toml` y
+  `ground-truth/ground_truth.json.example` (esqueleto válido para `check_ground_truth.py`).
+- `dev/fixtures/target_matrix.yml`: lista objetivo de lenguajes, frameworks, sistemas de build,
+  tipos de archivo y contenedores.
+- `dev/tools/fixtures_matrix.py`: descubre fixtures, calcula ejes cubiertos por cada uno
+  (extensiones, manifiestos, archivos clave de frameworks, contenedores) y compara contra
+  `target_matrix.yml`. Genera `dev/fixtures/MATRIX.md` y soporta `--check`.
+- Tests ampliados en `dev/tests/test_check_ground_truth.py` (57 tests), `test_encoding.py`
+  (19), `test_comment_syntax.py` (20), `test_run_fixture_tests.py` (16),
+  `test_fixtures_matrix.py` (9).
+
+**Criterios de aceptación:**
+- [x] `check_ground_truth.py` valida los formatos exigidos, con tests de casos válidos y rotos
+      (≥ 14 casos cubriendo todos los formatos).
+- [x] La validación de CC-11 detecta menciones en todas las sintaxis de comentario
+      (probado en `#`, `//`, `/* */`).
+- [x] Los números de línea son correctos en archivos UTF-8, UTF-16 LE/BE, Latin-1, con BOM
+      y con CRLF.
+- [x] `fx-python-cli` sigue pasando sin cambios (`git diff dev/fixtures/fx-python-cli
+      dev/ground-truth/fx-python-cli` limpio, `check_ground_truth.py` exit 0).
+- [x] `run_fixture_tests.py` ejecuta `fx-python-cli` (estado `error (no manifest)` esperado
+      en F06a2: el manifest se introduce en F06b) y omite correctamente un fixture de prueba
+      marcado `requires: macos` en Linux.
+- [x] `_template/`, `target_matrix.yml`, `fixtures_matrix.py` y `MATRIX.md` existen y son
+      válidos; `fixtures_matrix.py` genera el Markdown de cobertura.
 
 ---
 

@@ -442,6 +442,46 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Decisión: 5 tokens `NPRGT-FXNOTES-001..005` en `unique_tokens.txt` (ground truth) y `dev/fixtures/fx-python-cli/unique_tokens.txt`. El test `test_02_fixture_has_no_unique_tokens` itera todos los archivos del fixture y falla si encuentra alguno de esos tokens fuera del archivo `unique_tokens.txt` mismo.
 - Consecuencias: el overfit_guard.py de F57 puede usar este patrón para detectar fugas entre skill y fixtures.
 
+### D-159 — Version 1 del formato de ground truth (F06a2)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06a2 · vigente
+- Contexto: el verificador pasa de soportar solo `archivo:línea` y `archivo:línea#símbolo` a 9 formatos (texto simple, rango, símbolo, columna, contenedor ZIP/asar, notebook Jupyter, xpath, yaml-path, binario con offset o símbolo).
+- Decisión: introducir un **despachador por tipo** en `check_ground_truth.py` que detecta el formato por regex y aplica el validador correspondiente. `manifest.ground_truth_format_version: 1` en los fixtures declara la versión. Ground truths v0 (los de F06a) siguen siendo válidos porque el formato `archivo:línea#símbolo` es compatible.
+- Alternativas: (a) renombrar los ground truths a un nuevo esquema JSON con `cite: {type, ...}`; (b) tener un script de migración. Descartado: el cambio interno es retrocompatible y no obliga a reescribir ground truths.
+- Consecuencias: los fixtures F06b..F06f pueden usar cualquiera de los 9 formatos sin parches ad hoc. Si en el futuro se añade un formato (v2), se introducirá un campo `format_version` por ground truth y el despachador discriminará.
+
+### D-160 — Sintaxis de comentarios como datos (F06a2)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06a2 · vigente
+- Contexto: la validación CC-11 (sin ground truth embebido en comentarios) necesita detectar comentarios en 80+ extensiones (Python, JS, TS, Go, Rust, Java, Kotlin, COBOL, Haskell, Erlang, SQL, etc.) sin codificar las sintaxis en Python.
+- Decisión: `dev/tools/comment_syntax.json` con `by_extension` y `by_filename`. `dev/tools/comment_syntax.py` con `detect(path) -> list[(open, close)]`, `mask_comments(text, syntax) -> str` (preserva newlines y longitudes) y `has_comment_syntax(path)`. La validación CC-11 invoca `mask_comments` y reporta menciones que están en `text` pero no en `mask_comments`.
+- Alternativas: (a) librería `pygments` o `tree-sitter`; (b) regex por extensión dentro de `check_ground_truth.py`. Descartado: dependencias externas y acoplamiento.
+- Consecuencias: agregar un lenguaje o framework no requiere tocar el verificador. La tabla puede ampliarse en cualquier commit de F06b..F06f si surge un lenguaje nuevo.
+
+### D-161 — Deteccion de codificacion conservadora (F06a2)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06a2 · vigente
+- Contexto: el inventario y el verificador deben leer archivos en UTF-8, UTF-16, Latin-1, CP1252 y Shift-JIS con o sin BOM y en CRLF, LF o CR sin distorsionar el conteo de líneas.
+- Decisión: `dev/tools/encoding.py` con `detect(path) -> str` (BOM primero, luego UTF-8 estricto, luego heurística de Shift-JIS, luego Latin-1) y `read_lines(path) -> (list[str], str)` (decodifica, elimina el BOM residual y aplica `splitlines()`). Sin auto-conversión destructiva; `errors="replace"` para no abortar.
+- Alternativas: (a) `chardet`; (b) leer siempre en binario y decodificar a UTF-8 con `errors="ignore"`. Descartado: dependencias y pérdida de información.
+- Consecuencias: el conteo de líneas y las citas `archivo:línea` son consistentes con lo que muestra un editor moderno en cualquier codificación soportada.
+
+### D-162 — Harness de fixtures opt-in (F06a2)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06a2 · vigente
+- Contexto: F06b..F06f requeriran ejecutar los tests de cada fixture en su toolchain, con soporte multiplataforma y contenedor opcional.
+- Decisión: `dev/tools/run_fixture_tests.py` se ejecuta **solo bajo peticion** del agente constructor (no en pytest por defecto). Cada fixture declara `manifest.yml` con `name`, `requires: [linux|macos|windows]`, `test_cmd` y `container: {dockerfile, image_tag, enabled}`. Sin Docker, el harness cae al `test_cmd` local; sin manifest, el fixture se marca `error (no manifest)` y bloquea el commit de F06b+ hasta que se agregue.
+- Alternativas: (a) auto-descubrir via `pyproject.toml`; (b) ejecutar todo en Docker. Descartado: ambiguo y costoso.
+- Consecuencias: la verificacion local sigue siendo opcional y el desarrollador puede elegir ejecutar solo los fixtures compatibles con su plataforma (`--platform linux`).
+
+### D-163 — Gate de cobertura total se cierra tras F06f (F06a2)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06a2 · vigente
+- Contexto: `dev/fixtures/target_matrix.yml` lista 13 lenguajes, 10 frameworks, 8 sistemas de build, 10 tipos de archivo y 7 contenedores. Con solo `fx-python-cli` la cobertura real es ~5 %; el gate de cobertura completa (`fixtures_matrix.py --check` exit 0) no se puede exigir en F06a2.
+- Decisión: durante F06a2..F06e `fixtures_matrix.py` reporta cobertura parcial sin fallar por defecto; `--check` devuelve 2 si hay gaps (informativo). El gate **se cierra** al terminar F06f: en ese punto `--check` debe devolver 0 y se anade a la lista de gates obligatorios antes de K (ver AGENTS §12).
+- Alternativas: (a) forzar el gate ya en F06a2; (b) no documentar el gate. Descartado: paralizaria F06a2 innecesariamente y perderia la senal de progreso.
+- Consecuencias: queda explicito que el gate de cobertura total es responsabilidad de F06f, no de F06a2.
+
 ## Plantilla para nuevas decisiones
 
 ```
