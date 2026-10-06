@@ -82,6 +82,12 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     "pnpm-workspace.yaml": {"pnpm-monorepo"},
 }
 
+# Markers adicionales en package.json que indican el framework aunque el
+# archivo no este presente (util para shims de VS Code, etc.).
+PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
+    "contributes": {"vscode-extension"},
+}
+
 # Tipos de archivo
 FILE_KIND_BY_EXT: Dict[str, Set[str]] = {
     ".min.js": {"minified-js"},
@@ -156,6 +162,10 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
             covered["frameworks"].add("node-express")
         if (fixture_dir / "pnpm-workspace.yaml").is_file():
             covered["frameworks"].add("pnpm-monorepo")
+        # Markers adicionales (contributes -> vscode-extension).
+        for marker, frameworks in PACKAGE_JSON_MARKERS.items():
+            if marker in data:
+                covered["frameworks"] |= frameworks
 
     # Recorrido del arbol para extensiones
     for path in fixture_dir.rglob("*"):

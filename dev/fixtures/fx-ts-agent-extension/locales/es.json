@@ -1,0 +1,18 @@
+{
+  "mode.plan.title": "Plan",
+  "mode.plan.description": "Lee el codigo y propone cambios sin aplicarlos.",
+  "mode.code.title": "Codigo",
+  "mode.code.description": "Aplica cambios con aprobacion.",
+  "mode.ask.title": "Pregunta",
+  "mode.ask.description": "Responde preguntas sobre el codigo sin modificarlo.",
+  "tool.read_file.label": "Leer archivo",
+  "tool.list_dir.label": "Listar directorio",
+  "tool.search_code.label": "Buscar en el codigo",
+  "tool.run_terminal_cmd.label": "Ejecutar comando de terminal",
+  "tool.ask_user.label": "Preguntar al usuario",
+  "tool.propose_plan.label": "Proponer plan",
+  "error.invalid_message": "Mensaje invalido recibido del webview.",
+  "error.tool_denied": "El usuario denego la ejecucion de la herramienta.",
+  "error.tool_timeout": "El usuario no respondio a la solicitud de aprobacion.",
+  "context.condensed": "Contexto condensado: {removed} mensajes antiguos eliminados."
+}

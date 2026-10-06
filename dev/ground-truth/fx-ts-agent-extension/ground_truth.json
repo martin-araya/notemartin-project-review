@@ -1,0 +1,1441 @@
+{
+  "fixture": "fx-ts-agent-extension",
+  "version": "1.0.0",
+  "entry_points": [
+    {
+      "id": "EP-activate",
+      "file": "src/host/extension.ts",
+      "line": 17,
+      "function": "activate",
+      "kind": "script"
+    },
+    {
+      "id": "EP-extension-pkg",
+      "file": "package.json",
+      "line": 22,
+      "function": "contributes.commands",
+      "kind": "module"
+    }
+  ],
+  "modules": [
+    {
+      "id": "MOD-extension",
+      "path": "src/host/extension.ts",
+      "summary": "activate() + registerCommand + contributes"
+    },
+    {
+      "id": "MOD-messages",
+      "path": "src/host/messages.ts",
+      "summary": "12 message types dispatcher (5000+ lines)"
+    },
+    {
+      "id": "MOD-modes",
+      "path": "src/host/modes.ts",
+      "summary": "3 modes (plan, code, ask) with allowedTools"
+    },
+    {
+      "id": "MOD-skills",
+      "path": "src/host/skills.ts",
+      "summary": "Skill loader (2 paths, merge of frontmatter)"
+    },
+    {
+      "id": "MOD-tools",
+      "path": "src/host/tools.ts",
+      "summary": "6 tools with approval flow"
+    },
+    {
+      "id": "MOD-providers",
+      "path": "src/host/providers/index.ts",
+      "summary": "Provider factory with dynamic import"
+    },
+    {
+      "id": "MOD-mcp",
+      "path": "src/host/mcp/client.ts",
+      "summary": "Simulated MCP client"
+    },
+    {
+      "id": "MOD-context",
+      "path": "src/host/context.ts",
+      "summary": "Context condensation"
+    },
+    {
+      "id": "MOD-i18n",
+      "path": "src/host/i18n.ts",
+      "summary": "i18n with bundles"
+    },
+    {
+      "id": "MOD-vscode-shim",
+      "path": "src/host/vscode-shim/index.ts",
+      "summary": "Minimal VS Code API shim for tests"
+    },
+    {
+      "id": "MOD-webview",
+      "path": "src/webview/messages.ts",
+      "summary": "Webview message type registry"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "zod",
+      "scope": "runtime",
+      "used_in": "src/host/messages.ts:25",
+      "manifest": "package.json:42"
+    },
+    {
+      "name": "js-yaml",
+      "scope": "runtime",
+      "used_in": "src/host/skills.ts:11",
+      "manifest": "package.json:43"
+    },
+    {
+      "name": "typescript",
+      "scope": "dev",
+      "used_in": "tsconfig.json",
+      "manifest": "package.json:35"
+    },
+    {
+      "name": "esbuild",
+      "scope": "dev",
+      "used_in": "package.json:32",
+      "manifest": "package.json:32"
+    },
+    {
+      "name": "vitest",
+      "scope": "dev",
+      "used_in": "vitest.config.ts:1",
+      "manifest": "package.json:34"
+    },
+    {
+      "name": "@types/node",
+      "scope": "dev",
+      "used_in": "tsconfig.json:14",
+      "manifest": "package.json:36"
+    },
+    {
+      "name": "@types/js-yaml",
+      "scope": "dev",
+      "used_in": "src/host/skills.ts:11",
+      "manifest": "package.json:37"
+    }
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "cambiar-modo",
+      "user_description": "User changes the agent mode via the webview UI; the host updates the allowed tools and emits an updated snapshot.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "UI click on ModePicker",
+          "cite": "src/host/messages.ts:200",
+          "data_in": "from=plan, to=code",
+          "data_out": "msg validated"
+        },
+        {
+          "n": 2,
+          "what": "validate mode id via isModeId",
+          "cite": "src/host/modes.ts:46",
+          "data_in": "to=code",
+          "data_out": "true"
+        },
+        {
+          "n": 3,
+          "what": "update state.mode",
+          "cite": "src/host/messages.ts:486",
+          "data_in": "ctx.state.mode = to",
+          "data_out": "state updated"
+        },
+        {
+          "n": 4,
+          "what": "lookup allowedTools from MODES",
+          "cite": "src/host/modes.ts:10",
+          "data_in": "mode=code",
+          "data_out": "6 tools"
+        },
+        {
+          "n": 5,
+          "what": "emit host/mode/updated to webview",
+          "cite": "src/host/messages.ts:492",
+          "data_in": "from, to, allowedTools",
+          "data_out": "webview message"
+        },
+        {
+          "n": 6,
+          "what": "log jump-ask-to-code if applicable",
+          "cite": "src/host/messages.ts:499",
+          "data_in": "from, to",
+          "data_out": "log entry"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-001",
+          "file": "src/host/messages.ts",
+          "line": 482,
+          "kind": "validation",
+          "condition_text": "isModeId(safe.to)",
+          "branches": [
+            {
+              "label": "true",
+              "target_line": 485
+            },
+            {
+              "label": "false -> error",
+              "target_line": 482
+            }
+          ]
+        },
+        {
+          "id": "DP-002",
+          "file": "src/host/messages.ts",
+          "line": 499,
+          "kind": "logging",
+          "condition_text": "previous === 'ask' && safe.to === 'code'",
+          "branches": [
+            {
+              "label": "log jump",
+              "target_line": 500
+            },
+            {
+              "label": "skip",
+              "target_line": 502
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "success",
+          "conditions": "valid mode id",
+          "user_sees": "Mode badge updates to 'Code' and 6 tools become available.",
+          "side_effects": [
+            "state.mode updated",
+            "host/mode/updated emitted"
+          ],
+          "reversible": true,
+          "final_state": "ctx.state.mode = 'code'",
+          "tests": [
+            "tests/test_modes.test.ts:code tiene TODAS las 6 tools"
+          ]
+        },
+        {
+          "id": "R-02",
+          "category": "error_invalid_input",
+          "conditions": "to is not in [plan, code, ask]",
+          "user_sees": "host/error with code INVALID_MODE",
+          "side_effects": [
+            "no state mutation"
+          ],
+          "reversible": false,
+          "final_state": "mode unchanged",
+          "tests": [
+            "tests/test_messages.test.ts:dispatch a webview/mode/change con modo invalido emite host/error"
+          ]
+        },
+        {
+          "id": "R-03",
+          "category": "no_op",
+          "conditions": "from === to (same mode)",
+          "user_sees": "host/mode/updated emitted with same from/to",
+          "side_effects": [
+            "emits same event"
+          ],
+          "reversible": true,
+          "final_state": "unchanged",
+          "tests": [
+            "tests/test_modes.test.ts:acepta from igual a to (no-op)"
+          ]
+        },
+        {
+          "id": "R-04",
+          "category": "log_warning",
+          "conditions": "previous=ask, to=code (jump-ask-to-code)",
+          "user_sees": "no UI change; log entry 'mode/jump-ask-to-code'",
+          "side_effects": [
+            "log entry"
+          ],
+          "reversible": true,
+          "final_state": "no extra state",
+          "tests": [
+            "tests/test_messages.test.ts:registra salto de ask a code"
+          ]
+        },
+        {
+          "id": "R-05",
+          "category": "error_invalid_payload",
+          "conditions": "payload missing 'to' field",
+          "user_sees": "InvalidMessageError thrown",
+          "side_effects": [
+            "zod parse fails"
+          ],
+          "reversible": false,
+          "final_state": "no mutation",
+          "tests": [
+            "tests/test_messages.test.ts:rechaza payload sin to"
+          ]
+        },
+        {
+          "id": "R-06",
+          "category": "validation",
+          "conditions": "payload missing 'from' field",
+          "user_sees": "InvalidMessageError thrown",
+          "side_effects": [
+            "zod parse fails"
+          ],
+          "reversible": false,
+          "final_state": "no mutation",
+          "tests": [
+            "tests/test_modes.test.ts:includes from in event"
+          ]
+        }
+      ],
+      "errors": [
+        {
+          "id": "ERR-001",
+          "type": "InvalidMessageError",
+          "origin": "src/host/messages.ts:480",
+          "message": "invalid webview/mode/change",
+          "propagation": [
+            {
+              "layer": "dispatch",
+              "action": "validate",
+              "cite": "src/host/messages.ts:480"
+            }
+          ],
+          "handled_at": "caller",
+          "user_sees": "INVALID_MODE error",
+          "outcome": "R-02"
+        }
+      ],
+      "config": [],
+      "states": [
+        {
+          "name": "plan",
+          "description": "only read tools"
+        },
+        {
+          "name": "code",
+          "description": "all 6 tools"
+        },
+        {
+          "name": "ask",
+          "description": "read-only + propose"
+        }
+      ],
+      "telemetry": [
+        {
+          "event": "mode/changed",
+          "payload": {
+            "from": "string",
+            "to": "string"
+          },
+          "emitted_at": "src/host/messages.ts:499"
+        }
+      ],
+      "interactions": [
+        {
+          "feature": "FEAT-002",
+          "kind": "shares config"
+        },
+        {
+          "feature": "FEAT-003",
+          "kind": "restricts allowed tools"
+        }
+      ],
+      "callgraph": [
+        "src/host/messages.ts:handleModeChange -> src/host/modes.ts:isModeId",
+        "src/host/messages.ts:handleModeChange -> src/host/modes.ts:getMode"
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "cargar-skill",
+      "user_description": "User triggers 'Load skill' command; the host discovers skills from disk (2 paths) and merges project over user.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "command 'fxagent.loadSkill' invoked",
+          "cite": "src/host/extension.ts:51",
+          "data_in": "no args",
+          "data_out": "command start"
+        },
+        {
+          "n": 2,
+          "what": "discover skills from disk",
+          "cite": "src/host/skills.ts:170",
+          "data_in": "projectRoot",
+          "data_out": "Record<string, Skill>"
+        },
+        {
+          "n": 3,
+          "what": "list user skills dir",
+          "cite": "src/host/skills.ts:155",
+          "data_in": "~/.fxagent/skills",
+          "data_out": "file list"
+        },
+        {
+          "n": 4,
+          "what": "list project skills dir",
+          "cite": "src/host/skills.ts:155",
+          "data_in": ".fxagent/skills",
+          "data_out": "file list"
+        },
+        {
+          "n": 5,
+          "what": "merge project over user for same name",
+          "cite": "src/host/skills.ts:111",
+          "data_in": "userSkill, projectSkill",
+          "data_out": "merged Skill"
+        },
+        {
+          "n": 6,
+          "what": "emit host/skills/updated with consolidated list",
+          "cite": "src/host/messages.ts:1707",
+          "data_in": "skills[]",
+          "data_out": "webview message"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-003",
+          "file": "src/host/skills.ts",
+          "line": 167,
+          "kind": "merge",
+          "condition_text": "existing.scope === 'user' && skill.scope === 'project'",
+          "branches": [
+            {
+              "label": "mergeSkills",
+              "target_line": 189
+            },
+            {
+              "label": "overwrite",
+              "target_line": 190
+            }
+          ]
+        },
+        {
+          "id": "DP-004",
+          "file": "src/host/skills.ts",
+          "line": 80,
+          "kind": "frontmatter",
+          "condition_text": "typeof obj.name !== 'string' || obj.name.length === 0",
+          "branches": [
+            {
+              "label": "throw SkillFrontmatterError",
+              "target_line": 81
+            },
+            {
+              "label": "accept",
+              "target_line": 82
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "success",
+          "conditions": "user and project have same skill",
+          "user_sees": "Merged skill with project frontmatter overriding user's and body concatenated.",
+          "side_effects": [
+            "state.skills updated",
+            "host/skills/updated emitted"
+          ],
+          "reversible": true,
+          "final_state": "merged skill in state",
+          "tests": [
+            "tests/test_skills.test.ts:proyecto pisa usuario en campos top-level"
+          ]
+        },
+        {
+          "id": "R-02",
+          "category": "success",
+          "conditions": "no project skill, only user",
+          "user_sees": "User skill loaded as-is.",
+          "side_effects": [
+            "state.skills updated"
+          ],
+          "reversible": true,
+          "final_state": "user skill in state",
+          "tests": [
+            "tests/test_skills.test.ts:descubre skill de usuario"
+          ]
+        },
+        {
+          "id": "R-03",
+          "category": "error_invalid_frontmatter",
+          "conditions": "SKILL.md has no '---' delimiters",
+          "user_sees": "SkillFrontmatterError logged",
+          "side_effects": [
+            "error logged"
+          ],
+          "reversible": false,
+          "final_state": "skill skipped",
+          "tests": [
+            "tests/test_skills.test.ts:lanza error si no hay delimitadores"
+          ]
+        },
+        {
+          "id": "R-04",
+          "category": "error_invalid_frontmatter",
+          "conditions": "SKILL.md has no 'name' field",
+          "user_sees": "SkillFrontmatterError logged",
+          "side_effects": [
+            "error logged"
+          ],
+          "reversible": false,
+          "final_state": "skill skipped",
+          "tests": [
+            "tests/test_skills.test.ts:lanza error si falta name"
+          ]
+        },
+        {
+          "id": "R-05",
+          "category": "error_io",
+          "conditions": "discover() throws (path inaccessible)",
+          "user_sees": "webview/skills/error emitted with message",
+          "side_effects": [
+            "error message published"
+          ],
+          "reversible": true,
+          "final_state": "state unchanged",
+          "tests": [
+            "tests/test_messages.test.ts:dispatch a webview/skills/error loguea"
+          ]
+        },
+        {
+          "id": "R-06",
+          "category": "partial",
+          "conditions": "user skill and project skill have different names",
+          "user_sees": "mergeSkills throws because names differ; both kept separately.",
+          "side_effects": [
+            "error thrown"
+          ],
+          "reversible": false,
+          "final_state": "no merge",
+          "tests": [
+            "tests/test_skills.test.ts:lanza error si los nombres difieren"
+          ]
+        }
+      ],
+      "errors": [
+        {
+          "id": "ERR-002",
+          "type": "SkillFrontmatterError",
+          "origin": "src/host/skills.ts:80",
+          "message": "missing '---' delimiters",
+          "propagation": [
+            {
+              "layer": "loader",
+              "action": "throw",
+              "cite": "src/host/skills.ts:80"
+            }
+          ],
+          "handled_at": "discover()",
+          "user_sees": "logged error",
+          "outcome": "R-03"
+        }
+      ],
+      "config": [
+        {
+          "key": "FXAGENT_SKILLS_DIR",
+          "kind": "env|file",
+          "default": "~/.fxagent/skills",
+          "effect": "user skills dir"
+        }
+      ],
+      "states": [
+        {
+          "name": "user",
+          "description": "skill from user dir"
+        },
+        {
+          "name": "project",
+          "description": "skill from project dir"
+        },
+        {
+          "name": "merged",
+          "description": "project frontmatter overrides user, body concatenated"
+        }
+      ],
+      "telemetry": [
+        {
+          "event": "skill/discovered-via-webview",
+          "payload": {
+            "name": "string",
+            "sourcePath": "string",
+            "scope": "string"
+          },
+          "emitted_at": "src/host/messages.ts:1700"
+        }
+      ],
+      "interactions": [
+        {
+          "feature": "FEAT-001",
+          "kind": "shares config (locale, provider)"
+        }
+      ],
+      "callgraph": [
+        "src/host/extension.ts:activate#loadSkill -> src/host/skills.ts:discover",
+        "src/host/skills.ts:discover -> src/host/skills.ts:listSkillFilesIn",
+        "src/host/skills.ts:discover -> src/host/skills.ts:loadSkillFile",
+        "src/host/skills.ts:discover -> src/host/skills.ts:mergeSkills"
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "ejecutar-herramienta-con-aprobacion",
+      "user_description": "User requests a tool execution; the host asks for approval (if required) and runs the tool.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "webview sends webview/tools/start",
+          "cite": "src/host/messages.ts:2660",
+          "data_in": "callId, tool, args",
+          "data_out": "msg validated"
+        },
+        {
+          "n": 2,
+          "what": "lookup tool definition",
+          "cite": "src/host/tools.ts:235",
+          "data_in": "tool name",
+          "data_out": "ToolDefinition"
+        },
+        {
+          "n": 3,
+          "what": "check tool allowed in current mode",
+          "cite": "src/host/modes.ts:52",
+          "data_in": "tool, mode",
+          "data_out": "boolean"
+        },
+        {
+          "n": 4,
+          "what": "call runTool (runTool decides approval)",
+          "cite": "src/host/tools.ts:316",
+          "data_in": "name, args, ctx",
+          "data_out": "RunToolResult"
+        },
+        {
+          "n": 5,
+          "what": "askForApproval if requiresApproval",
+          "cite": "src/host/tools.ts:271",
+          "data_in": "toolName, payload",
+          "data_out": "boolean"
+        },
+        {
+          "n": 6,
+          "what": "execute tool body",
+          "cite": "src/host/tools.ts:54",
+          "data_in": "args, ctx",
+          "data_out": "result"
+        },
+        {
+          "n": 7,
+          "what": "emit webview/tools/result",
+          "cite": "src/host/messages.ts:2707",
+          "data_in": "callId, ok, result/error",
+          "data_out": "webview message"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-005",
+          "file": "src/host/messages.ts",
+          "line": 2662,
+          "kind": "lookup",
+          "condition_text": "toolName in TOOLS",
+          "branches": [
+            {
+              "label": "found",
+              "target_line": 2665
+            },
+            {
+              "label": "not found -> error",
+              "target_line": 2662
+            }
+          ]
+        },
+        {
+          "id": "DP-006",
+          "file": "src/host/messages.ts",
+          "line": 2666,
+          "kind": "permission",
+          "condition_text": "toolAllowedInMode(tool, ctx.state.mode)",
+          "branches": [
+            {
+              "label": "allowed",
+              "target_line": 2675
+            },
+            {
+              "label": "not allowed -> error",
+              "target_line": 2666
+            }
+          ]
+        },
+        {
+          "id": "DP-007",
+          "file": "src/host/tools.ts",
+          "line": 328,
+          "kind": "bypass",
+          "condition_text": "name === 'run_terminal_cmd' && ctx.config.askForTerminal === false",
+          "branches": [
+            {
+              "label": "skip approval",
+              "target_line": 332
+            },
+            {
+              "label": "require approval",
+              "target_line": 333
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "success",
+          "conditions": "tool allowed, approval granted",
+          "user_sees": "webview/tools/result with ok=true and result",
+          "side_effects": [
+            "tool executed",
+            "result published"
+          ],
+          "reversible": false,
+          "final_state": "result returned",
+          "tests": [
+            "tests/test_tools.test.ts:search_code funciona sin approval"
+          ]
+        },
+        {
+          "id": "R-02",
+          "category": "error_unknown_tool",
+          "conditions": "tool name not in TOOLS",
+          "user_sees": "webview/tools/result with ok=false, error=UnknownTool",
+          "side_effects": [
+            "error published"
+          ],
+          "reversible": false,
+          "final_state": "no execution",
+          "tests": [
+            "tests/test_tools.test.ts:rechaza tool desconocida"
+          ]
+        },
+        {
+          "id": "R-03",
+          "category": "error_not_allowed",
+          "conditions": "tool not in current mode allowedTools",
+          "user_sees": "webview/tools/result with ok=false, error=ToolNotAllowedInMode",
+          "side_effects": [
+            "error published"
+          ],
+          "reversible": false,
+          "final_state": "no execution",
+          "tests": [
+            "tests/test_messages.test.ts:dispatch a webview/tools/start con tool no permitida en modo"
+          ]
+        },
+        {
+          "id": "R-04",
+          "category": "cancelled_by_user",
+          "conditions": "approval times out (no response in approvalTimeoutMs)",
+          "user_sees": "webview/tools/result with ok=false, error=ToolDeniedError",
+          "side_effects": [
+            "timer fired"
+          ],
+          "reversible": false,
+          "final_state": "tool not executed",
+          "tests": [
+            "tests/test_tools.test.ts:devuelve ToolDeniedError por timeout"
+          ]
+        },
+        {
+          "id": "R-05",
+          "category": "success_unsafe_bypass",
+          "conditions": "askForTerminal=false + tool=run_terminal_cmd",
+          "user_sees": "webview/tools/result with ok=true, exitCode=0",
+          "side_effects": [
+            "command executed WITHOUT approval"
+          ],
+          "reversible": false,
+          "final_state": "command output returned",
+          "tests": [
+            "tests/test_tools.test.ts:se ejecuta sin pedir approval"
+          ]
+        },
+        {
+          "id": "R-06",
+          "category": "error_invalid_args",
+          "conditions": "args missing required field (e.g. read_file.path empty)",
+          "user_sees": "webview/tools/result with ok=false, error=ToolArgsError",
+          "side_effects": [
+            "error thrown inside tool"
+          ],
+          "reversible": false,
+          "final_state": "no execution",
+          "tests": [
+            "tests/test_tools.test.ts:read_file rechaza path vacio"
+          ]
+        }
+      ],
+      "errors": [
+        {
+          "id": "ERR-003",
+          "type": "ToolArgsError",
+          "origin": "src/host/tools.ts:60",
+          "message": "read_file.path is required",
+          "propagation": [
+            {
+              "layer": "tool",
+              "action": "throw",
+              "cite": "src/host/tools.ts:60"
+            }
+          ],
+          "handled_at": "runTool",
+          "user_sees": "error name=ToolArgsError",
+          "outcome": "R-06"
+        },
+        {
+          "id": "ERR-004",
+          "type": "ToolDeniedError",
+          "origin": "src/host/tools.ts:280",
+          "message": "tool denied by timeout",
+          "propagation": [
+            {
+              "layer": "approval",
+              "action": "throw",
+              "cite": "src/host/tools.ts:280"
+            }
+          ],
+          "handled_at": "runTool",
+          "user_sees": "error name=ToolDeniedError",
+          "outcome": "R-04"
+        }
+      ],
+      "config": [
+        {
+          "key": "FXAGENT_ASK_FOR_TERMINAL",
+          "kind": "env",
+          "default": true,
+          "effect": "if false, run_terminal_cmd skips approval (package trap #1)"
+        }
+      ],
+      "states": [
+        {
+          "name": "idle",
+          "description": "no approval pending"
+        },
+        {
+          "name": "pending",
+          "description": "approval requested, waiting"
+        },
+        {
+          "name": "approved",
+          "description": "user approved, tool running"
+        },
+        {
+          "name": "denied",
+          "description": "user denied or timeout"
+        }
+      ],
+      "telemetry": [
+        {
+          "event": "tool/start",
+          "payload": {
+            "callId": "string",
+            "tool": "string"
+          },
+          "emitted_at": "src/host/messages.ts:2718"
+        }
+      ],
+      "interactions": [
+        {
+          "feature": "FEAT-001",
+          "kind": "uses mode.allowedTools"
+        },
+        {
+          "feature": "FEAT-002",
+          "kind": "shares config"
+        }
+      ],
+      "callgraph": [
+        "src/host/messages.ts:handleToolStart -> src/host/tools.ts:runTool",
+        "src/host/tools.ts:runTool -> src/host/tools.ts:askForApproval",
+        "src/host/tools.ts:runTool -> tool.run",
+        "src/host/modes.ts:toolAllowedInMode"
+      ]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "condensar-contexto",
+      "user_description": "When the conversation exceeds the token threshold, the host summarizes older messages and emits a 'condensed' event.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "condenseIfNeeded called from handler 11",
+          "cite": "src/host/context.ts:30",
+          "data_in": "messages, provider, opts",
+          "data_out": "result"
+        },
+        {
+          "n": 2,
+          "what": "estimate tokens",
+          "cite": "src/host/context.ts:18",
+          "data_in": "messages",
+          "data_out": "token count"
+        },
+        {
+          "n": 3,
+          "what": "if over threshold, slice to keepRecent",
+          "cite": "src/host/context.ts:36",
+          "data_in": "messages, keepRecent",
+          "data_out": "older + keep"
+        },
+        {
+          "n": 4,
+          "what": "call provider to summarize",
+          "cite": "src/host/context.ts:43",
+          "data_in": "summaryPrompt + older",
+          "data_out": "summary text"
+        },
+        {
+          "n": 5,
+          "what": "build summary message",
+          "cite": "src/host/context.ts:60",
+          "data_in": "summary text",
+          "data_out": "ChatMessage"
+        },
+        {
+          "n": 6,
+          "what": "emit host/context/condensed with removedCount",
+          "cite": "src/host/messages.ts:2011",
+          "data_in": "removedCount, newTokenCount",
+          "data_out": "webview message"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-008",
+          "file": "src/host/context.ts",
+          "line": 27,
+          "kind": "threshold",
+          "condition_text": "current <= opts.maxTokens",
+          "branches": [
+            {
+              "label": "no condense",
+              "target_line": 28
+            },
+            {
+              "label": "condense",
+              "target_line": 35
+            }
+          ]
+        },
+        {
+          "id": "DP-009",
+          "file": "src/host/context.ts",
+          "line": 50,
+          "kind": "error",
+          "condition_text": "provider.chat throws",
+          "branches": [
+            {
+              "label": "catch (swallow)",
+              "target_line": 52
+            },
+            {
+              "label": "propagate (would crash)",
+              "target_line": 51
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "no_op",
+          "conditions": "current token count <= maxTokens",
+          "user_sees": "no change; messages returned intact",
+          "side_effects": [
+            "none"
+          ],
+          "reversible": true,
+          "final_state": "history unchanged",
+          "tests": [
+            "tests/test_context.test.ts:no condensa si el historial esta bajo el umbral"
+          ]
+        },
+        {
+          "id": "R-02",
+          "category": "success",
+          "conditions": "current > maxTokens AND provider succeeds",
+          "user_sees": "host/context/condensed with removedCount and newTokenCount",
+          "side_effects": [
+            "history replaced with summary + keepRecent"
+          ],
+          "reversible": false,
+          "final_state": "history shorter",
+          "tests": [
+            "tests/test_context.test.ts:condensa cuando supera el umbral"
+          ]
+        },
+        {
+          "id": "R-03",
+          "category": "silent_fail",
+          "conditions": "current > maxTokens AND provider throws",
+          "user_sees": "no event; messages returned intact (package trap #2)",
+          "side_effects": [
+            "error swallowed"
+          ],
+          "reversible": true,
+          "final_state": "history unchanged",
+          "tests": [
+            "tests/test_context.test.ts:devuelve mensajes intactos si el provider falla"
+          ]
+        },
+        {
+          "id": "R-04",
+          "category": "boundary_no_condense",
+          "conditions": "current === maxTokens (exactly at threshold)",
+          "user_sees": "no event (boundary is strict >)",
+          "side_effects": [
+            "none"
+          ],
+          "reversible": true,
+          "final_state": "history unchanged",
+          "tests": [
+            "tests/test_context.test.ts:no condensa si el historial esta justo en el umbral"
+          ]
+        },
+        {
+          "id": "R-05",
+          "category": "validation",
+          "conditions": "removedCount negative (zod fails)",
+          "user_sees": "InvalidMessageError",
+          "side_effects": [
+            "no mutation"
+          ],
+          "reversible": false,
+          "final_state": "unchanged",
+          "tests": [
+            "tests/test_messages.test.ts:rechaza removedCount negativo"
+          ]
+        },
+        {
+          "id": "R-06",
+          "category": "partial_keep",
+          "conditions": "history larger than keepRecent",
+          "user_sees": "summary + last keepRecent messages preserved",
+          "side_effects": [
+            "older messages removed"
+          ],
+          "reversible": false,
+          "final_state": "history = [summary, ...keepRecent]",
+          "tests": [
+            "tests/test_context.test.ts:usa keepRecent para no perder los ultimos mensajes"
+          ]
+        }
+      ],
+      "errors": [],
+      "config": [
+        {
+          "key": "FXAGENT_MAX_TOKENS",
+          "kind": "env|file",
+          "default": 8000,
+          "effect": "condensation threshold"
+        },
+        {
+          "key": "FXAGENT_KEEP_RECENT",
+          "kind": "env|file",
+          "default": 4,
+          "effect": "messages kept after condensation"
+        }
+      ],
+      "states": [
+        {
+          "name": "small",
+          "description": "below threshold"
+        },
+        {
+          "name": "condensing",
+          "description": "calling provider"
+        },
+        {
+          "name": "condensed",
+          "description": "history replaced with summary + keep"
+        }
+      ],
+      "telemetry": [
+        {
+          "event": "context/condensed",
+          "payload": {
+            "removedCount": "number",
+            "newTokenCount": "number"
+          },
+          "emitted_at": "src/host/messages.ts:2010"
+        }
+      ],
+      "interactions": [
+        {
+          "feature": "FEAT-003",
+          "kind": "shares provider"
+        },
+        {
+          "feature": "FEAT-002",
+          "kind": "shares locale"
+        }
+      ],
+      "callgraph": [
+        "src/host/messages.ts:handleContextCondensed -> src/host/context.ts:condenseIfNeeded",
+        "src/host/context.ts:condenseIfNeeded -> src/host/providers/openai.ts:OpenAIProvider.chat"
+      ]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "SRF-cmd-changeMode",
+      "kind": "command",
+      "name": "fxagent.changeMode",
+      "handler": "src/host/extension.ts:46#changeMode",
+      "file": "src/host/extension.ts",
+      "line": 46,
+      "pair": "src/host/messages.ts:handleModeChange"
+    },
+    {
+      "id": "SRF-cmd-loadSkill",
+      "kind": "command",
+      "name": "fxagent.loadSkill",
+      "handler": "src/host/extension.ts:50#loadSkill",
+      "file": "src/host/extension.ts",
+      "line": 50,
+      "pair": "src/host/messages.ts:handleSkillsLoaded"
+    },
+    {
+      "id": "SRF-cmd-approveTool",
+      "kind": "command",
+      "name": "fxagent.approveTool",
+      "handler": "src/host/extension.ts:71#approveTool",
+      "file": "src/host/extension.ts",
+      "line": 71,
+      "pair": "src/host/messages.ts:handleApprovalResponse"
+    },
+    {
+      "id": "SRF-cmd-condense",
+      "kind": "command",
+      "name": "fxagent.condense",
+      "handler": "src/host/extension.ts:79#condense",
+      "file": "src/host/extension.ts",
+      "line": 79,
+      "pair": "src/host/messages.ts:handleContextCondensed"
+    },
+    {
+      "id": "SRF-cmd-showWebview",
+      "kind": "command",
+      "name": "fxagent.showWebview",
+      "handler": "src/host/extension.ts:96#showWebview",
+      "file": "src/host/extension.ts",
+      "line": 96,
+      "pair": null
+    },
+    {
+      "id": "SRF-cmd-listSkills",
+      "kind": "command",
+      "name": "fxagent.listSkills",
+      "handler": "src/host/extension.ts:100#listSkills",
+      "file": "src/host/extension.ts",
+      "line": 100,
+      "pair": null
+    },
+    {
+      "id": "SRF-msg-ready",
+      "kind": "webview",
+      "name": "webview/ready",
+      "handler": "src/host/messages.ts:handleReady",
+      "file": "src/host/messages.ts",
+      "line": 285,
+      "pair": "host/snapshot + host/welcome"
+    },
+    {
+      "id": "SRF-msg-mode-change",
+      "kind": "webview",
+      "name": "webview/mode/change",
+      "handler": "src/host/messages.ts:handleModeChange",
+      "file": "src/host/messages.ts",
+      "line": 476,
+      "pair": "host/mode/updated"
+    },
+    {
+      "id": "SRF-msg-user-message",
+      "kind": "webview",
+      "name": "webview/chat/user-message",
+      "handler": "src/host/messages.ts:handleUserMessage",
+      "file": "src/host/messages.ts",
+      "line": 645,
+      "pair": "host/chat/chunk + host/chat/done"
+    },
+    {
+      "id": "SRF-msg-assistant-chunk",
+      "kind": "webview",
+      "name": "webview/chat/assistant-chunk",
+      "handler": "src/host/messages.ts:handleAssistantChunk",
+      "file": "src/host/messages.ts",
+      "line": 651,
+      "pair": "host/chat/ack"
+    },
+    {
+      "id": "SRF-msg-approval-request",
+      "kind": "webview",
+      "name": "webview/chat/approval-request",
+      "handler": "src/host/messages.ts:handleApprovalRequest",
+      "file": "src/host/messages.ts",
+      "line": 838,
+      "pair": null
+    },
+    {
+      "id": "SRF-msg-approval-response",
+      "kind": "webview",
+      "name": "webview/chat/approval-response",
+      "handler": "src/host/messages.ts:handleApprovalResponse",
+      "file": "src/host/messages.ts",
+      "line": 1012,
+      "pair": "resolve pending approval"
+    },
+    {
+      "id": "SRF-msg-tools-start",
+      "kind": "webview",
+      "name": "webview/tools/start",
+      "handler": "src/host/messages.ts:handleToolStart",
+      "file": "src/host/messages.ts",
+      "line": 949,
+      "pair": "webview/tools/result"
+    },
+    {
+      "id": "SRF-msg-tools-result",
+      "kind": "webview",
+      "name": "webview/tools/result",
+      "handler": "src/host/messages.ts:handleToolResult",
+      "file": "src/host/messages.ts",
+      "line": 1419,
+      "pair": null
+    },
+    {
+      "id": "SRF-msg-skills-loaded",
+      "kind": "webview",
+      "name": "webview/skills/loaded",
+      "handler": "src/host/messages.ts:handleSkillsLoaded",
+      "file": "src/host/messages.ts",
+      "line": 1570,
+      "pair": "host/skills/updated"
+    },
+    {
+      "id": "SRF-msg-skills-error",
+      "kind": "webview",
+      "name": "webview/skills/error",
+      "handler": "src/host/messages.ts:handleSkillsError",
+      "file": "src/host/messages.ts",
+      "line": 1817,
+      "pair": null
+    },
+    {
+      "id": "SRF-msg-context-condensed",
+      "kind": "webview",
+      "name": "webview/context/condensed",
+      "handler": "src/host/messages.ts:handleContextCondensed",
+      "file": "src/host/messages.ts",
+      "line": 1953,
+      "pair": "host/context/condensed"
+    },
+    {
+      "id": "SRF-msg-i18n-changed",
+      "kind": "webview",
+      "name": "webview/i18n/changed",
+      "handler": "src/host/messages.ts:handleI18nChanged",
+      "file": "src/host/messages.ts",
+      "line": 2175,
+      "pair": "host/i18n/changed"
+    },
+    {
+      "id": "SRF-mcp-fs-read",
+      "kind": "mcp",
+      "name": "mcp.fs.read",
+      "handler": "src/host/mcp/client.ts",
+      "file": "src/host/mcp/client.ts",
+      "line": 41,
+      "pair": null
+    },
+    {
+      "id": "SRF-mcp-fs-list",
+      "kind": "mcp",
+      "name": "mcp.fs.list",
+      "handler": "src/host/mcp/client.ts",
+      "file": "src/host/mcp/client.ts",
+      "line": 44,
+      "pair": null
+    },
+    {
+      "id": "SRF-tool-list_dir",
+      "kind": "tool",
+      "name": "list_dir",
+      "handler": "src/host/tools.ts:79#listDir",
+      "file": "src/host/tools.ts",
+      "line": 79,
+      "pair": null
+    },
+    {
+      "id": "SRF-tool-ask_user",
+      "kind": "tool",
+      "name": "ask_user",
+      "handler": "src/host/tools.ts:180#askUser",
+      "file": "src/host/tools.ts",
+      "line": 180,
+      "pair": null
+    },
+    {
+      "id": "SRF-tool-propose_plan",
+      "kind": "tool",
+      "name": "propose_plan",
+      "handler": "src/host/tools.ts:216#proposePlan",
+      "file": "src/host/tools.ts",
+      "line": 216,
+      "pair": null
+    }
+  ],
+  "config": [
+    {
+      "key": "FXAGENT_MODE",
+      "kind": "env|file",
+      "default": "plan",
+      "values": [
+        "plan",
+        "code",
+        "ask"
+      ]
+    },
+    {
+      "key": "FXAGENT_SKILLS_DIR",
+      "kind": "env|file",
+      "default": "~/.fxagent/skills"
+    },
+    {
+      "key": "FXAGENT_PROVIDER",
+      "kind": "env|file",
+      "default": "openai",
+      "values": [
+        "openai",
+        "anthropic",
+        "ollama"
+      ]
+    },
+    {
+      "key": "FXAGENT_LOCALE",
+      "kind": "env|file",
+      "default": "en",
+      "values": [
+        "en",
+        "es"
+      ]
+    },
+    {
+      "key": "FXAGENT_MAX_TOKENS",
+      "kind": "env|file",
+      "default": 8000
+    },
+    {
+      "key": "FXAGENT_KEEP_RECENT",
+      "kind": "env|file",
+      "default": 4
+    },
+    {
+      "key": "FXAGENT_ASK_FOR_TERMINAL",
+      "kind": "env|file",
+      "default": true,
+      "effect": "if false, run_terminal_cmd skips approval (package trap #1)"
+    },
+    {
+      "key": "FXAGENT_APPROVAL_TIMEOUT_MS",
+      "kind": "env|file",
+      "default": 30000
+    }
+  ],
+  "traps": [
+    {
+      "id": "TRAP-E01",
+      "kind": "command_registry",
+      "where": "package.json:22 (contributes.commands)",
+      "resolution": "Los 6 comandos se declaran en contributes.commands pero solo se manejan en extension.ts:46..104. El scanner debe leer el package.json para descubrirlos."
+    },
+    {
+      "id": "TRAP-E02",
+      "kind": "string_dispatch",
+      "where": "src/host/messages.ts:dispatch (switch sobre msg.type)",
+      "resolution": "Los 12 tipos de mensaje viven en MSG_TYPES; un switch de strings. El scanner debe leer MSG_TYPES, no inferir del codigo."
+    },
+    {
+      "id": "TRAP-E03",
+      "kind": "readme_mismatch",
+      "where": "src/host/skills.ts:111#mergeSkills",
+      "resolution": "El README dice que se descubre de ~/.fxagent/skills; el codigo tambien de .fxagent/skills (proyecto). El ground truth documenta la precedencia."
+    },
+    {
+      "id": "TRAP-E04",
+      "kind": "feature_flag_disable",
+      "where": "src/host/modes.ts:10#MODES (allowedTools por modo)",
+      "resolution": "Las tools permitidas viven en el objeto MODES, no en condicionales. El scanner debe leer la tabla."
+    },
+    {
+      "id": "TRAP-E05",
+      "kind": "string_construction_runtime",
+      "where": "src/host/i18n.ts y modes.ts:buildSystemPrompt",
+      "resolution": "Las claves i18n se construyen como ``t(`mode.${modeId}.title`)`` en runtime. Un grep estatico no las encuentra."
+    },
+    {
+      "id": "TRAP-E06",
+      "kind": "dynamic_import",
+      "where": "src/host/providers/index.ts:loadProvider",
+      "resolution": "Los providers se cargan con await import() dinamico por nombre. Un escaner de imports no los resuelve estaticamente."
+    }
+  ],
+  "package_traps": [
+    {
+      "id": "TRAP-P01",
+      "feature": "FEAT-003",
+      "kind": "combination_two_settings",
+      "where": "src/host/tools.ts:328#runTool + requiresApproval",
+      "resolution": "run_terminal_cmd se ejecuta sin pedir aprobacion si config.askForTerminal === false. La combinacion de requiresApproval=true (del tool) + askForTerminal=false (del config) produce el resultado sin aprobacion (R-05)."
+    },
+    {
+      "id": "TRAP-P02",
+      "feature": "FEAT-004",
+      "kind": "empty_catch_swallows_error",
+      "where": "src/host/context.ts:50 (catch vacio)",
+      "resolution": "Si el provider.chat() lanza durante la condensacion, el catch vacio devuelve los mensajes intactos. El usuario no se entera del fallo. Resultado: R-03 silent_fail."
+    },
+    {
+      "id": "TRAP-P03",
+      "feature": "FEAT-002",
+      "kind": "duplicate_body_concat",
+      "where": "src/host/skills.ts:128#mergeSkills",
+      "resolution": "El merge concatena el body con join('\\n\\n---\\n\\n') sin deduplicar. Si dos skills proveen el mismo fragmento, queda duplicado en el body final."
+    },
+    {
+      "id": "TRAP-P04",
+      "feature": "FEAT-003",
+      "kind": "timeout_equals_rejection",
+      "where": "src/host/tools.ts:280#askForApproval (setTimeout -> resolve(false))",
+      "resolution": "Si el usuario no responde en approvalTimeoutMs, el timer resuelve false, que es indistinguible de una denegacion explicita. R-04 cancelled_by_user aparece solo bajo esa combinacion (timeout o no-response)."
+    },
+    {
+      "id": "TRAP-P05",
+      "feature": "FEAT-002",
+      "kind": "default_silent_stub",
+      "where": "src/host/providers/index.ts:51#makeSilentStub",
+      "resolution": "loadProvider con kind desconocido NO lanza UnknownProviderError; devuelve un stub silencioso que responde '[silent stub: ...]'. El scanner que asume throw-on-unknown falla al predecir."
+    },
+    {
+      "id": "TRAP-P06",
+      "feature": "todos",
+      "kind": "log_before_dispatch",
+      "where": "src/host/messages.ts:170#dispatch (ctx.log antes del switch)",
+      "resolution": "El log se hace ANTES de ejecutar el handler. Si el handler lanza, el log queda con la entrada del intento pero sin resultado. Estado inconsistente: el log dice 'context/condensed' pero el handler fallo."
+    }
+  ]
+}

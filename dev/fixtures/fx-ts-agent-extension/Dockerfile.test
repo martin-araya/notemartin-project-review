@@ -1,0 +1,13 @@
+# Imagen para ejecutar los tests del fixture F06b (TypeScript).
+# El host de desarrollo no necesita node/npm; el harness levanta este contenedor.
+FROM node:22-slim
+
+WORKDIR /fixture
+
+# Copiamos solo el manifest primero para cachear npm ci.
+COPY package.json ./
+RUN npm install --no-audit --no-fund --prefer-offline || npm install --no-audit --no-fund
+
+COPY . .
+
+CMD ["make", "test"]

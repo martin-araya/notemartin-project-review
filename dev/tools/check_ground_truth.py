@@ -810,7 +810,10 @@ def _check_cc11(fixture_root: Path, gt: dict) -> List[str]:
     Si la cadena aparece dentro de un comentario (segun la sintaxis de la extension
     del archivo), CC-11 falla: la explicacion no debe vivir en un comentario.
     """
-    from dev.tools.comment_syntax import mask_comments, detect  # type: ignore
+    try:
+        from dev.tools.comment_syntax import mask_comments, detect  # type: ignore
+    except ImportError:
+        from comment_syntax import mask_comments, detect  # type: ignore
 
     sensitive: List[str] = []
     for feature in gt.get("features", []):

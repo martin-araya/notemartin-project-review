@@ -482,6 +482,46 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas: (a) forzar el gate ya en F06a2; (b) no documentar el gate. Descartado: paralizaria F06a2 innecesariamente y perderia la senal de progreso.
 - Consecuencias: queda explicito que el gate de cobertura total es responsabilidad de F06f, no de F06a2.
 
+### D-164 — Stack del fixture F06b: TypeScript + Node 22 + esbuild + vitest + zod + js-yaml
+
+- Fecha · Fase · Estado: 2026-10-06 · F06b · vigente
+- Contexto: F06b requiere extension tipo VS Code escrita en TypeScript con multiples entry points, traps de ecosistema y archivo de > 5.000 lineas.
+- Decisión: stack = TypeScript 5.4 (target ES2022, strict), Node 22 (slim image), esbuild para bundle, vitest para tests, zod para validacion de payloads, js-yaml para parseo de frontmatter. Sin npm install en el host: todo el testing pasa por `Dockerfile.test` con `node:22-slim`.
+- Alternativas: (a) TypeScript sin Node 22 (no disponible en el host de dev); (b) JavaScript plano sin tipos (rompe la verificacion de zod). Descartado: TS+Node 22 es el estandar para extensiones modernas.
+- Consecuencias: el harness `run_fixture_tests.py` corre con `container.enabled: true`; el host de desarrollo no necesita `node` localmente.
+
+### D-165 — VS Code API simulada (vscode-shim) en F06b
+
+- Fecha · Fase · Estado: 2026-10-06 · F06b · vigente
+- Contexto: la API real de VS Code requiere Electron + un proceso extension host separado. Para mantener el fixture portable y testeable en Node 22 puro, hace falta un shim.
+- Decisión: `src/host/vscode-shim/` implementa el minimo necesario (`window.showInformationMessage`, `commands.registerCommand`/`executeCommand`, `createWebviewPanel`/`postMessage`/`onDidReceiveMessage`). El codigo de la extension importa todo desde `vscode-shim`; en produccion real este modulo se reemplazaria por `vscode`.
+- Alternativas: (a) mockear VS Code via `vscode` npm package (requiere VS Code Test Runner); (b) ejecutar la extension dentro de xvfb. Descartado: complejidad y dependencias externas innecesarias.
+- Consecuencias: el fixture corre en CI sin Electron; el shim es claramente etiquetado en el README para que la skill no confunda el shim con la API real.
+
+### D-166 — `messages.ts` util, no relleno (F06b)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06b · vigente
+- Contexto: el roadmap exige `messages.ts` >= 5.000 lineas. Es facil cumplir el conteo con relleno detectable (condicionales vacios, comentarios lorem ipsum, tests triviales).
+- Decisión: cada uno de los 12 handlers del switch aporta ~400 lineas con: doc JSDoc, validacion zod, logica real, helpers de formato, y tests inline con `(import.meta as any).vitest`. El verificador independiente (F63) puede detectar relleno: los tests deben ejercitar paths reales del codigo, no ser tautologias. Ademas, cada handler tiene al menos 1 trampa pequena plantada y documentada.
+- Alternativas: (a) archivo de 5.000 lineas con contenido sintetico (rechazado por F63); (b) archivo corto con relleno (incumple CC-02). Descartado: el archivo largo con contenido real es lo unico que cumple la regla sin trampas detectables.
+- Consecuencias: la auditoria del verificador valida la proporcion entre citaciones, trampas plantadas, tests reales y lineas; el archivo cumple.
+
+### D-167 — `js-yaml` como dependencia de runtime en F06b
+
+- Fecha · Fase · Estado: 2026-10-06 · F06b · vigente
+- Contexto: el skill loader parsea frontmatter de archivos SKILL.md, que pueden tener secciones YAML arbitrarias.
+- Decisión: `js-yaml` se declara como `dependencies` (no `devDependencies`) en `package.json` del fixture, con `@types/js-yaml` en devDependencies. La alternativa (escribir un mini-parser YAML) rechaza: el estandar real es js-yaml y los fixtures de prueba pueden tener cualquier YAML valido.
+- Alternativas: (a) mini-parser YAML propio (descartado: perderiamos casos limite); (b) cargar YAML con eval de un DSL custom (inseguro). Descartado.
+- Consecuencias: el fixture declara 1 dep runtime nueva (js-yaml) que NO es parte de la skill `notemartin-project-review`. La skill sigue sin deps runtime.
+
+### D-168 — Harness con `container.enabled: true` obligatorio para fixtures TS
+
+- Fecha · Fase · Estado: 2026-10-06 · F06b · vigente
+- Contexto: F06a (Python) corre los tests del fixture con `pytest` local sin contenedor. F06b (TypeScript) necesita `node` y `npm install`, que no estan en el host de desarrollo.
+- Decisión: el `manifest.yml` de F06b tiene `container.enabled: true` y el harness `run_fixture_tests.py` construye la imagen `node:22-slim` automaticamente. Sin Docker, el harness cae al `test_cmd` local y se omite con `skipped (no docker)`. Los fixtures futuros en JS/TS seguiran este patron.
+- Alternativas: (a) requerir node localmente; (b) requerir Docker siempre. Descartado: doble standard confunde.
+- Consecuencias: la verificacion de F06b..F06e (y cualquier fixture TS/JS) requiere Docker; la verificacion de F06a (Python) sigue siendo local.
+
 ## Plantilla para nuevas decisiones
 
 ```

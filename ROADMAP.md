@@ -471,21 +471,25 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
  
 # Fixtures ya planificados (completados)
  
-## F06b — Fixture `fx-ts-agent-extension`
- 
+## F06b — Fixture `fx-ts-agent-extension` ✅
+
 **Objetivo:** extensión tipo VS Code (TypeScript) que imita la arquitectura de un agente de código: proceso de extensión + webview con protocolo de mensajes tipado, **modos** (`plan`, `code`, `ask`) con prompts distintos y grupos de herramientas permitidas, **carga de skills** desde `~/.fxagent/skills/` y `.fxagent/skills/` con precedencia y parseo de frontmatter, herramienta `use_skill`, loop de agente con llamadas a herramientas y aprobación, abstracción de proveedores LLM, cliente MCP simulado, condensación de contexto, i18n de la UI. Un archivo de > 5.000 líneas.
-**Stack:** TypeScript, Node, API de VS Code (simulada), esbuild, webview React.
+**Stack:** TypeScript, Node 22, esbuild, vitest, zod, js-yaml, vscode-shim propio.
 **Features:** `cambiar-modo`, `cargar-skill`, `ejecutar-herramienta-con-aprobación`, `condensar-contexto`.
-**Trampas del ecosistema:**
-1. Comandos y activación declarados en `package.json` (`contributes.commands`, `activationEvents`), sin llamada explícita en el código.
-2. Mensajes del webview despachados por `type` string en un `switch` dentro del archivo de > 5.000 líneas.
-3. Precedencia de skills: proyecto sobre usuario, con merge parcial de frontmatter.
-4. Herramientas habilitadas por modo mediante un objeto de configuración de grupos, no por condicionales.
-5. Claves i18n construidas en runtime (`` t(`mode.${id}.title`) ``).
-6. Proveedor LLM elegido por factory con `import()` dinámico.
+**Trampas del ecosistema:** las 6 documentadas en el ground truth (commands en package.json, switch en archivo grande, precedencia de skills, grupos de tools por modo, i18n runtime, provider factory con import() dinámico).
 **Toolchain de tests:** Node 22 + vitest, en contenedor.
-**Criterios específicos:**
-- [ ] 3 modos, 6 herramientas, 1 cargador de skills con 2 rutas y precedencia, 12 tipos de mensajes webview.
+**Criterios de aceptación:**
+- [x] 3 modos, 6 herramientas, 1 cargador de skills con 2 rutas y precedencia, 12 tipos de mensajes webview.
+- [x] `src/host/messages.ts` >= 5.000 líneas (5.163 verificado).
+- [x] 4 features, cada una con >= 6 R-NN documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas y documentadas (CC-06).
+- [x] 6 trampas del paquete plantadas y documentadas (CC-04).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones en comentarios) en verde.
+- [x] `run_fixture_tests.py --fixture fx-ts-agent-extension` -> passed en contenedor.
+- [x] `dev/tests/test_fx_ts_agent_extension_ground_truth.py` agregado y verde.
+- [x] `MATRIX.md` muestra `vscode-extension` y `typescript` cubiertos.
+- [x] `fx-python-cli` sin cambios (regresion F06a verificada).
 ## F06c — Fixture `fx-java-micronaut`
  
 **Objetivo:** servicio REST Micronaut con controladores, servicios, repositorios, cliente HTTP declarativo, `application.yml` con entornos, DI en tiempo de compilación, migraciones y tareas programadas.

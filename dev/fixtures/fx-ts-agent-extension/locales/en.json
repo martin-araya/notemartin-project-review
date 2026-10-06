@@ -1,0 +1,18 @@
+{
+  "mode.plan.title": "Plan",
+  "mode.plan.description": "Read code and propose changes without applying them.",
+  "mode.code.title": "Code",
+  "mode.code.description": "Apply changes with approval.",
+  "mode.ask.title": "Ask",
+  "mode.ask.description": "Answer questions about the code without modifying it.",
+  "tool.read_file.label": "Read file",
+  "tool.list_dir.label": "List directory",
+  "tool.search_code.label": "Search code",
+  "tool.run_terminal_cmd.label": "Run terminal command",
+  "tool.ask_user.label": "Ask the user",
+  "tool.propose_plan.label": "Propose plan",
+  "error.invalid_message": "Invalid message received from webview.",
+  "error.tool_denied": "The user denied the tool execution.",
+  "error.tool_timeout": "The user did not respond to the approval request.",
+  "context.condensed": "Context was condensed: {removed} older messages removed."
+}
