@@ -4,7 +4,9 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 ## Fixtures detectados
 - `fx-java-micronaut`
+- `fx-minified`
 - `fx-monorepo`
+- `fx-polyglot`
 - `fx-python-cli`
 - `fx-ts-agent-extension`
 
@@ -12,14 +14,14 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `python` | cubierto | fx-python-cli |
-| `typescript` | cubierto | fx-monorepo, fx-ts-agent-extension |
-| `javascript` | cubierto | fx-monorepo, fx-ts-agent-extension |
-| `java` | cubierto | fx-java-micronaut |
+| `python` | cubierto | fx-minified, fx-python-cli |
+| `typescript` | cubierto | fx-minified, fx-monorepo, fx-ts-agent-extension |
+| `javascript` | cubierto | fx-minified, fx-monorepo, fx-ts-agent-extension |
+| `java` | cubierto | fx-java-micronaut, fx-minified |
 | `kotlin` | cubierto | fx-java-micronaut |
-| `go` | **falta** | _(ninguno)_ |
-| `rust` | **falta** | _(ninguno)_ |
-| `shell` | cubierto | fx-java-micronaut, fx-monorepo, fx-python-cli, fx-ts-agent-extension |
+| `go` | cubierto | fx-minified, fx-polyglot |
+| `rust` | cubierto | fx-polyglot |
+| `shell` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-polyglot, fx-python-cli, fx-ts-agent-extension |
 | `dart` | **falta** | _(ninguno)_ |
 | `swift` | **falta** | _(ninguno)_ |
 | `csharp` | **falta** | _(ninguno)_ |
@@ -38,8 +40,8 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `electron` | **falta** | _(ninguno)_ |
 | `gradle` | cubierto | fx-java-micronaut |
 | `maven` | **falta** | _(ninguno)_ |
-| `cargo` | **falta** | _(ninguno)_ |
-| `go-modules` | **falta** | _(ninguno)_ |
+| `cargo` | cubierto | fx-polyglot |
+| `go-modules` | cubierto | fx-minified, fx-polyglot |
 
 ## Eje: build_systems
 
@@ -49,21 +51,21 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `pnpm` | cubierto | fx-monorepo |
 | `maven` | **falta** | _(ninguno)_ |
 | `gradle` | cubierto | fx-java-micronaut |
-| `cargo` | **falta** | _(ninguno)_ |
-| `go-modules` | **falta** | _(ninguno)_ |
-| `make` | cubierto | fx-java-micronaut, fx-monorepo, fx-ts-agent-extension |
+| `cargo` | cubierto | fx-polyglot |
+| `go-modules` | cubierto | fx-minified, fx-polyglot |
+| `make` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-polyglot, fx-ts-agent-extension |
 | `docker` | **falta** | _(ninguno)_ |
 
 ## Eje: file_kinds
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `source-text` | cubierto | fx-java-micronaut, fx-monorepo, fx-python-cli, fx-ts-agent-extension |
-| `minified-js` | **falta** | _(ninguno)_ |
-| `bundle-with-sourcemap` | **falta** | _(ninguno)_ |
+| `source-text` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-polyglot, fx-python-cli, fx-ts-agent-extension |
+| `minified-js` | cubierto | fx-minified |
+| `bundle-with-sourcemap` | cubierto | fx-minified |
 | `bundle-without-sourcemap` | **falta** | _(ninguno)_ |
-| `asar` | **falta** | _(ninguno)_ |
-| `pyc` | **falta** | _(ninguno)_ |
+| `asar` | cubierto | fx-minified |
+| `pyc` | cubierto | fx-minified |
 | `notebook-ipynb` | **falta** | _(ninguno)_ |
 | `xml-declarative` | cubierto | fx-java-micronaut |
 | `yaml-scene` | **falta** | _(ninguno)_ |
@@ -73,8 +75,8 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `asar` | **falta** | _(ninguno)_ |
-| `jar` | **falta** | _(ninguno)_ |
+| `asar` | cubierto | fx-minified |
+| `jar` | cubierto | fx-minified |
 | `zip` | **falta** | _(ninguno)_ |
 | `apk` | **falta** | _(ninguno)_ |
 | `vsix` | **falta** | _(ninguno)_ |

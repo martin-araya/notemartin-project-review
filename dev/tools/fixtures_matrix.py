@@ -82,6 +82,11 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     "nx.json": {"pnpm-monorepo"},
     "turbo.json": {"pnpm-monorepo"},
     "pnpm-workspace.yaml": {"pnpm-monorepo"},
+    # ``cargo`` y ``go-modules`` son a la vez build_systems y frameworks;
+    # los cubrimos en build_systems desde MANIFEST_BUILD y los reusamos aqui
+    # para que el eje frameworks los reporte como cubiertos.
+    "Cargo.toml": {"cargo"},
+    "go.mod": {"go-modules"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -138,9 +143,11 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
     if not fixture_dir.is_dir():
         return covered
 
-    # Manifiestos en la raiz
+    # Manifiestos en la raiz o recursivos (importante para fixtures con src/ subdirs).
     for manifest, builds in MANIFEST_BUILD.items():
         if (fixture_dir / manifest).is_file():
+            covered["build_systems"] |= builds
+        elif any(fixture_dir.rglob(manifest)):
             covered["build_systems"] |= builds
 
     # Archivos clave de frameworks en la raiz o un nivel (o recursivo si
@@ -189,6 +196,8 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
             continue
         if any(part.startswith(".") and part not in (".vscode",) for part in path.parts):
             continue
+        # ``artifacts/`` se inspecciona para detectar containers y binarios
+        # aunque esten generados por el Dockerfile.test.
         if any(p in path.parts for p in ("node_modules", "__pycache__", "target", "build", "dist", ".git")):
             continue
         ext = path.suffix.lower()
@@ -198,6 +207,71 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 covered["file_kinds"] |= kinds
         if ext in CONTAINER_EXTS:
             covered["containers"].add(ext.lstrip("."))
+
+    # ``artifacts/`` aporta containers y file_kinds aunque sea generado.
+    artifacts_dir = fixture_dir / "artifacts"
+    if artifacts_dir.is_dir():
+        for path in artifacts_dir.rglob("*"):
+            if not path.is_file():
+                continue
+            ext = path.suffix.lower()
+            # Sin ``source-text`` desde artifacts/ (es generado).
+            for specific, kinds in FILE_KIND_BY_EXT.items():
+                if path.name.endswith(specific) or ext == specific:
+                    covered["file_kinds"] |= kinds
+            if ext in CONTAINER_EXTS:
+                covered["containers"].add(ext.lstrip("."))
+            # Binarios sin extension declarada por `containers` cuentan como ``binary``.
+            stem = path.stem.lower()
+            if (
+                path.stat().st_size > 1024
+                and ext not in CONTAINER_EXTS
+                and not ext
+                and any(stem.endswith(s) for s in ("bin", "exe"))
+            ) or ext in (".elf", ".macho"):
+                covered["file_kinds"].add("binary")
+
+    # ``manifests/`` (convention usada por fx-minified) declara los artefactos
+    # aunque no esten generados localmente. Inspeccionamos los nombres de
+    # archivo JSON para derivar containers/file_kinds.
+    manifests_dir = fixture_dir / "manifests"
+    if manifests_dir.is_dir():
+        import json as _json
+        for path in manifests_dir.rglob("*.json*"):
+            if not path.is_file():
+                continue
+            name = path.name.lower()
+            for ext in CONTAINER_EXTS:
+                if ext in name:
+                    covered["containers"].add(ext.lstrip("."))
+            for marker in ("min.js", "minified", "bundle.js", "sourcemap",
+                          "tree-shak", "asar", "pyc", ".jar", "binary"):
+                if marker in name:
+                    if marker == "min":
+                        covered["file_kinds"].add("minified-js")
+                    elif marker in ("bundle.js", "sourcemap"):
+                        covered["file_kinds"].add("bundle-with-sourcemap")
+                    elif marker == "asar":
+                        covered["file_kinds"].add("asar")
+                    elif marker == "pyc":
+                        covered["file_kinds"].add("pyc")
+            try:
+                data = _json.loads(path.read_text(encoding="utf-8", errors="replace"))
+            except Exception:
+                continue
+            artifact = (data.get("artifact") or "").lower() if isinstance(data, dict) else ""
+            for marker in (".jar", ".asar", ".pyc", ".js.map", ".min.js", ".bundle.js"):
+                if artifact.endswith(marker):
+                    covered["file_kinds"].add(
+                        "bundle-with-sourcemap" if marker == ".js.map" else
+                        "minified-js" if marker in (".min.js", ".bundle.js") else
+                        "asar" if marker == ".asar" else
+                        "pyc" if marker == ".pyc" else
+                        "jar" if marker == ".jar" else marker.lstrip(".")
+                    )
+                    if marker in CONTAINER_EXTS or marker in (".jar", ".asar", ".zip", ".apk",
+                                                              ".vsix", ".whl", ".egg"):
+                        covered["containers"].add(marker.lstrip("."))
 
     # Si el fixture tiene archivos de codigo fuente, implica ``source-text``.
     if covered["languages"]:

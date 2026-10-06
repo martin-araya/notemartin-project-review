@@ -1,0 +1,15 @@
+{
+  "_comment": "Manifest del app.asar. Trampa #3 del ecosistema.",
+  "artifact": "app.asar",
+  "container": true,
+  "entries": {
+    "calcular_tarifa.js": 84,
+    "validar_licencia.js": 78,
+    "sincronizar.js": 76
+  },
+  "features": {
+    "calcular-tarifa": "app.asar!/calcular_tarifa.js:7",
+    "validar-licencia": "app.asar!/validar_licencia.js:7",
+    "sincronizar": "app.asar!/sincronizar.js:7"
+  }
+}

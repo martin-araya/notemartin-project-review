@@ -1,0 +1,16 @@
+# Metadata del fixture F06e: fx-minified
+# Artefactos sin codigo fuente legible: bundle JS con sourcemap, bundle JS
+# minificado sin sourcemap, .asar, .pyc, .jar, binario Go stripped.
+# La verificacion requiere Node + Python + Java + Go; todo corre en contenedor.
+name: fx-minified
+description: Artefactos opacos (bundle JS, .asar, .pyc, .jar, Go binary) con las 3 features (F06e)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: bash build/all-tests.sh
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-minified
+  enabled: true
+ground_truth_format_version: 1

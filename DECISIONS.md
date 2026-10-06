@@ -694,6 +694,125 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: `MATRIX.md` ahora muestra `javascript` cubierto por
   `fx-monorepo` y `fx-ts-agent-extension`.
 
+### D-179 — `check_ground_truth.py` separa errores y warnings (F06e)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06e · vigente
+- Contexto: `check_ground_truth.py` (F06a2) emitia un unico canal de
+  errores. Al validar el ground truth de F06e (`fx-minified`) contra los
+  artefactos generados por `Dockerfile.test`, el validador fallaba
+  porque los archivos bajo `artifacts/` (gitignored, construidos solo
+  en el contenedor) no existian localmente. Esto hacia imposible
+  validar el ground truth fuera del contenedor, contradiciendo la
+  decision D-108 (verificacion local, sin CI remoto).
+- Decisión: introducir `_ARTIFACT_DIRS = ("artifacts/", "build/",
+  "target/", "dist/")` y `_is_generated()`. Las referencias a archivos
+  en estos directorios que no se encuentran se emiten como `WARN`
+  (con prefijo explicito) en vez de como `ERR`. La funcion `check()`
+  ahora retorna `Tuple[List[str], List[str]] = (errores, warnings)`.
+  El CLI imprime los warnings pero sale 0 si no hay errores.
+- Alternativas: (a) requerir que el usuario ejecute el build antes de
+  validar (descartado: tooling fragil, dependencias opcionales); (b)
+  eliminar las referencias a `artifacts/` del ground truth (descartado:
+  perderiamos la trazabilidad al artefacto generado); (c) hacer que
+  `check_ground_truth.py` se ejecute dentro del contenedor (descartado:
+  rompe la verificacion local de D-108).
+- Consecuencias: el ground truth de F06e puede validarse localmente
+  incluso sin haber construido los artefactos; los warnings indican
+  "esperado por build" y son no fatales.
+
+### D-180 — Parser de citas prioriza binary sobre YAML cuando la extension es binaria (F06e)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06e · vigente
+- Contexto: el parser de citas (F06a2) intentaba YAML antes que binary
+  cuando la cita era `archivo.jar#com/fxmin/CalcularTarifa`. La regex
+  YAML `_YAML_CITE_RE` aceptaba paths con `/` en el ypath, asi que
+  `com/fxmin/CalcularTarifa` matcheaba como path YAML. Esto hacia que
+  el validador intentara parsear el binario `.jar` como texto YAML y
+  fallara siempre.
+- Decisión: en `parse_cite`, detectar primero si el path tiene una
+  extension en `_BINARY_EXTS` (`.jar`, `.pyc`, `.class`, etc.) y, en ese
+  caso, intentar las variantes de binary (`#0xN`, `#N`, `#symbol`)
+  antes que `_YAML_CITE_RE`. Si no matchea ninguna binary, se cae al
+  camino YAML por defecto.
+- Alternativas: (a) renombrar `_YAML_CITE_RE` para que rechace `/` en
+  ypath (descartado: cambios sutiles que rompen citas validas como
+  `package.json#dependencies.react`); (b) documentar y pedir al
+  usuario que use un formato distinto (descartado: rompe fixtures
+  existentes).
+- Consecuencias: las citas binarias con `#` se interpretan como binary
+  siempre que la extension sea claramente binaria. Las citas YAML con
+  `/` en el path siguen funcionando.
+
+### D-181 — Ground truth de fx-minified apunta a src/, no a artifacts/ (F06e)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06e · vigente
+- Contexto: el ground truth original de `fx-minified` declaraba las
+  trazas como `artifacts/bundle.js` (path sin linea), `artifacts/bundle.js.map`
+  (idem), `artifacts/bundle.min.js`, etc. Estos no son cites validos
+  (el formato `archivo:línea` requiere una linea) y los paths no
+  existen localmente. Ademas, los nombres de features (`calcular_tarifa`)
+  aparecian en comentarios dentro de `src/ts/*.ts`, `src/py/*.py` y
+  `src/java/com/fxmin/*.java`, violando CC-11.
+- Decisión: (1) reemplazar las trazas `artifacts/X` por cites validos a
+  los archivos fuente correspondientes: `src/ts/index.ts:1`, `src/ts/calcular-tarifa.ts:3`,
+  `src/py/calcular_tarifa.py:6`, `src/java/com/fxmin/CalcularTarifa.java:15`,
+  `src/go/main.go:22`, etc. (2) Mantener los nombres de features con
+  guion (`calcular-tarifa`, `validar-licencia`, `sincronizar`) que es
+  el formato que el test `test_features_match_spec` espera. (3)
+  Eliminar de los comentarios de source cualquier mencion del nombre
+  de la feature; los literales reconocibles (`FEATURE_CALCULAR_TARIFA`,
+  `FXMIN_TARIFA_PREFIX`) siguen presentes en strings (no en comentarios)
+  para que CC-11 los ignore.
+- Alternativas: (a) mantener las trazas en `artifacts/` y aceptar que
+  la validacion local falle (descartado: rompe el flujo de D-108); (b)
+  renombrar las features a `calcular_tarifa` (descartado: rompe el
+  test existente y la convencion del proyecto).
+- Consecuencias: el ground truth de fx-minified se valida correctamente
+  con `check_ground_truth.py --check-cc11`; las trazas son verificables
+  leyendo los archivos fuente.
+
+### D-182 — fx-polyglot usa bats instalado por apt en el contenedor (F06f)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06f · vigente
+- Contexto: F06f (fx-polyglot) necesita bats para los tests de
+  orquestador bash, ingesta CLI y transformacion. bats no es una
+  dependencia de Node (como vitest) ni de Python (como pytest). Es un
+  paquete Debian que vive aparte.
+- Decisión: usar `FROM rust:1-bookworm` como imagen base (trae cargo +
+  rustc) y agregar bats via `apt-get install -y bats jq golang-go
+  file binutils coreutils ca-certificates` en el Dockerfile.test. Los
+  binarios `ingesta`, `transformacion-linux` y `transformacion-linux-v2`
+  se compilan en tiempo de build de la imagen con `cargo build` y
+  `go build`, y se copian a `/usr/local/bin/`.
+- Alternativas: (a) instalar bats via npm (`bats-core` en npm)
+  (descartado: requiere Node y arrastra dependencias no relacionadas con
+  el pipeline poliglota); (b) usar bats vendoreado (descartado: agrega
+  peso a la imagen sin beneficio); (c) usar pytest con un plugin de bash
+  (descartado: pytest no es el tool idiomático para tests bash).
+- Consecuencias: el Dockerfile.test tarda mas en construir (apt-get +
+  cargo build de 4 features) pero las dependencias quedan declaradas
+  explicitamente y los bats tests se ejecutan nativamente.
+
+### D-183 — Orquestador fx-polyglot usa exit codes no-convencionales (64, 11) (F06f)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06f · vigente
+- Contexto: bash usa exit codes 128+N para senales (SIGTERM=143,
+  SIGKILL=137). Exit codes como 7 (strict rejected), 8 (json
+  malformed), 9 (sin feature), 10 (OS no soportado), 11 (jq fallo),
+  12 (uso incorrecto) chocan con las senales. Por ejemplo, exit 7 es
+  ambiguo si alguien lee la documentacion de senales.
+- Decisión: usar exit codes >= 64 (excepto 127 y 128+N) para errores
+  no-fatales del pipeline: 64 = strict rejected, 65 = no usado,
+  8 = json malformed (consistente con bash strict mode), 9 = sin feature,
+  10 = OS no soportado, 11 = jq fallo, 12 = uso incorrecto. Los exit
+  codes 0/2/3/4 se mantienen para los casos del Go ingesta.
+- Alternativas: (a) usar solo exit codes < 8 (descartado: insuficiente
+  granularidad); (b) mapear cada error a un nombre simbolico via un
+  mapa JSON (descartado: complica el orquestador bash, que ya es
+  verboso).
+- Consecuencias: el exit code 64+ no choca con senales bash (128+N).
+  El orquestador preserva los exit codes originales via `exit "$rc"`.
+
 ## Plantilla para nuevas decisiones
 
 ```

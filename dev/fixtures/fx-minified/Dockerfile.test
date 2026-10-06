@@ -1,0 +1,29 @@
+# Imagen multi-toolchain: Node 22 + Python 3 + OpenJDK 17 + Go 1.22.
+FROM node:22-bookworm-slim
+
+WORKDIR /fixture
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-venv python3-pytest \
+        openjdk-17-jdk-headless \
+        golang-go \
+        file binutils \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cacheamos los manifests primero para cachear npm install.
+COPY package.json tsconfig.json ./
+RUN npm install --no-audit --no-fund
+
+# Copiamos el codigo fuente y los build scripts.
+COPY src ./src
+COPY build ./build
+
+# Generamos los 5 artefactos en build time.
+RUN bash build/build-all.sh
+
+# Tests.
+COPY tests ./tests
+
+# CMD por defecto: corre los tests contra los artefactos pre-generados.
+CMD ["bash", "build/all-tests.sh"]

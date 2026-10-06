@@ -1,0 +1,14 @@
+# Metadata del fixture F06f.
+# Pipeline poliglota: Go + Rust + Bash comunicado por stdin/stdout con JSON.
+# Ver referencias a las trampas en ground-truth/ground_truth.json.
+name: fx-polyglot
+description: Pipeline Go + Rust + Bash comunicado por stdin/stdout con JSON (F06f)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-polyglot
+  enabled: true
+ground_truth_format_version: 1

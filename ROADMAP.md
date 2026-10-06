@@ -377,7 +377,8 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 | Grupo | Fases | Fixtures |
 |---|---|---|
 | Base | F06a ✅, F06a2 | `fx-python-cli`, verificador y harness multi-ecosistema |
-| Ya planificados (completados aquí) | F06b–F06f | `fx-ts-agent-extension`, `fx-java-micronaut`, `fx-monorepo`, `fx-minified`, `fx-polyglot` |
+| Ya planificados (completados aquí) | F06b–F06e ✅ | `fx-ts-agent-extension`, `fx-java-micronaut`, `fx-monorepo`, `fx-minified` |
+| Pendiente F06 | F06f | `fx-polyglot` |
 | Frontend web | F06g–F06l | React, Next.js, JS vanilla/jQuery, Vue/Nuxt, SvelteKit, Angular + NgRx |
 | Backend | F06m–F06w | Spring Boot, Kotlin/Ktor, ASP.NET Core, Django, FastAPI, NestJS, Go, Rust/Axum, Laravel, Rails, Elixir/Phoenix |
 | Nativo y sistemas | F06x–F06z | C++/CMake, C embebido, C++/Qt |
@@ -537,22 +538,27 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
       de ``make test`` a ``npm test`` para no depender de ``make`` en el
       contenedor ``node:22-slim``).
  
-## F06e — Fixture `fx-minified`
- 
+## F06e — Fixture `fx-minified` ✅
+
 **Objetivo:** artefactos sin código fuente legible: bundle JS minificado con sourcemap, bundle sin sourcemap, `.asar`, `.pyc`, `.jar` sin fuentes y binario Go con símbolos eliminados.
-**Stack:** JS (esbuild/terser), Electron asar, CPython bytecode, JVM bytecode, Go.
-**Features:** las mismas 3 features implementadas en cada artefacto (`calcular-tarifa`, `validar-licencia`, `sincronizar`).
-**Trampas del ecosistema:**
-1. Referencias `archivo:línea:columna` que se resuelven a la fuente original vía sourcemap.
-2. Sin sourcemap: nombres alterados; las features se identifican por literales, rutas y mensajes.
-3. `.asar` que hay que extraer y mapear con `contenedor!/ruta`.
-4. `.pyc` de una versión concreta de CPython (magic number) sin `.py`.
-5. `.jar` solo con `.class`; una feature registrada por `META-INF/services`.
-6. Código eliminado por tree-shaking: existe en el sourcemap pero no en el bundle (la skill debe distinguirlo).
-**Toolchain de tests:** tests que verifican la extracción y el comportamiento de cada artefacto, en contenedor.
+**Stack:** JS (esbuild/terser), Electron asar (custom writer), CPython bytecode 3.11 (magic 3495), JVM bytecode (JDK 17), Go stripped vía `-ldflags="-s -w"`. Imagen `node:22-bookworm-slim` con `openjdk-17-jdk-headless`, `python3-pytest`, `golang-go`, `binutils` instalados via apt.
+**Features:** las mismas 3 features implementadas en cada artefacto (`calcular-tarifa`, `validar-licencia`, `sincronizar`). 6 R-NN por feature.
+**Trampas del ecosistema:** las 6 documentadas en el ground truth (sourcemap, sin sourcemap, asar, magic number .pyc, META-INF/services .jar, tree-shaking).
+**Toolchain de tests:** vitest (TS) + pytest (Python) + bash (Go), 30 tests en total, en contenedor.
+
+**Criterios de aceptación:**
+- [x] 5 artefactos: `bundle.js`+`bundle.js.map`, `bundle.min.js`, `app.asar`, `app.pyc`, `app.jar`, `app` (Go).
+- [x] 3 features en cada artefacto, 6 R-NN cada una (CC-03, CC-07, CC-08).
+- [x] 6 trampas del ecosistema plantadas (CC-06).
+- [x] 6 trampas del paquete plantadas (CC-04).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) — formatos `archivo:línea:columna`, `contenedor!/ruta:línea`, `binario#símbolo`.
+- [x] CC-11 (sin menciones en comentarios) en verde.
+- [x] `run_fixture_tests.py --fixture fx-minified --container` -> passed (vitest 16 + pytest 9 + bash 5 = 30 tests).
+- [x] `dev/tests/test_fx_minified_ground_truth.py` agregado y verde (14 tests).
+- [x] `MATRIX.md` muestra `javascript`, `electron-asar`, `python-bytecode`, `java-jar`, `go-binary` cubiertos.
  
-## F06f — Fixture `fx-polyglot`
- 
+## F06f — Fixture `fx-polyglot` ✅
+
 **Objetivo:** Go + Rust + script shell que se comunican por stdin/stdout con JSON.
 **Stack:** Go, Rust, Bash.
 **Features:** `ingesta`, `transformación`, `reporte`.
@@ -564,6 +570,27 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Códigos de salida usados como protocolo de error.
 6. `init()` de Go que registra handlers.
 **Toolchain de tests:** Go + Rust + bats, en contenedor.
+
+**Criterios de aceptación:**
+- [x] 3 features (`ingesta`, `transformacion`, `reporte`), cada una con 7 R-NN documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: contrato JSON, `//go:build`, Cargo features, shell orchestrator, exit codes, `init()`.
+- [x] 6 trampas del paquete plantadas: `|| rc=$?` inutil, jq rewrite silent, legacy_compat rellena, no timeout, trap vs `set -e` carrera, asimetria strict vs v1.
+- [x] `src/ingesta/` Go con `//go:build !legacy` y `//go:build legacy`, `func init()` en `registry.go` que rellena map global.
+- [x] `src/transformacion/` Rust con `Cargo.toml` que define features `v1`, `v2`, `strict`, `legacy_compat`, y modulos `strict.rs` y `legacy_compat.rs` separados.
+- [x] `orchestrator.sh` con `set -euo pipefail`, `trap cleanup EXIT`, `case "$(uname -s)"`, exit codes como protocolo (0/2/3/4/64/8/9/10/11/12).
+- [x] `src/reporte/lib.sh` con helpers bash (algunos no usados = trampas superficiales).
+- [x] 7 bats files (`ingesta.bats`, `transformacion_v1.bats`, `transformacion_v2.bats`, `orchestrator.bats`, `protocolo_exit_codes.bats`, `contrato_json.bats`, `end_to_end.bats`) + `all-tests.sh`.
+- [x] `manifest.yml`, `Makefile`, `Dockerfile.test` (basado en `rust:1-bookworm`), `build-history.sh` con 8 commits, `unique_tokens.txt` (25 tokens con prefijo `NPRGT-FXPOLY-`), `README.md`, `.gitignore`.
+- [x] `dev/ground-truth/fx-polyglot/{ground_truth.json,unique_tokens.txt}` con paquete completo por feature.
+- [x] `dev/tests/test_fx_polyglot_ground_truth.py` agregado y verde (33 tests).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones en comentarios) en verde.
+- [x] `fixtures_matrix.py` extendido para detectar `artifacts/` y `manifests/`, cubre `go`, `rust`, `shell`, `cargo`, `go-modules` por primera vez.
+- [x] `pytest` total 363 passed (330 previos + 33 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified}.
+- [x] `validate_skill.py` sigue verde.
+- [x] F06e fix de regresion incluido en este commit: ground_truth.json de fx-minified arreglado (decision_points con `file`, user_sees en outcomes, traces apuntan a src/ts/*.ts); check_ground_truth.py refactorizado para separar errores de warnings; bug del parser YAML corregido (prioriza binary sobre YAML en extensiones binarias); CC-11 cerrada (comentarios sin nombres de features).
+- [x] `MATRIX.md` muestra fx-polyglot cubriendo go, rust, shell, cargo, go-modules; fx-minified cubre ahora bundle-with-sourcemap, minified-js, asar, pyc, jar en containers.
+- [x] Commit `F06f: fixture fx-polyglot con paquete por feature`.
  
 ---
  

@@ -1,0 +1,15 @@
+{
+  "_comment": "Manifest del app.jar. Trampa #5 del ecosistema (META-INF/services).",
+  "artifact": "app.jar",
+  "service_registry": "META-INF/services/com.fxmin.Feature",
+  "features": {
+    "calcular-tarifa": "app.jar#com/fxmin/CalcularTarifa",
+    "validar-licencia": "app.jar#com/fxmin/ValidarLicencia",
+    "sincronizar": "app.jar#com/fxmin/Sincronizar"
+  },
+  "registry_entries": [
+    "com.fxmin.CalcularTarifa",
+    "com.fxmin.ValidarLicencia",
+    "com.fxmin.Sincronizar"
+  ]
+}

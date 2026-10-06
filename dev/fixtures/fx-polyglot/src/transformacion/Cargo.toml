@@ -1,0 +1,24 @@
+[package]
+name = "transformacion"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+# Pipeline por defecto (v1): lee {id, raw}, escribe {id, transformed}.
+default = ["v1"]
+v1 = []
+v2 = []
+strict = []
+legacy_compat = []
+
+[[bin]]
+name = "transformacion"
+path = "src/main.rs"
+
+[[bin]]
+name = "transformacion_v2"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

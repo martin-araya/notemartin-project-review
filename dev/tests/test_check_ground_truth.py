@@ -424,7 +424,7 @@ class TestCC11:
             "# MySecretFeature is implemented here\nx = 1\n"
         )
         from dev.tools.check_ground_truth import check
-        errs = check(gt_dir, fx, check_cc11=True)
+        errs, _warns = check(gt_dir, fx, check_cc11=True)
         assert any("CC-11" in e for e in errs)
 
     def test_no_mention_passes(self, tmp_path: Path) -> None:
@@ -434,7 +434,7 @@ class TestCC11:
         fx.mkdir()
         (fx / "a.py").write_text("# unrelated comment\nx = 1\n")
         from dev.tools.check_ground_truth import check
-        errs = check(gt_dir, fx, check_cc11=True)
+        errs, _warns = check(gt_dir, fx, check_cc11=True)
         assert not any("CC-11" in e for e in errs)
 
     def test_detects_in_block_comment_js(self, tmp_path: Path) -> None:
@@ -444,7 +444,7 @@ class TestCC11:
         fx.mkdir()
         (fx / "a.js").write_text("/* BlockFeature lives here */\nconst x = 1;\n")
         from dev.tools.check_ground_truth import check
-        errs = check(gt_dir, fx, check_cc11=True)
+        errs, _warns = check(gt_dir, fx, check_cc11=True)
         assert any("CC-11" in e for e in errs)
 
     def test_string_in_code_passes(self, tmp_path: Path) -> None:
@@ -454,7 +454,7 @@ class TestCC11:
         fx.mkdir()
         (fx / "a.py").write_text('name = "StringFeature"\nx = 1\n')
         from dev.tools.check_ground_truth import check
-        errs = check(gt_dir, fx, check_cc11=True)
+        errs, _warns = check(gt_dir, fx, check_cc11=True)
         assert not any("CC-11" in e for e in errs)
 
 

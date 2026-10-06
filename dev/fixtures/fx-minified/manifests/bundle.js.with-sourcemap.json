@@ -1,0 +1,19 @@
+{
+  "_comment": "Manifest del bundle.js con sourcemap. Trampa #1 del ecosistema.",
+  "artifact": "bundle.js",
+  "with_sourcemap": true,
+  "sourcemap": "bundle.js.map",
+  "features": {
+    "calcular-tarifa": "src/ts/calcular-tarifa.ts:8",
+    "validar-licencia": "src/ts/validar-licencia.ts:7",
+    "sincronizar": "src/ts/sincronizar.ts:7"
+  },
+  "literals": {
+    "calcular_tarifa": "src/ts/calcular-tarifa.ts:3",
+    "validar_licencia": "src/ts/validar-licencia.ts:3",
+    "sincronizar": "src/ts/sincronizar.ts:3"
+  },
+  "tree_shaken": {
+    "_unusedCalculoHelper": "src/ts/calcular-tarifa.ts:18 (presente en sourcemap solo)"
+  }
+}

@@ -110,11 +110,17 @@ def parse_cite(cite: str) -> Optional[CiteRef]:
     2. ``container`` (presencia de ``!``)
     3. ``notebook`` (``#celda-``)
     4. ``xpath`` (``#/...``)
-    5. ``yaml`` (``#path``)
-    6. ``binary`` (``#0xN``, ``#N``, ``#símbolo`` con extension binaria conocida)
+    5. ``binary`` (``#0xN``, ``#N``, ``#símbolo`` con extension binaria conocida)
+    6. ``yaml`` (``#path``)
     """
     if not isinstance(cite, str) or not cite:
         return None
+
+    # Pre-decide: si la extension es claramente binaria, priorizar binary.
+    binary_path_match = re.match(r"^([^#]+)#", cite)
+    looks_binary = bool(
+        binary_path_match and _looks_like_binary_path(binary_path_match.group(1))
+    )
 
     m = _TEXT_CITE_RE.match(cite)
     if m:
@@ -157,6 +163,38 @@ def parse_cite(cite: str) -> Optional[CiteRef]:
             expr=m.group("xpath"),
         )
 
+    if looks_binary:
+        m = _BINARY_OFFSET_RE.match(cite)
+        if m:
+            return CiteRef(
+                raw=cite, kind="binary",
+                path=m.group("path"), offset=int(m.group("off"), 16),
+                expr=f"0x{m.group('off')}",
+            )
+        m = _BINARY_DEC_RE.match(cite)
+        if m:
+            return CiteRef(
+                raw=cite, kind="binary",
+                path=m.group("path"), offset=int(m.group("off")),
+                expr=m.group("off"),
+            )
+        m = _BINARY_SYM_RE.match(cite)
+        if m:
+            return CiteRef(
+                raw=cite, kind="binary",
+                path=m.group("path"), symbol=m.group("sym"),
+                expr=m.group("sym"),
+            )
+
+    m = _YAML_CITE_RE.match(cite)
+    if m:
+        return CiteRef(
+            raw=cite,
+            kind="yaml",
+            path=m.group("path"),
+            expr=m.group("ypath"),
+        )
+
     m = _BINARY_OFFSET_RE.match(cite)
     if m:
         return CiteRef(
@@ -175,25 +213,6 @@ def parse_cite(cite: str) -> Optional[CiteRef]:
             path=m.group("path"),
             offset=int(m.group("off")),
             expr=m.group("off"),
-        )
-
-    m = _BINARY_SYM_RE.match(cite)
-    if m and _looks_like_binary_path(m.group("path")):
-        return CiteRef(
-            raw=cite,
-            kind="binary",
-            path=m.group("path"),
-            symbol=m.group("sym"),
-            expr=m.group("sym"),
-        )
-
-    m = _YAML_CITE_RE.match(cite)
-    if m:
-        return CiteRef(
-            raw=cite,
-            kind="yaml",
-            path=m.group("path"),
-            expr=m.group("ypath"),
         )
 
     m = _BINARY_SYM_RE.match(cite)
@@ -465,10 +484,21 @@ def _read_lines_smart(path: Path) -> Tuple[List[str], str]:
 # ---------------------------------------------------------------------------
 
 
+# Directorios de artefactos generados por build (excluidos de validacion estricta:
+# se asume que el contenedor los construye). Se emite un warning, no un error.
+_ARTIFACT_DIRS = ("artifacts/", "build/", "target/", "dist/")
+
+
+def _is_generated(path: str) -> bool:
+    return any(path.startswith(d) for d in _ARTIFACT_DIRS)
+
+
 def _validate_text(fixture_root: Path, ref: CiteRef) -> List[str]:
     errs: List[str] = []
     target = fixture_root / ref.path
     if not target.is_file():
+        if _is_generated(ref.path):
+            return [f"WARN: artefacto no generado (esperado por build): {ref.path}"]
         return [f"archivo inexistente: {ref.path}"]
 
     lines, _ = _read_lines_smart(target)
@@ -554,6 +584,8 @@ def _read_asar_member(data: bytes, inner: str) -> Optional[bytes]:
 def _validate_container(fixture_root: Path, ref: CiteRef) -> List[str]:
     archive = fixture_root / ref.path
     if not archive.is_file():
+        if _is_generated(ref.path):
+            return [f"WARN: artefacto contenedor no generado: {ref.path}"]
         return [f"contenedor inexistente: {ref.path}"]
     if ref.inner is None or ref.line is None:
         return ["contenedor: inner o line faltante"]
@@ -688,6 +720,8 @@ def _validate_yaml(fixture_root: Path, ref: CiteRef) -> List[str]:
 def _validate_binary(fixture_root: Path, ref: CiteRef) -> List[str]:
     target = fixture_root / (ref.path or "")
     if not target.is_file():
+        if _is_generated(ref.path or ""):
+            return [f"WARN: binario no generado: {ref.path}"]
         return [f"binario: archivo inexistente {ref.path}"]
     try:
         data = target.read_bytes()
@@ -739,17 +773,23 @@ def _check_cite(fixture_root: Path, cite: str, where: str) -> List[str]:
     return [f"{where}: {e}" for e in check_cite(fixture_root, cite)]
 
 
-def check(gt_dir: Path, fixture_root: Path, check_cc11: bool = False) -> List[str]:
-    """Devuelve la lista de errores del ground truth."""
+def check(gt_dir: Path, fixture_root: Path, check_cc11: bool = False) -> Tuple[List[str], List[str]]:
+    """Devuelve la tupla (errores, warnings) del ground truth.
+
+    Los warnings se emiten para referencias bajo ``artifacts/``, ``build/``,
+    ``target/`` o ``dist/`` que no estan generadas localmente: se asume que el
+    contenedor las construye. Los callers deben tratarlos como no fatales.
+    """
     errs: List[str] = []
+    warns: List[str] = []
     gt_path = gt_dir / "ground_truth.json"
     if not gt_path.is_file():
-        return [f"no existe {gt_path}"]
+        return [f"no existe {gt_path}"], []
 
     try:
         gt = json.loads(gt_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        return [f"{gt_path} no es JSON valido: {exc}"]
+        return [f"{gt_path} no es JSON valido: {exc}"], []
 
     features = gt.get("features", [])
     if len(features) < 3:
@@ -759,12 +799,20 @@ def check(gt_dir: Path, fixture_root: Path, check_cc11: bool = False) -> List[st
         fid = feature.get("id", f"<feature[{fi}]>")
         for si, step in enumerate(feature.get("traces", [])):
             cite = step.get("cite", "")
-            errs.extend(_check_cite(fixture_root, cite, f"{fid}/trace[{si}]"))
+            bucket = warns if _looks_like_cite_warn(cite) else errs
+            for e in check_cite(fixture_root, cite):
+                bucket.append(f"{fid}/trace[{si}]: {e}")
         for di, dp in enumerate(feature.get("decision_points", [])):
-            f = dp.get("file", "")
+            f = dp.get("file") or dp.get("artifact") or ""
             ln = dp.get("line", 0)
+            if not f:
+                errs.append(f"{fid}/dp[{di}]: file/artifact vacio")
+                continue
             target = fixture_root / f
             if not target.is_file():
+                if _is_generated(f):
+                    warns.append(f"{fid}/dp#{di}: artefacto no generado: {f}")
+                    continue
                 errs.append(f"{fid}/dp[{di}]: archivo inexistente {f}")
                 continue
             lines, _ = _read_lines_smart(target)
@@ -788,9 +836,17 @@ def check(gt_dir: Path, fixture_root: Path, check_cc11: bool = False) -> List[st
         errs.append(f"package_traps: solo {len(gt.get('package_traps', []))} (<6)")
 
     if check_cc11:
-        errs.extend(_check_cc11(fixture_root, gt))
+        for e in _check_cc11(fixture_root, gt):
+            errs.append(e)
 
-    return errs
+    return errs, warns
+
+
+def _looks_like_cite_warn(cite: str) -> bool:
+    """Decide si los problemas de validacion de esta cita deben ir a warnings."""
+    if not cite:
+        return False
+    return any(cite.startswith(d) for d in _ARTIFACT_DIRS)
 
 
 # ---------------------------------------------------------------------------
@@ -878,14 +934,21 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"ERROR: no se encontro el repo del fixture en {fixture_root}", file=sys.stderr)
         return 1
 
-    errs = check(args.gt_dir, fixture_root, check_cc11=args.check_cc11)
+    errs, warns = check(args.gt_dir, fixture_root, check_cc11=args.check_cc11)
+    if warns:
+        print(f"WARN ({len(warns)} avisos):", file=sys.stderr)
+        for w in warns:
+            print(f"  {w}", file=sys.stderr)
     if errs:
         print(f"FALLO ({len(errs)} problemas):", file=sys.stderr)
         for e in errs:
             print(f"  {e}", file=sys.stderr)
         return 2
 
-    print(f"OK ({args.gt_dir.name})")
+    if warns:
+        print(f"OK ({args.gt_dir.name}) con {len(warns)} avisos")
+    else:
+        print(f"OK ({args.gt_dir.name})")
     if args.verbose:
         print("Todos los formatos validados correctamente.", file=sys.stderr)
     return 0

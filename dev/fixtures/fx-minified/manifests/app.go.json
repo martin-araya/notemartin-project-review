@@ -1,0 +1,24 @@
+{
+  "_comment": "Manifest del binario Go stripped. Trampa #2 aplicada a binarios.",
+  "artifact": "app",
+  "format": "elf",
+  "stripped": true,
+  "features": {
+    "calcular-tarifa": "app#CalcularTarifa",
+    "validar-licencia": "app#ValidarLicencia",
+    "sincronizar": "app#Sincronizar"
+  },
+  "literals": {
+    "calcular_tarifa": "string_constant_preserved",
+    "validar_licencia": "string_constant_preserved",
+    "sincronizar": "string_constant_preserved",
+    "FXMIN_TARIFA_PREFIX": "string_constant_preserved",
+    "FXMIN_TARIFA_SUFFIX": "string_constant_preserved",
+    "FXMIN_LIC_INVALID": "string_constant_preserved",
+    "FXMIN_SYNC_OK": "string_constant_preserved",
+    "FXMIN_SYNC_ERROR": "string_constant_preserved"
+  },
+  "magic": {
+    "elf": "7f 45 4c 46"
+  }
+}

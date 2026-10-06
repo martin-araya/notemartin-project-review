@@ -1,0 +1,21 @@
+{
+  "_comment": "Manifest del .pyc. Trampa #4 del ecosistema (magic number).",
+  "artifact": "app.pyc",
+  "cpython_version": "3.11",
+  "magic_number": 3495,
+  "features": {
+    "calcular-tarifa": "app.pyc#calcular_tarifa",
+    "validar-licencia": "app.pyc#validar_licencia",
+    "sincronizar": "app.pyc#sincronizar"
+  },
+  "literals": {
+    "calcular_tarifa": "string_literal_preserved",
+    "validar_licencia": "string_literal_preserved",
+    "sincronizar": "string_literal_preserved",
+    "FXMIN_TARIFA_PREFIX": "string_literal_preserved",
+    "FXMIN_TARIFA_SUFFIX": "string_literal_preserved",
+    "FXMIN_LIC_INVALID": "string_literal_preserved",
+    "FXMIN_SYNC_OK": "string_literal_preserved",
+    "FXMIN_SYNC_ERROR": "string_literal_preserved"
+  }
+}

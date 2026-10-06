@@ -1,0 +1,136 @@
+{
+  "fixture": "fx-polyglot",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-orchestrator", "artifact": "orchestrator.sh", "file": "orchestrator.sh"},
+    {"id": "EP-ingesta", "artifact": "ingesta", "file": "src/ingesta/main.go"},
+    {"id": "EP-transformacion", "artifact": "transformacion", "file": "src/transformacion/src/main.rs"}
+  ],
+  "modules": [
+    {"id": "MOD-ingesta", "path": "src/ingesta/", "summary": "CLI Go con handlers current y legacy registrados via func init()"},
+    {"id": "MOD-transformacion", "path": "src/transformacion/", "summary": "CLI Rust con features v1/v2/strict/legacy_compat"},
+    {"id": "MOD-reporte", "path": "src/reporte/", "summary": "Helpers bash (algunos no usados)"},
+    {"id": "MOD-orchestrator", "path": ".", "summary": "Orquestador bash con trap y uname"}
+  ],
+  "dependencies": [
+    {"name": "golang-go", "scope": "dev", "manifest": "Dockerfile.test (apt)"},
+    {"name": "rust", "scope": "dev", "manifest": "Dockerfile.test (rust:1-bookworm)"},
+    {"name": "cargo", "scope": "dev", "manifest": "Dockerfile.test (rust:1-bookworm)"},
+    {"name": "bats", "scope": "dev", "manifest": "Dockerfile.test (apt)"},
+    {"name": "jq", "scope": "dev", "manifest": "Dockerfile.test (apt)"},
+    {"name": "serde", "scope": "runtime", "manifest": "src/transformacion/Cargo.toml"},
+    {"name": "serde_json", "scope": "runtime", "manifest": "src/transformacion/Cargo.toml"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "ingesta",
+      "traces": [
+        {"n": 1, "artifact": "ingesta CLI", "what": "CLI Go que lee stdin", "cite": "src/ingesta/main.go:14"},
+        {"n": 2, "artifact": "tag current", "what": "Handler current registrado via init()", "cite": "src/ingesta/handlers.go:11"},
+        {"n": 3, "artifact": "tag legacy", "what": "Handler legacy con campos ts_raw/body", "cite": "src/ingesta/handlers_legacy.go:14"},
+        {"n": 4, "artifact": "registry global", "what": "Map de handlers inicializado en registry.go", "cite": "src/ingesta/registry.go:7"},
+        {"n": 5, "artifact": "orquestador", "what": "Invocado desde orchestrator.sh via --list-tags", "cite": "orchestrator.sh:48"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/ingesta/main.go", "line": 18, "kind": "branch", "condition_text": "--list-tags presente", "branches": [{"label": "imprime tags y sale", "target_line": 19}, {"label": "lookup handler", "target_line": 24}]},
+        {"id": "DP-002", "file": "src/ingesta/main.go", "line": 27, "kind": "validation", "condition_text": "handler existe", "branches": [{"label": "exit 4 si desconocida", "target_line": 28}, {"label": "procesa stdin", "target_line": 31}]},
+        {"id": "DP-003", "file": "src/ingesta/main.go", "line": 35, "kind": "validation", "condition_text": "linea vacia", "branches": [{"label": "exit 2", "target_line": 36}, {"label": "parsea y emite", "target_line": 41}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_current", "conditions": "tag=current y linea valida", "user_sees": "JSON {id, ts, raw, tag: 'current'} por stdout, una linea por entrada", "tests": ["tests/ingesta.bats:emite JSON con tag current para entrada valida"]},
+        {"id": "R-02", "category": "success_legacy", "conditions": "tag=legacy (binario compilado con -tags legacy)", "user_sees": "JSON {id, ts_raw, body} — campos diferentes del current", "tests": ["src/ingesta/handlers_legacy.go:14"]},
+        {"id": "R-03", "category": "error_empty_line", "conditions": "linea vacia en stdin", "user_sees": "stderr 'linea vacia (exit 2)' y exit code 2", "tests": ["tests/ingesta.bats:linea vacia devuelve exit 2"]},
+        {"id": "R-04", "category": "error_malformed_line", "conditions": "linea sin el separador |", "user_sees": "stderr 'error: formato invalido (exit 3)' y exit 3", "tests": ["tests/ingesta.bats:linea malformada devuelve exit 3"]},
+        {"id": "R-05", "category": "error_unknown_tag", "conditions": "tag no existe en handlers map", "user_sees": "stderr 'tag desconocida (exit 4)' y exit 4", "tests": ["tests/ingesta.bats:tag desconocida devuelve exit 4"]},
+        {"id": "R-06", "category": "info_list_tags", "conditions": "--list-tags", "user_sees": "stdout lista de tags (uno por linea) y exit 0", "tests": ["tests/ingesta.bats:--list-tags imprime current"]},
+        {"id": "R-07", "category": "noop_empty_stdin", "conditions": "stdin completamente vacio", "user_sees": "sin output, exit 0", "tests": ["tests/ingesta.bats:stdin vacio devuelve exit 0 sin output"]}
+      ],
+      "config": [
+        {"key": "INGESTA_TAG", "kind": "env", "default": "current", "effect": "tag usada por el orquestador"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "transformacion",
+      "traces": [
+        {"n": 1, "artifact": "bin transformacion (v1)", "what": "Build con --features v1 (default)", "cite": "src/transformacion/src/main.rs:5"},
+        {"n": 2, "artifact": "lib.rs transform()", "what": "Logica de transformacion con cfg(feature)", "cite": "src/transformacion/src/lib.rs:23"},
+        {"n": 3, "artifact": "strict.rs", "what": "Rechazo de campos extra (solo con feature strict)", "cite": "src/transformacion/src/strict.rs:9"},
+        {"n": 4, "artifact": "legacy_compat.rs", "what": "Relleno silencioso de campos faltantes", "cite": "src/transformacion/src/legacy_compat.rs:7"},
+        {"n": 5, "artifact": "bin transformacion_v2", "what": "Build con --no-default-features --features v2,strict", "cite": "src/transformacion/Cargo.toml:14"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "src/transformacion/src/lib.rs", "line": 47, "kind": "selection", "condition_text": "feature v2 vs default", "branches": [{"label": "input_field = payload", "target_line": 48}, {"label": "input_field = raw", "target_line": 50}]},
+        {"id": "DP-005", "file": "src/transformacion/src/lib.rs", "line": 36, "kind": "validation", "condition_text": "feature strict", "branches": [{"label": "rechaza con exit 64", "target_line": 38}, {"label": "continua", "target_line": 44}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_v1", "conditions": "feature v1 (default) y JSON con campo raw", "user_sees": "JSON {id, transformed: '<raw>::v1', via: 'v1'}", "tests": ["tests/transformacion_v1.bats:lee .raw y emite transformed con sufijo ::v1"]},
+        {"id": "R-02", "category": "success_v2", "conditions": "feature v2 y JSON con campo payload", "user_sees": "JSON {id, transformed: '<payload>::v2', via: 'v2'}", "tests": ["tests/transformacion_v2.bats:lee .payload y emite transformed con sufijo ::v2"]},
+        {"id": "R-03", "category": "error_strict_rejected", "conditions": "feature strict y JSON con campo extra", "user_sees": "stderr 'campo extra detectado (exit 64)' y exit 64", "tests": ["tests/transformacion_v2.bats:campo extra se rechaza con exit 64"]},
+        {"id": "R-04", "category": "success_legacy_compat", "conditions": "feature legacy_compat y campo input falta", "user_sees": "JSON con transformed usando default vacio, exit 0 (error del caller silenciado)", "tests": ["tests/contrato_json.bats:legacy_compat rellena raw cuando falta"]},
+        {"id": "R-05", "category": "error_json_malformed", "conditions": "linea no es JSON", "user_sees": "stderr 'json malformado (exit 8)' y exit 8", "tests": ["tests/transformacion_v1.bats:JSON malformado devuelve exit 8"]},
+        {"id": "R-06", "category": "error_empty_line", "conditions": "linea vacia en stdin", "user_sees": "stderr 'linea vacia (exit 2)' y exit 2", "tests": ["tests/transformacion_v1.bats:linea vacia devuelve exit 2"]},
+        {"id": "R-07", "category": "noop_extra_field_v1", "conditions": "feature v1 sin strict, campo extra presente", "user_sees": "transformed::v1, campo extra ignorado sin warning (asimetria con strict)", "tests": ["tests/transformacion_v1.bats:campo payload se ignora silenciosamente"]}
+      ],
+      "config": [
+        {"key": "TRANSFORM_BIN", "kind": "env", "default": "transformacion-linux", "effect": "binario de Rust seleccionado por el orquestador"},
+        {"key": "TRANSFORM_BIN_V2", "kind": "env", "default": "transformacion-linux-v2", "effect": "binario v2 (v2 + strict)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "reporte",
+      "traces": [
+        {"n": 1, "artifact": "orchestrator.sh entrada", "what": "Lee argumento <input>", "cite": "orchestrator.sh:36"},
+        {"n": 2, "artifact": "uname case", "what": "Selecciona binario segun uname", "cite": "orchestrator.sh:26"},
+        {"n": 3, "artifact": "trap cleanup EXIT", "what": "Limpia tmpdir al final", "cite": "orchestrator.sh:18"},
+        {"n": 4, "artifact": "pipeline ingesta+transform", "what": "Pipe stdin/stdout JSON", "cite": "orchestrator.sh:50"},
+        {"n": 5, "artifact": "jq report", "what": "Genera JSON final con items y available_handlers", "cite": "orchestrator.sh:60"},
+        {"n": 6, "artifact": "lib.sh (no usado)", "what": "format_report existe pero nadie lo llama", "cite": "src/reporte/lib.sh:13"}
+      ],
+      "decision_points": [
+        {"id": "DP-006", "file": "orchestrator.sh", "line": 26, "kind": "switch", "condition_text": "uname -s", "branches": [{"label": "Linux -> transformacion-linux", "target_line": 27}, {"label": "Darwin -> transformacion-linux-v2", "target_line": 30}, {"label": "otro -> exit 10", "target_line": 33}]},
+        {"id": "DP-007", "file": "orchestrator.sh", "line": 60, "kind": "validation", "condition_text": "jq -n falla", "branches": [{"label": "exit 11", "target_line": 64}, {"label": "OK", "target_line": 67}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_linux", "conditions": "uname -s = Linux", "user_sees": "reporte.json con items y available_handlers; exit 0", "tests": ["tests/orchestrator.bats:OK Linux produce reporte.json"]},
+        {"id": "R-02", "category": "success_macos", "conditions": "uname -s = Darwin", "user_sees": "usa transformacion-linux-v2 (v2+strict); exit 0", "tests": ["src/transformacion/Cargo.toml:18"]},
+        {"id": "R-03", "category": "error_unsupported_os", "conditions": "uname -s no es Linux ni Darwin", "user_sees": "stderr 'OS no soportado (exit 10)' y exit 10", "tests": ["tests/orchestrator.bats:OS no soportado devuelve exit 10"]},
+        {"id": "R-04", "category": "error_missing_input", "conditions": "input.txt no existe", "user_sees": "stderr 'input inexistente' y exit 12", "tests": ["tests/orchestrator.bats:input inexistente devuelve exit 12"]},
+        {"id": "R-05", "category": "error_usage", "conditions": "sin argumentos", "user_sees": "stderr 'uso: ...' y exit 12", "tests": ["tests/orchestrator.bats:uso sin argumentos devuelve exit 12"]},
+        {"id": "R-06", "category": "error_jq_failed", "conditions": "jq -n retorna != 0", "user_sees": "stderr 'jq fallo generando reporte (exit 11)' y exit 11", "tests": ["orchestrator.sh:64"]},
+        {"id": "R-07", "category": "success_clean_exit", "conditions": "trap cleanup EXIT ejecuta aunque set -e aborte antes", "user_sees": "tmpdir eliminado, exit code propagado", "tests": ["orchestrator.sh:18"]}
+      ],
+      "config": [
+        {"key": "INGESTA_BIN", "kind": "env", "default": "ingesta", "effect": "CLI Go invocada por el orquestador"},
+        {"key": "TRANSFORM_BIN", "kind": "env", "default": "transformacion-linux", "effect": "CLI Rust invocada (Linux)"},
+        {"key": "TMPDIR", "kind": "env", "default": "/tmp", "effect": "donde se crean los tmpdir de trabajo"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "implicit_json_contract", "where": "src/ingesta/handlers.go:11 vs src/transformacion/src/lib.rs:48", "resolution": "Cada binario espera campos diferentes. ingesta current emite {id, ts, raw, tag}; legacy emite {id, ts_raw, body}; transformacion v1 lee .raw y v2 lee .payload. El orquestador (orchestrator.sh:52) reescribe con `.raw // .body // ''` como fallback silencioso — un cambio de contrato no levanta error."},
+    {"id": "TRAP-E02", "kind": "go_build_tags", "where": "src/ingesta/handlers_legacy.go:1 //go:build legacy", "resolution": "El binario `ingesta` por defecto solo incluye handlers.go. Construir con `go build -tags legacy` incluye handlers_legacy.go y la CLI registra el handler legacy en el map (func init()). La skill debe inspeccionar las tags de build para saber que handler existe."},
+    {"id": "TRAP-E03", "kind": "cargo_features", "where": "src/transformacion/Cargo.toml:[features]", "resolution": "Las features v1, v2, strict, legacy_compat son mutuamente excluyentes en parte. La combinacion determina que campos JSON se leen y que se hace con los extras. La skill debe detectar las features activas desde el binario (sufijo del output ::v1 / ::v2) o desde los cfg del codigo fuente."},
+    {"id": "TRAP-E04", "kind": "shell_orchestrator", "where": "orchestrator.sh:3 (set -euo pipefail), :5 (trap), :26 (uname case)", "resolution": "El orquestador tiene set -euo pipefail, trap cleanup EXIT, y un case $(uname -s) que selecciona TRANSFORM_BIN. La eleccion del binario NO se ve desde main() ni desde las funciones de Rust; solo desde el bash."},
+    {"id": "TRAP-E05", "kind": "exit_codes_as_protocol", "where": "src/ingesta/main.go:18-44 + src/transformacion/src/main.rs:10-30 + orchestrator.sh:33,37,64", "resolution": "Cada binario usa exit codes no-cero como tipo de error (2=linea vacia, 3=malformed, 4=tag desconocida, 64=strict rejected, 8=json malformed). El orquestador los preserva via `exit $rc`."},
+    {"id": "TRAP-E06", "kind": "go_init_registers_handlers", "where": "src/ingesta/registry.go:8 + src/ingesta/handlers.go:11 (func init)", "resolution": "El map `handlers` se declara vacio en registry.go y se rellena en `func init()` de cada archivo de handlers. main.go solo hace el lookup en el map. La skill debe leer registry.go + handlers.go + handlers_legacy.go para reconstruir como se registran los handlers."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "captura_de_rc_inutil", "where": "orchestrator.sh (intencional en captura de jq)", "resolution": "Cualquier bloque que use `cmd || rc=$? && rc=0` con set -e activo aborta antes del `||`. Si la skill intenta documentar ese patron, debe notar que nunca se usa en ejecucion real."},
+    {"id": "TRAP-P02", "kind": "jq_rewrite_silent", "where": "orchestrator.sh:52 (`.raw // .body // ''`)", "resolution": "El orquestador normaliza el JSON silenciosamente: si ingesta emite {id, ts_raw, body} (legacy) pero el contrato de transformacion espera {raw}, jq rellena raw vacio. El caller nunca recibe un error de contrato."},
+    {"id": "TRAP-P03", "kind": "legacy_compat_silencia_errores", "where": "src/transformacion/src/legacy_compat.rs:7", "resolution": "Cuando legacy_compat esta activo y el caller olvido enviar un campo, transformacion lo rellena con '' y devuelve exito. La skill no puede distinguir un exito real de un error silenciado."},
+    {"id": "TRAP-P04", "kind": "no_timeout_in_pipe", "where": "orchestrator.sh (ausencia de timeout)", "resolution": "Si transformacion cuelga, el pipe queda abierto indefinidamente. No hay `timeout` ni se\\~al de alarma. La skill debe notar la ausencia y proponer un timeout para operaciones no-confiables."},
+    {"id": "TRAP-P05", "kind": "trap_y_set_e_carrera", "where": "orchestrator.sh:5-10 (trap cleanup)", "resolution": "Si `rm -rf` en cleanup falla (permisos), trap propaga el exit code del rm, no el rc original del orquestador. La skill debe distinguir el exit code real del error de cleanup."},
+    {"id": "TRAP-P06", "kind": "asimetria_strict_v1", "where": "src/transformacion/src/v1 rama vs strict.rs", "resolution": "strict solo aplica cuando la feature strict esta activa. Con v1 puro, los campos extra se ignoran sin warning. La skill debe notar que 'exito silencioso' y 'rechazo' dependen del feature flag."}
+  ],
+  "surfaces": [
+    {"id": "SRF-cmd-ingesta", "kind": "command", "name": "ingesta [--list-tags] [--tag=current|legacy]", "handler": "src/ingesta/main.go:func main", "file": "src/ingesta/main.go"},
+    {"id": "SRF-cmd-transformacion-v1", "kind": "command", "name": "transformacion-linux (lee JSON de stdin, escribe JSON a stdout)", "handler": "src/transformacion/src/main.rs:fn main", "file": "src/transformacion/src/main.rs"},
+    {"id": "SRF-cmd-transformacion-v2", "kind": "command", "name": "transformacion-linux-v2 (v2 + strict)", "handler": "src/transformacion/src/main.rs:fn main", "file": "src/transformacion/src/main.rs"},
+    {"id": "SRF-cmd-orchestrator", "kind": "command", "name": "orchestrator.sh <input.txt> [output.json]", "handler": "orchestrator.sh:bash", "file": "orchestrator.sh"},
+    {"id": "SRF-msg-stdin-json", "kind": "message", "name": "JSON line protocol (ingesta <-> transformacion <-> reporte)", "pair": "ingesta|orchestrator y transformacion|orchestrator"},
+    {"id": "SRF-evt-trap-cleanup", "kind": "event", "name": "cleanup EXIT en orchestrator.sh", "pair": "Bash EXIT signal -> cleanup function"}
+  ]
+}

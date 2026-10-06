@@ -1,0 +1,17 @@
+{
+  "name": "fx-minified",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Build del fixture fx-minified (F06e).",
+  "type": "module",
+  "scripts": {
+    "build:bundle-sourcemap": "node build/build-bundle-with-sourcemap.mjs",
+    "build:bundle-min": "node build/build-bundle-without-sourcemap.mjs",
+    "build:asar": "node build/build-asar.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.0",
+    "vitest": "^1.6.0"
+  }
+}

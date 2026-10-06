@@ -1,0 +1,5 @@
+/artifacts/
+/src/ingesta/ingesta
+/src/transformacion/target/
+/src/transformacion/Cargo.lock
+*.log

@@ -1,0 +1,128 @@
+{
+  "fixture": "fx-minified",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-bundle", "artifact": "bundle.js", "file": "artifacts/bundle.js"},
+    {"id": "EP-bundle-min", "artifact": "bundle.min.js", "file": "artifacts/bundle.min.js"},
+    {"id": "EP-asar", "artifact": "app.asar", "file": "artifacts/app.asar"},
+    {"id": "EP-pyc", "artifact": "app.pyc", "file": "artifacts/app.pyc"},
+    {"id": "EP-jar", "artifact": "app.jar", "file": "artifacts/app.jar"},
+    {"id": "EP-go", "artifact": "app", "file": "artifacts/app"}
+  ],
+  "modules": [
+    {"id": "MOD-src-ts", "path": "src/ts/", "summary": "Source TS de las 3 features (bundleable con esbuild)"},
+    {"id": "MOD-src-js", "path": "src/js/", "summary": "Source JS de las 3 features (empaquetado en app.asar)"},
+    {"id": "MOD-src-py", "path": "src/py/", "summary": "Source Python (compilado a app.pyc)"},
+    {"id": "MOD-src-java", "path": "src/java/", "summary": "Source Java (compilado a app.jar con META-INF/services)"},
+    {"id": "MOD-src-go", "path": "src/go/", "summary": "Source Go (compilado a binario stripped)"}
+  ],
+  "dependencies": [
+    {"name": "esbuild", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "vitest", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "openjdk-17-jdk-headless", "scope": "dev", "manifest": "Dockerfile.test (apt-get)"},
+    {"name": "python3-pytest", "scope": "dev", "manifest": "Dockerfile.test (apt-get)"},
+    {"name": "binutils", "scope": "dev", "manifest": "Dockerfile.test (apt-get; provides strings, nm, file)"},
+    {"name": "golang-go", "scope": "dev", "manifest": "Dockerfile.test (apt-get)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "calcular-tarifa",
+      "traces": [
+        {"n": 1, "artifact": "bundle.js", "what": "Punto de entrada del bundle con sourcemap", "cite": "src/ts/index.ts:1"},
+        {"n": 2, "artifact": "bundle.js.map", "what": "Sourcemap con mapping a src/ts/*.ts", "cite": "src/ts/calcular-tarifa.ts:3"},
+        {"n": 3, "artifact": "bundle.min.js", "what": "Bundle minificado sin sourcemap", "cite": "src/ts/calcular-tarifa.ts:5"},
+        {"n": 4, "artifact": "app.asar", "what": "Entrada calcular_tarifa.js", "cite": "src/js/calcular_tarifa.js:5"},
+        {"n": 5, "artifact": "app.pyc", "what": "Funcion calcular_tarifa en bytecode Python", "cite": "src/py/calcular_tarifa.py:6"},
+        {"n": 6, "artifact": "app.jar", "what": "Clase CalcularTarifa en jar (ServiceLoader)", "cite": "src/java/com/fxmin/CalcularTarifa.java:15"},
+        {"n": 7, "artifact": "app (Go)", "what": "Funcion CalcularTarifa en binario Go stripped", "cite": "src/go/main.go:22"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/ts/calcular-tarifa.ts", "line": 7, "kind": "validation", "condition_text": "amount < 0", "branches": [{"label": "throw FXMIN_TARIFA_PREFIX", "target_line": 8}, {"label": "return total", "target_line": 11}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "amount >= 0", "user_sees": "{rate, total} donde total = amount * (1 + rate)", "tests": ["src/ts/calcular-tarifa.ts:7"]},
+        {"id": "R-02", "category": "error_validation", "conditions": "amount < 0", "user_sees": "throw new Error('FXMIN_TARIFA_PREFIX amount must be non-negative FXMIN_TARIFA_SUFFIX')", "tests": ["src/ts/calcular-tarifa.ts:8-9"]},
+        {"id": "R-03", "category": "success_with_tree_shaking", "conditions": "funcion tree-shakeada (no usada)", "user_sees": "existe en el sourcemap pero NO en el bundle minificado", "tests": ["tests/test_bundle.test.ts:preserva _unusedCalculoHelper"]},
+        {"id": "R-04", "category": "success_pyc", "conditions": "compilado a .pyc, magic 3495 (Python 3.11)", "user_sees": "bytecode Python 3.11 con literales calcular_tarifa, FXMIN_TARIFA_PREFIX, FXMIN_TARIFA_SUFFIX preservados", "tests": ["tests/test_pyc_test.py:test_literal_error_markers_present"]},
+        {"id": "R-05", "category": "success_jar", "conditions": "META-INF/services/com.fxmin.Feature lo lista", "user_sees": "META-INF/services/com.fxmin.Feature contiene CalcularTarifa; class file com/fxmin/CalcularTarifa.class presente en el jar", "tests": ["tests/test_jar_test.py:test_service_registry_lists_all_features"]},
+        {"id": "R-06", "category": "success_go", "conditions": "binario ELF stripped, literales preservados", "user_sees": "ELF executable; literales calcular_tarifa, FXMIN_TARIFA_PREFIX, FXMIN_TARIFA_SUFFIX localizables con strings; nm NO muestra nombres de funciones (stripped)", "tests": ["tests/test_go_binary.sh:literals found via strings"]}
+      ],
+      "config": [
+        {"key": "FXMIN_TARIFA_PREFIX", "kind": "literal", "default": "FXMIN_TARIFA_PREFIX", "effect": "prefijo del mensaje de error"},
+        {"key": "FXMIN_TARIFA_SUFFIX", "kind": "literal", "default": "FXMIN_TARIFA_SUFFIX", "effect": "sufijo del mensaje de error"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "validar-licencia",
+      "traces": [
+        {"n": 1, "artifact": "bundle.js", "cite": "src/ts/index.ts:2"},
+        {"n": 2, "artifact": "bundle.js.map", "cite": "src/ts/validar-licencia.ts:3"},
+        {"n": 3, "artifact": "bundle.min.js", "cite": "src/ts/validar-licencia.ts:5"},
+        {"n": 4, "artifact": "app.asar", "cite": "src/js/validar_licencia.js:5"},
+        {"n": 5, "artifact": "app.pyc", "cite": "src/py/validar_licencia.py:6"},
+        {"n": 6, "artifact": "app.jar", "cite": "src/java/com/fxmin/ValidarLicencia.java:14"},
+        {"n": 7, "artifact": "app (Go)", "cite": "src/go/main.go:30"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/ts/validar-licencia.ts", "line": 6, "kind": "validation", "condition_text": "!licenseKey || licenseKey.length < 8", "branches": [{"label": "return FXMIN_LIC_INVALID", "target_line": 7}, {"label": "return 2099-12-31", "target_line": 12}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "licenseKey.length >= 8", "user_sees": "{valid: true, expiresAt: '2099-12-31'}", "tests": ["src/ts/validar-licencia.ts:6-13"]},
+        {"id": "R-02", "category": "error_validation", "conditions": "licenseKey null o length < 8", "user_sees": "{valid: false, expiresAt: 'FXMIN_LIC_INVALID'}", "tests": ["src/ts/validar-licencia.ts:7"]},
+        {"id": "R-03", "category": "pyc_works", "conditions": "compilado a .pyc (literal FXMIN_LIC_INVALID preservado)", "user_sees": "bytecode Python contiene el literal FXMIN_LIC_INVALID", "tests": ["tests/test_pyc_test.py:test_literal_error_markers_present"]},
+        {"id": "R-04", "category": "jar_works", "conditions": "META-INF/services lo lista (com.fxmin.ValidarLicencia)", "user_sees": "META-INF/services/com.fxmin.Feature contiene ValidarLicencia; class file com/fxmin/ValidarLicencia.class presente", "tests": ["tests/test_jar_test.py:test_service_registry_lists_all_features"]},
+        {"id": "R-05", "category": "go_works", "conditions": "binario Go stripped con literales preservados", "user_sees": "strings sobre el binario encuentra validar_licencia y FXMIN_LIC_INVALID; nm no expone nombre", "tests": ["tests/test_go_binary.sh:literals found via strings"]},
+        {"id": "R-06", "category": "asar_validiert_v2", "conditions": "app.asar!/validar_licencia.js extraido correctamente", "user_sees": "asar entry validar_licencia.js contiene FEATURE_VALIDAR_LICENCIA y FXMIN_LIC_INVALID", "tests": ["tests/test_asar.test.ts:extrae validar_licencia.js"]}
+      ],
+      "config": [
+        {"key": "FXMIN_LIC_INVALID", "kind": "literal", "default": "FXMIN_LIC_INVALID", "effect": "string de retorno cuando la clave es invalida"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "sincronizar",
+      "traces": [
+        {"n": 1, "artifact": "bundle.js", "cite": "src/ts/index.ts:3"},
+        {"n": 2, "artifact": "bundle.js.map", "cite": "src/ts/sincronizar.ts:2"},
+        {"n": 3, "artifact": "bundle.min.js", "cite": "src/ts/sincronizar.ts:4"},
+        {"n": 4, "artifact": "app.asar", "cite": "src/js/sincronizar.js:5"},
+        {"n": 5, "artifact": "app.pyc", "cite": "src/py/sincronizar.py:8"},
+        {"n": 6, "artifact": "app.jar", "cite": "src/java/com/fxmin/Sincronizar.java:16"},
+        {"n": 7, "artifact": "app (Go)", "cite": "src/go/main.go:38"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/ts/sincronizar.ts", "line": 5, "kind": "branch", "condition_text": "state === 'error' || state === 'pending' || else", "branches": [{"label": "return FXMIN_SYNC_ERROR", "target_line": 6}, {"label": "return pending", "target_line": 9}, {"label": "return FXMIN_SYNC_OK", "target_line": 9}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "state != 'error' y != 'pending'", "user_sees": "{status: 'FXMIN_SYNC_OK', timestamp: ISO actual}", "tests": ["src/ts/sincronizar.ts:9"]},
+        {"id": "R-02", "category": "success_pending", "conditions": "state == 'pending'", "user_sees": "{status: 'pending', timestamp: ISO actual}", "tests": ["src/ts/sincronizar.ts:9"]},
+        {"id": "R-03", "category": "error_state", "conditions": "state == 'error'", "user_sees": "{status: 'FXMIN_SYNC_ERROR', timestamp: '1970-01-01T00:00:00Z'}", "tests": ["src/ts/sincronizar.ts:6-7"]},
+        {"id": "R-04", "category": "pyc_error_literal", "conditions": "compilado a .pyc, magic 3495 (trampa #4)", "user_sees": "bytecode contiene sincronizar, FXMIN_SYNC_OK y FXMIN_SYNC_ERROR preservados", "tests": ["tests/test_pyc_test.py:test_literal_error_markers_present"]},
+        {"id": "R-05", "category": "jar_class_string", "conditions": "META-INF/services lista com.fxmin.Sincronizar (trampa #5)", "user_sees": "META-INF/services/com.fxmin.Feature contiene Sincronizar; class file com/fxmin/Sincronizar.class presente", "tests": ["tests/test_jar_test.py:test_service_registry_lists_all_features"]},
+        {"id": "R-06", "category": "go_strings", "conditions": "binario Go stripped con literales preservados", "user_sees": "strings encuentra sincronizar, FXMIN_SYNC_OK, FXMIN_SYNC_ERROR; nm no expone nombre de funcion", "tests": ["tests/test_go_binary.sh:literals found via strings"]}
+      ],
+      "config": [
+        {"key": "FXMIN_SYNC_OK", "kind": "literal", "default": "FXMIN_SYNC_OK", "effect": "string de retorno en caso exitoso"},
+        {"key": "FXMIN_SYNC_ERROR", "kind": "literal", "default": "FXMIN_SYNC_ERROR", "effect": "string de retorno en caso de error"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "sourcemap_mapping", "where": "artifacts/bundle.js + artifacts/bundle.js.map", "resolution": "El bundle tiene references archivo:línea:columna que se resuelven a src/ts/*.ts via el sourcemap. La skill debe parsear el sourcemap (formato v3) para mapear de vuelta."},
+    {"id": "TRAP-E02", "kind": "no_sourcemap", "where": "artifacts/bundle.min.js", "resolution": "El bundle minificado NO tiene sourcemap. Los nombres de variables y funciones estan alterados por esbuild. Las features se identifican solo por literales (FEATURE_CALCULAR_TARIFA, FXMIN_TARIFA_PREFIX, etc.)."},
+    {"id": "TRAP-E03", "kind": "asar_container", "where": "artifacts/app.asar", "resolution": "El archivo es un contenedor formato asar (header JSON con offsets + contenido binario concatenado, separado por \\x00). Las features viven en app.asar!/<feature>.js:N. La skill debe parsear el asar y extraer el archivo."},
+    {"id": "TRAP-E04", "kind": "pyc_magic_number", "where": "artifacts/app.pyc", "resolution": "El bytecode de CPython tiene un magic number que indica la version (3495=3.11). La skill debe detectar la version antes de parsear el header y los co_names/co_consts."},
+    {"id": "TRAP-E05", "kind": "jar_service_registry", "where": "artifacts/app.jar", "resolution": "El jar tiene META-INF/services/<fully.qualified.ServiceInterface> que lista las implementaciones. La skill debe parsear este archivo para descubrir las features sin descompilar los .class."},
+    {"id": "TRAP-E06", "kind": "tree_shaking_sourcemap", "where": "artifacts/bundle.js.map (no bundle.js)", "resolution": "La funcion _unusedCalculoHelper existe en el sourcemap (sourcesContent) pero NO en el bundle minificado porque tree-shaking la elimino. La skill debe usar el sourcemap para descubrir codigo que NO esta en el bundle."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "size_truncation", "where": "bundle.js.map grande (>2MB)", "resolution": "Si el sourcemap excede un tamano maximo, la skill debe truncarse."},
+    {"id": "TRAP-P02", "kind": "no_sourcemap_invalid_mappings", "where": "src/ts/*.ts con mappings corruptos", "resolution": "El decoder de sourcemap debe detectar offsets invalidos y reportar un OQ."},
+    {"id": "TRAP-P03", "kind": "wrong_cpython_version", "where": "artifacts/app.pyc con magic 3495 (3.11) vs 3379 (3.13)", "resolution": "Si la skill intenta parsear un .pyc con un parser de otra version, falla. La skill debe detectar el magic number."},
+    {"id": "TRAP-P04", "kind": "jar_without_services", "where": "app.jar sin META-INF/services", "resolution": "Si el jar no tiene META-INF/services, la skill debe caer al class scanning (buscar .class que implementen Feature)."},
+    {"id": "TRAP-P05", "kind": "go_strings_corruption", "where": "artifacts/app binario corrupto", "resolution": "Si strings falla o devuelve solo partial output, la skill debe reportar que el binario parece corrupto y continuar con los literales que SI encontro."},
+    {"id": "TRAP-P06", "kind": "asar_pickle_corruption", "where": "artifacts/app.asar con magic bytes invalidos", "resolution": "Si el header del asar no es JSON valido, parseAsar debe lanzar error claro (no silencioso). La skill aborta y registra OQ."}
+  ]
+}
