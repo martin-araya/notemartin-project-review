@@ -1,0 +1,17 @@
+# Metadata del fixture F06m: fx-spring-boot
+# API REST Spring Boot 3 con persistencia JPA, Spring Security,
+# eventos transaccionales y procesos asíncronos. Ver referencias a
+# las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-spring-boot/ground_truth.json.
+name: fx-spring-boot
+description: API Spring Boot 3 con JPA, Security, eventos transaccionales y procesos asíncronos (F06m)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: mvn -B -q test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-spring-boot
+  enabled: true
+ground_truth_format_version: 1

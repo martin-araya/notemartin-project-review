@@ -49,6 +49,8 @@ axes:
     - nuxt
     - ngrx
     - angular-material
+    - spring-boot
+    - lombok
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

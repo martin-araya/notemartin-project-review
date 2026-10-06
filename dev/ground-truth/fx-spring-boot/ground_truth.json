@@ -1,0 +1,209 @@
+{
+  "fixture": "fx-spring-boot",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-app", "artifact": "FxSpringApplication.java", "file": "src/main/java/com/example/fxspring/FxSpringApplication.java"},
+    {"id": "EP-pom", "artifact": "pom.xml", "file": "pom.xml"},
+    {"id": "EP-security", "artifact": "SecurityConfig.java", "file": "src/main/java/com/example/fxspring/config/SecurityConfig.java"},
+    {"id": "EP-app-yml", "artifact": "application.yml", "file": "src/main/resources/application.yml"}
+  ],
+  "modules": [
+    {"id": "MOD-app", "path": "src/main/java/com/example/fxspring/FxSpringApplication.java", "summary": "@SpringBootApplication con ComponentScan + EntityScan + EnableJpaRepositories (sin @EnableAsync)"},
+    {"id": "MOD-security-config", "path": "src/main/java/com/example/fxspring/config/SecurityConfig.java", "summary": "@EnableMethodSecurity con SecurityFilterChain unico que define todas las rutas"},
+    {"id": "MOD-database-config", "path": "src/main/java/com/example/fxspring/config/DatabaseConfig.java", "summary": "@Bean con @ConditionalOnProperty (postgres) y @Profile('prod')"},
+    {"id": "MOD-async-config", "path": "src/main/java/com/example/fxspring/config/AsyncConfig.java", "summary": "@Bean Executor (ThreadPoolTaskExecutor) sin property en application.yml"},
+    {"id": "MOD-cuenta-entity", "path": "src/main/java/com/example/fxspring/domain/Cuenta.java", "summary": "@Entity con @Data de Lombok: id, email, titular, saldo, estado, createdAt"},
+    {"id": "MOD-transferencia-entity", "path": "src/main/java/com/example/fxspring/domain/Transferencia.java", "summary": "@Entity con @Version (optimistic lock) y enum Estado"},
+    {"id": "MOD-auditoria-entity", "path": "src/main/java/com/example/fxspring/domain/Auditoria.java", "summary": "@Entity inmutable con accion, entidad, usuarioId, timestamp"},
+    {"id": "MOD-notificacion-entity", "path": "src/main/java/com/example/fxspring/domain/Notificacion.java", "summary": "@Entity simple: destinatario, mensaje, estado, createdAt"},
+    {"id": "MOD-cuenta-repository", "path": "src/main/java/com/example/fxspring/repository/CuentaRepository.java", "summary": "JpaRepository con derived queries: findByEmail, findByEmailAndEstado, findByEstado"},
+    {"id": "MOD-transferencia-repository", "path": "src/main/java/com/example/fxspring/repository/TransferenciaRepository.java", "summary": "JpaRepository con derived queries y @Lock PESSIMISTIC_WRITE"},
+    {"id": "MOD-notificacion-repository", "path": "src/main/java/com/example/fxspring/repository/NotificacionRepository.java", "summary": "JpaRepository con derived query findByDestinatario"},
+    {"id": "MOD-auditoria-repository", "path": "src/main/java/com/example/fxspring/repository/AuditoriaRepository.java", "summary": "JpaRepository vacio (dead code, no se invoca)"},
+    {"id": "MOD-cuenta-service", "path": "src/main/java/com/example/fxspring/service/CuentaService.java", "summary": "@Service con @Transactional a nivel de clase y @Cacheable sin condicion de null"},
+    {"id": "MOD-transferencia-service", "path": "src/main/java/com/example/fxspring/service/TransferenciaService.java", "summary": "@Service con auto-invocation bug (this.validarSaldo)"},
+    {"id": "MOD-auditoria-service", "path": "src/main/java/com/example/fxspring/service/AuditoriaService.java", "summary": "@Service con @Transactional que no maneja OptimisticLockException"},
+    {"id": "MOD-notificacion-service", "path": "src/main/java/com/example/fxspring/service/NotificacionService.java", "summary": "@Service con @Async (sin @EnableAsync -> sync)"},
+    {"id": "MOD-evento", "path": "src/main/java/com/example/fxspring/event/TransferenciaRealizadaEvent.java", "summary": "ApplicationEvent con transferenciaId"},
+    {"id": "MOD-listener", "path": "src/main/java/com/example/fxspring/listener/NotificacionListener.java", "summary": "@TransactionalEventListener(AFTER_COMMIT) que dispara Notificacion y Auditoria"},
+    {"id": "MOD-cuenta-controller", "path": "src/main/java/com/example/fxspring/controller/CuentaController.java", "summary": "@RestController con POST, GET por id, GET listAll (ruta no en Security)"},
+    {"id": "MOD-transferencia-controller", "path": "src/main/java/com/example/fxspring/controller/TransferenciaController.java", "summary": "@RestController con POST, PATCH confirmar, DELETE cancelar (SpEL incorrecta)"},
+    {"id": "MOD-auditoria-controller", "path": "src/main/java/com/example/fxspring/controller/AuditoriaController.java", "summary": "@RestController con GET listar (sin @PreAuthorize)"},
+    {"id": "MOD-v1-migration", "path": "src/main/resources/db/migration/V1__init.sql", "summary": "Schema inicial con tablas cuentas, transferencias, auditoria, notificaciones"},
+    {"id": "MOD-application-yml", "path": "src/main/resources/application.yml", "summary": "Configuracion con perfiles dev (H2) y prod (Postgres) + @ConditionalOnProperty"}
+  ],
+  "dependencies": [
+    {"name": "spring-boot-starter-web", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "spring-boot-starter-data-jpa", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "spring-boot-starter-security", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "spring-boot-starter-validation", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "spring-boot-starter-actuator", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "flyway-core", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "flyway-database-postgresql", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "postgresql", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "h2", "scope": "runtime", "manifest": "pom.xml (dependencies)"},
+    {"name": "lombok", "scope": "provided", "manifest": "pom.xml (dependencies)"},
+    {"name": "spring-boot-starter-test", "scope": "test", "manifest": "pom.xml (dependencies)"},
+    {"name": "spring-security-test", "scope": "test", "manifest": "pom.xml (dependencies)"},
+    {"name": "testcontainers/postgresql", "scope": "test", "manifest": "pom.xml (dependencies)"},
+    {"name": "testcontainers/junit-jupiter", "scope": "test", "manifest": "pom.xml (dependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "cuentas",
+      "user_description": "El usuario crea una cuenta con email y titular, valida el email con @Email, persiste con H2/Postgres, y lista paginado por estado.",
+      "traces": [
+        {"n": 1, "what": "User POST /api/v1/cuentas con JSON {email, titular}", "cite": "src/main/java/com/example/fxspring/controller/CuentaController.java:29", "data_in": "JSON body", "data_out": "POST request"},
+        {"n": 2, "what": "@Valid activa jakarta.validation: @Email rechaza formato invalido", "cite": "src/main/java/com/example/fxspring/domain/Cuenta.java:25", "data_in": "Cuenta", "data_out": "BindingResult"},
+        {"n": 3, "what": "CuentaController.crear delega a service.crear()", "cite": "src/main/java/com/example/fxspring/controller/CuentaController.java:29", "data_in": "Cuenta", "data_out": "Cuenta"},
+        {"n": 4, "what": "service.crear busca duplicados via repo.findByEmail", "cite": "src/main/java/com/example/fxspring/service/CuentaService.java:31", "data_in": "email", "data_out": "Optional<Cuenta>"},
+        {"n": 5, "what": "Si email duplicado -> 400 IllegalStateException", "cite": "src/main/java/com/example/fxspring/service/CuentaService.java:32", "data_in": "Optional", "data_out": "error"},
+        {"n": 6, "what": "Lombok @Data genera setters que inicializan saldo=0", "cite": "src/main/java/com/example/fxspring/service/CuentaService.java:34", "data_in": "Cuenta", "data_out": "Cuenta"},
+        {"n": 7, "what": "repo.save persiste y devuelve 201 con la cuenta", "cite": "src/main/java/com/example/fxspring/service/CuentaService.java:35", "data_in": "Cuenta", "data_out": "Cuenta saved"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/main/java/com/example/fxspring/service/CuentaService.java", "line": 31, "kind": "validation", "condition_text": "repo.findByEmail(c.getEmail()).isPresent()", "branches": [{"label": "ok -> save", "target_line": 35}, {"label": "duplicado -> 400", "target_line": 32}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con email valido y titular", "user_sees": "201 con la cuenta creada (id asignado)", "side_effects": ["INSERT en cuentas"], "reversible": false, "final_state": "cuenta creada"},
+        {"id": "R-02", "category": "success_get_by_id", "conditions": "GET /api/v1/cuentas/{id} con id existente", "user_sees": "200 con la cuenta", "side_effects": [], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "error_get_404", "conditions": "GET con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "error_validation_zod", "conditions": "POST con email formato invalido", "user_sees": "400 Bad Request", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-05", "category": "success_list_paginated", "conditions": "GET /api/v1/cuentas?page=0&size=10", "user_sees": "200 con Page<Cuenta>", "side_effects": [], "reversible": true, "final_state": "rendered"},
+        {"id": "R-06", "category": "error_create_duplicate", "conditions": "POST con email que ya existe", "user_sees": "500 IllegalStateException (mapeado por Spring)", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_unauthorized_401", "conditions": "POST sin Authorization header", "user_sees": "401 (SecurityFilterChain lo bloquea)", "side_effects": [], "reversible": true, "final_state": "unauthorized"}
+      ],
+      "config": [
+        {"key": "email.validation", "kind": "literal", "default": "@Email regex", "effect": "rechaza formatos invalidos con 400"},
+        {"key": "saldo.default", "kind": "literal", "default": "BigDecimal.ZERO", "effect": "saldo inicial si no se proporciona"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "transferencias",
+      "user_description": "El usuario crea una transferencia entre dos cuentas, la confirma (cambia estado y dispara evento) y puede listar por origen. La confirmacion dispara el listener transaccional que crea la notificacion y el registro de auditoria.",
+      "traces": [
+        {"n": 1, "what": "User POST /api/v1/transferencias con {cuentaOrigenId, cuentaDestinoId, monto}", "cite": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:32", "data_in": "JSON body", "data_out": "POST"},
+        {"n": 2, "what": "TransferenciaController.crear delega a service.crear()", "cite": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:32", "data_in": "body", "data_out": "Transferencia"},
+        {"n": 3, "what": "service.crear llama this.validarSaldo() (auto-invocation bug)", "cite": "src/main/java/com/example/fxspring/service/TransferenciaService.java:38", "data_in": "monto", "data_out": "validarSaldo()"},
+        {"n": 4, "what": "Trampa: validarSaldo corre en la misma transaccion, no en REQUIRES_NEW", "cite": "src/main/java/com/example/fxspring/service/TransferenciaService.java:56", "data_in": "monto", "data_out": "throw RuntimeException"},
+        {"n": 5, "what": "Si monto >= 0, persiste Transferencia con estado PENDIENTE", "cite": "src/main/java/com/example/fxspring/service/TransferenciaService.java:40", "data_in": "Transferencia", "data_out": "Transferencia saved"},
+        {"n": 6, "what": "User PATCH /api/v1/transferencias/{id}/confirmar", "cite": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:40", "data_in": "id", "data_out": "PATCH"},
+        {"n": 7, "what": "service.confirmar hace findByIdForUpdate (PESSIMISTIC_WRITE) + setEstado COMPLETADA + save", "cite": "src/main/java/com/example/fxspring/service/TransferenciaService.java:62", "data_in": "id", "data_out": "Transferencia"},
+        {"n": 8, "what": "publisher.publishEvent(TransferenciaRealizadaEvent) -> @TransactionalEventListener AFTER_COMMIT", "cite": "src/main/java/com/example/fxspring/service/TransferenciaService.java:65", "data_in": "id", "data_out": "event published"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/main/java/com/example/fxspring/service/TransferenciaService.java", "line": 38, "kind": "auto_invocation", "condition_text": "this.validarSaldo() (intercepcion AOP rota)", "branches": [{"label": "monto >= 0 -> save", "target_line": 40}, {"label": "monto < 0 -> throw", "target_line": 56}]},
+        {"id": "DP-003", "file": "src/main/java/com/example/fxspring/service/TransferenciaService.java", "line": 62, "kind": "lookup", "condition_text": "repo.findByIdForUpdate(id).isPresent()", "branches": [{"label": "ok -> save + publish event", "target_line": 65}, {"label": "not_found", "target_line": 63}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con cuentaOrigenId, cuentaDestinoId, monto > 0", "user_sees": "201 con la transferencia en estado PENDIENTE", "side_effects": ["INSERT en transferencias"], "reversible": false, "final_state": "transferencia creada"},
+        {"id": "R-02", "category": "success_confirm", "conditions": "PATCH con id existente", "user_sees": "200 con la transferencia en estado COMPLETADA", "side_effects": ["UPDATE transferencias", "INSERT en notificaciones (via listener)", "INSERT en auditoria (via listener)"], "reversible": false, "final_state": "transferencia completada"},
+        {"id": "R-03", "category": "error_optimistic_lock", "conditions": "PATCH con version desactualizada (no se maneja)", "user_sees": "500 con OptimisticLockException stack trace", "side_effects": [], "reversible": false, "final_state": "upsert silencioso"},
+        {"id": "R-04", "category": "error_saldo_insuficiente", "conditions": "POST con monto < 0", "user_sees": "500 con RuntimeException", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-05", "category": "error_auto_invocation_no_rollback", "conditions": "this.validarSaldo() desde crear()", "user_sees": "La transaccion padre se hace rollback aunque validarSaldo use REQUIRES_NEW (porque no se intercepta)", "side_effects": [], "reversible": false, "final_state": "rollback no esperado"},
+        {"id": "R-06", "category": "success_event_listener", "conditions": "Transferencia confirmada con publisher.publishEvent", "user_sees": "Notificacion creada, registro de auditoria creado (AFTER_COMMIT)", "side_effects": ["INSERT en notificaciones", "INSERT en auditoria"], "reversible": false, "final_state": "listener executed"},
+        {"id": "R-07", "category": "error_unauthorized_403", "conditions": "DELETE /api/v1/transferencias/{id} con @PreAuthorize incorrecto", "user_sees": "200 (la SpEL pasa porque id == authentication.principal.id solo para userId)", "side_effects": [], "reversible": true, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "lock.pessimistic", "kind": "literal", "default": "LockModeType.PESSIMISTIC_WRITE", "effect": "bloquea la fila durante la confirmacion"},
+        {"key": "auto.invocation", "kind": "literal", "default": "this.validarSaldo()", "effect": "by-passes AOP proxy (trampa)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "auditoria",
+      "user_description": "El usuario con role ADMIN lista los registros de auditoria; los registros se crean automaticamente al confirmar una transferencia via el listener.",
+      "traces": [
+        {"n": 1, "what": "User GET /api/v1/auditoria con Authorization: Basic admin", "cite": "src/main/java/com/example/fxspring/controller/AuditoriaController.java:36", "data_in": "headers", "data_out": "GET"},
+        {"n": 2, "what": "SecurityFilterChain valida que /api/v1/auditoria/** requiere hasRole('ADMIN')", "cite": "src/main/java/com/example/fxspring/config/SecurityConfig.java:26", "data_in": "Authorization", "data_out": "role check"},
+        {"n": 3, "what": "AuditoriaController.listar() retorna repo.findAll()", "cite": "src/main/java/com/example/fxspring/controller/AuditoriaController.java:36", "data_in": "-", "data_out": "List<Auditoria>"},
+        {"n": 4, "what": "200 con la lista de registros", "cite": "src/main/java/com/example/fxspring/controller/AuditoriaController.java:36", "data_in": "List<Auditoria>", "data_out": "JSON"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "src/main/java/com/example/fxspring/config/SecurityConfig.java", "line": 26, "kind": "auth", "condition_text": "requestMatchers('/api/v1/auditoria/**').hasRole('ADMIN')", "branches": [{"label": "ADMIN -> 200", "target_line": 27}, {"label": "no ADMIN -> 403", "target_line": 26}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET con Authorization de admin", "user_sees": "200 con la lista de registros", "side_effects": [], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_create", "conditions": "Transferencia confirmada -> listener AFTER_COMMIT -> auditoria.registrar", "user_sees": "Nuevo registro aparece en la lista (no en este request, en el siguiente)", "side_effects": ["INSERT en auditoria"], "reversible": false, "final_state": "registro creado"},
+        {"id": "R-03", "category": "error_create_no_admin", "conditions": "GET sin role ADMIN (sin Authorization o con user)", "user_sees": "403 Forbidden", "side_effects": [], "reversible": true, "final_state": "forbidden"},
+        {"id": "R-04", "category": "success_read_only", "conditions": "AuditoriaService NO declara @Transactional(readOnly = true)", "user_sees": "El query usa transaccion normal (no optimizada para read)", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-05", "category": "error_list_no_admin", "conditions": "GET con Authorization de user no admin", "user_sees": "403 Forbidden", "side_effects": [], "reversible": true, "final_state": "forbidden"},
+        {"id": "R-06", "category": "success_audit_trail", "conditions": "Secuencia: crear -> confirmar -> INSERT auditoria", "user_sees": "Registro de auditoria con accion=TRANSFERENCIA_COMPLETADA", "side_effects": ["INSERT en auditoria"], "reversible": false, "final_state": "audit log"},
+        {"id": "R-07", "category": "error_event_listener_silent_fail", "conditions": "El listener lanza RuntimeException", "user_sees": "Spring la ignora silenciosamente despues del commit; la notificacion y el audit log se pierden", "side_effects": [], "reversible": false, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "auth.audit", "kind": "literal", "default": "hasRole('ADMIN')", "effect": "Solo admins ven la auditoria"}
+      ]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "notificaciones-asíncronas",
+      "user_description": "Las notificaciones se envian automaticamente via @TransactionalEventListener(AFTER_COMMIT) cuando se confirma una transferencia. Como la app no tiene @EnableAsync, el envio es sincrono aunque @Async este declarado.",
+      "traces": [
+        {"n": 1, "what": "TransferenciaService.confirmar llama publisher.publishEvent", "cite": "src/main/java/com/example/fxspring/service/TransferenciaService.java:65", "data_in": "TransferenciaRealizadaEvent", "data_out": "event published"},
+        {"n": 2, "what": "Spring busca listeners con @TransactionalEventListener", "cite": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:35", "data_in": "event", "data_out": "listener triggered"},
+        {"n": 3, "what": "AFTER_COMMIT: el listener corre despues del commit de la transaccion padre", "cite": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:35", "data_in": "-", "data_out": "listener execution"},
+        {"n": 4, "what": "listener llama notificaciones.enviar() (sincrono, no async)", "cite": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:40", "data_in": "destinatario, mensaje", "data_out": "Notificacion saved"},
+        {"n": 5, "what": "listener llama auditoria.registrar() (sync)", "cite": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:43", "data_in": "accion, entidad, etc", "data_out": "Auditoria saved"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/main/java/com/example/fxspring/listener/NotificacionListener.java", "line": 35, "kind": "transaction_phase", "condition_text": "@TransactionalEventListener(phase = AFTER_COMMIT)", "branches": [{"label": "commit -> listener OK", "target_line": 36}, {"label": "rollback -> listener NO corre", "target_line": 35}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_dispatch", "conditions": "Transferencia confirmada y commit exitoso", "user_sees": "Notificacion creada en la DB con estado=ENVIADO", "side_effects": ["INSERT en notificaciones"], "reversible": false, "final_state": "listener executed"},
+        {"id": "R-02", "category": "success_after_commit", "conditions": "Transferencia hace commit normal", "user_sees": "Listener se ejecuta despues del commit (no durante)", "side_effects": [], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "error_silent_failure", "conditions": "Listener lanza RuntimeException", "user_sees": "Spring la ignora silenciosamente; el log de Spring muestra un warning", "side_effects": [], "reversible": false, "final_state": "noop"},
+        {"id": "R-04", "category": "error_no_async", "conditions": "App no tiene @EnableAsync", "user_sees": "NotificacionService.enviar() ejecuta en el hilo del listener (sync), bloqueando el thread", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-05", "category": "success_duplicate_dispatch", "conditions": "publisher.publishEvent se llama 2 veces para el mismo evento", "user_sees": "2 notificaciones creadas", "side_effects": ["2x INSERT"], "reversible": false, "final_state": "duplicate"},
+        {"id": "R-06", "category": "error_pre_commit", "conditions": "Si el listener usara BEFORE_COMMIT y fallara", "user_sees": "La transaccion padre haria rollback (en este caso es AFTER_COMMIT, asi que no aplica)", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-07", "category": "error_db_unavailable", "conditions": "DB caida al ejecutar el listener en AFTER_COMMIT", "user_sees": "Excepcion al insertar; Spring la ignora silenciosamente", "side_effects": [], "reversible": false, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "async.enabled", "kind": "literal", "default": "false (sin @EnableAsync)", "effect": "@Async se ejecuta sync"},
+        {"key": "event.phase", "kind": "literal", "default": "AFTER_COMMIT", "effect": "listener corre despues del commit"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "auto_config_conditional", "where": "src/main/java/com/example/fxspring/config/DatabaseConfig.java:24", "resolution": "@Bean @ConditionalOnProperty(name = 'app.db.url', havingValue = 'postgres') se declara en DatabaseConfig. En dev (perfil dev) no se establece esa property, asi que el bean no se crea y la app usa H2. En prod (perfil prod) la property se setea a 'postgres' y el bean se activa. La skill debe notar que cambiar la property afecta el datasource."},
+    {"id": "TRAP-E02", "kind": "aop_proxy_autoinvocation", "where": "src/main/java/com/example/fxspring/service/TransferenciaService.java:38 + 56", "resolution": "TransferenciaService.crear() llama this.validarSaldo() que tiene @Transactional(propagation = REQUIRES_NEW). Spring AOP no intercepta llamadas this.X, asi que validarSaldo() se ejecuta dentro de la transaccion padre en vez de crear una nueva. La trampa: el comentario dice 'REQUIRES_NEW' pero el comportamiento es 'REQUIRED'."},
+    {"id": "TRAP-E03", "kind": "derived_queries_no_impl", "where": "src/main/java/com/example/fxspring/repository/CuentaRepository.java:20-24", "resolution": "Los metodos findByEmail, findByEmailAndEstado y findByEstado son derived queries: Spring Data JPA los implementa en runtime parseando el nombre del metodo. El codigo fuente NO contiene cuerpo. La skill debe notar la falta de body y entender que Spring genera la implementacion."},
+    {"id": "TRAP-E04", "kind": "security_filter_chain_single", "where": "src/main/java/com/example/fxspring/config/SecurityConfig.java:20-32", "resolution": "Un unico bean SecurityFilterChain define TODAS las rutas: /api/v1/public/** permitAll, /actuator/health permitAll, /api/v1/auditoria/** hasRole(ADMIN), /api/v1/** authenticated. Trampa: si el controller agrega una nueva ruta sin actualizar el matcher, queda accesible o bloqueada segun el orden."},
+    {"id": "TRAP-E05", "kind": "transactional_event_listener", "where": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:35", "resolution": "@TransactionalEventListener(phase = AFTER_COMMIT) hace que el listener se ejecute DESPUES del commit de la transaccion padre. Si la transaccion hace rollback, el listener NO corre. Ademas, si el listener lanza una excepcion, Spring la ignora silenciosamente."},
+    {"id": "TRAP-E06", "kind": "lombok_generated", "where": "src/main/java/com/example/fxspring/domain/Cuenta.java + Transferencia.java + Auditoria.java + Notificacion.java", "resolution": "Las entidades usan @Data de Lombok, que genera getters, setters, equals, hashCode, toString y un constructor con todos los campos. El codigo fuente NO contiene esos metodos. La skill debe notar la anotacion @Data y entender que se generan en tiempo de compilacion."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "transactional_class_level", "where": "src/main/java/com/example/fxspring/service/CuentaService.java:21", "resolution": "@Transactional a nivel de clase. Todos los metodos heredan la transaccion, incluso findByEmailCached que es read-only. La trampa: deberia ser @Transactional(readOnly = true) o @Transactional en metodos especificos. La skill debe notar la diferencia de granularidad."},
+    {"id": "TRAP-P02", "kind": "cacheable_no_null_check", "where": "src/main/java/com/example/fxspring/service/CuentaService.java:47-50", "resolution": "@Cacheable(value = 'cuentas', key = '#email') sin condicion `unless = '#result == null || !#result.isPresent()'`. Si el email no existe, el cache guarda null (o Optional.empty() segun el CacheManager), lo que produce cache miss repetidos o NPE."},
+    {"id": "TRAP-P03", "kind": "async_no_enable_async", "where": "src/main/java/com/example/fxspring/service/NotificacionService.java:24", "resolution": "El metodo enviar() declara @Async pero la app no tiene @EnableAsync. Spring no intercepta @Async sin @EnableAsync, asi que el metodo se ejecuta sincronamente. La trampa: en el codigo fuente esta @Async pero en runtime no hay pool async."},
+    {"id": "TRAP-P04", "kind": "preauthorize_incorrect_spel", "where": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:47", "resolution": "@PreAuthorize('#id == authentication.principal.id') no valida que el id del path pertenezca al usuario autenticado. authentication.principal.id seria el id del usuario (un Long), no el id de la transferencia. La trampa: un usuario podria cancelar cualquier item cuyo id coincida con su propio userId."},
+    {"id": "TRAP-P05", "kind": "version_silent_overwrite", "where": "src/main/java/com/example/fxspring/domain/Transferencia.java:51 + src/main/java/com/example/fxspring/service/AuditoriaService.java:25", "resolution": "La entidad Transferencia declara @Version para optimistic lock, pero el servicio no maneja OptimisticLockException. Si dos requests concurrentes modifican el mismo item, el segundo hace upsert silencioso. La trampa: el codigo sugiere que la concurrencia esta cubierta pero no lo esta."},
+    {"id": "TRAP-P06", "kind": "transactional_event_listener_silent_fail", "where": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:35", "resolution": "El listener declara @TransactionalEventListener pero su cuerpo (auditoria.registrar) puede lanzar OptimisticLockException. Spring lo ignora silenciosamente. La trampa: la excepcion no se loguea, el audit log se pierde, y la app sigue funcionando como si nada."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_route", "where": "src/main/java/com/example/fxspring/controller/CuentaController.java:41", "resolution": "CuentaController.listAll() esta declarado con @GetMapping (ruta raiz) pero el SecurityFilterChain no expone esa ruta en el matcher. Trampa: el controller declara un endpoint que el security no permite."},
+    {"id": "TRAP-S02", "kind": "controller_no_preauthorize", "where": "src/main/java/com/example/fxspring/controller/AuditoriaController.java:36", "resolution": "El metodo listar() no tiene @PreAuthorize('hasRole(\"ADMIN\")'). Aunque el SecurityFilterChain protege la ruta, si alguien elimina la regla del filter, el metodo queda accesible. La trampa: defense in depth no implementado."},
+    {"id": "TRAP-S03", "kind": "async_config_no_properties", "where": "src/main/java/com/example/fxspring/config/AsyncConfig.java:18-25 + src/main/resources/application.yml", "resolution": "AsyncConfig define un @Bean Executor con corePoolSize=2, maxPoolSize=5, queueCapacity=10, pero application.yml NO define spring.task.execution.pool.core-size. La trampa: el bean existe pero Spring usa los defaults."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-cuentas-create", "kind": "endpoint", "name": "POST /api/v1/cuentas", "handler": "src/main/java/com/example/fxspring/controller/CuentaController.java:29", "file": "src/main/java/com/example/fxspring/controller/CuentaController.java"},
+    {"id": "SRF-route-cuentas-get", "kind": "endpoint", "name": "GET /api/v1/cuentas/{id}", "handler": "src/main/java/com/example/fxspring/controller/CuentaController.java:33", "file": "src/main/java/com/example/fxspring/controller/CuentaController.java"},
+    {"id": "SRF-route-cuentas-list", "kind": "endpoint", "name": "GET /api/v1/cuentas", "handler": "src/main/java/com/example/fxspring/controller/CuentaController.java:40", "file": "src/main/java/com/example/fxspring/controller/CuentaController.java"},
+    {"id": "SRF-route-transferencias-create", "kind": "endpoint", "name": "POST /api/v1/transferencias", "handler": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:32", "file": "src/main/java/com/example/fxspring/controller/TransferenciaController.java"},
+    {"id": "SRF-route-transferencias-confirm", "kind": "endpoint", "name": "PATCH /api/v1/transferencias/{id}/confirmar", "handler": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:40", "file": "src/main/java/com/example/fxspring/controller/TransferenciaController.java"},
+    {"id": "SRF-route-transferencias-cancel", "kind": "endpoint", "name": "DELETE /api/v1/transferencias/{id}", "handler": "src/main/java/com/example/fxspring/controller/TransferenciaController.java:47", "file": "src/main/java/com/example/fxspring/controller/TransferenciaController.java"},
+    {"id": "SRF-route-auditoria-list", "kind": "endpoint", "name": "GET /api/v1/auditoria", "handler": "src/main/java/com/example/fxspring/controller/AuditoriaController.java:36", "file": "src/main/java/com/example/fxspring/controller/AuditoriaController.java"},
+    {"id": "SRF-action-cuenta-crear", "kind": "service", "name": "CuentaService.crear", "handler": "src/main/java/com/example/fxspring/service/CuentaService.java:30", "file": "src/main/java/com/example/fxspring/service/CuentaService.java"},
+    {"id": "SRF-action-cuenta-cached", "kind": "service", "name": "CuentaService.findByEmailCached", "handler": "src/main/java/com/example/fxspring/service/CuentaService.java:48", "file": "src/main/java/com/example/fxspring/service/CuentaService.java"},
+    {"id": "SRF-action-transferencia-crear", "kind": "service", "name": "TransferenciaService.crear", "handler": "src/main/java/com/example/fxspring/service/TransferenciaService.java:34", "file": "src/main/java/com/example/fxspring/service/TransferenciaService.java"},
+    {"id": "SRF-action-transferencia-confirmar", "kind": "service", "name": "TransferenciaService.confirmar", "handler": "src/main/java/com/example/fxspring/service/TransferenciaService.java:62", "file": "src/main/java/com/example/fxspring/service/TransferenciaService.java"},
+    {"id": "SRF-action-notificacion-enviar", "kind": "service", "name": "NotificacionService.enviar", "handler": "src/main/java/com/example/fxspring/service/NotificacionService.java:26", "file": "src/main/java/com/example/fxspring/service/NotificacionService.java"},
+    {"id": "SRF-listener-evento", "kind": "listener", "name": "NotificacionListener.onTransferenciaRealizada", "handler": "src/main/java/com/example/fxspring/listener/NotificacionListener.java:36", "file": "src/main/java/com/example/fxspring/listener/NotificacionListener.java"},
+    {"id": "SRF-evento-transferencia", "kind": "event", "name": "TransferenciaRealizadaEvent", "handler": "src/main/java/com/example/fxspring/event/TransferenciaRealizadaEvent.java:9", "file": "src/main/java/com/example/fxspring/event/TransferenciaRealizadaEvent.java"},
+    {"id": "SRF-security-filter-chain", "kind": "security", "name": "SecurityFilterChain", "handler": "src/main/java/com/example/fxspring/config/SecurityConfig.java:20", "file": "src/main/java/com/example/fxspring/config/SecurityConfig.java"},
+    {"id": "SRF-security-database-config", "kind": "config", "name": "DatabaseConfig.postgresDataSource", "handler": "src/main/java/com/example/fxspring/config/DatabaseConfig.java:24", "file": "src/main/java/com/example/fxspring/config/DatabaseConfig.java"},
+    {"id": "SRF-security-async-config", "kind": "config", "name": "AsyncConfig.taskExecutor", "handler": "src/main/java/com/example/fxspring/config/AsyncConfig.java:18", "file": "src/main/java/com/example/fxspring/config/AsyncConfig.java"}
+  ]
+}

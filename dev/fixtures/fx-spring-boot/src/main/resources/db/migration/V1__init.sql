@@ -1,0 +1,41 @@
+-- V1__init.sql
+-- Schema inicial para la app.
+
+CREATE TABLE IF NOT EXISTS cuentas (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    titular VARCHAR(255) NOT NULL,
+    saldo DECIMAL(19, 2) NOT NULL DEFAULT 0,
+    estado VARCHAR(32) NOT NULL DEFAULT 'ACTIVA',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS transferencias (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cuenta_origen_id BIGINT NOT NULL,
+    cuenta_destino_id BIGINT NOT NULL,
+    monto DECIMAL(19, 2) NOT NULL,
+    estado VARCHAR(32) NOT NULL DEFAULT 'PENDIENTE',
+    version BIGINT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS auditoria (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    accion VARCHAR(64) NOT NULL,
+    entidad VARCHAR(64) NOT NULL,
+    entidad_id VARCHAR(64) NOT NULL,
+    usuario_id VARCHAR(64) NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    destinatario VARCHAR(255) NOT NULL,
+    mensaje VARCHAR(1024) NOT NULL,
+    estado VARCHAR(32) NOT NULL DEFAULT 'PENDIENTE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_transferencias_origen ON transferencias(cuenta_origen_id);
+CREATE INDEX IF NOT EXISTS idx_auditoria_timestamp ON auditoria(timestamp);

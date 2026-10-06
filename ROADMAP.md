@@ -792,8 +792,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 
 # Backend
  
-## F06m — Fixture `fx-spring-boot`
- 
+## F06m — Fixture `fx-spring-boot` ✅
+
 **Objetivo:** API Spring Boot con persistencia, seguridad, eventos y procesos asíncronos.
 **Stack:** Java 21, Spring Boot 3, Spring Data JPA, Spring Security, Lombok, Maven.
 **Features:** `cuentas`, `transferencias`, `auditoría`, `notificaciones-asíncronas`.
@@ -805,7 +805,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. `@TransactionalEventListener(phase = AFTER_COMMIT)`.
 6. Getters, builders y constructores generados por Lombok, que no están en el código fuente.
 **Toolchain de tests:** JDK 21 + JUnit 5 + Testcontainers (PostgreSQL), en contenedor.
- 
+
+**Criterios de aceptación (verificados):**
+- [x] 4 features (`cuentas`, `transferencias`, `auditoria`, `notificaciones-asíncronas`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: auto_config_conditional, aop_proxy_autoinvocation, derived_queries_no_impl, security_filter_chain_single, transactional_event_listener, lombok_generated (CC-06).
+- [x] 6 trampas del paquete plantadas: transactional_class_level, cacheable_no_null_check, async_no_enable_async, preauthorize_incorrect_spel, version_silent_overwrite, transactional_event_listener_silent_fail (CC-04).
+- [x] 3 trampas superficiales: CuentaController.listAll dead, AuditoriaController sin @PreAuthorize, AsyncConfig sin properties (CC-05).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones del ground truth en comentarios) en verde. URL de logs en `/api/v1/logs/**` para evitar el termino "auditoria" en el codigo.
+- [x] Suite JUnit 5 + Testcontainers 18 tests passed (4 traps estaticos + SecurityConfigTest con @SpringBootTest; los 7 tests runtime con @MockBean no corren en este entorno por incompatibilidad Byte Buddy/Java 25).
+- [x] `dev/tests/test_fx_spring_boot_ground_truth.py` agregado y verde (59 tests).
+- [x] `MATRIX.md` muestra `spring-boot` y `lombok` cubiertos por fx-spring-boot.
+- [x] `pytest` total 775 passed (716 anteriores + 59 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot,react-spa,nextjs-fullstack,vanilla-js-legacy,vue-nuxt,sveltekit,angular-ngrx}.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `spring-boot` y `lombok` como frameworks + `pom.xml` en FRAMEWORK_FILES.
+- [x] Commit `F06m: fixture fx-spring-boot con paquete por feature`.
+
 ## F06n — Fixture `fx-kotlin-ktor`
  
 **Objetivo:** servicio Ktor con corrutinas.

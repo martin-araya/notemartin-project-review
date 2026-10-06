@@ -96,6 +96,9 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     "nuxt.config.ts": {"nuxt"},
     # SvelteKit: la presencia de svelte.config.js indica una app SvelteKit.
     "svelte.config.js": {"sveltekit"},
+    # Spring Boot: la presencia de pom.xml indica Maven; con
+    # spring-boot-starter-* en el pom.xml es Spring Boot.
+    "pom.xml": {"maven", "spring-boot"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -124,6 +127,8 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "@ngrx/store": {"ngrx"},
     # Angular Material: la dep ``@angular/material`` indica Angular Material (F06l).
     "@angular/material": {"angular-material"},
+    # Spring Boot: la dep ``spring-boot-starter-web`` indica Spring Boot (F06m).
+    "spring-boot-starter-web": {"spring-boot"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.

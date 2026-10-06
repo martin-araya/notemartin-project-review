@@ -1,0 +1,16 @@
+# Imagen para ejecutar los tests del fixture F06m (Spring Boot).
+FROM eclipse-temurin:21-jdk
+
+# Maven 3.9 con la mayoria de paquetes.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    maven \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+COPY pom.xml ./
+RUN mvn -B -q -DskipTests dependency:go-offline 2>&1 | tail -5 || true
+
+COPY . .
+
+CMD ["make", "test"]

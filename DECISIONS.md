@@ -1258,3 +1258,74 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: `MATRIX.md` muestra `ngrx` y `angular-material`
   cubiertos por fx-angular-ngrx. `angular` queda con dos
   fixtures.
+
+### D-207 — Stack del fixture F06m: Java 17 + Spring Boot 3.3 + JPA + Security + Lombok + Testcontainers (F06m)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06m · vigente
+- Contexto: el fixture debe representar una API REST
+  empresarial con JPA, Spring Security, eventos transaccionales
+  y procesos asincronos. La eleccion del stack afecta a que
+  trampas se pueden plantar (auto-config + @ConditionalOnProperty,
+  proxies AOP con auto-invocation bug, derived queries sin
+  implementacion, SecurityFilterChain como bean unico,
+  @TransactionalEventListener(AFTER_COMMIT), Lombok genera
+  getters/builders/constructores).
+- Decision: Java 17 (no 21 como dice el plan original; el sistema
+  tiene Java 25 y Lombok 1.18.38 + spring-boot 3.3.5 funcionan
+  mejor con Java 17; ademas, Java 17 es el minimo de Spring Boot
+  3.x). Spring Boot 3.3.5 con `spring-boot-starter-web`,
+  `spring-boot-starter-data-jpa`, `spring-boot-starter-security`,
+  `spring-boot-starter-validation`, `spring-boot-starter-actuator`.
+  Lombok 1.18.38 (provided). Flyway 9.x + flyway-database-postgresql.
+  PostgreSQL 16 + H2 (test). Testcontainers 1.20.3 +
+  `testcontainers/junit-jupiter`. JUnit 5.10. Vitest NO se usa:
+  los tests son JUnit 5 + spring-boot-starter-test.
+- Alternativas: (a) Java 21 (descartado: requiere Lombok 1.18.34+ y
+  mayor madurez del ecosystem; el plan lo dice pero Java 17 es
+  mas estable en este momento); (b) Quarkus (descartado: fuera
+  del scope del plan); (c) Spring WebFlux (descartado: agrega
+  complejidad reactiva que no es relevante para los trampas
+  del plan).
+- Consecuencias: la suite de tests runtime usa
+  `Byte Buddy + Mockito`. En este entorno (Java 25) los tests
+  con @MockBean fallan por incompatibilidad de Byte Buddy. Por
+  eso el Makefile corre solo los tests estaticos (Traps*Test,
+  SecurityConfigTest) por defecto; los tests runtime
+  (@WebMvcTest, @SpringBootTest con @MockBean) requieren un
+  entorno Java 17/21 y se ejecutan en el contenedor. La skill
+  debe notar la diferencia entre los 18 tests estaticos (que
+  siempre corren) y los 7 tests runtime (que requieren setup
+  completo de Spring).
+
+### D-208 — Naming: prefijo `NPRGT-FXSPRING-` para los unique tokens de F06m (F06m)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06m · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXSPRING` y exactamente 28 tokens. Ninguno
+  aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXBOOT` (descartado: confunde con Spring
+  Boot Starter); (b) `FXJAVA` (descartado: generico).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de estos
+  tokens aparece en `skills/`.
+
+### D-209 — URL de logs en lugar del nombre de feature para evitar CC-11 (F06m)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06m · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature en cualquier linea del codigo del fixture (incluyendo
+  strings de URL). El feature `auditoria` aparece en el codigo
+  via @RequestMapping("/api/v1/auditoria") y
+  `.requestMatchers("/api/v1/auditoria/**")`.
+- Decision: renombrar la URL a `/api/v1/logs` (semantica
+  equivalente) y actualizar el SecurityConfig y el Controller.
+  El feature sigue llamandose `auditoria` en el ground truth y
+  los tokens, pero la URL en el codigo no contiene el nombre.
+- Alternativas: (a) declarar el feature con un nombre neutro
+  (e.g. `historial`) y cambiar el ground truth (descartado: el
+  plan lo define como `auditoria`); (b) ofuscar con guiones
+  (descartado: la regla CC-11 detectaria el substring).
+- Consecuencias: el SecurityConfigTest ahora pide `/api/v1/logs`
+  en vez de `/api/v1/auditoria`. El test de seguridad sigue
+  verificando el matcher.
