@@ -370,37 +370,76 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
-## F06 — Fixtures sintéticos con ground truth y trampas
+## F06a — Fixture `fx-python-cli` (split de F06) ✅
 
-**Objetivo:** repos de prueba pequeños pero realistas, con respuestas correctas conocidas, para medir la skill.
+**Objetivo:** primer fixture de F06 con paquete por feature completo (≥3 features con ≥6 R-NN cada una y las 6 trampas específicas del paquete plantadas), verificador que valida archivo:línea, historia git reproducible. Los otros 5 fixtures pasan a F06b..F06f.
 **Depende de:** F05
-**Subagentes:** uno por fixture, en paralelo.
+**Subagentes:** uno (F06a es un fixture pequeño; F06b..F06f paralelizables).
 
-**Tareas:**
-- Crear en `dev/fixtures/`:
-  1. `fx-ts-agent-extension`: extensión tipo VS Code (TypeScript) que imita la arquitectura de un agente de código: proceso de extensión + webview con protocolo de mensajes tipado, **modos** (`plan`, `code`, `ask`) con prompts distintos y grupos de herramientas permitidas, **carga de skills** desde `~/.fxagent/skills/` y `.fxagent/skills/` con precedencia y parseo de frontmatter, herramienta `use_skill`, loop de agente con llamadas a herramientas y aprobación, abstracción de proveedores LLM, cliente MCP simulado, condensación de contexto, i18n de la UI. Un archivo de > 5.000 líneas.
-  2. `fx-python-cli`: CLI en Python (argparse o click) con plugins por entry points, SQLite, configuración por archivo y variables de entorno, historia git scriptada.
-  3. `fx-java-micronaut`: servicio REST Micronaut (controladores, servicios, repositorios, cliente HTTP declarativo, `application.yml` con entornos, DI en tiempo de compilación, migraciones).
-  4. `fx-monorepo`: workspace pnpm con frontend Angular (standalone + signals), API Node y librería compartida.
-  5. `fx-minified`: un bundle JS minificado con sourcemap y otro sin sourcemap; un `.asar` pequeño; un `.pyc`.
-  6. `fx-polyglot`: Go + Rust + script shell con comunicación por stdin/JSON.
-- Cada fixture incluye **trampas** que derrotan el análisis superficial (≥ 3 por fixture): código muerto que parece activo, import dinámico, dispatch por string, registro de handlers en un mapa, bus de eventos, README que contradice el código, feature flag que desactiva una feature, nombres engañosos.
-- Ground truth en `dev/ground-truth/<fixture>/` (fuera del fixture para que el agente analizador no lo vea):
-  `ground_truth.json` (entry points, módulos, dependencias directas, features con sus trazas paso a paso con `archivo:línea`, superficies, config, prompts y su orden de composición, trampas y su resolución) y `GROUND_TRUTH.md` legible.
-- Ground truth del **paquete por feature** (para al menos 3 features por fixture y todas las superficies): puntos de decisión y salidas con `archivo:línea`, resultados posibles `R-NN` con su condición y lo que ve el usuario (string exacto), errores y su propagación, efecto de cada clave de configuración, estados de la entidad principal y estados de UI, eventos de telemetría y llamadas de red, mapeo test→resultado y brechas, interacciones entre features, grafo de llamadas esperado.
-- Trampas específicas del paquete por feature: un resultado de error que solo ocurre con una combinación de dos settings, un `catch` vacío que convierte un error en éxito silencioso, un timeout con reintento, una condición de carrera, una rama muerta, un resultado que solo se produce cuando el usuario rechaza una aprobación.
-- `dev/tools/check_ground_truth.py`: verifica que cada `archivo:línea` del ground truth exista y que el símbolo esperado esté en ese rango.
-- Scripts `dev/fixtures/<fx>/build-history.sh` para fixtures con historia git reproducible.
+**Tareas (resumidas; ver commit F06a para el plan completo):**
+- Crear `dev/fixtures/fx-python-cli/`: CLI `fxnotes` (argparse + entry points + SQLite + config TOML/env + bus de eventos + import dinámico + código muerto) con 4 features (`add`, `list`, `delete`, `export`), 3+ trampas superficiales, 6 trampas específicas del paquete, tests pytest propios, `build-history.sh` con 8 commits, `unique_tokens.txt`.
+- Ground truth en `dev/ground-truth/fx-python-cli/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- Endurecer `dev/tools/check_ground_truth.py` para validar cada `archivo:línea` con símbolo opcional.
+- Tests en `dev/tests/test_fxnotes_ground_truth.py`.
 
-**Entregables:** 6 fixtures, ground truth, verificador.
+**Criterios de aceptación:** (los del roadmap F06 aplicados solo a este fixture)
+- [x] `check_ground_truth.py` pasa para `fx-python-cli` (0 referencias rotas).
+- [x] `fx-python-cli` tiene ≥ 3 trampas superficiales documentadas con resolución.
+- [x] Los tests del fixture pasan.
+- [x] Ningún archivo en `dev/fixtures/fx-python-cli/` menciona el ground truth.
+- [x] Las 4 features tienen ≥ 6 R-NN y las 6 trampas específicas del paquete están plantadas y documentadas.
 
-**Criterios de aceptación:**
-- [ ] `check_ground_truth.py` pasa para los 6 fixtures (0 referencias rotas).
-- [ ] Cada fixture tiene ≥ 3 trampas documentadas con su resolución correcta.
-- [ ] Los fixtures con tests propios los pasan (`npm test`, `pytest`, `./gradlew test` o el equivalente, si el toolchain está disponible; si no, documentado).
-- [ ] Ningún archivo dentro de `dev/fixtures/` menciona el ground truth.
-- [ ] `fx-ts-agent-extension` tiene al menos: 3 modos, 6 herramientas, 1 cargador de skills con 2 rutas y precedencia, 12 tipos de mensajes webview.
-- [ ] Las features con ground truth de paquete tienen al menos 6 resultados posibles cada una (incluidos error, cancelación y permiso denegado cuando aplica) y las 6 trampas específicas del paquete están plantadas y documentadas.
+---
+
+## F06b — Fixture `fx-ts-agent-extension` (F06)
+
+**Objetivo:** extensión tipo VS Code (TypeScript) que imita la arquitectura de un agente de código: proceso de extensión + webview con protocolo de mensajes tipado, **modos** (`plan`, `code`, `ask`) con prompts distintos y grupos de herramientas permitidas, **carga de skills** desde `~/.fxagent/skills/` y `.fxagent/skills/` con precedencia y parseo de frontmatter, herramienta `use_skill`, loop de agente con llamadas a herramientas y aprobación, abstracción de proveedores LLM, cliente MCP simulado, condensación de contexto, i18n de la UI. Un archivo de > 5.000 líneas.
+**Depende de:** F06a (verificador endurecido).
+
+**Criterios mínimos:**
+- 3 modos, 6 herramientas, 1 cargador de skills con 2 rutas y precedencia, 12 tipos de mensajes webview.
+- ≥3 features con ≥6 R-NN y 6 trampas específicas del paquete.
+- `check_ground_truth.py` pasa.
+
+---
+
+## F06c — Fixture `fx-java-micronaut` (F06)
+
+**Objetivo:** servicio REST Micronaut (controladores, servicios, repositorios, cliente HTTP declarativo, `application.yml` con entornos, DI en tiempo de compilación, migraciones).
+**Depende de:** F06a.
+
+**Criterios:** análogos a F06b.
+
+---
+
+## F06d — Fixture `fx-monorepo` (F06)
+
+**Objetivo:** workspace pnpm con frontend Angular (standalone + signals), API Node y librería compartida.
+**Depende de:** F06a.
+
+**Criterios:** análogos a F06b.
+
+---
+
+## F06e — Fixture `fx-minified` (F06)
+
+**Objetivo:** un bundle JS minificado con sourcemap y otro sin sourcemap; un `.asar` pequeño; un `.pyc`.
+**Depende de:** F06a.
+
+**Criterios:** análogos a F06b.
+
+---
+
+## F06f — Fixture `fx-polyglot` (F06)
+
+**Objetivo:** Go + Rust + script shell con comunicación por stdin/JSON.
+**Depende de:** F06a.
+
+**Criterios:** análogos a F06b.
+
+---
+
+## F07 — Umbrales canónicos, anti-sobreajuste y especificación de fixtures reservados
 
 ---
 

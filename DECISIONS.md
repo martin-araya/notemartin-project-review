@@ -382,6 +382,66 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas consideradas: crear un esquema `status-output` separado (rechazado: duplica el state base; la fusión es estable); permitir campos extra con `additionalProperties: true` en `state` (rechazado: abre la puerta a typos).
 - Consecuencias: el esquema `state` queda como supertipo de `state.json` y del payload de `status --json`. Los demás consumidores que solo leen `state.json` siguen funcionando.
 
+### D-150 — Nombre del fixture F06a: `fxnotes`
+
+- Fecha · Fase · Estado: 2026-10-05 · F06a · vigente
+- Contexto: F06a exige un fixture pequeño pero realista con paquete por feature.
+- Decisión: `fxnotes` — CLI de notas en SQLite. Cuatro comandos (`add`, `list`, `delete`, `export`). Permite plantar las 6 trampas específicas del paquete por feature y los 6 R-NN por feature.
+- Alternativas consideradas: `fxmark` (bookmarks), `fxtask` (tareas), `fxlog` (logs). `fxnotes` gana porque el dominio de notas es universal y permite los patrones de error requeridos (DB lock, race, duplicados).
+- Consecuencias: las features se llaman `FEAT-001..FEAT-004` en el ground truth.
+
+### D-151 — Estructura del fixture
+
+- Fecha · Fase · Estado: 2026-10-05 · F06a · vigente
+- Contexto: F06a pide un CLI con plugins por entry points, SQLite, config por archivo y env, historia git scriptada.
+- Decisión: `pyproject.toml` con entry points en el grupo `fxnotes.commands`; paquete `src/fxnotes/` con módulos `cli`, `config`, `db`, `events`, `plugins/loader`, `legacy_v1`, y subpaquete `commands/` con un módulo por feature; `tests/` con pytest; `README.md` con trampa de contradiccion; `unique_tokens.txt` para detectar fugas; `build-history.sh` con 8 commits.
+- Alternativas consideradas: usar `click` en lugar de `argparse` (rechazado: añade dep no-stdlib); estructura plana sin subpaquete `commands/` (rechazado: el dispatch string vive en `__init__.py` y queda menos visible).
+- Consecuencias: 15 archivos en el fixture, todos con roles claros.
+
+### D-152 — Ground truth con paquete completo
+
+- Decisión: el ground truth de cada feature incluye traces con `cite`, decision_points con `file:line`, outcomes con `user_sees` y `tests`, errors con propagation, config con default y efecto, states, telemetry, interactions, callgraph.
+- 4 features x ~13 artefactos = ~50 entradas. El verificador (`check_ground_truth.py`) valida cada `cite` con `archivo:linea-linea#symbol`.
+- Consecuencias: el verificador falló las primeras 2 veces por line numbers incorrectos; se corrigió leyendo cada archivo. La moral: el ground truth se genera DESPUÉS del código, no antes.
+
+### D-153 — 4 features con paquete completo
+
+- Decisión: `add`, `list`, `delete`, `export` (4 en vez del mínimo 3) porque cubren los 6 patrones de R-NN (success, validation_error, silent_success, cancelled, not_found, error_internal).
+- `delete` cubre 3 patrones solos (R-04 dead_branch, R-05 combination_two_settings, R-06 user_rejection); `add` cubre 2 (R-04 duplicate, R-06 race); `list` cubre R-06 empty_catch.
+- Consecuencias: las 6 trampas del paquete se reparten entre las 4 features sin forzar features vacías.
+
+### D-154 — Trampas superficiales (6)
+
+- Decisión: dead_code (`legacy_v1.py`), dynamic_import (`plugins/loader.py`), string_dispatch (`commands/__init__.py`), event_bus (`events.py`), readme_mismatch (`README.md`), feature_flag_phantom (`config.py` DEAD_CODE).
+- 6 trampas, excede el mínimo de 3. Cada una derrota una categoria de análisis superficial diferente.
+- Consecuencias: el README miente sobre `delete`; el verificador debe comparar la documentacion con el codigo (Fase publica lo hace).
+
+### D-155 — 6 trampas específicas del paquete por feature
+
+- Decisión:
+  1. `delete` con `confirm=False` + `--no-undo` → R-05 permanente (combination_two_settings).
+  2. `list` con FXNotesError → R-06 silencioso "0 entries." (empty_catch_swallows_error).
+  3. `add` con DB lock → 3 reintentos con backoff (timeout_retry).
+  4. `add` SELECT-then-INSERT → IntegrityError mapeado a "lost race" (race_condition).
+  5. `delete --archived` → rama muerta que imprime "deprecated" (dead_branch).
+  6. `delete confirm=ask` + usuario rechaza → CancelledError (user_rejection).
+- Consecuencias: cada trampa tiene su R-NN en el ground truth, su test en `tests/`, y su entrada en `package_traps` del ground truth.
+
+### D-156 — Verificador endurecido
+
+- Decisión: `dev/tools/check_ground_truth.py` reescrito. Carga `ground_truth.json`, itera features/outcomes/traps/package_traps, valida cada `cite` con regex `[A-Za-z0-9_./-]+:linea(start-end)?(#symbol)?`, comprueba archivo existe, rango válido, símbolo presente, y `resolution` no vacía.
+- Consecuencias: el verificador atrapa 3 clases de errores: archivos borrados, rangos fuera de rango, símbolos mal nombrados. F06b..F06f reutilizan el mismo verificador sin cambios.
+
+### D-157 — `build-history.sh` con 8 commits
+
+- Decisión: el script crea 8 commits en orden cronológico, uno por capa del fixture (scaffold, CLI+config, DB+events, comandos, plugin+legacy, tests). El script es idempotente: si .git ya existe, sale sin hacer nada.
+- Consecuencias: la historia refleja la evolución real del fixture. Tests de F08+ (git stats) encuentran datos consistentes.
+
+### D-158 — `unique_tokens.txt` y verificacion de no-leak
+
+- Decisión: 5 tokens `NPRGT-FXNOTES-001..005` en `unique_tokens.txt` (ground truth) y `dev/fixtures/fx-python-cli/unique_tokens.txt`. El test `test_02_fixture_has_no_unique_tokens` itera todos los archivos del fixture y falla si encuentra alguno de esos tokens fuera del archivo `unique_tokens.txt` mismo.
+- Consecuencias: el overfit_guard.py de F57 puede usar este patrón para detectar fugas entre skill y fixtures.
+
 ## Plantilla para nuevas decisiones
 
 ```

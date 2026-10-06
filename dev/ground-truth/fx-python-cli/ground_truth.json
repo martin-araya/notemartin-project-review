@@ -1,0 +1,194 @@
+{
+  "fixture": "fx-python-cli",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-cli", "file": "src/fxnotes/cli.py", "line": 28, "function": "main", "kind": "script"},
+    {"id": "EP-mod", "file": "src/fxnotes/__main__.py", "line": 4, "function": "main", "kind": "module"}
+  ],
+  "modules": [
+    {"id": "MOD-cli", "path": "src/fxnotes/cli.py", "summary": "argparse + dispatch table"},
+    {"id": "MOD-config", "path": "src/fxnotes/config.py", "summary": "TOML + env config loader"},
+    {"id": "MOD-db", "path": "src/fxnotes/db.py", "summary": "SQLite wrapper with retry"},
+    {"id": "MOD-events", "path": "src/fxnotes/events.py", "summary": "In-process event bus"},
+    {"id": "MOD-plugins", "path": "src/fxnotes/plugins/loader.py", "summary": "Dynamic plugin loader (importlib)"},
+    {"id": "MOD-legacy", "path": "src/fxnotes/legacy_v1.py", "summary": "Dead v1 API (phantom)"}
+  ],
+  "dependencies": [
+    {"name": "tomllib", "scope": "stdlib", "used_in": "src/fxnotes/config.py:6"},
+    {"name": "sqlite3", "scope": "stdlib", "used_in": "src/fxnotes/db.py:5"},
+    {"name": "argparse", "scope": "stdlib", "used_in": "src/fxnotes/cli.py:4"},
+    {"name": "importlib.metadata", "scope": "stdlib", "used_in": "src/fxnotes/plugins/loader.py:4"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "add",
+      "user_description": "User runs `fxnotes add KEY VALUE` and the CLI inserts a row in the notes table.",
+      "traces": [
+        {"n": 1, "what": "parse argv", "cite": "src/fxnotes/commands/add.py:18-23#add_parser", "data_in": "[add, KEY, VALUE]", "data_out": "args Namespace"},
+        {"n": 2, "what": "load_config and connect DB", "cite": "src/fxnotes/cli.py:28-39#main", "data_in": "args", "data_out": "ctx"},
+        {"n": 3, "what": "validate key and value", "cite": "src/fxnotes/commands/add.py:30-37#ValidationError", "data_in": "args.key, cfg", "data_out": "ok | ValidationError"},
+        {"n": 4, "what": "SELECT existing", "cite": "src/fxnotes/commands/add.py:41-43#SELECT", "data_in": "key", "data_out": "row | None"},
+        {"n": 5, "what": "INSERT row", "cite": "src/fxnotes/commands/add.py:44-47#INSERT", "data_in": "key, value, tag, ts", "data_out": "ok | DatabaseError"},
+        {"n": 6, "what": "emit note_added", "cite": "src/fxnotes/commands/add.py:53-54#emit", "data_in": "key", "data_out": "listeners fired"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/fxnotes/commands/add.py", "line": 27, "kind": "validation", "condition_text": "key empty", "branches": [{"label": "raise ValidationError", "target_line": 28}, {"label": "continue", "target_line": 29}]},
+        {"id": "DP-002", "file": "src/fxnotes/commands/add.py", "line": 30, "kind": "validation", "condition_text": "len(key) > max_key_len", "branches": [{"label": "raise", "target_line": 31}, {"label": "continue", "target_line": 32}]},
+        {"id": "DP-003", "file": "src/fxnotes/commands/add.py", "line": 38, "kind": "existence", "condition_text": "row already exists", "branches": [{"label": "raise DatabaseError(duplicate)", "target_line": 39}, {"label": "INSERT", "target_line": 40}]},
+        {"id": "DP-004", "file": "src/fxnotes/commands/add.py", "line": 42, "kind": "exception", "condition_text": "sqlite3.IntegrityError", "branches": [{"label": "raise DatabaseError(lost race)", "target_line": 43}, {"label": "ok", "target_line": 45}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "key non-empty, value valid, key not exists", "diagram_path": null, "example_inputs": ["add k1 v1"], "user_sees": "Note 'k1' added.", "side_effects": ["row inserted", "event note_added emitted"], "reversible": true, "final_state": "row visible in DB", "logged": true, "recovery": "delete --no-undo", "repro": "tests/test_add.py::test_add_r01_success", "tests": ["tests/test_add.py::test_add_r01_success"]},
+        {"id": "R-02", "category": "validation_error", "conditions": "key is empty", "user_sees": "Error: key cannot be empty", "side_effects": [], "reversible": false, "final_state": "no change", "tests": ["tests/test_add.py::test_add_r02_validation_empty_key"]},
+        {"id": "R-03", "category": "validation_error", "conditions": "len(key) > max_key_len (default 64)", "user_sees": "Error: key exceeds 64 characters", "side_effects": [], "tests": ["tests/test_add.py::test_add_r03_validation_too_long_key"]},
+        {"id": "R-04", "category": "error_internal", "conditions": "key already exists", "user_sees": "Error: duplicate key: 'k1'", "side_effects": [], "tests": ["tests/test_add.py::test_add_r04_duplicate"]},
+        {"id": "R-05", "category": "validation_error", "conditions": "len(value) > max_value_len (default 4096)", "user_sees": "Error: value exceeds 4096 characters", "side_effects": [], "tests": ["tests/test_add.py::test_add_r05_value_too_long"]},
+        {"id": "R-06", "category": "concurrency", "conditions": "two threads insert the same key; SELECT runs before either INSERT", "user_sees": "Error: duplicate key 'k1' (lost race)", "side_effects": ["exactly one row inserted"], "tests": ["tests/test_add.py::test_add_r06_race_lost"]}
+      ],
+      "errors": [
+        {"id": "ERR-A01", "type": "ValidationError", "origin": "src/fxnotes/commands/add.py:28", "message": "key cannot be empty", "propagation": [{"layer": "command", "action": "raise", "cite": "src/fxnotes/commands/add.py:28"}], "handled_at": "src/fxnotes/cli.py:34", "user_sees": "Error: key cannot be empty", "outcome": "R-02/R-03/R-05"},
+        {"id": "ERR-A02", "type": "DatabaseError", "origin": "src/fxnotes/commands/add.py:39", "message": "duplicate key", "propagation": [{"layer": "command", "action": "raise", "cite": "src/fxnotes/commands/add.py:39"}], "handled_at": "src/fxnotes/cli.py:34", "user_sees": "Error: duplicate key: 'k1'", "outcome": "R-04/R-06"}
+      ],
+      "config": [
+        {"key": "max_key_len", "default": 64, "effect": "validates key length"},
+        {"key": "max_value_len", "default": 4096, "effect": "validates value length"}
+      ],
+      "states": [{"name": "absent", "description": "no row with this key"}, {"name": "present", "description": "row exists with deleted=0"}],
+      "telemetry": [{"event": "note_added", "payload": {"key": "string"}, "emitted_at": "src/fxnotes/commands/add.py:45"}],
+      "interactions": [{"feature": "FEAT-002", "kind": "shared_table", "description": "list and delete operate on the same notes table"}],
+      "callgraph": ["src/fxnotes/commands/add.py:run -> src/fxnotes/db.py:Database.execute", "src/fxnotes/commands/add.py:run -> src/fxnotes/events.py:emit"]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "list",
+      "user_description": "User runs `fxnotes list` and sees all non-deleted notes.",
+      "traces": [
+        {"n": 1, "what": "parse argv", "cite": "src/fxnotes/commands/list_cmd.py:18-23#add_parser", "data_in": "[list, --tag T, --sort-by K]", "data_out": "args"},
+        {"n": 2, "what": "build SQL", "cite": "src/fxnotes/commands/list_cmd.py:30-41#SELECT", "data_in": "args, cfg", "data_out": "sql, params"},
+        {"n": 3, "what": "execute SELECT", "cite": "src/fxnotes/commands/list_cmd.py:43-45#cur.execute", "data_in": "sql, params", "data_out": "rows | FXNotesError"},
+        {"n": 4, "what": "format and emit", "cite": "src/fxnotes/commands/list_cmd.py:49-56#emit", "data_in": "rows", "data_out": "stdout lines"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/fxnotes/commands/list_cmd.py", "line": 31, "kind": "filter", "condition_text": "--include-deleted not set", "branches": [{"label": "WHERE deleted = 0", "target_line": 32}, {"label": "no filter", "target_line": 33}]},
+        {"id": "DP-006", "file": "src/fxnotes/commands/list_cmd.py", "line": 35, "kind": "filter", "condition_text": "--tag set", "branches": [{"label": "WHERE tag = ?", "target_line": 36}, {"label": "no tag filter", "target_line": 37}]},
+        {"id": "DP-007", "file": "src/fxnotes/commands/list_cmd.py", "line": 42, "kind": "exception", "condition_text": "FXNotesError on SELECT", "branches": [{"label": "swallow (rows=[])", "target_line": 43}, {"label": "propagate", "target_line": 44}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_empty", "conditions": "no notes in DB or all deleted", "user_sees": "0 entries.", "side_effects": [], "tests": ["tests/test_list.py::test_list_r01_empty"]},
+        {"id": "R-02", "category": "success", "conditions": "DB has non-deleted notes", "user_sees": "KEY<TAB>TAG<TAB>VALUE", "side_effects": ["event note_listed emitted"], "tests": ["tests/test_list.py::test_list_r02_with_entries"]},
+        {"id": "R-03", "category": "success_filtered", "conditions": "--tag TAG set", "user_sees": "only notes with that tag", "side_effects": [], "tests": ["tests/test_list.py::test_list_r03_filter_by_tag"]},
+        {"id": "R-04", "category": "success_sorted", "conditions": "--sort-by KEY set", "user_sees": "rows ordered by KEY", "side_effects": [], "tests": ["tests/test_list.py::test_list_r04_sort_by_key"]},
+        {"id": "R-05", "category": "validation_error", "conditions": "--sort-by value not in [created_at, key, tag]", "user_sees": "argparse error", "side_effects": [], "tests": ["tests/test_list.py::test_list_r05_invalid_sort_key"]},
+        {"id": "R-06", "category": "silent_success", "conditions": "DB throws FXNotesError", "user_sees": "0 entries.", "side_effects": [], "tests": ["tests/test_list.py::test_list_r06_empty_swallow_db_error"]}
+      ],
+      "errors": [],
+      "config": [{"key": "list_default_sort", "default": "created_at", "effect": "ORDER BY clause when --sort-by omitted"}],
+      "states": [],
+      "telemetry": [{"event": "note_listed", "payload": {"count": "int"}, "emitted_at": "src/fxnotes/commands/list_cmd.py:46"}],
+      "interactions": [{"feature": "FEAT-001", "kind": "shared_table"}],
+      "callgraph": ["src/fxnotes/commands/list_cmd.py:run -> src/fxnotes/db.py:Database.execute"]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "delete",
+      "user_description": "User runs `fxnotes delete KEY` to remove a note (soft by default, permanent with --no-undo).",
+      "traces": [
+        {"n": 1, "what": "parse argv", "cite": "src/fxnotes/commands/delete.py:19-28#add_parser", "data_in": "[delete, KEY, --no-undo, --archived, --yes]", "data_out": "args"},
+        {"n": 2, "what": "validate key", "cite": "src/fxnotes/commands/delete.py:46-48#ValidationError", "data_in": "args.key", "data_out": "ok | ValidationError"},
+        {"n": 3, "what": "check --archived dead branch", "cite": "src/fxnotes/commands/delete.py:50-52#deprecated", "data_in": "args.archived", "data_out": "deprecated msg | continue"},
+        {"n": 4, "what": "verify key exists", "cite": "src/fxnotes/commands/delete.py:54-58#NotFoundError", "data_in": "key", "data_out": "ok | NotFoundError"},
+        {"n": 5, "what": "confirm interactively if needed", "cite": "src/fxnotes/commands/delete.py:60-63#CancelledError", "data_in": "confirm mode, --yes", "data_out": "ok | CancelledError"},
+        {"n": 6, "what": "decide permanent", "cite": "src/fxnotes/commands/delete.py:65-65#permanent", "data_in": "confirm, --no-undo, --yes", "data_out": "bool"},
+        {"n": 7, "what": "DELETE or UPDATE row", "cite": "src/fxnotes/commands/delete.py:67-75#emit", "data_in": "permanent", "data_out": "stdout msg"}
+      ],
+      "decision_points": [
+        {"id": "DP-008", "file": "src/fxnotes/commands/delete.py", "line": 43, "kind": "validation", "condition_text": "key empty", "branches": [{"label": "raise", "target_line": 44}, {"label": "continue", "target_line": 46}]},
+        {"id": "DP-009", "file": "src/fxnotes/commands/delete.py", "line": 47, "kind": "deprecated", "condition_text": "args.archived", "branches": [{"label": "print deprecated, exit", "target_line": 48}, {"label": "continue", "target_line": 51}]},
+        {"id": "DP-010", "file": "src/fxnotes/commands/delete.py", "line": 53, "kind": "existence", "condition_text": "row exists", "branches": [{"label": "raise NotFoundError", "target_line": 54}, {"label": "continue", "target_line": 56}]},
+        {"id": "DP-011", "file": "src/fxnotes/commands/delete.py", "line": 57, "kind": "confirm", "condition_text": "ask mode and not --yes", "branches": [{"label": "ask user", "target_line": 58}, {"label": "skip", "target_line": 62}]},
+        {"id": "DP-012", "file": "src/fxnotes/commands/delete.py", "line": 58, "kind": "confirm", "condition_text": "_ask_user returns False", "branches": [{"label": "raise CancelledError", "target_line": 59}, {"label": "continue", "target_line": 62}]},
+        {"id": "DP-013", "file": "src/fxnotes/commands/delete.py", "line": 62, "kind": "permanent", "condition_text": "confirm=False or --no-undo or --yes", "branches": [{"label": "permanent=True", "target_line": 65}, {"label": "soft delete", "target_line": 71}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_soft", "conditions": "key exists, confirm soft", "user_sees": "Note 'KEY' deleted (soft; recoverable within 30 days).", "side_effects": ["row.deleted=1", "event note_deleted soft=true"], "reversible": true, "final_state": "row.deleted=1", "tests": ["tests/test_delete.py::test_delete_r01_success_soft"]},
+        {"id": "R-02", "category": "not_found", "conditions": "key not in DB", "user_sees": "Error: key not found: 'X'", "side_effects": [], "tests": ["tests/test_delete.py::test_delete_r02_not_found"]},
+        {"id": "R-03", "category": "validation_error", "conditions": "key empty", "user_sees": "Error: key cannot be empty", "side_effects": [], "tests": ["tests/test_delete.py::test_delete_r03_validation_empty_key"]},
+        {"id": "R-04", "category": "noop", "conditions": "--archived passed", "user_sees": "--archived is deprecated; 'X' was not deleted.", "side_effects": [], "tests": ["tests/test_delete.py::test_delete_r04_archived_is_dead_branch"]},
+        {"id": "R-05", "category": "success_permanent", "conditions": "FXNOTES_CONFIRM=false and --no-undo", "user_sees": "Note 'KEY' deleted permanently.", "side_effects": ["row physically deleted"], "reversible": false, "final_state": "row gone", "tests": ["tests/test_delete.py::test_delete_r05_no_undo_plus_confirm_false_is_permanent"]},
+        {"id": "R-06", "category": "cancelled", "conditions": "confirm=ask and user answers 'n'", "user_sees": "Error: delete of 'KEY' cancelled by user", "side_effects": [], "tests": ["tests/test_delete.py::test_delete_r06_user_rejects_ask"]}
+      ],
+      "errors": [
+        {"id": "ERR-D01", "type": "CancelledError", "origin": "src/fxnotes/commands/delete.py:59", "message": "delete of KEY cancelled by user", "propagation": [{"layer": "command", "action": "raise", "cite": "src/fxnotes/commands/delete.py:59"}], "handled_at": "src/fxnotes/cli.py:34", "user_sees": "Error: delete of KEY cancelled by user", "outcome": "R-06"}
+      ],
+      "config": [{"key": "confirm", "default": "ask", "values": ["ask", "false"], "effect": "controls interactive prompt; false skips ask"}],
+      "states": [{"name": "present", "description": "deleted=0"}, {"name": "soft_deleted", "description": "deleted=1"}, {"name": "absent", "description": "row removed"}],
+      "telemetry": [{"event": "note_deleted", "payload": {"key": "string", "soft": "bool"}, "emitted_at": "src/fxnotes/commands/delete.py:67,70"}],
+      "interactions": [{"feature": "FEAT-002", "kind": "list excludes soft-deleted by default"}],
+      "callgraph": ["src/fxnotes/commands/delete.py:run -> src/fxnotes/db.py:Database.execute", "src/fxnotes/commands/delete.py:run -> src/fxnotes/events.py:emit"]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "export",
+      "user_description": "User runs `fxnotes export PATH` to dump notes as JSON or CSV.",
+      "traces": [
+        {"n": 1, "what": "parse argv", "cite": "src/fxnotes/commands/export.py:13-18#add_parser", "data_in": "[export, PATH, --format, --include-deleted]", "data_out": "args"},
+        {"n": 2, "what": "SELECT notes", "cite": "src/fxnotes/commands/export.py:29-34#FXNotesError", "data_in": "args", "data_out": "rows | FXNotesError"},
+        {"n": 3, "what": "format payload", "cite": "src/fxnotes/commands/export.py:38-45#json.dumps", "data_in": "rows, --format", "data_out": "text | file content"}
+      ],
+      "decision_points": [
+        {"id": "DP-014", "file": "src/fxnotes/commands/export.py", "line": 35, "kind": "format", "condition_text": "--format=csv", "branches": [{"label": "CSV writer", "target_line": 36}, {"label": "JSON", "target_line": 41}]},
+        {"id": "DP-015", "file": "src/fxnotes/commands/export.py", "line": 42, "kind": "destination", "condition_text": "path == '-'", "branches": [{"label": "stdout", "target_line": 43}, {"label": "file", "target_line": 44}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "DB has rows, --format=json, path=file", "user_sees": "stderr: 'Exported N notes.'", "side_effects": ["file written"], "tests": ["tests/test_export.py::test_export_r01_json_to_file"]},
+        {"id": "R-02", "category": "success", "conditions": "--format=csv", "user_sees": "csv on stdout or file", "side_effects": [], "tests": ["tests/test_export.py::test_export_r02_csv_to_stdout"]},
+        {"id": "R-03", "category": "success", "conditions": "JSON to stdout", "user_sees": "json on stdout", "side_effects": [], "tests": ["tests/test_export.py::test_export_r03_json_stdout"]},
+        {"id": "R-04", "category": "success_empty", "conditions": "DB empty", "user_sees": "[]", "side_effects": ["file written"], "tests": ["tests/test_export.py::test_export_r04_empty_export"]},
+        {"id": "R-05", "category": "validation_error", "conditions": "--format not in [json, csv]", "user_sees": "argparse error", "side_effects": [], "tests": ["tests/test_export.py::test_export_r05_invalid_format"]},
+        {"id": "R-06", "category": "error_internal", "conditions": "DB throws FXNotesError", "user_sees": "Export failed: <reason>", "side_effects": ["exit 1"], "tests": ["tests/test_export.py::test_export_r06_db_error_returns_one"]}
+      ],
+      "errors": [
+        {"id": "ERR-E01", "type": "FXNotesError", "origin": "src/fxnotes/db.py:Database.execute", "propagation": [{"layer": "command", "action": "catch and print", "cite": "src/fxnotes/commands/export.py:27-29"}], "handled_at": "src/fxnotes/commands/export.py:28", "user_sees": "Export failed: <reason>", "outcome": "R-06"}
+      ],
+      "config": [],
+      "states": [],
+      "telemetry": [],
+      "interactions": [{"feature": "FEAT-001", "kind": "shares table"}, {"feature": "FEAT-002", "kind": "shares table"}],
+      "callgraph": ["src/fxnotes/commands/export.py:run -> src/fxnotes/db.py:Database.execute"]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-cli-add", "kind": "cli", "name": "fxnotes add", "handler": "src/fxnotes/commands/add.py:run", "file": "src/fxnotes/commands/add.py", "line": 26, "pair": null},
+    {"id": "SRF-cli-list", "kind": "cli", "name": "fxnotes list", "handler": "src/fxnotes/commands/list_cmd.py:run", "file": "src/fxnotes/commands/list_cmd.py", "line": 26, "pair": null},
+    {"id": "SRF-cli-delete", "kind": "cli", "name": "fxnotes delete", "handler": "src/fxnotes/commands/delete.py:run", "file": "src/fxnotes/commands/delete.py", "line": 42, "pair": null},
+    {"id": "SRF-cli-export", "kind": "cli", "name": "fxnotes export", "handler": "src/fxnotes/commands/export.py:run", "file": "src/fxnotes/commands/export.py", "line": 21, "pair": null},
+    {"id": "SRF-event-bus", "kind": "event", "name": "fxnotes internal events", "handler": "src/fxnotes/events.py:emit", "file": "src/fxnotes/events.py", "line": 20, "pair": null}
+  ],
+  "config": [
+    {"key": "db_path", "kind": "file", "default": "~/.local/share/fxnotes/notes.db"},
+    {"key": "confirm", "kind": "env|file", "default": "ask", "values": ["ask", "false"]},
+    {"key": "soft_delete", "kind": "env|file", "default": true},
+    {"key": "max_key_len", "kind": "env|file", "default": 64},
+    {"key": "max_value_len", "kind": "env|file", "default": 4096},
+    {"key": "list_default_sort", "kind": "env|file", "default": "created_at"},
+    {"key": "debounce_ms", "kind": "env|file", "default": 100},
+    {"key": "DEAD_CODE", "kind": "feature_flag", "default": true, "effect": "Si true, importa fxnotes.legacy_v1 al cargar config (modulo muerto que parece activo)."}
+  ],
+  "traps": [
+    {"id": "TRAP-S01", "kind": "dead_code", "where": "src/fxnotes/legacy_v1.py:14-29", "resolution": "Ignorar. Ningun comando actual invoca old_add/old_list/old_delete; importan solo si DEAD_CODE=true en config (feature flag que activa un modulo fantasma)."},
+    {"id": "TRAP-S02", "kind": "dynamic_import", "where": "src/fxnotes/plugins/loader.py:18-26", "resolution": "Los plugins se descubren via importlib.metadata.entry_points; un escaner estatico no los ve hasta que se ejecutan."},
+    {"id": "TRAP-S03", "kind": "string_dispatch", "where": "src/fxnotes/commands/__init__.py:12-17", "resolution": "COMMANDS es un dict {nombre -> modulo}; el lector debe abrir COMMANDS para listar comandos, no inferirlos de la estructura de carpetas."},
+    {"id": "TRAP-S04", "kind": "event_bus", "where": "src/fxnotes/events.py:16-28", "resolution": "El bus emite eventos a listeners registrados con on(). Las acciones del CLI (add/list/delete) emiten eventos pero los listeners son registrados fuera del paquete."},
+    {"id": "TRAP-S05", "kind": "readme_mismatch", "where": "README.md:9-11", "resolution": "El README afirma que delete es sincrono y limpia el flag de soft-delete. En realidad, delete soft pone deleted=1 y nunca limpia automaticamente; el flag persiste hasta que un garbage collector externo (inexistente) lo borre. El codigo es la verdad."},
+    {"id": "TRAP-S06", "kind": "feature_flag_phantom", "where": "src/fxnotes/config.py:60-64", "resolution": "DEAD_CODE=true hace que config.py importe fxnotes.legacy_v1. Si se pone false, el modulo deja de importarse (pero sigue presente en disco)."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "feature": "FEAT-003", "kind": "combination_two_settings", "where": "src/fxnotes/commands/delete.py:62-63", "resolution": "El resultado 'deleted permanently' (R-05) solo aparece cuando confirm=False AND --no-undo. Cualquier combinacion que no cumpla ambos -> soft delete (R-01)."},
+    {"id": "TRAP-P02", "feature": "FEAT-002", "kind": "empty_catch_swallows_error", "where": "src/fxnotes/commands/list_cmd.py:42-44", "resolution": "Si DB.execute lanza FXNotesError, rows=[] y se imprime '0 entries.' sin error. La excepcion se pierde. Resultado: R-06 (silent_success)."},
+    {"id": "TRAP-P03", "feature": "FEAT-001", "kind": "timeout_retry", "where": "src/fxnotes/db.py:50-58", "resolution": "Database.execute reintenta hasta 3 veces con backoff si sqlite3.OperationalError menciona 'locked'. Despues de 3, lanza DatabaseError."},
+    {"id": "TRAP-P04", "feature": "FEAT-001", "kind": "race_condition", "where": "src/fxnotes/commands/add.py:36-43", "resolution": "El patron SELECT-then-INSERT permite que dos inserts con la misma key ambos pasen el check; el UNIQUE constraint hace que uno gane y el otro lance IntegrityError, mapeada a DatabaseError('lost race')."},
+    {"id": "TRAP-P05", "feature": "FEAT-003", "kind": "dead_branch", "where": "src/fxnotes/commands/delete.py:47-49", "resolution": "--archived se acepta por argparse pero el handler imprime 'deprecated' y retorna 0 sin tocar la BD. El flag nunca hizo nada."},
+    {"id": "TRAP-P06", "feature": "FEAT-003", "kind": "user_rejection", "where": "src/fxnotes/commands/delete.py:56-60", "resolution": "Si confirm=ask y el usuario responde 'n', se lanza CancelledError (R-06). Sin la combinacion ask+no, no aparece el outcome de cancelacion."}
+  ]
+}

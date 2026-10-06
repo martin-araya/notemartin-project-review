@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fxnotes"
+version = "1.0.0"
+description = "Fixture CLI for notemartin-project-review (F06a)"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+fxnotes = "fxnotes.__main__:main"
+
+[project.entry-points."fxnotes.commands"]
+add = "fxnotes.commands.add:add_cmd"
+list = "fxnotes.commands.list_cmd:list_cmd"
+delete = "fxnotes.commands.delete:delete_cmd"
+export = "fxnotes.commands.export:export_cmd"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["fxnotes*"]
