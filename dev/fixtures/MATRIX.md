@@ -12,19 +12,20 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 - `fx-react-spa`
 - `fx-ts-agent-extension`
 - `fx-vanilla-js-legacy`
+- `fx-vue-nuxt`
 
 ## Eje: languages
 
 | Item | Estado | Cubierto por |
 |---|---|---|
 | `python` | cubierto | fx-minified, fx-python-cli |
-| `typescript` | cubierto | fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-ts-agent-extension |
-| `javascript` | cubierto | fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy |
+| `typescript` | cubierto | fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-ts-agent-extension, fx-vue-nuxt |
+| `javascript` | cubierto | fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `java` | cubierto | fx-java-micronaut, fx-minified |
 | `kotlin` | cubierto | fx-java-micronaut |
 | `go` | cubierto | fx-minified, fx-polyglot |
 | `rust` | cubierto | fx-polyglot |
-| `shell` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy |
+| `shell` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `dart` | **falta** | _(ninguno)_ |
 | `swift` | **falta** | _(ninguno)_ |
 | `csharp` | **falta** | _(ninguno)_ |
@@ -46,11 +47,12 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `cargo` | cubierto | fx-polyglot |
 | `go-modules` | cubierto | fx-minified, fx-polyglot |
 | `react-spa` | cubierto | fx-nextjs-fullstack, fx-react-spa |
-| `vue-spa` | **falta** | _(ninguno)_ |
+| `vue-spa` | cubierto | fx-vue-nuxt |
 | `nextjs` | cubierto | fx-nextjs-fullstack |
 | `svelte-spa` | **falta** | _(ninguno)_ |
 | `prisma` | cubierto | fx-nextjs-fullstack |
 | `jquery` | cubierto | fx-vanilla-js-legacy |
+| `nuxt` | cubierto | fx-vue-nuxt |
 
 ## Eje: build_systems
 
@@ -62,7 +64,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `gradle` | cubierto | fx-java-micronaut |
 | `cargo` | cubierto | fx-polyglot |
 | `go-modules` | cubierto | fx-minified, fx-polyglot |
-| `make` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy |
+| `make` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `docker` | **falta** | _(ninguno)_ |
 | `gulp` | cubierto | fx-vanilla-js-legacy |
 
@@ -70,7 +72,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `source-text` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy |
+| `source-text` | cubierto | fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `minified-js` | cubierto | fx-minified, fx-vanilla-js-legacy |
 | `bundle-with-sourcemap` | cubierto | fx-minified |
 | `bundle-without-sourcemap` | **falta** | _(ninguno)_ |

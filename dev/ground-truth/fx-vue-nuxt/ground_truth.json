@@ -1,0 +1,195 @@
+{
+  "fixture": "fx-vue-nuxt",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-nuxt-config", "artifact": "nuxt.config.ts", "file": "nuxt.config.ts"},
+    {"id": "EP-app", "artifact": "app.vue", "file": "app.vue"},
+    {"id": "EP-page-index", "artifact": "pages/index.vue", "file": "pages/index.vue"},
+    {"id": "EP-page-reservas", "artifact": "pages/reservas/index.vue", "file": "pages/reservas/index.vue"},
+    {"id": "EP-page-perfil", "artifact": "pages/perfil/index.vue", "file": "pages/perfil/index.vue"},
+    {"id": "EP-page-notificaciones", "artifact": "pages/notificaciones/index.vue", "file": "pages/notificaciones/index.vue"},
+    {"id": "EP-server-api", "artifact": "server/api/reservas.get.ts", "file": "server/api/reservas.get.ts"}
+  ],
+  "modules": [
+    {"id": "MOD-store-reservations", "path": "stores/reservations.ts", "summary": "Store Pinia: state {items, loading, error} + actions fetchAll/create/cancelar"},
+    {"id": "MOD-store-profile", "path": "stores/profile.ts", "summary": "Store Pinia: state {current, loading} + getters isPremium/role + actions fetch/update/logout"},
+    {"id": "MOD-store-notifications", "path": "stores/notifications.ts", "summary": "Store Pinia: state {items, loading} + getters unread/count + actions fetchAll/markRead (cross-store)"},
+    {"id": "MOD-composable-reservas", "path": "composables/useReservas.ts", "summary": "Composable que envuelve la store de reservas con computed reactivos"},
+    {"id": "MOD-composable-profile", "path": "composables/useProfile.ts", "summary": "Composable que expone el modulo de cuenta"},
+    {"id": "MOD-composable-datefmt", "path": "composables/useDateFmt.ts", "summary": "Composable con formatDate (no usado en la app)"},
+    {"id": "MOD-composable-session", "path": "composables/useSession.ts", "summary": "Composable auxiliar para el middleware de auth"},
+    {"id": "MOD-page-index", "path": "pages/index.vue", "summary": "Landing con links y dead-import de HiddenPremium"},
+    {"id": "MOD-page-reservas", "path": "pages/reservas/index.vue", "summary": "Listado y formulario; definePageMeta con middleware named"},
+    {"id": "MOD-page-reservas-id", "path": "pages/reservas/[id].vue", "summary": "Detalle de un item por route param"},
+    {"id": "MOD-page-perfil", "path": "pages/perfil/index.vue", "summary": "Editor del modulo de cuenta con v-model"},
+    {"id": "MOD-page-notificaciones", "path": "pages/notificaciones/index.vue", "summary": "Listado del modulo de avisos con filtro"},
+    {"id": "MOD-comp-reserva-card", "path": "components/ReservaCard.vue", "summary": "Tarjeta de un item; aplica la clase premium-hide"},
+    {"id": "MOD-comp-reserva-form", "path": "components/ReservaForm.vue", "summary": "Formulario con defineModel y defineEmits; preventDefault explicito"},
+    {"id": "MOD-comp-perfil-editor", "path": "components/PerfilEditor.vue", "summary": "Editor inline (no usado por las paginas actuales)"},
+    {"id": "MOD-comp-notificacion-item", "path": "components/NotificacionItem.vue", "summary": "Item del modulo de avisos; clase archived cuando leido"},
+    {"id": "MOD-comp-hidden-premium", "path": "components/HiddenPremium.vue", "summary": "Render condicional para premium (dead-import)"},
+    {"id": "MOD-plugin-api", "path": "plugins/0.api-base.ts", "summary": "Plugin que provee $api con cliente basico"},
+    {"id": "MOD-plugin-i18n", "path": "plugins/1.i18n.ts", "summary": "Plugin que provee $t con fallback silencioso"},
+    {"id": "MOD-mw-auth", "path": "middleware/auth.global.ts", "summary": "Middleware global; redirige a /login sin comprobar ruta destino"},
+    {"id": "MOD-mw-reservas-only", "path": "middleware/reservas-only.ts", "summary": "Middleware named; bloquea paginas premium-only"},
+    {"id": "MOD-server-utils-db", "path": "server/utils/db.ts", "summary": "Store en memoria con seed y funcion seedExtra dead code"},
+    {"id": "MOD-server-api-reservas-get", "path": "server/api/reservas.get.ts", "summary": "GET /api/reservas con filtro por usuarioId"},
+    {"id": "MOD-server-api-reservas-post", "path": "server/api/reservas.post.ts", "summary": "POST /api/reservas con validacion Zod"},
+    {"id": "MOD-server-api-reservas-delete", "path": "server/api/reservas/[id].delete.ts", "summary": "DELETE /api/reservas/:id sin validar owner"},
+    {"id": "MOD-server-api-profile-get", "path": "server/api/profile.get.ts", "summary": "GET /api/profile?id=... (404 si no existe)"},
+    {"id": "MOD-server-api-profile-patch", "path": "server/api/profile.patch.ts", "summary": "PATCH /api/profile con validacion Zod de email"},
+    {"id": "MOD-server-api-notifications-get", "path": "server/api/notifications.get.ts", "summary": "GET /api/notifications con filtro por usuarioId"}
+  ],
+  "dependencies": [
+    {"name": "nuxt", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "vue", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "pinia", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@pinia/nuxt", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "vue-router", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "zod", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@nuxt/test-utils", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@vue/test-utils", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "happy-dom", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "sass", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "vitest", "scope": "dev", "manifest": "package.json (devDependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "reservas",
+      "user_description": "El usuario ve una lista de reservas, puede crear una nueva y cancelar las suyas; el filtrado por usuario se hace en cliente y servidor.",
+      "traces": [
+        {"n": 1, "what": "User abre /reservas; definePageMeta aplica middleware reservas-only", "cite": "pages/reservas/index.vue:6", "data_in": "ruta", "data_out": "middleware evaluated"},
+        {"n": 2, "what": "Composables auto-importados: useReservas, useReservationsStore", "cite": "pages/reservas/index.vue:10", "data_in": "auto-import", "data_out": "store bind"},
+        {"n": 3, "what": "onMounted llama store.fetchAll(usuarioId) -> $fetch", "cite": "pages/reservas/index.vue:27", "data_in": "usuarioId", "data_out": "GET /api/reservas"},
+        {"n": 4, "what": "Server: getReservas filtra por usuarioId", "cite": "server/api/reservas.get.ts:8", "data_in": "query", "data_out": "items[]"},
+        {"n": 5, "what": "Render de la lista con ReservaCard; emite 'cancelar'", "cite": "pages/reservas/index.vue:36-41", "data_in": "items", "data_out": "DOM con <li>"},
+        {"n": 6, "what": "ReservaCard aplica premium-hide si premium y no es u-1", "cite": "components/ReservaCard.vue:11", "data_in": "reserva", "data_out": "class binding"},
+        {"n": 7, "what": "Submit del form -> onSubmit -> store.create", "cite": "pages/reservas/index.vue:16", "data_in": "payload", "data_out": "POST /api/reservas"},
+        {"n": 8, "what": "Server: zod.safeParse -> addReserva -> 201", "cite": "server/api/reservas.post.ts:15", "data_in": "body", "data_out": "nueva reserva"},
+        {"n": 9, "what": "Cross-store desde notifications.markRead llama a reservations.cancelar", "cite": "stores/notifications.ts:47-48", "data_in": "notif id", "data_out": "DELETE /api/reservas/:id"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "pages/reservas/index.vue", "line": 6, "kind": "middleware", "condition_text": "definePageMeta({ middleware: ['reservas-only'] })", "branches": [{"label": "continuar", "target_line": 10}, {"label": "redirect a /", "target_line": 7}]},
+        {"id": "DP-002", "file": "stores/reservations.ts", "line": 22, "kind": "fetch", "condition_text": "fetchAll(usuarioId)", "branches": [{"label": "con usuarioId", "target_line": 26}, {"label": "sin filtro", "target_line": 26}]},
+        {"id": "DP-003", "file": "server/api/reservas.post.ts", "line": 17, "kind": "validation", "condition_text": "schema.safeParse(body)", "branches": [{"label": "ok -> 201", "target_line": 22}, {"label": "fail -> 400", "target_line": 19}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /api/reservas devuelve 12 items", "user_sees": "Lista de items con id, fecha, personas, sala", "side_effects": ["GET /api/reservas"], "reversible": true, "final_state": "items rendered"},
+        {"id": "R-02", "category": "success_create", "conditions": "POST con payload valido", "user_sees": "201 con el nuevo item, lista actualizada", "side_effects": ["POST /api/reservas"], "reversible": true, "final_state": "item added"},
+        {"id": "R-03", "category": "error_validation", "conditions": "POST sin campo requerido o fecha invalida", "user_sees": "400 con issues de Zod", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "success_delete", "conditions": "DELETE /api/reservas/r-001 con id existente", "user_sees": "200 {ok:true}, item quitado del array", "side_effects": ["DELETE /api/reservas/r-001"], "reversible": false, "final_state": "item removed"},
+        {"id": "R-05", "category": "error_delete_404", "conditions": "DELETE con id inexistente", "user_sees": "404 {error: not_found}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "success_cross_store", "conditions": "markRead de notificacion llama a reservations.cancelar con el mismo id", "user_sees": "DELETE /api/reservas/n-001 con 404 silencioso, la notificacion queda como leida", "side_effects": ["DELETE /api/reservas/n-001", "PATCH /api/notifications/n-001"], "reversible": false, "final_state": "indeterminado"},
+        {"id": "R-07", "category": "success_filter", "conditions": "GET /api/reservas?usuarioId=u-1", "user_sees": "Solo items del usuario u-1 (8 de 12)", "side_effects": ["GET /api/reservas?usuarioId=u-1"], "reversible": true, "final_state": "filtered"}
+      ],
+      "config": [
+        {"key": "apiBase", "kind": "literal", "default": "/api", "effect": "ruta base de las llamadas del plugin $api"},
+        {"key": "sala.values", "kind": "literal", "default": "['A','B','C']", "effect": "enum validado por Zod en POST"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "perfil",
+      "user_description": "El usuario edita su nombre y email; el servidor valida el email y devuelve el perfil actualizado.",
+      "traces": [
+        {"n": 1, "what": "User abre /perfil; definePageMeta aplica middleware auth (global)", "cite": "pages/perfil/index.vue:4", "data_in": "ruta", "data_out": "auth global ejecutado"},
+        {"n": 2, "what": "useProfile('u-1') expone current/isPremium/role", "cite": "pages/perfil/index.vue:8", "data_in": "auto-import", "data_out": "store bind"},
+        {"n": 3, "what": "onMounted llama profileStore.fetch('u-1')", "cite": "pages/perfil/index.vue:10", "data_in": "id", "data_out": "GET /api/profile?id=u-1"},
+        {"n": 4, "what": "Server: getProfile(id) devuelve 404 si no existe", "cite": "server/api/profile.get.ts:8", "data_in": "id", "data_out": "Profile or 404"},
+        {"n": 5, "what": "watch rellena nombre/email cuando current cambia", "cite": "pages/perfil/index.vue:17", "data_in": "current", "data_out": "form values"},
+        {"n": 6, "what": "onSave -> update({nombre, email}) -> PATCH /api/profile", "cite": "pages/perfil/index.vue:24", "data_in": "patch", "data_out": "PATCH"},
+        {"n": 7, "what": "Server: schema.safeParse -> updateProfile -> 200", "cite": "server/api/profile.patch.ts:14", "data_in": "body", "data_out": "Profile"},
+        {"n": 8, "what": "isPremium = true muestra la insignia", "cite": "pages/perfil/index.vue:37", "data_in": "current.premium", "data_out": "<p>Premium</p>"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "middleware/auth.global.ts", "line": 5, "kind": "auth", "condition_text": "session.isAuthenticated", "branches": [{"label": "continuar", "target_line": 12}, {"label": "redirect /login", "target_line": 10}]},
+        {"id": "DP-005", "file": "server/api/profile.patch.ts", "line": 16, "kind": "validation", "condition_text": "schema.safeParse(body)", "branches": [{"label": "ok -> 200", "target_line": 24}, {"label": "fail -> 400", "target_line": 18}]},
+        {"id": "DP-006", "file": "stores/profile.ts", "line": 19, "kind": "premium_flag", "condition_text": "current.premium === true", "branches": [{"label": "isPremium true", "target_line": 19}, {"label": "isPremium false", "target_line": 19}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load", "conditions": "GET /api/profile?id=u-1 con id existente", "user_sees": "Form rellenado con nombre y email; insignia Premium si role=premium", "side_effects": ["GET /api/profile"], "reversible": true, "final_state": "form filled"},
+        {"id": "R-02", "category": "success_save", "conditions": "PATCH con email valido", "user_sees": "200 con el perfil actualizado, formulario persiste el cambio", "side_effects": ["PATCH /api/profile"], "reversible": true, "final_state": "saved"},
+        {"id": "R-03", "category": "error_validation_email", "conditions": "PATCH con email invalido", "user_sees": "400 con issues: email invalido", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "success_redirect_loop", "conditions": "Usuario sin sesion navega a /perfil", "user_sees": "Bucle silencioso: auth redirige a /login que vuelve a ejecutar auth", "side_effects": ["redirect /login x N"], "reversible": false, "final_state": "loop"},
+        {"id": "R-05", "category": "success_logout", "conditions": "Usuario hace click en 'Cerrar sesion'", "user_sees": "current pasa a null; insignia Premium desaparece", "side_effects": ["store.logout()"], "reversible": true, "final_state": "logged out"},
+        {"id": "R-06", "category": "error_fetch_500", "conditions": "GET /api/profile con servidor caido (simulado)", "user_sees": "current queda null, formulario vacio", "side_effects": [], "reversible": true, "final_state": "empty"},
+        {"id": "R-07", "category": "success_hidden_premium", "conditions": "current.role === 'premium'", "user_sees": "Insignia Premium visible", "side_effects": [], "reversible": true, "final_state": "premium shown"}
+      ],
+      "config": [
+        {"key": "email.schema", "kind": "literal", "default": "zod email validator", "effect": "PATCH rechaza emails invalidos con 400"},
+        {"key": "premium.cssClass", "kind": "literal", "default": "premium-hide", "effect": "oculta opciones premium si el rol no las activa"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "notificaciones",
+      "user_description": "El usuario ve sus notificaciones y puede marcarlas como leidas; al marcarlas se dispara una cross-store call al modulo principal.",
+      "traces": [
+        {"n": 1, "what": "User abre /notificaciones; no hay middleware aplicado", "cite": "pages/notificaciones/index.vue:4", "data_in": "ruta", "data_out": "store bind"},
+        {"n": 2, "what": "onMounted llama notificationsStore.fetchAll('u-1')", "cite": "pages/notificaciones/index.vue:9", "data_in": "usuarioId", "data_out": "GET /api/notifications"},
+        {"n": 3, "what": "Server: getNotificaciones filtra por usuarioId", "cite": "server/api/notifications.get.ts:7", "data_in": "query", "data_out": "items[]"},
+        {"n": 4, "what": "Filtro computed: all vs unread", "cite": "pages/notificaciones/index.vue:7", "data_in": "filter", "data_out": "visible[]"},
+        {"n": 5, "what": "Render con NotificacionItem; emite 'mark-read'", "cite": "pages/notificaciones/index.vue:21", "data_in": "items", "data_out": "DOM con <li>"},
+        {"n": 6, "what": "markRead: PATCH /api/notifications/:id (leida=true)", "cite": "stores/notifications.ts:41", "data_in": "id", "data_out": "200"},
+        {"n": 7, "what": "Cross-store: useReservationsStore().cancelar(id)", "cite": "stores/notifications.ts:47", "data_in": "id", "data_out": "DELETE /api/reservas/:id"},
+        {"n": 8, "what": "Como el id no coincide, el DELETE devuelve 404 silencioso", "cite": "stores/notifications.ts:52", "data_in": "error", "data_out": "false"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "pages/notificaciones/index.vue", "line": 7, "kind": "filter", "condition_text": "filter.value === 'unread'", "branches": [{"label": "unread", "target_line": 7}, {"label": "all", "target_line": 7}]},
+        {"id": "DP-008", "file": "stores/notifications.ts", "line": 39, "kind": "cross_store", "condition_text": "try markRead", "branches": [{"label": "ok", "target_line": 49}, {"label": "catch", "target_line": 52}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load", "conditions": "GET /api/notifications con usuarioId", "user_sees": "Lista de 2-3 avisos con mensaje y fecha", "side_effects": ["GET /api/notifications"], "reversible": true, "final_state": "items rendered"},
+        {"id": "R-02", "category": "success_mark_read", "conditions": "Click en 'Marcar leida' sobre un item", "user_sees": "Item aparece tachado, boton desaparece", "side_effects": ["PATCH /api/notifications/n-001"], "reversible": true, "final_state": "leida"},
+        {"id": "R-03", "category": "success_cross_store", "conditions": "markRead dispara DELETE /api/reservas/n-001 (404)", "user_sees": "Nada visible; la llamada interna falla silenciosamente", "side_effects": ["DELETE /api/reservas/n-001"], "reversible": false, "final_state": "indeterminado"},
+        {"id": "R-04", "category": "success_filter_unread", "conditions": "Filter select en 'No leidas'", "user_sees": "Solo items con leida=false", "side_effects": [], "reversible": true, "final_state": "filtered"},
+        {"id": "R-05", "category": "error_fetch_500", "conditions": "GET /api/notifications con servidor caido", "user_sees": "items queda vacio, loading false", "side_effects": [], "reversible": true, "final_state": "empty"},
+        {"id": "R-06", "category": "success_pagination", "conditions": "Usuario carga mas items (no implementado; placeholder)", "user_sees": "Items adicionales aparecen al final", "side_effects": [], "reversible": true, "final_state": "extended"},
+        {"id": "R-07", "category": "success_i18n_missing_key", "conditions": "$t('no-translated') invocado en algun lugar", "user_sees": "String vacio (fallback silencioso del plugin i18n)", "side_effects": [], "reversible": true, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "filter.options", "kind": "literal", "default": "['all','unread']", "effect": "opciones del selector"},
+        {"key": "i18n.fallback", "kind": "literal", "default": "''", "effect": "string vacio sin warn para claves no registradas"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "auto_imports", "where": "pages/reservas/index.vue:1-27", "resolution": "La pagina no tiene ninguna linea de import. useReservas, useReservationsStore, ref, computed, onMounted, ReservaCard, ReservaForm entran via auto-imports de Nuxt. La skill debe notar que el primer `<script setup>` no contiene imports para los simbolos que usa."},
+    {"id": "TRAP-E02", "kind": "define_page_meta", "where": "pages/reservas/index.vue:6-8 + pages/perfil/index.vue:4-6", "resolution": "Las paginas declaran middlewares via definePageMeta({ middleware: ['reservas-only'] }) y ['auth']. El primero es named (middleware/reservas-only.ts); el segundo es global (middleware/auth.global.ts, sufijo .global.ts). La skill debe distinguir los dos por el sufijo del archivo."},
+    {"id": "TRAP-E03", "kind": "plugin_provide", "where": "plugins/0.api-base.ts:21-23 + plugins/1.i18n.ts:12-22", "resolution": "Ambos plugins devuelven { provide: { api } } y { provide: { t } } respectivamente. El orden se garantiza por el prefijo numerico del nombre de archivo (0., 1.). La skill debe notar que $api y $t son globales sin import."},
+    {"id": "TRAP-E04", "kind": "server_api_by_name", "where": "server/api/reservas.get.ts + server/api/reservas.post.ts + server/api/reservas/[id].delete.ts", "resolution": "Nitro mapea cada archivo en server/api/ a una ruta HTTP segun el patron `nombre.METHODO.ts`. reservas.get.ts -> GET /api/reservas; reservas.post.ts -> POST /api/reservas; reservas/[id].delete.ts -> DELETE /api/reservas/:id. La skill debe derivar las rutas del nombre de archivo."},
+    {"id": "TRAP-E05", "kind": "define_model_emits", "where": "components/ReservaForm.vue:9-21", "resolution": "El componente usa defineModel para v-model personalizado (Vue 3.4+) y defineEmits para emitir 'submit'/'cancelar'. El handler onSubmit hace ev.preventDefault() y emite 'submit' al padre. Trampa: el preventDefault se aplica tambien al submit del padre, asi que si el padre tiene un form propio nunca recibe el submit."},
+    {"id": "TRAP-E06", "kind": "pinia_cross_store", "where": "stores/notifications.ts:39-52", "resolution": "La accion markRead importa useReservationsStore y llama a other.cancelar(id) despues de hacer PATCH. Como los ids de notificaciones (n-001) no coinciden con los de items del otro modulo (r-001), la cancelacion falla silenciosamente con 404, pero la llamada cross-store revela la indireccion."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "dead_code_composable", "where": "composables/useDateFmt.ts", "resolution": "Define formatDate() pero ninguna pagina ni componente lo invoca. El grep en pages/ y components/ confirma que es codigo muerto del paquete."},
+    {"id": "TRAP-P02", "kind": "i18n_silent_fallback", "where": "plugins/1.i18n.ts:18-21", "resolution": "El plugin $t devuelve string vacio para claves no registradas sin emitir warn. Cualquier {{ $t('clave.inexistente') }} muestra vacio, ocultando traducciones faltantes."},
+    {"id": "TRAP-P03", "kind": "store_no_owner_check", "where": "stores/reservations.ts:46-55", "resolution": "La accion cancelar() no valida que el caller sea dueno del item. Confia en el cliente. Esto permite que el cross-store llame a cancelar() con ids arbitrarios."},
+    {"id": "TRAP-P04", "kind": "fetch_no_retry", "where": "composables/useReservas.ts:1-18", "resolution": "El composable hace $fetch directo sin opciones de reintento. Si el servidor cuelga, el cliente espera indefinidamente. La skill debe notar la ausencia de timeout/retry en la composicion."},
+    {"id": "TRAP-P05", "kind": "vmodel_string_vs_date", "where": "components/ReservaForm.vue:9 + server/api/reservas.post.ts:8", "resolution": "El componente define fecha como defineModel<string> con default '', pero el server valida con Date.parse (que acepta el string ISO). La trampa es que el submit envia el string crudo del input; si el usuario escribe 'manana' el server responde 400 con fecha invalida."},
+    {"id": "TRAP-P06", "kind": "auth_redirect_loop", "where": "middleware/auth.global.ts:5-11", "resolution": "El middleware redirige a /login sin comprobar la ruta destino. Cuando el usuario navega a /login sin sesion, el middleware se ejecuta otra vez y vuelve a redirigir, generando un bucle. La pagina /login nunca termina de renderizar."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_code_composable", "where": "composables/useDateFmt.ts", "resolution": "Exporta formatDate() que nadie invoca. El grep en pages/ y components/ lo confirma."},
+    {"id": "TRAP-S02", "kind": "dead_code_function", "where": "server/utils/db.ts:80-90", "resolution": "Exporta seedExtra(count) que la app no invoca. Solo los tests la llaman para inflar el array."},
+    {"id": "TRAP-S03", "kind": "explicit_import_breaks_auto", "where": "pages/index.vue:10", "resolution": "HiddenPremium se importa con ruta completa '~/components/HiddenPremium.vue', rompiendo el patron de auto-imports. La skill debe notar que el resto de la pagina (links, template) usa auto-imports pero este componente es la excepcion."}
+  ],
+  "surfaces": [
+    {"id": "SRF-page-index", "kind": "page", "name": "/", "handler": "pages/index.vue", "file": "pages/index.vue"},
+    {"id": "SRF-page-reservas", "kind": "page", "name": "/reservas", "handler": "pages/reservas/index.vue", "file": "pages/reservas/index.vue"},
+    {"id": "SRF-page-reservas-id", "kind": "page", "name": "/reservas/:id", "handler": "pages/reservas/[id].vue", "file": "pages/reservas/[id].vue"},
+    {"id": "SRF-page-perfil", "kind": "page", "name": "/perfil", "handler": "pages/perfil/index.vue", "file": "pages/perfil/index.vue"},
+    {"id": "SRF-page-notificaciones", "kind": "page", "name": "/notificaciones", "handler": "pages/notificaciones/index.vue", "file": "pages/notificaciones/index.vue"},
+    {"id": "SRF-api-reservas-get", "kind": "http", "name": "GET /api/reservas", "handler": "server/api/reservas.get.ts:5", "file": "server/api/reservas.get.ts"},
+    {"id": "SRF-api-reservas-post", "kind": "http", "name": "POST /api/reservas", "handler": "server/api/reservas.post.ts:15", "file": "server/api/reservas.post.ts"},
+    {"id": "SRF-api-reservas-delete", "kind": "http", "name": "DELETE /api/reservas/:id", "handler": "server/api/reservas/[id].delete.ts:6", "file": "server/api/reservas/[id].delete.ts"},
+    {"id": "SRF-api-profile-get", "kind": "http", "name": "GET /api/profile", "handler": "server/api/profile.get.ts:5", "file": "server/api/profile.get.ts"},
+    {"id": "SRF-api-profile-patch", "kind": "http", "name": "PATCH /api/profile", "handler": "server/api/profile.patch.ts:14", "file": "server/api/profile.patch.ts"},
+    {"id": "SRF-api-notifications-get", "kind": "http", "name": "GET /api/notifications", "handler": "server/api/notifications.get.ts:5", "file": "server/api/notifications.get.ts"},
+    {"id": "SRF-mw-auth", "kind": "middleware", "name": "auth.global", "handler": "middleware/auth.global.ts:5", "file": "middleware/auth.global.ts"},
+    {"id": "SRF-mw-reservas-only", "kind": "middleware", "name": "reservas-only", "handler": "middleware/reservas-only.ts:3", "file": "middleware/reservas-only.ts"},
+    {"id": "SRF-plugin-api", "kind": "plugin", "name": "$api", "handler": "plugins/0.api-base.ts:5", "file": "plugins/0.api-base.ts"},
+    {"id": "SRF-plugin-i18n", "kind": "plugin", "name": "$t", "handler": "plugins/1.i18n.ts:6", "file": "plugins/1.i18n.ts"}
+  ]
+}

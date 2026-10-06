@@ -45,6 +45,7 @@ axes:
     - svelte-spa
     - prisma
     - jquery
+    - nuxt
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

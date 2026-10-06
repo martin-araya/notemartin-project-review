@@ -1068,3 +1068,65 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: `MATRIX.md` muestra `jquery` y `gulp` cubiertos por
   fx-vanilla-js-legacy. `fixtures_matrix.py --check` sigue con 20 gaps
   en otros ejes (F06g..F06l pendientes, no parte de este trabajo).
+
+### D-198 — Stack del fixture F06j: Nuxt 3 + Vue 3.5 + Pinia 2 + Nitro (F06j)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06j · vigente
+- Contexto: el fixture debe representar un frontend Nuxt 3 con
+  Pinia y rutas de servidor Nitro. La eleccion del stack afecta a
+  que trampas se pueden plantar (auto-imports, definePageMeta,
+  plugins provide, server/api por nombre, cross-store).
+- Decision: Nuxt 3.13, Vue 3.5 con `<script setup>` y Composition API,
+  Pinia 2.2 + `@pinia/nuxt`, Nitro (incluido en Nuxt) para
+  `server/api/`, `zod` 3.23 para validacion en server, Sass built-in
+  de Nuxt, `vitest` 3 + `@nuxt/test-utils` 3 + `happy-dom` para tests.
+  Sin TypeScript explicito en `tsconfig` (el fixture usa `<script
+  setup lang="ts">` por archivo pero sin `tsconfig.json`).
+- Alternativas: (a) Nuxt 2 con Vue 2 (descartado: fin de vida);
+  (b) Quasar (descartado: no es Vue 3 puro); (c) TypeScript con
+  `tsconfig.json` (descartado: el fixture es JS-flavoured para
+  mostrar la indireccion de auto-imports sin friccion).
+- Consecuencias: la suite de tests usa `vitest.config.ts` con
+  alias `~`, `@`, `#imports` para resolver las rutas de Nuxt. Los
+  tests de Pinia requieren `setActivePinia(createPinia())` antes
+  de instanciar stores. CC-11 obligo a renombrar los archivos
+  `tests/perfil.test.ts` y `server/api/reservas.*.ts` para evitar
+  menciones del nombre de feature en la primera linea de
+  comentario (el path mismo contiene el nombre).
+
+### D-199 — Naming: prefijo `NPRGT-FXVUE-` para los unique tokens de F06j (F06j)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06j · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-` para
+  los unique tokens de cada fixture. F06b..F06i usan
+  `FXTS/FXJAVA/FXMONO/FXMIN/FXPOLY/FXREACT/FXNEXT/FXVANILLA`.
+- Decision: prefijo `FXVUE` y exactamente 28 tokens. Ninguno
+  aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXNUXT` (descartado: Nuxt usa Vue como lenguaje
+  base); (b) `FXNITRO` (descartado: Nitro es solo el server, no
+  la app).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de estos
+  tokens aparece en `skills/`. Se anade al allowlist si fuera
+  necesario.
+
+### D-200 — Actualizacion de `target_matrix.yml` y `fixtures_matrix.py` para cubrir nuxt (F06j)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06j · vigente
+- Contexto: AGENTS §15 dice que relajar o ampliar un umbral del
+  Anexo C requiere al dueno. Anadir `nuxt` a `target_matrix.yml`
+  cambia el alcance de la matriz objetivo. Ademas,
+  `fixtures_matrix.py` no detectaba `nuxt.config.ts` ni la dep
+  `nuxt` en `package.json`.
+- Decision: anadir `frameworks: [nuxt]` a
+  `dev/fixtures/target_matrix.yml`. Extender
+  `dev/tools/fixtures_matrix.py` con `nuxt` en
+  `PACKAGE_JSON_MARKERS` y `nuxt.config.ts` en `FRAMEWORK_FILES`.
+- Alternativas: (a) no tocar `target_matrix.yml` (descartado: la
+  matriz quedaria artificialmente incompleta cuando el fixture ya
+  cubre Nuxt); (b) esperar a F06-cierre (descartado: cierra
+  brechas reales ya existentes; ademas `vue-spa` ya estaba en el
+  target pero sin fixture que lo cubriera).
+- Consecuencias: `MATRIX.md` muestra `nuxt` y `vue-spa` cubiertos
+  por fx-vue-nuxt. `fixtures_matrix.py --check` sigue con gaps en
+  otros ejes (F06k..F06l pendientes, no parte de este trabajo).

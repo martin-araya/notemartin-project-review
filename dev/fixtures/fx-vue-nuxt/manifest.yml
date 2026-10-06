@@ -1,0 +1,16 @@
+# Metadata del fixture F06j: fx-vue-nuxt
+# Aplicacion Nuxt 3 con Vue 3 (Composition API), Pinia y Nitro. Ver
+# referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-vue-nuxt/ground_truth.json.
+name: fx-vue-nuxt
+description: App Nuxt 3 con auto-imports, definePageMeta, plugins provide, server/api por nombre y Pinia cross-store (F06j)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: npm test -- --run
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-vue-nuxt
+  enabled: true
+ground_truth_format_version: 1

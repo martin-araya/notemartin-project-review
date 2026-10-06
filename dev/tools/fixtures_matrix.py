@@ -92,6 +92,8 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     # como dep en package.json indica React. Tambien capturamos ``vite`` desde
     # el mismo archivo.
     "vite.config.ts": {"react-spa", "vite"},
+    # Nuxt 3: la presencia de nuxt.config.ts indica una app Nuxt.
+    "nuxt.config.ts": {"nuxt"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -112,6 +114,8 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "next-auth": {"nextjs"},
     # jQuery como dep de runtime: frontend legacy con jQuery (F06i).
     "jquery": {"jquery"},
+    # Nuxt 3 como dep de runtime: app fullstack con auto-imports (F06j).
+    "nuxt": {"nuxt"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.

@@ -701,8 +701,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `jquery` (framework) y `gulp` (build_system).
 - [x] Commit `F06i: fixture fx-vanilla-js-legacy con paquete por feature`.
  
-## F06j — Fixture `fx-vue-nuxt`
- 
+## F06j — Fixture `fx-vue-nuxt` ✅
+
 **Objetivo:** aplicación Nuxt 3 con Vue 3 y Pinia.
 **Stack:** Vue 3 (`<script setup>`), Nuxt 3, Pinia, Nitro (rutas de servidor).
 **Features:** `reservas`, `perfil`, `notificaciones`.
@@ -714,7 +714,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. `defineModel` y `emits` en componentes con `v-model` personalizado.
 6. Stores de Pinia cuyas acciones llaman a otros stores.
 **Toolchain de tests:** Vitest + @nuxt/test-utils, en contenedor.
- 
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`reservas`, `perfil`, `notificaciones`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: auto_imports, define_page_meta, plugin_provide, server_api_by_name, define_model_emits, pinia_cross_store (CC-06).
+- [x] 6 trampas del paquete plantadas: dead_code_composable (useDateFmt), i18n_silent_fallback, store_no_owner_check (cancelar sin validar), fetch_no_retry, vmodel_string_vs_date, auth_redirect_loop (CC-04).
+- [x] 3 trampas superficiales: useDateFmt, seedExtra, HiddenPremium import explicito (CC-05).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones del ground truth en comentarios) en verde.
+- [x] Suite Vitest 27 tests passed (6 archivos: reservas 4, perfil 4, notifications 4, traps_ecosystem 6, traps_package 6, traps_superficial 3).
+- [x] `dev/tests/test_fx_vue_nuxt_ground_truth.py` agregado y verde (68 tests).
+- [x] `MATRIX.md` muestra `nuxt` y `vue-spa` cubiertos por fx-vue-nuxt.
+- [x] `pytest` total 589 passed (521 anteriores + 68 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot,react-spa,nextjs-fullstack,vanilla-js-legacy}.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `nuxt` (framework) y `nuxt.config.ts` en FRAMEWORK_FILES.
+- [x] Commit `F06j: fixture fx-vue-nuxt con paquete por feature`.
+
 ## F06k — Fixture `fx-sveltekit`
  
 **Objetivo:** aplicación SvelteKit con Svelte 5.

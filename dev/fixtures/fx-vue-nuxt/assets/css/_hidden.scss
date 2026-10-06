@@ -1,0 +1,6 @@
+// assets/css/_hidden.scss
+// Clases que aplican visibilidad reducida a contenido premium o
+// archivado. El JS las activa/desactiva segun el rol del usuario.
+.premium-hide { display: none; }
+.no-print { display: none; }
+.archived { opacity: 0.4; }
