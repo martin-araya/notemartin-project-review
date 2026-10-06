@@ -1,0 +1,15 @@
+# Imagen con JDK 21 + Gradle 8.10 pre-instalados. El host no necesita
+# ninguna de las dos: la verificacion se hace dentro del contenedor.
+FROM gradle:8.10-jdk21-jammy
+
+WORKDIR /fixture
+
+# Copiamos los archivos de build primero para que Gradle cachee el
+# classpath en una capa estable.
+COPY build.gradle.kts settings.gradle.kts gradle.properties ./
+RUN gradle --no-daemon dependencies --quiet || true
+
+COPY src ./src
+
+# Por defecto, ejecutar los tests.
+CMD ["gradle", "test", "--no-daemon", "--console=plain"]

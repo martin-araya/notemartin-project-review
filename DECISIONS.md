@@ -522,6 +522,92 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas: (a) requerir node localmente; (b) requerir Docker siempre. Descartado: doble standard confunde.
 - Consecuencias: la verificacion de F06b..F06e (y cualquier fixture TS/JS) requiere Docker; la verificacion de F06a (Python) sigue siendo local.
 
+### D-169 — Stack del fixture F06c: Java 21 + Micronaut 4 + Gradle Kotlin DSL + H2
+
+- Fecha · Fase · Estado: 2026-10-06 · F06c · vigente
+- Contexto: F06c requiere un servicio REST empresarial con DI compile-time,
+  persistencia JDBC, migraciones Flyway, cliente HTTP declarativo,
+  eventos in-process, scheduler y configuracion por entornos.
+- Decisión: stack = Java 21 (toolchain), Micronaut 4.4 (annotation processing),
+  Gradle 8.10 (Kotlin DSL), Micronaut Data JDBC + Flyway + H2 (tests).
+  Sin Java en host: el harness levanta el contenedor `gradle:8.10-jdk21-jammy`.
+- Alternativas: (a) Maven (descartado por el spec: Gradle Kotlin DSL);
+  (b) Spring Boot (descartado: el spec exige Micronaut 4); (c) Quarkus
+  (descartado por la misma razon). La unica opcion valida es Micronaut.
+- Consecuencias: el harness `run_fixture_tests.py` corre con
+  `container.enabled: true`; el host de desarrollo no necesita Java/Gradle.
+
+### D-170 — Contenedor `gradle:8.10-jdk21-jammy` sin wrapper
+
+- Fecha · Fase · Estado: 2026-10-06 · F06c · vigente
+- Contexto: el spec de F06b (TS) recomienda incluir el `gradle-wrapper.jar`
+  pregenerado para no depender de red al construir la imagen. F06c (Java)
+  toma un camino distinto: usar la imagen oficial de Gradle que ya trae
+  el cliente `gradle` en PATH.
+- Decisión: la imagen `gradle:8.10-jdk21-jammy` ya incluye JDK 21 + Gradle
+  8.10. El `Dockerfile.test` copia los archivos de build primero y cachea
+  `gradle dependencies` en una capa. El `test_cmd` del `manifest.yml` invoca
+  `gradle test --no-daemon --console=plain` directamente, sin wrapper.
+- Alternativas: (a) generar `gradlew` con `gradle wrapper` (requiere red para
+  descargar `gradle-wrapper.jar`); (b) usar `eclipse-temurin:21-jdk-jammy`
+  + descargar Gradle 8.10 en build (mas complejo, mismo resultado).
+  Descartado: la imagen oficial es la mas simple y reproducible.
+- Consecuencias: el fixture no commitea `gradlew` ni `gradle-wrapper.jar`;
+  el repositorio pesa menos. Si en el futuro el harness soporta mas JDKs,
+  sera trivial cambiar a `gradle:8.10-jdk17-jammy` u otra variante.
+
+### D-171 — Flyway + H2 en memoria para tests (F06c)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06c · vigente
+- Contexto: F06c requiere migraciones versionadas (Flyway) y un perfil de
+  tests rapido y sin red. La trampa del ecosistema #6 exige una columna
+  agregada por V2 que solo consume una `@Query` nativa.
+- Decisión: H2 en memoria (`jdbc:h2:mem:test;DB_CLOSE_DELAY=-1`) en
+  `application-test.yml`; Flyway habilitado en el perfil test con
+  `clean-disabled: false` para que cada `@MicronautTest` arranque con BD
+  limpia. Las migraciones V1 y V2 viven en `db/migration/` y se aplican
+  automaticamente al levantar el contexto.
+- Alternativas: (a) TestContainers + Postgres real (descartado: requiere
+  red y Docker en Docker); (b) BD en disco (descartado: mas lento, menos
+  reproducible). Descartado: H2 in-memory es el estandar de la comunidad
+  Micronaut para tests.
+- Consecuencias: el test `ScoreRepositoryTest.migracion_v2_crea_tabla_score_categories`
+  falla si V2 no se ejecuta (la query `JOIN score_categories` falla con
+  "Table not found"). Esto valida la trampa #6.
+
+### D-172 — snakeyaml en runtime (F06c)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06c · vigente
+- Contexto: Micronaut 4.4 carga archivos YAML de aplicacion (`application.yml`,
+  `application-{profile}.yml`) durante el build de Gradle via
+  `inspectRuntimeClasspath`. Si `snakeyaml` no esta en el classpath,
+  el build falla con "YAML configuration file detected but snakeyaml is
+  not on classpath".
+- Decisión: agregar `runtimeOnly("org.yaml:snakeyaml")` a `build.gradle.kts`.
+  Sin esto el test falla en compilacion. No afecta la skill publica; el
+  snakeyaml es exclusivo del fixture.
+- Alternativas: (a) snakeyaml en `implementation` (descartado: deberia ser
+  solo runtime); (b) `compileOnly` (descartado: idem).
+- Consecuencias: el `gradle dependencies` cachea snakeyaml en la imagen.
+
+### D-173 — Deteccion de Micronaut via el plugin en `build.gradle.kts`
+
+- Fecha · Fase · Estado: 2026-10-06 · F06c · vigente
+- Contexto: `fixtures_matrix.py` detecta frameworks por archivos
+  marcadores (`angular.json`, `micronaut-cli.yml`, `package.json#contributes`,
+  etc.). F06c no usa `micronaut-cli.yml` (Micronaut Launch lo genera solo
+  si inicializas el proyecto con `mn`); en su lugar, el plugin
+  `io.micronaut.application` en `build.gradle.kts` es el marcador real.
+- Decisión: extender `fixtures_matrix.py` para leer `build.gradle.kts` y
+  agregar `micronaut` a los frameworks cubiertos si contiene
+  `io.micronaut.application` (o `io.micronaut` en general).
+- Alternativas: (a) commitear un `micronaut-cli.yml` vacio como marcador
+  (descartado: ruido en el repo); (b) usar la presencia de
+  `@Serdeable`/`@Singleton` en el codigo fuente (descartado: regex fragil).
+  Descartado: el plugin es la unica senal canonica.
+- Consecuencias: `MATRIX.md` ahora muestra `micronaut` cubierto por
+  `fx-java-micronaut`, alineado con la realidad.
+
 ## Plantilla para nuevas decisiones
 
 ```

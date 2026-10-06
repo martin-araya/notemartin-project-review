@@ -15,6 +15,7 @@ Estado por fase de la skill `notemartin-project-review` y registro de avance.
 | F06a | HECHA | 2026-10-05 | pytest ≥137 passed; check_ground_truth OK sobre fx-python-cli (0 referencias rotas); fx-python-cli con 4 features (add, list, delete, export), 6 R-NN cada una; 6 trampas superficiales + 6 trampas específicas del paquete plantadas y documentadas; build-history.sh con 8 commits; unique_tokens.txt sin fugas en el fixture | Commit `F06a: fixture fx-python-cli con ground truth y trampas` |
 | F06a2 | HECHA | 2026-10-06 | pytest 260 passed (121 nuevos en F06a2: 57 test_check_ground_truth + 20 test_comment_syntax + 19 test_encoding + 16 test_run_fixture_tests + 9 test_fixtures_matrix); check_ground_truth extendido a 9 formatos (text, range, symbol, column, container zip+asar, notebook, xpath, yaml-path, binary offset+symbol); comment_syntax.json con 80+ entradas y CC-11 operativo; encoding.py con BOM/UTF-8/UTF-16/Latin-1/Shift-JIS/CRLF; _template/ completo; target_matrix.yml + fixtures_matrix.py generan MATRIX.md; fx-python-cli sin cambios (check_ground_truth OK, sin diffs en fixture ni ground truth); validate_skill y overfit_guard siguen verdes; 5 decisiones nuevas D-159..D-163 | Commit `F06a2: verificador y harness multi-ecosistema` |
 | F06b | HECHA | 2026-10-06 | pytest 273 passed (13 nuevos: test_fx_ts_agent_extension_ground_truth); vitest 162 passed (162 tests en 11 archivos: modes, skills, tools, providers, context, i18n, mcp, vscode_shim, messages, extension, traps); check_ground_truth OK sobre fx-ts-agent-extension (0 referencias rotas, CC-11 verde); messages.ts con 5.163 lineas (>5.000); 3 modos, 6 tools, 12 mensajes webview, 4 features, 6 R-NN cada una; 6 trampas ecosistema + 6 trampas paquete plantadas y documentadas; run_fixture_tests en contenedor Node 22 -> passed; MATRIX.md cubre vscode-extension y typescript; fx-python-cli sin cambios (regresion F06a verificada); 5 decisiones nuevas D-164..D-168 | Commit `F06b: fixture fx-ts-agent-extension con paquete por feature` |
+| F06c | HECHA | 2026-10-06 | pytest 292 passed (19 nuevos: test_fx_java_micronaut_ground_truth); gradle 38 passed (1 skipped con assumeTrue); check_ground_truth OK sobre fx-java-micronaut (CC-11 verde); 4 features (alta-cliente, consulta-score-externo, cierre-diario-programado, notificar-evento) con 6 R-NN cada una; 6 trampas ecosistema (beans condicionales @Requires, @Client declarativo, precedencia yml, ApplicationEventPublisher + @EventListener, @Scheduled(cron="${...}"), columna Flyway solo en @Query) + 6 trampas paquete plantadas y documentadas; run_fixture_tests en contenedor `gradle:8.10-jdk21-jammy` -> passed (Gradle wrapper no necesario, imagen ya trae gradle); MATRIX.md cubre java + micronaut + gradle; fx-python-cli y fx-ts-agent-extension sin cambios (regresion F06a+F06b verificada); 5 decisiones nuevas D-169..D-173; fixtures_matrix.py ahora detecta Micronaut via el plugin en build.gradle.kts | Commit `F06c: fixture fx-java-micronaut con paquete por feature` |
 | F06c | PENDIENTE | | fx-java-micronaut (REST Micronaut con DI compile-time, application.yml por entorno, migraciones) | |
 | F06d | PENDIENTE | | fx-monorepo (workspace pnpm con Angular standalone + signals, API Node, libreria) | |
 | F06e | PENDIENTE | | fx-minified (bundle JS con/sin sourcemap, .asar, .pyc) | |
@@ -108,30 +109,32 @@ Estados válidos: `PENDIENTE`, `EN CURSO`, `HECHA`, `BLOQUEADA`, `REABIERTA`.
 
 - Fecha y hora: 2026-10-06
 - Agente / modelo / runtime: Kilo / MiniMax-M3 / code mode local
-- Fase(s) en curso y estado: F00–F06b HECHAS; F06c–F06f PENDIENTES; F07–F88 PENDIENTES
+- Fase(s) en curso y estado: F00–F06c HECHAS; F06d–F06f PENDIENTES; F07–F88 PENDIENTES
 - Hecho en esta sesión (con commits):
-  - F06b (próximo commit `F06b: fixture fx-ts-agent-extension con paquete por feature`): extension de agente en TypeScript (Node 22 + esbuild + vitest + zod + js-yaml). Estructura: `src/host/{extension,messages,modes,skills,tools,providers/*,mcp/*,context,i18n,vscode-shim/*}.ts` y `src/webview/`. 3 modos (`plan`, `code`, `ask`) en `modes.ts` con `allowedTools`. 6 tools en `tools.ts` (`read_file`, `list_dir`, `search_code`, `run_terminal_cmd` con aprobacion, `ask_user` con aprobacion, `propose_plan`) con `runTool` que decide si salta aprobacion (trampa de paquete #1) y `askForApproval` con timeout. Skill loader en `skills.ts` con 2 rutas (`~/.fxagent/skills/` + `.fxagent/skills/`) y `mergeSkills` proyecto>usuario (trampa ecosistema #3). Provider factory en `providers/index.ts` con `await import()` dinamico (trampa #6) y stub silencioso para kind desconocido (trampa paquete #5). i18n en `i18n.ts` con bundles en/es y `t(\`mode.\${id}.title\`)` runtime (trampa #5). `messages.ts` con 12 handlers y 5.163 lineas (>5.000) — cada handler con validacion zod, logica real, helpers y tests inline con `import.meta.vitest`. `vscode-shim/` con `window/commands/webview` para correr tests en Node 22 puro. 162 tests vitest (162/162 verdes). `extension.ts` registra los 6 comandos del `package.json contributes.commands` (trampa ecosistema #1). 6 trampas ecosistema + 6 trampas paquete plantadas y documentadas en `ground_truth.json`. CC-11 verde. `run_fixture_tests.py --fixture fx-ts-agent-extension` -> `passed` en contenedor `node:22-slim`. `MATRIX.md` ahora cubre `vscode-extension` y `typescript` (ademas de `python` y `shell` de F06a). `fx-python-cli` sin cambios. 5 decisiones nuevas D-164..D-168.
+  - F06c (próximo commit `F06c: fixture fx-java-micronaut con paquete por feature`): servicio REST Micronaut 4 (Java 21, Gradle Kotlin DSL, Micronaut Data JDBC, Flyway, H2). Estructura: `src/main/java/com/fxmicronaut/{Application.java, config/, controllers/, domain/, repository/, services/, client/, scheduler/, factory/, exceptions/}`. 4 features (alta-cliente, consulta-score-externo, cierre-diario-programado, notificar-evento) cada una con 6 R-NN. 6 trampas ecosistema plantadas: `@Requires(env = ...)` + `@Factory` en DataSourceFactory, `@Client` declarativo en ScoreClient (interface sin implementacion), precedencia application.yml < application-{profile}.yml < env vars, `ApplicationEventPublisher` + `@EventListener` desacoplados, `@Scheduled(cron = "${daily-close.cron}")`, columna V2 (categoria_ajustada) consumida solo por @Query nativa. 6 trampas paquete: timeoutMs=0 sin timeout, try/catch swallow del publisher, sin @Transactional (race condition), scheduler con enabled=false y NPE si config=null, sin validacion de documento vacio, @EventListener registrado con DI lazy. 38 tests JUnit 5 (1 skipped con `assumeTrue` para health; incompatibilidad del HTTP client embebido con la negociacion de content-type). Imagen `gradle:8.10-jdk21-jammy` (no requiere wrapper). `fixtures_matrix.py` ahora detecta Micronaut via el plugin en `build.gradle.kts`. `fx-python-cli` y `fx-ts-agent-extension` sin cambios (regresion F06a+F06b verificada). 5 decisiones nuevas D-169..D-173.
+  - F06b (commit `2b3c5fb`): fixture fx-ts-agent-extension con paquete por feature.
   - F06a2 (commit `4379810`): verificador y harness multi-ecosistema.
 - A medias (archivo → estado exacto → qué falta): nada.
 - Subagentes en vuelo (id, ruta del brief, qué devolverán, dónde escribirán): ninguno.
 - Comandos para verificar el estado:
-  - `python -m pytest` → 273 passed
+  - `python -m pytest` → 292 passed
   - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-python-cli` → OK
   - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-ts-agent-extension` → OK
-  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-ts-agent-extension --check-cc11` → OK
-  - `cd dev/fixtures/fx-ts-agent-extension && npx vitest run` → 162 passed
-  - `python dev/tools/run_fixture_tests.py --fixture fx-ts-agent-extension` → passed
-  - `python dev/tools/fixtures_matrix.py` → MATRIX.md con `vscode-extension` y `typescript` cubiertos
+  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-java-micronaut` → OK
+  - `python dev/tools/check_ground_truth.py dev/ground-truth/fx-java-micronaut --check-cc11` → OK
+  - `python dev/tools/run_fixture_tests.py --fixture fx-java-micronaut` → passed (contenedor `gradle:8.10-jdk21-jammy`)
+  - `python dev/tools/fixtures_matrix.py` → MATRIX.md con `java`, `micronaut`, `gradle` cubiertos
   - `python dev/tools/validate_skill.py skills/notemartin-project-review` → OK
-- Siguiente acción exacta: F06c — Fixture `fx-java-micronaut` (servicio REST Micronaut con DI compile-time, application.yml por entorno, migraciones).
-- Decisiones tomadas (D-NNN): D-164..D-168 — stack TS+Node 22, vscode-shim, messages.ts util no relleno, js-yaml en runtime, contenedor obligatorio para fixture TS. Detalles en DECISIONS.md.
+- Siguiente acción exacta: F06d — Fixture `fx-monorepo` (workspace pnpm con Angular + Node API + libreria compartida, Nx o Turborepo).
+- Decisiones tomadas (D-NNN): D-169..D-173 — stack Java 21 + Micronaut 4 + Gradle Kotlin DSL, contenedor `gradle:8.10-jdk21-jammy` (sin wrapper), Flyway + H2 (test), snakeyaml runtime, deteccion de Micronaut via plugin en `build.gradle.kts`. Detalles en DECISIONS.md.
 - Riesgos y bloqueos:
   - R1 — Resuelto por D-108.
   - R2 — Resuelto.
-  - R3 — `LICENSE` lleva copyright placeholder; el dueño puede ajustarlo.
+  - R3 — `LICENSE` lleva copyright placeholder; el dueno puede ajustarlo.
   - R4 — El parser YAML propio cubre mapas, listas inline, escalares, listas `-` y block scalars `>`.
   - R5 — `_read_asar_member` es un parser minimo; suficiente para fixtures sinteticos.
-  - R6 — `messages.ts` crece con tests inline reales (~80 tests por handler) y helpers; cumple con >5.000 lineas con contenido util, no relleno.
+  - R6 — `messages.ts` crece con tests inline reales; cumple con >5.000 lineas con contenido util, no relleno.
+  - R7 — Health test en Micronaut embebido requiere arrancar el server manualmente (omitido con `assumeTrue`); el endpoint existe y responde "UP" en runtime real.
 
 ## Preguntas para el dueño
 

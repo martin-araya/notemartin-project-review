@@ -1,0 +1,33 @@
+micronaut:
+  application:
+    name: fxmicronaut
+  server:
+    port: 8080
+
+# Configuracion del cliente HTTP declarativo que consulta el score externo.
+# La URL puede sobreescribirse con la variable de entorno SCORE_BASE_URL.
+score:
+  client:
+    base-url: ${SCORE_BASE_URL:https://score.example.com}
+    timeout-ms: ${SCORE_TIMEOUT_MS:2000}
+
+# Configuracion del scheduler de cierre diario.
+# La expresion cron vive aqui (no hardcodeada) y puede sobreescribirse.
+daily-close:
+  cron: ${DAILY_CLOSE_CRON:0 0 2 * * *}
+  enabled: ${DAILY_CLOSE_ENABLED:true}
+
+# Datasource por defecto. En tests, application-test.yml lo reemplaza con H2 en memoria.
+datasources:
+  default:
+    url: ${JDBC_URL:jdbc:h2:mem:default;DB_CLOSE_DELAY=-1}
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+# Flyway aplica las migraciones al arrancar.
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration

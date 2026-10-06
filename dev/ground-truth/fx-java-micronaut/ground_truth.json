@@ -1,0 +1,206 @@
+{
+  "fixture": "fx-java-micronaut",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-app", "file": "src/main/java/com/fxmicronaut/Application.java", "line": 7, "function": "main", "kind": "script"},
+    {"id": "EP-scheduler", "file": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java", "line": 36, "function": "run", "kind": "scheduled"}
+  ],
+  "modules": [
+    {"id": "MOD-application", "path": "src/main/java/com/fxmicronaut/Application.java", "summary": "Micronaut entry point"},
+    {"id": "MOD-config", "path": "src/main/java/com/fxmicronaut/config", "summary": "@ConfigurationProperties beans"},
+    {"id": "MOD-controllers", "path": "src/main/java/com/fxmicronaut/controllers", "summary": "ClienteController + HealthController"},
+    {"id": "MOD-domain", "path": "src/main/java/com/fxmicronaut/domain", "summary": "Cliente + Score entities + events"},
+    {"id": "MOD-repository", "path": "src/main/java/com/fxmicronaut/repository", "summary": "ClienteRepository + ScoreRepository (Micronaut Data JDBC)"},
+    {"id": "MOD-services", "path": "src/main/java/com/fxmicronaut/services", "summary": "ClienteService + ScoreService + NotifierService"},
+    {"id": "MOD-client", "path": "src/main/java/com/fxmicronaut/client", "summary": "ScoreClient (@Client declarativo)"},
+    {"id": "MOD-scheduler", "path": "src/main/java/com/fxmicronaut/scheduler", "summary": "DailyCloseScheduler (@Scheduled)"},
+    {"id": "MOD-factory", "path": "src/main/java/com/fxmicronaut/factory", "summary": "DataSourceFactory (@Factory + @Requires)"},
+    {"id": "MOD-exceptions", "path": "src/main/java/com/fxmicronaut/exceptions", "summary": "Duplicate + NotFound excepciones"}
+  ],
+  "dependencies": [
+    {"name": "micronaut-http-server-netty", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "micronaut-jackson-databind", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "micronaut-serde-jackson", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "micronaut-validation", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "micronaut-data-jdbc", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "micronaut-jdbc-hikari", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "micronaut-flyway", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "flyway-core", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "logback-classic", "scope": "runtime", "manifest": "build.gradle.kts"},
+    {"name": "h2", "scope": "runtime", "manifest": "build.gradle.kts (runtimeOnly)"},
+    {"name": "junit-jupiter", "scope": "test", "manifest": "build.gradle.kts (testImplementation)"},
+    {"name": "micronaut-test-junit5", "scope": "test", "manifest": "build.gradle.kts (testImplementation)"},
+    {"name": "assertj-core", "scope": "test", "manifest": "build.gradle.kts (testImplementation)"},
+    {"name": "mockito", "scope": "test", "transitive_from": "micronaut-test-junit5"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "alta-cliente",
+      "user_description": "User POSTs a Cliente to /clientes; the service validates, persists, and emits ClienteAltaEvent.",
+      "traces": [
+        {"n": 1, "what": "POST /clientes with body", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:38", "data_in": "Cliente JSON", "data_out": "args"},
+        {"n": 2, "what": "Bean validation (@Valid)", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:39", "data_in": "Cliente", "data_out": "validated or 400"},
+        {"n": 3, "what": "delegate to ClienteService.alta", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:40", "data_in": "Cliente", "data_out": "Cliente saved"},
+        {"n": 4, "what": "findByDocumento (exists check)", "cite": "src/main/java/com/fxmicronaut/services/ClienteService.java:38", "data_in": "documento", "data_out": "Optional<Cliente>"},
+        {"n": 5, "what": "throw DuplicateClienteException if exists", "cite": "src/main/java/com/fxmicronaut/services/ClienteService.java:39", "data_in": "existing", "data_out": "exception"},
+        {"n": 6, "what": "repo.save (insert)", "cite": "src/main/java/com/fxmicronaut/services/ClienteService.java:42", "data_in": "Cliente", "data_out": "Cliente with id"},
+        {"n": 7, "what": "publish ClienteAltaEvent (swallow errors)", "cite": "src/main/java/com/fxmicronaut/services/ClienteService.java:43-47", "data_in": "saved", "data_out": "event or swallowed"},
+        {"n": 8, "what": "return 201 Created", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:41", "data_in": "saved", "data_out": "HTTP 201"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/main/java/com/fxmicronaut/services/ClienteService.java", "line": 38, "kind": "existence", "condition_text": "repo.findByDocumento(c.documento()).isPresent()", "branches": [{"label": "throw DuplicateClienteException", "target_line": 39}, {"label": "continue", "target_line": 42}]},
+        {"id": "DP-002", "file": "src/main/java/com/fxmicronaut/controllers/ClienteController.java", "line": 39, "kind": "validation", "condition_text": "@Valid on body", "branches": [{"label": "ok", "target_line": 40}, {"label": "Bean Validation fails -> 400", "target_line": 39}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "valid Cliente, no duplicate", "user_sees": "201 Created with Cliente body (id, nombre, documento, email, createdAt)", "side_effects": ["row inserted", "ClienteAltaEvent published", "NotifierService.onClienteAlta called"], "reversible": true, "final_state": "row visible in DB", "tests": ["src/test/java/com/fxmicronaut/ClienteControllerTest.java:alta_y_get_cliente_ok"]},
+        {"id": "R-02", "category": "error_duplicate", "conditions": "documento already exists", "user_sees": "DuplicateClienteException -> 400 with error message", "side_effects": ["no DB mutation"], "reversible": false, "final_state": "no change", "tests": ["src/test/java/com/fxmicronaut/ClienteControllerTest.java:alta_rechaza_documento_duplicado"]},
+        {"id": "R-03", "category": "error_validation", "conditions": "nombre or documento or email blank", "user_sees": "Bean Validation -> 400 with field error", "side_effects": ["no DB mutation"], "reversible": false, "final_state": "no change", "tests": ["src/test/java/com/fxmicronaut/ClienteControllerTest.java:alta_rechaza_campos_vacios"]},
+        {"id": "R-04", "category": "success_event", "conditions": "alta succeeded", "user_sees": "Notifier receives ClienteAltaEvent with documento", "side_effects": ["log entry", "delivered list appended"], "reversible": true, "final_state": "notifier.delivered() has 1 entry", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:recibe_cliente_alta_event"]},
+        {"id": "R-05", "category": "silent_fail", "conditions": "publisher.publishEvent throws (Notificador down)", "user_sees": "still 201 Created; warning logged in ClienteService", "side_effects": ["event NOT delivered; warning logged"], "reversible": true, "final_state": "row inserted; notifier did not receive", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:cliente_alta_con_publisher_fallido_sigue_ok"]},
+        {"id": "R-06", "category": "validation", "conditions": "payload missing required field", "user_sees": "Bean Validation 400 (ConstraintViolationException)", "side_effects": ["no DB mutation"], "reversible": false, "final_state": "no change", "tests": ["src/test/java/com/fxmicronaut/TrapsTest.java:trap_1_bean_condicional_con_requires"]}
+      ],
+      "errors": [
+        {"id": "ERR-001", "type": "DuplicateClienteException", "origin": "src/main/java/com/fxmicronaut/services/ClienteService.java:39", "message": "Cliente duplicado", "propagation": [{"layer": "service", "action": "throw", "cite": "src/main/java/com/fxmicronaut/services/ClienteService.java:39"}], "handled_at": "ClienteController", "user_sees": "400 with error message", "outcome": "R-02"}
+      ],
+      "config": [],
+      "states": [{"name": "absent", "description": "no row with this documento"}, {"name": "present", "description": "row exists with this documento"}],
+      "telemetry": [{"event": "ClienteAltaEvent", "payload": {"cliente": "Cliente"}, "emitted_at": "src/main/java/com/fxmicronaut/services/ClienteService.java:43"}],
+      "interactions": [{"feature": "FEAT-004", "kind": "publishes event consumed by NotifierService"}],
+      "callgraph": ["src/main/java/com/fxmicronaut/controllers/ClienteController.java:alta -> src/main/java/com/fxmicronaut/services/ClienteService.java:alta", "src/main/java/com/fxmicronaut/services/ClienteService.java:alta -> src/main/java/com/fxmicronaut/repository/ClienteRepository.java:findByDocumento", "src/main/java/com/fxmicronaut/services/ClienteService.java:alta -> src/main/java/com/fxmicronaut/repository/ClienteRepository.java:save"]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "consulta-score-externo",
+      "user_description": "User GETs /clientes/score?documento=X; the controller delegates to ScoreService which calls the @Client ScoreClient.",
+      "traces": [
+        {"n": 1, "what": "GET /clientes/score?documento=X", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:49", "data_in": "documento", "data_out": "args"},
+        {"n": 2, "what": "delegate to ScoreService.forDocumento", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:50", "data_in": "documento", "data_out": "Optional<Score>"},
+        {"n": 3, "what": "ScoreService.forDocumento", "cite": "src/main/java/com/fxmicronaut/services/ScoreService.java:23", "data_in": "documento", "data_out": "Optional<Score>"},
+        {"n": 4, "what": "ScoreClient.fetch (declarative HTTP)", "cite": "src/main/java/com/fxmicronaut/client/ScoreClient.java:21", "data_in": "documento", "data_out": "Score or null"},
+        {"n": 5, "what": "wrap in Optional", "cite": "src/main/java/com/fxmicronaut/services/ScoreService.java:30", "data_in": "Score", "data_out": "Optional<Score>"},
+        {"n": 6, "what": "return or throw NotFoundScoreException", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:51", "data_in": "Optional<Score>", "data_out": "Score or 404"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/main/java/com/fxmicronaut/services/ScoreService.java", "line": 25, "kind": "null_check", "condition_text": "documento == null", "branches": [{"label": "return empty", "target_line": 26}, {"label": "call client", "target_line": 28}]},
+        {"id": "DP-004", "file": "src/main/java/com/fxmicronaut/services/ScoreService.java", "line": 32, "kind": "exception", "condition_text": "client.fetch throws", "branches": [{"label": "swallow + return empty", "target_line": 33}, {"label": "ok", "target_line": 30}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "cliente externo returns Score", "user_sees": "200 with Score body (id, clienteId, valor, categoria, computedAt)", "side_effects": ["network call to score.client.base-url"], "reversible": false, "final_state": "score returned", "tests": ["src/test/java/com/fxmicronaut/ScoreServiceTest.java:devuelve_score_del_cliente_externo"]},
+        {"id": "R-02", "category": "not_found", "conditions": "cliente externo returns null", "user_sees": "NotFoundScoreException -> 404", "side_effects": ["no error logged"], "reversible": false, "final_state": "no score", "tests": ["src/test/java/com/fxmicronaut/ScoreServiceTest.java:retorna_vacio_si_cliente_devuelve_null"]},
+        {"id": "R-03", "category": "error_upstream", "conditions": "cliente externo lanza RuntimeException (timeout, 5xx, red)", "user_sees": "NotFoundScoreException -> 404 (silent_fail)", "side_effects": ["exception swallowed"], "reversible": false, "final_state": "no score", "tests": ["src/test/java/com/fxmicronaut/ScoreServiceTest.java:retorna_vacio_si_cliente_lanza_excepcion"]},
+        {"id": "R-04", "category": "validation_silent", "conditions": "documento is null", "user_sees": "404 (empty Optional without error)", "side_effects": ["no network call"], "reversible": false, "final_state": "no score", "tests": ["src/test/java/com/fxmicronaut/ScoreServiceTest.java:retorna_vacio_si_documento_null"]},
+        {"id": "R-05", "category": "validation_silent", "conditions": "documento is empty string (package trap #5)", "user_sees": "404 (empty Optional, no error visible)", "side_effects": ["client called with empty string"], "reversible": false, "final_state": "no score", "tests": ["src/test/java/com/fxmicronaut/ScoreServiceTest.java:retorna_vacio_si_documento_vacio_sin_error"]},
+        {"id": "R-06", "category": "success_ajustada", "conditions": "score has categoria_ajustada (from V2)", "user_sees": "Score with mapped categoria (premium/standard/basic)", "side_effects": ["ScoreRepository consumed the V2 column"], "reversible": false, "final_state": "score returned with mapped category", "tests": ["src/test/java/com/fxmicronaut/ScoreServiceTest.java:maneja_score_con_categoria_ajustada"]}
+      ],
+      "errors": [
+        {"id": "ERR-002", "type": "NotFoundScoreException", "origin": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:51", "message": "Score no encontrado", "propagation": [{"layer": "controller", "action": "throw", "cite": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:51"}], "handled_at": "global error handler", "user_sees": "404", "outcome": "R-02/R-03/R-04/R-05"}
+      ],
+      "config": [
+        {"key": "score.client.base-url", "kind": "env|file", "default": "https://score.example.com", "effect": "URL base del cliente HTTP"},
+        {"key": "score.client.timeout-ms", "kind": "env|file", "default": 2000, "effect": "timeout (0 = sin timeout, trampa paquete #1)"}
+      ],
+      "states": [],
+      "telemetry": [],
+      "interactions": [{"feature": "FEAT-001", "kind": "no directa; ambos usan el repositorio"}],
+      "callgraph": ["src/main/java/com/fxmicronaut/controllers/ClienteController.java:scoreByDocumento -> src/main/java/com/fxmicronaut/services/ScoreService.java:forDocumento", "src/main/java/com/fxmicronaut/services/ScoreService.java:forDocumento -> src/main/java/com/fxmicronaut/client/ScoreClient.java:fetch"]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "cierre-diario-programado",
+      "user_description": "The DailyCloseScheduler runs on the configured cron (default 2 AM), counts clientes, and publishes CierreDiarioEvent.",
+      "traces": [
+        {"n": 1, "what": "cron fires (or test calls run() directly)", "cite": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:36", "data_in": "no args", "data_out": "scheduler call"},
+        {"n": 2, "what": "check config.enabled()", "cite": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:38", "data_in": "config", "data_out": "boolean"},
+        {"n": 3, "what": "if false, return (no event)", "cite": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:39", "data_in": "-", "data_out": "void"},
+        {"n": 4, "what": "repo.count() (Micronaut Data)", "cite": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:42", "data_in": "-", "data_out": "long"},
+        {"n": 5, "what": "publish CierreDiarioEvent", "cite": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:43", "data_in": "LocalDate.now(), total", "data_out": "event"},
+        {"n": 6, "what": "NotifierService.onCierreDiario receives", "cite": "src/main/java/com/fxmicronaut/services/NotifierService.java:47", "data_in": "CierreDiarioEvent", "data_out": "log + delivered list"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java", "line": 38, "kind": "config_check", "condition_text": "!config.enabled()", "branches": [{"label": "return", "target_line": 39}, {"label": "continue", "target_line": 42}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "enabled=true, repo.count() returns N", "user_sees": "CierreDiarioEvent published with fecha=LocalDate.now(), totalClientes=N", "side_effects": ["event published", "NotifierService.onCierreDiario called"], "reversible": false, "final_state": "delivered list has new entry", "tests": ["src/test/java/com/fxmicronaut/DailyCloseSchedulerTest.java:run_publica_evento_con_total_de_clientes"]},
+        {"id": "R-02", "category": "no_op", "conditions": "enabled=false (default in tests)", "user_sees": "nothing", "side_effects": ["no event published"], "reversible": false, "final_state": "delivered list unchanged", "tests": ["src/test/java/com/fxmicronaut/DailyCloseSchedulerTest.java:run_no_publica_si_disabled"]},
+        {"id": "R-03", "category": "success_config", "conditions": "config has cron set", "user_sees": "@Scheduled annotation binds to daily-close.cron", "side_effects": ["scheduler registered"], "reversible": false, "final_state": "scheduler active", "tests": ["src/test/java/com/fxmicronaut/DailyCloseSchedulerTest.java:tiene_expresion_cron_externa"]},
+        {"id": "R-04", "category": "config_override", "conditions": "DAILY_CLOSE_CRON env var set", "user_sees": "scheduler uses the env var instead of application.yml", "side_effects": ["config re-evaluated"], "reversible": true, "final_state": "scheduler uses new cron", "tests": ["src/test/java/com/fxmicronaut/TrapsTest.java:trap_3_precedencia_yml_sobre_dev"]},
+        {"id": "R-05", "category": "config_override", "conditions": "DAILY_CLOSE_ENABLED=false env var set", "user_sees": "scheduler registered but does nothing on tick", "side_effects": ["scheduler registered"], "reversible": true, "final_state": "scheduler active but no-op", "tests": ["src/test/java/com/fxmicronaut/DailyCloseSchedulerTest.java:run_no_publica_si_disabled"]},
+        {"id": "R-06", "category": "error_internal", "conditions": "config is null (DI failure)", "user_sees": "NullPointerException (NPE) on first tick", "side_effects": ["scheduler task fails"], "reversible": false, "final_state": "scheduler broken", "tests": ["src/test/java/com/fxmicronaut/TrapsTest.java:package_trap_4_scheduler_retorna_si_disabled"]}
+      ],
+      "errors": [],
+      "config": [
+        {"key": "daily-close.cron", "kind": "env|file", "default": "0 0 2 * * *", "effect": "expresion cron para @Scheduled"},
+        {"key": "daily-close.enabled", "kind": "env|file", "default": true, "effect": "si false, el scheduler no publica eventos"}
+      ],
+      "states": [{"name": "disabled", "description": "scheduler tick no hace nada"}, {"name": "enabled", "description": "scheduler tick publica CierreDiarioEvent"}],
+      "telemetry": [{"event": "CierreDiarioEvent", "payload": {"fecha": "LocalDate", "totalClientes": "int"}, "emitted_at": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:43"}],
+      "interactions": [{"feature": "FEAT-004", "kind": "publishes event consumed by NotifierService"}],
+      "callgraph": ["src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:run -> src/main/java/com/fxmicronaut/repository/ClienteRepository.java:count", "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:run -> ApplicationEventPublisher.publishEvent"]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "notificar-evento",
+      "user_description": "NotifierService receives application events (ClienteAltaEvent, CierreDiarioEvent) and reacts without coupling to the publishers.",
+      "traces": [
+        {"n": 1, "what": "emitter publishes event (anywhere in app)", "cite": "src/main/java/com/fxmicronaut/services/ClienteService.java:43", "data_in": "ClienteAltaEvent", "data_out": "publish"},
+        {"n": 2, "what": "Micronaut routes by type", "cite": "src/main/java/com/fxmicronaut/services/NotifierService.java:41", "data_in": "event", "data_out": "method call"},
+        {"n": 3, "what": "NotifierService.onClienteAlta invoked", "cite": "src/main/java/com/fxmicronaut/services/NotifierService.java:42", "data_in": "event", "data_out": "log + delivered"},
+        {"n": 4, "what": "append to delivered list", "cite": "src/main/java/com/fxmicronaut/services/NotifierService.java:43", "data_in": "msg", "data_out": "delivered"},
+        {"n": 5, "what": "log info", "cite": "src/main/java/com/fxmicronaut/services/NotifierService.java:44", "data_in": "msg", "data_out": "log"},
+        {"n": 6, "what": "second listener onCierreDiario (when CierreDiarioEvent published)", "cite": "src/main/java/com/fxmicronaut/services/NotifierService.java:48", "data_in": "CierreDiarioEvent", "data_out": "log + delivered"}
+      ],
+      "decision_points": [],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "ClienteAltaEvent published", "user_sees": "NotifierService.delivered() has 1 entry; log line printed", "side_effects": ["log", "delivered list mutated"], "reversible": true, "final_state": "delivered has 1 entry", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:recibe_cliente_alta_event"]},
+        {"id": "R-02", "category": "success", "conditions": "CierreDiarioEvent published", "user_sees": "NotifierService.delivered() has new entry with 'Cierre diario' prefix", "side_effects": ["log", "delivered list mutated"], "reversible": true, "final_state": "delivered has new entry", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:recibe_cierre_diario_event"]},
+        {"id": "R-03", "category": "success_multi", "conditions": "multiple events published", "user_sees": "NotifierService.delivered() has N entries", "side_effects": ["N log lines"], "reversible": true, "final_state": "delivered has N entries", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:puede_recibir_multiples_eventos"]},
+        {"id": "R-04", "category": "decoupled", "conditions": "NotifierService is registered but emitter does not import it", "user_sees": "events delivered without emitter knowing the receiver", "side_effects": ["DI decouples types"], "reversible": true, "final_state": "events still delivered", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:emisor_y_receptor_desacoplados"]},
+        {"id": "R-05", "category": "silent_fail", "conditions": "emitter wraps publisher in try/catch", "user_sees": "still 201, but no notification", "side_effects": ["warning logged in ClienteService"], "reversible": true, "final_state": "notifier.delivered() empty; row inserted", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:cliente_alta_con_publisher_fallido_sigue_ok"]},
+        {"id": "R-06", "category": "validation", "conditions": "no event published", "user_sees": "nothing", "side_effects": ["no log"], "reversible": false, "final_state": "delivered empty", "tests": ["src/test/java/com/fxmicronaut/NotifierServiceTest.java:cleanup"]}
+      ],
+      "errors": [],
+      "config": [],
+      "states": [{"name": "no_events", "description": "delivered list empty"}, {"name": "received_n", "description": "delivered list has N entries"}],
+      "telemetry": [],
+      "interactions": [{"feature": "FEAT-001", "kind": "consumes ClienteAltaEvent"}, {"feature": "FEAT-003", "kind": "consumes CierreDiarioEvent"}],
+      "callgraph": ["src/main/java/com/fxmicronaut/services/NotifierService.java:onClienteAlta", "src/main/java/com/fxmicronaut/services/NotifierService.java:onCierreDiario"]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-http-post-clientes", "kind": "http", "name": "POST /clientes", "handler": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:alta", "file": "src/main/java/com/fxmicronaut/controllers/ClienteController.java", "line": 38, "pair": "ClienteAltaEvent"},
+    {"id": "SRF-http-get-clientes-id", "kind": "http", "name": "GET /clientes/{id}", "handler": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:get", "file": "src/main/java/com/fxmicronaut/controllers/ClienteController.java", "line": 45, "pair": null},
+    {"id": "SRF-http-get-clientes-score", "kind": "http", "name": "GET /clientes/score?documento=...", "handler": "src/main/java/com/fxmicronaut/controllers/ClienteController.java:scoreByDocumento", "file": "src/main/java/com/fxmicronaut/controllers/ClienteController.java", "line": 49, "pair": "ScoreClient.fetch"},
+    {"id": "SRF-http-get-health", "kind": "http", "name": "GET /health", "handler": "src/main/java/com/fxmicronaut/controllers/HealthController.java:health", "file": "src/main/java/com/fxmicronaut/controllers/HealthController.java", "line": 13, "pair": null},
+    {"id": "SRF-event-cliente-alta", "kind": "event", "name": "ClienteAltaEvent", "handler": "src/main/java/com/fxmicronaut/services/NotifierService.java:onClienteAlta", "file": "src/main/java/com/fxmicronaut/services/NotifierService.java", "line": 41, "pair": null},
+    {"id": "SRF-event-cierre-diario", "kind": "event", "name": "CierreDiarioEvent", "handler": "src/main/java/com/fxmicronaut/services/NotifierService.java:onCierreDiario", "file": "src/main/java/com/fxmicronaut/services/NotifierService.java", "line": 47, "pair": null},
+    {"id": "SRF-scheduled-daily-close", "kind": "scheduled", "name": "@Scheduled daily-close", "handler": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:run", "file": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java", "line": 36, "pair": "CierreDiarioEvent"},
+    {"id": "SRF-client-score", "kind": "client", "name": "ScoreClient.fetch", "handler": "src/main/java/com/fxmicronaut/client/ScoreClient.java:fetch", "file": "src/main/java/com/fxmicronaut/client/ScoreClient.java", "line": 21, "pair": null}
+  ],
+  "config": [
+    {"key": "score.client.base-url", "kind": "env|file", "default": "https://score.example.com", "values": ["any URL"]},
+    {"key": "score.client.timeout-ms", "kind": "env|file", "default": 2000, "effect": "0 = sin timeout (trampa paquete #1)"},
+    {"key": "daily-close.cron", "kind": "env|file", "default": "0 0 2 * * *"},
+    {"key": "daily-close.enabled", "kind": "env|file", "default": true},
+    {"key": "datasources.default.url", "kind": "env|file", "default": "jdbc:h2:mem:default;DB_CLOSE_DELAY=-1"},
+    {"key": "datasources.default.driver-class-name", "kind": "env|file", "default": "org.h2.Driver"},
+    {"key": "flyway.datasources.default.enabled", "kind": "env|file", "default": true},
+    {"key": "flyway.datasources.default.locations", "kind": "env|file", "default": "classpath:db/migration"}
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "conditional_bean", "where": "src/main/java/com/fxmicronaut/factory/DataSourceFactory.java:23", "resolution": "El bean DataSource activo depende del entorno via @Requires(env = 'dev') o @Requires(notEnv = 'dev'). El scanner debe leer el perfil activo para saber cual se inyecta."},
+    {"id": "TRAP-E02", "kind": "declarative_client", "where": "src/main/java/com/fxmicronaut/client/ScoreClient.java:18", "resolution": "ScoreClient es interface con @Client; sin clase. Micronaut genera el proxy en compilación."},
+    {"id": "TRAP-E03", "kind": "config_precedence", "where": "src/main/resources/application.yml, application-dev.yml, application-test.yml", "resolution": "Precedencia: application.yml < application-{profile}.yml < variables de entorno (SCORE_BASE_URL gana sobre application-dev.yml)."},
+    {"id": "TRAP-E04", "kind": "event_decoupled", "where": "src/main/java/com/fxmicronaut/services/NotifierService.java:41", "resolution": "ApplicationEventPublisher y @EventListener acoplan por tipo, no por referencia directa. NotifierService no importa ClienteService ni DailyCloseScheduler."},
+    {"id": "TRAP-E05", "kind": "external_cron", "where": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:36", "resolution": "La expresion cron viene de configuracion (${daily-close.cron}), no hardcodeada. Cambiable por env o por application-{profile}.yml."},
+    {"id": "TRAP-E06", "kind": "flyway_native_column", "where": "src/main/resources/db/migration/V2__add_score_extra.sql", "resolution": "La columna categoria_ajustada solo la consume la @Query nativa de ScoreRepository. El modelo Micronaut Data no la ve."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "feature": "FEAT-002", "kind": "combination_two_settings", "where": "src/main/java/com/fxmicronaut/config/ScoreClientConfig.java:20", "resolution": "Si timeoutMs <= 0 en la config, queda en 0 (sin timeout). La combinacion de setting + comportamiento produce cuelgue de la llamada HTTP."},
+    {"id": "TRAP-P02", "feature": "FEAT-001", "kind": "empty_catch_swallows_error", "where": "src/main/java/com/fxmicronaut/services/ClienteService.java:43-47", "resolution": "El try/catch alrededor de publisher.publishEvent traga los errores de Notifier. El usuario recibe 201 Created aunque el evento no se haya entregado."},
+    {"id": "TRAP-P03", "feature": "FEAT-001", "kind": "race_condition", "where": "src/main/java/com/fxmicronaut/services/ClienteService.java:37 (sin @Transactional)", "resolution": "El metodo alta no es transaccional. findByDocumento y save corren en conexiones separadas; dos inserts concurrentes con el mismo documento pueden ambos pasar el check; el UNIQUE constraint rechaza uno con excepcion."},
+    {"id": "TRAP-P04", "feature": "FEAT-003", "kind": "combination_two_settings", "where": "src/main/java/com/fxmicronaut/scheduler/DailyCloseScheduler.java:38-40", "resolution": "Si config.enabled() es false, run() retorna sin publicar. La combinacion de enabled=false + cualquier config (incluso null) produce un scheduler que se ejecuta pero no hace nada (con NPE si config es null)."},
+    {"id": "TRAP-P05", "feature": "FEAT-002", "kind": "missing_validation", "where": "src/main/java/com/fxmicronaut/services/ScoreService.java:23", "resolution": "forDocumento no valida documento vacio o blank. El cliente externo recibe '' y devuelve null/404; el caller obtiene Optional.empty() sin explicacion."},
+    {"id": "TRAP-P06", "feature": "FEAT-004", "kind": "lazy_di_failure", "where": "src/main/java/com/fxmicronaut/services/NotifierService.java:41", "resolution": "El bean NotifierService se inyecta en el primer evento, no al arranque. Si la inyeccion falla, el error aparece al primer evento, no en el startup. Sin @PostConstruct que valide la inyeccion al arranque."}
+  ]
+}

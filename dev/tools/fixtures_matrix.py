@@ -167,6 +167,16 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
             if marker in data:
                 covered["frameworks"] |= frameworks
 
+    # Detectar Micronaut via el plugin en build.gradle.kts.
+    gradle_kts = fixture_dir / "build.gradle.kts"
+    if gradle_kts.is_file():
+        try:
+            content = gradle_kts.read_text(encoding="utf-8")
+            if "io.micronaut.application" in content or "io.micronaut" in content:
+                covered["frameworks"].add("micronaut")
+        except (OSError, UnicodeDecodeError):
+            pass
+
     # Recorrido del arbol para extensiones
     for path in fixture_dir.rglob("*"):
         if not path.is_file():

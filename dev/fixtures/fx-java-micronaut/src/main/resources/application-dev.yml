@@ -1,0 +1,19 @@
+# Overrides para entorno dev. La base-url del cliente de score apunta a un
+# servidor local ficticio (no se hace red real: el cliente se mockea en tests
+# con @MockBean). Esta precedencia esta documentada como trampa del
+# ecosistema #3 en el ground truth.
+
+score:
+  client:
+    base-url: http://localhost:8081
+    timeout-ms: 500
+
+daily-close:
+  enabled: false
+
+datasources:
+  default:
+    url: jdbc:h2:mem:dev;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""

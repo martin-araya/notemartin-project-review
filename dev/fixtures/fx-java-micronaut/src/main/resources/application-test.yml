@@ -1,0 +1,25 @@
+# Overrides para el perfil "test" (activado por @MicronautTest automaticamente).
+# Apuntamos a H2 en memoria, deshabilitamos el scheduler (los tests no deben
+# dispararlo) y deshabilitamos la red en el cliente de score (los tests usan
+# @MockBean para inyectar una version stub).
+
+score:
+  client:
+    base-url: http://localhost:0
+
+daily-close:
+  enabled: false
+
+datasources:
+  default:
+    url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+      clean-disabled: false

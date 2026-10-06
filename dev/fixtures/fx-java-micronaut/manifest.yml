@@ -1,0 +1,16 @@
+# Metadata del fixture F06c: fx-java-micronaut
+# Servicio REST Micronaut 4 con DI compile-time, Flyway, @Client, @Scheduled,
+# @EventListener. El JDK no esta instalado en el host; el harness levanta
+# el contenedor gradle:8.10-jdk21-jammy que incluye ambos.
+name: fx-java-micronaut
+description: Servicio REST Micronaut con cliente @Client, scheduler, eventos, migraciones y DI condicional (F06c)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: gradle test --no-daemon --console=plain
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-java-micronaut
+  enabled: true
+ground_truth_format_version: 1
