@@ -43,6 +43,7 @@ axes:
     - vue-spa
     - nextjs
     - svelte-spa
+    - prisma
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

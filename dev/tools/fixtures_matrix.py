@@ -106,6 +106,15 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "next": {"nextjs"},
     "svelte": {"svelte-spa"},
     "@reduxjs/toolkit": {"react-spa"},
+    # Next.js App Router: ``next`` ya cubre nextjs; anadimos next-auth para
+    # distinguir Next.js fullstack de SPA.
+    "next-auth": {"nextjs"},
+}
+
+# Dependencias que definen el ecosistema por si mismas.
+DEPENDENCY_ECOSYSTEM: Dict[str, Set[str]] = {
+    "@prisma/client": {"prisma"},
+    "prisma": {"prisma"},
 }
 
 # Tipos de archivo
@@ -197,6 +206,10 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
         for marker, frameworks in PACKAGE_JSON_MARKERS.items():
             if marker in deps:
                 covered["frameworks"] |= frameworks
+        # Ecosistemas definidos solo por su dep (no son frameworks SPA).
+        for marker, ecosystems in DEPENDENCY_ECOSYSTEM.items():
+            if marker in deps:
+                covered["frameworks"] |= ecosystems
 
     # Detectar Micronaut via el plugin en build.gradle.kts.
     gradle_kts = fixture_dir / "build.gradle.kts"

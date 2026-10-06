@@ -1,0 +1,216 @@
+{
+  "fixture": "fx-nextjs-fullstack",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-html", "artifact": "RootLayout", "file": "app/layout.tsx"},
+    {"id": "EP-home", "artifact": "HomePage", "file": "app/page.tsx"},
+    {"id": "EP-middleware", "artifact": "middleware.ts", "file": "middleware.ts"},
+    {"id": "EP-prisma", "artifact": "schema.prisma", "file": "prisma/schema.prisma"}
+  ],
+  "modules": [
+    {"id": "MOD-layout", "path": "app/layout.tsx", "summary": "RootLayout (RSC) con Nav y auth()"},
+    {"id": "MOD-home", "path": "app/page.tsx", "summary": "HomePage (RSC) con ISR revalidate=60 y tag 'home'"},
+    {"id": "MOD-router-marketing", "path": "app/(marketing)/", "summary": "Route group: registro/login/publicar-articulo/articulos/[slug]"},
+    {"id": "MOD-page-registro", "path": "app/(marketing)/registro/page.tsx", "summary": "Registro (RSC) con RegistrarForm"},
+    {"id": "MOD-page-login", "path": "app/(marketing)/login/page.tsx", "summary": "Login (RSC) con LoginForm (ignora `from`)"},
+    {"id": "MOD-page-publicar", "path": "app/(marketing)/publicar-articulo/page.tsx", "summary": "Publicar (RSC) - redirige sin sesion"},
+    {"id": "MOD-page-articulo", "path": "app/(marketing)/articulos/[slug]/page.tsx", "summary": "Detalle (RSC) con revalidate=60 y CommentBox"},
+    {"id": "MOD-page-comentarios", "path": "app/comentarios/page.tsx", "summary": "Lista de comentarios (RSC)"},
+    {"id": "MOD-page-comentario", "path": "app/comentarios/[id]/page.tsx", "summary": "Detalle de comentario"},
+    {"id": "MOD-page-panel-admin", "path": "app/panel-admin/page.tsx", "summary": "Panel admin (RSC) con AdminPanel y redirect por rol"},
+    {"id": "MOD-modal-default", "path": "app/@modal/default.tsx", "summary": "Default del slot parallel @modal"},
+    {"id": "MOD-modal-intercepting", "path": "app/@modal/(.)comentarios/page.tsx", "summary": "Intercepting route para /comentarios"},
+    {"id": "MOD-api-comentarios", "path": "app/api/comentarios/route.ts", "summary": "Route Handler GET/POST"},
+    {"id": "MOD-api-health", "path": "app/api/health/route.ts", "summary": "Health check (no protegido por middleware)"},
+    {"id": "MOD-component-nav", "path": "app/components/Nav.tsx", "summary": "'use client' Nav con useSession"},
+    {"id": "MOD-component-registrar", "path": "app/components/RegistrarForm.tsx", "summary": "'use client' Form de registro"},
+    {"id": "MOD-component-login", "path": "app/components/LoginForm.tsx", "summary": "'use client' Form de login"},
+    {"id": "MOD-component-publicar", "path": "app/components/PublicarForm.tsx", "summary": "'use client' Form de publicar"},
+    {"id": "MOD-component-commentbox", "path": "app/components/CommentBox.tsx", "summary": "'use client' Caja con useOptimistic"},
+    {"id": "MOD-component-adminpanel", "path": "app/components/AdminPanel.tsx", "summary": "'use client' Panel admin con tabs"},
+    {"id": "MOD-component-footer", "path": "app/components/Footer.tsx", "summary": "Footer estatico (no usado en layout)"},
+    {"id": "MOD-action-auth", "path": "app/actions/auth.ts", "summary": "'use server' registrar/loginAction/logoutAction"},
+    {"id": "MOD-action-articles", "path": "app/actions/articles.ts", "summary": "'use server' publicarArticulo/deleteArticulo"},
+    {"id": "MOD-action-comments", "path": "app/actions/comments.ts", "summary": "'use server' addComment/deleteComment"},
+    {"id": "MOD-lib-db", "path": "app/lib/db.ts", "summary": "PrismaClient singleton"},
+    {"id": "MOD-lib-auth", "path": "app/lib/auth.ts", "summary": "NextAuth config con CredentialsProvider"},
+    {"id": "MOD-lib-tags", "path": "app/lib/tags.ts", "summary": "TAG_ARTICLES, TAG_HOME, TAG_COMMENTS, TAG_ARTICULO factory"},
+    {"id": "MOD-lib-utils", "path": "app/lib/utils.ts", "summary": "formatDate (no usado), slugify, excerpt"},
+    {"id": "MOD-prisma-schema", "path": "prisma/schema.prisma", "summary": "SQLite con User/Article/Comment/Session"},
+    {"id": "MOD-prisma-seed", "path": "prisma/seed.ts", "summary": "seedDemo + seedAdminDemo (no llamado)"},
+    {"id": "MOD-middleware", "path": "middleware.ts", "summary": "Next.js middleware en raiz: redirige /panel-admin sin sesion"}
+  ],
+  "dependencies": [
+    {"name": "next", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react-dom", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "next-auth", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@prisma/client", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "bcryptjs", "scope": "runtime", "manifest": "package.json (dependencies) (no usado)"},
+    {"name": "zod", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "prisma", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@playwright/test", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "vitest", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@testing-library/jest-dom", "scope": "dev", "manifest": "package.json (devDependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "registro",
+      "user_description": "El usuario crea una cuenta nueva; la password se guarda en texto plano y se le pide luego que inicie sesion.",
+      "traces": [
+        {"n": 1, "what": "User navega a /registro", "cite": "app/(marketing)/registro/page.tsx:5", "data_in": "GET /registro", "data_out": "RegistroPage mounts (RSC)"},
+        {"n": 2, "what": "RegistrarForm (Client Component) con 'use client'", "cite": "app/components/RegistrarForm.tsx:1", "data_in": "form mounted", "data_out": "client component interactivo"},
+        {"n": 3, "what": "User submits form", "cite": "app/components/RegistrarForm.tsx:11", "data_in": "name, email, password", "data_out": "action(formData) call"},
+        {"n": 4, "what": "registrar() action (Server) con zod validation", "cite": "app/actions/auth.ts:38", "data_in": "FormData", "data_out": "ActionResult | error"},
+        {"n": 5, "what": "db.user.create() con password en texto plano (trampa paquete #5)", "cite": "app/actions/auth.ts:55", "data_in": "User object", "data_out": "user inserted"},
+        {"n": 6, "what": "Set Result; show success message", "cite": "app/components/RegistrarForm.tsx:38", "data_in": "ok=true", "data_out": "User sees success"},
+        {"n": 7, "what": "User clicks 'Iniciar sesion' link", "cite": "app/components/RegistrarForm.tsx:40", "data_in": "click", "data_out": "navigate to /login"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "app/actions/auth.ts", "line": 41, "kind": "validation", "condition_text": "registroSchema.safeParse(...)", "branches": [{"label": "ok -> proceed", "target_line": 50}, {"label": "error -> inline message", "target_line": 43}]},
+        {"id": "DP-002", "file": "app/actions/auth.ts", "line": 50, "kind": "existence", "condition_text": "existing user with email", "branches": [{"label": "ok -> proceed", "target_line": 55}, {"label": "email_exists", "target_line": 51}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "email valido + password >= 8 + email nuevo", "user_sees": "mensaje 'Cuenta creada' + link a /login", "side_effects": ["db.user.create con password plaintext"], "reversible": false, "final_state": "user created"},
+        {"id": "R-02", "category": "error_email_exists", "conditions": "email ya registrado", "user_sees": "alert 'email_exists'", "side_effects": ["none"], "reversible": true, "final_state": "no user created"},
+        {"id": "R-03", "category": "error_invalid_email", "conditions": "formato email invalido", "user_sees": "alert 'invalid_email'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-04", "category": "error_password_short", "conditions": "password < 8", "user_sees": "alert 'password_too_short'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-05", "category": "error_name_short", "conditions": "name < 2 chars", "user_sees": "alert 'name_too_short'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-06", "category": "noop_unauthenticated", "already_logged_in": "el form no se muestra si hay sesion (se renderiza igualmente pero no se usa)", "user_sees": "formulario normal", "side_effects": [], "reversible": true, "final_state": "form visible"},
+        {"id": "R-07", "category": "noop_network_error", "conditions": "fetch fallaria si fuera fetch, pero es action() - sin red directa", "user_sees": "submit bloqueado por pending", "side_effects": [], "reversible": true, "final_state": "form state idle"}
+      ],
+      "config": [],
+      "states": [{"name": "idle"}, {"name": "pending"}, {"name": "success"}, {"name": "error"}]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "publicar-articulo",
+      "user_description": "El usuario autenticado redacta un articulo; al publicarlo se invalida el tag 'articles' (no 'home').",
+      "traces": [
+        {"n": 1, "what": "User autenticado navega a /publicar-articulo", "cite": "app/(marketing)/publicar-articulo/page.tsx:7", "data_in": "GET /publicar-articulo", "data_out": "PublicarArticuloPage mounts"},
+        {"n": 2, "what": "await auth() valida sesion (RSC)", "cite": "app/(marketing)/publicar-articulo/page.tsx:9", "data_in": "cookies", "data_out": "session | redirect /login?from=/publicar-articulo"},
+        {"n": 3, "what": "PublicarForm (Client Component) con 'use client'", "cite": "app/components/PublicarForm.tsx:1", "data_in": "form rendered", "data_out": "client component"},
+        {"n": 4, "what": "User submits title + body", "cite": "app/components/PublicarForm.tsx:12", "data_in": "title, body", "data_out": "action(formData)"},
+        {"n": 5, "what": "publicarArticulo() action con zod + auth check", "cite": "app/actions/articles.ts:24", "data_in": "FormData", "data_out": "ActionResult | redirect"},
+        {"n": 6, "what": "db.article.create", "cite": "app/actions/articles.ts:46", "data_in": "Article object", "data_out": "article inserted"},
+        {"n": 7, "what": "revalidateTag(TAG_ARTICLES) - pero NO TAG_HOME (trampa #2)", "cite": "app/actions/articles.ts:55", "data_in": "TAG_ARTICLES", "data_out": "tag invalidated"},
+        {"n": 8, "what": "revalidatePath(/articulos/${slug})", "cite": "app/actions/articles.ts:56", "data_in": "path", "data_out": "path invalidated"},
+        {"n": 9, "what": "redirect(/articulos/${slug})", "cite": "app/actions/articles.ts:58", "data_in": "path", "data_out": "navigate"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "app/(marketing)/publicar-articulo/page.tsx", "line": 10, "kind": "auth", "condition_text": "!session?.user", "branches": [{"label": "redirect /login", "target_line": 11}, {"label": "render form", "target_line": 13}]},
+        {"id": "DP-004", "file": "app/actions/articles.ts", "line": 28, "kind": "auth", "condition_text": "session.user", "branches": [{"label": "proceed", "target_line": 33}, {"label": "unauthorized", "target_line": 29}]},
+        {"id": "DP-005", "file": "app/actions/articles.ts", "line": 33, "kind": "validation", "condition_text": "publicarSchema.safeParse", "branches": [{"label": "ok", "target_line": 39}, {"label": "validation error", "target_line": 34}]},
+        {"id": "DP-006", "file": "app/actions/articles.ts", "line": 41, "kind": "existence", "condition_text": "slug exists", "branches": [{"label": "ok -> proceed", "target_line": 46}, {"label": "slug_exists", "target_line": 42}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "autenticado + title >= 3 + body >= 10 + slug nuevo", "user_sees": "redirect a /articulos/${slug}; articulo visible", "side_effects": ["db.article.create", "revalidateTag(TAG_ARTICLES)", "revalidatePath"], "reversible": false, "final_state": "article created"},
+        {"id": "R-02", "category": "error_unauthorized", "conditions": "sesion expirada o sin sesion", "user_sees": "redirect a /login?from=/publicar-articulo", "side_effects": ["none"], "reversible": true, "final_state": "not logged in"},
+        {"id": "R-03", "category": "error_title_short", "conditions": "title < 3 chars", "user_sees": "alert 'title_too_short'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-04", "category": "error_body_short", "conditions": "body < 10 chars", "user_sees": "alert 'body_too_short'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-05", "category": "error_body_long", "conditions": "body > 20000 chars", "user_sees": "alert 'body_too_long'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-06", "category": "error_slug_exists", "conditions": "slug derivado ya existe", "user_sees": "alert 'slug_exists'", "side_effects": ["none"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-07", "category": "success_home_not_updated", "conditions": "articulo publicado", "user_sees": "articulo en /articulos/${slug}; home NO refresca (tag 'home' != TAG_ARTICLES)", "side_effects": ["TAG_ARTICLES invalidado, TAG_HOME no"], "reversible": false, "final_state": "home stale"}
+      ],
+      "config": []
+    },
+    {
+      "id": "FEAT-003",
+      "name": "comentarios",
+      "user_description": "El usuario autenticado comenta un articulo; el comentario aparece con useOptimistic antes de confirmarse.",
+      "traces": [
+        {"n": 1, "what": "User en /articulos/${slug} ve CommentBox", "cite": "app/components/CommentBox.tsx:9", "data_in": "articleId", "data_out": "form rendered"},
+        {"n": 2, "what": "User submits body + hidden articleId", "cite": "app/components/CommentBox.tsx:32", "data_in": "body, articleId", "data_out": "action(formData)"},
+        {"n": 3, "what": "addOptimistic({id:temp, body, pending:true})", "cite": "app/components/CommentBox.tsx:42", "data_in": "OptimisticComment", "data_out": "UI shows pending comment"},
+        {"n": 4, "what": "addComment() action con zod + auth", "cite": "app/actions/comments.ts:25", "data_in": "FormData", "data_out": "ActionResult"},
+        {"n": 5, "what": "db.comment.create", "cite": "app/actions/comments.ts:48", "data_in": "Comment object", "data_out": "comment inserted"},
+        {"n": 6, "what": "revalidateTag(TAG_ARTICULO(slug)) + revalidateTag(TAG_COMMENTS)", "cite": "app/actions/comments.ts:53", "data_in": "tags", "data_out": "tags invalidated"},
+        {"n": 7, "what": "Si falla: error seteado pero SIN rollback de optimistic (trampa #3)", "cite": "app/components/CommentBox.tsx:48", "data_in": "ActionResult.ok=false", "data_out": "error message visible"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "app/components/CommentBox.tsx", "line": 33, "kind": "validation", "condition_text": "body.trim().length < 2", "branches": [{"label": "set error", "target_line": 35}, {"label": "submit", "target_line": 38}]},
+        {"id": "DP-008", "file": "app/actions/comments.ts", "line": 28, "kind": "auth", "condition_text": "!session?.user", "branches": [{"label": "unauthorized", "target_line": 29}, {"label": "proceed", "target_line": 33}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "autenticado + body >= 2 + body <= 2000 + articulo existe", "user_sees": "comentario visible (reload); optimistic desaparece al completarse", "side_effects": ["db.comment.create", "revalidateTag(articulo:slug)", "revalidateTag(TAG_COMMENTS)"], "reversible": false, "final_state": "comment created"},
+        {"id": "R-02", "category": "error_unauthorized", "conditions": "sin sesion", "user_sees": "error 'unauthorized'", "side_effects": ["none"], "reversible": false, "final_state": "no comment"},
+        {"id": "R-03", "category": "error_body_short", "conditions": "body < 2 chars", "user_sees": "error 'comment_too_short' (cliente o server)", "side_effects": ["none"], "reversible": true, "final_state": "no comment"},
+        {"id": "R-04", "category": "error_body_long", "conditions": "body > 2000 chars", "user_sees": "error 'comment_too_long'", "side_effects": ["none"], "reversible": true, "final_state": "no comment"},
+        {"id": "R-05", "category": "error_article_not_found", "conditions": "articleId no existe", "user_sees": "error 'article_not_found'", "side_effects": ["none"], "reversible": false, "final_state": "no comment"},
+        {"id": "R-06", "category": "optimistic_no_rollback", "conditions": "action falla", "user_sees": "error visible; el comentario optimistic queda pendiente (UI 'destella')", "side_effects": ["none"], "reversible": false, "final_state": "stale optimistic"},
+        {"id": "R-07", "category": "success_delete_comment", "conditions": "User es admin y elimina", "user_sees": "comentario desaparece", "side_effects": ["db.comment.delete", "revalidateTag(TAG_COMMENTS)"], "reversible": false, "final_state": "comment deleted"}
+      ],
+      "config": []
+    },
+    {
+      "id": "FEAT-004",
+      "name": "panel-admin",
+      "user_description": "El admin ve usuarios, articulos y comentarios; el middleware redirige a /login si no hay sesion.",
+      "traces": [
+        {"n": 1, "what": "User navega a /panel-admin", "cite": "middleware.ts:7", "data_in": "GET /panel-admin", "data_out": "middleware runs"},
+        {"n": 2, "what": "middleware chequea fxnext-session cookie", "cite": "middleware.ts:8", "data_in": "cookies", "data_out": "boolean"},
+        {"n": 3, "what": "Sin cookie: redirect a /login?from=/panel-admin (trampa paquete #1)", "cite": "middleware.ts:11", "data_in": "no cookie", "data_out": "NextResponse.redirect"},
+        {"n": 4, "what": "Con cookie: NextResponse.next con header debug", "cite": "middleware.ts:18", "data_in": "with cookie", "data_out": "request continues"},
+        {"n": 5, "what": "page.tsx llama auth() (RSC)", "cite": "app/panel-admin/page.tsx:13", "data_in": "cookies", "data_out": "session | redirect /login"},
+        {"n": 6, "what": "page.tsx verifica rol admin", "cite": "app/panel-admin/page.tsx:18", "data_in": "session.user.role", "data_out": "redirect / si no admin"},
+        {"n": 7, "what": "page.tsx consulta users/articles/comments con Promise.all", "cite": "app/panel-admin/page.tsx:21", "data_in": "queries", "data_out": "rows"},
+        {"n": 8, "what": "AdminPanel (Client Component) renderiza tabs", "cite": "app/components/AdminPanel.tsx:18", "data_in": "rows", "data_out": "tab UI"}
+      ],
+      "decision_points": [
+        {"id": "DP-009", "file": "middleware.ts", "line": 10, "kind": "auth", "condition_text": "pathname.startsWith('/panel-admin') && !hasSession", "branches": [{"label": "redirect /login", "target_line": 11}, {"label": "next()", "target_line": 18}]},
+        {"id": "DP-010", "file": "app/panel-admin/page.tsx", "line": 14, "kind": "auth", "condition_text": "!session?.user", "branches": [{"label": "redirect /login", "target_line": 15}, {"label": "proceed", "target_line": 18}]},
+        {"id": "DP-011", "file": "app/panel-admin/page.tsx", "line": 18, "kind": "role", "condition_text": "role !== 'admin'", "branches": [{"label": "redirect /", "target_line": 19}, {"label": "render", "target_line": 21}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_admin", "conditions": "sesion valida + role admin", "user_sees": "AdminPanel con tabs users/articles/comments", "side_effects": ["3 queries a la DB"], "reversible": false, "final_state": "panel rendered"},
+        {"id": "R-02", "category": "redirect_no_session", "conditions": "sin cookie fxnext-session", "user_sees": "redirect /login?from=/panel-admin (impuesto por middleware)", "side_effects": ["none"], "reversible": true, "final_state": "redirected"},
+        {"id": "R-03", "category": "redirect_not_admin", "conditions": "sesion existe pero role != admin", "user_sees": "redirect a /", "side_effects": ["none"], "reversible": true, "final_state": "redirected"},
+        {"id": "R-04", "category": "success_delete_article", "conditions": "admin elimina articulo", "user_sees": "articulo desaparece (cascada en comments)", "side_effects": ["db.article.delete (cascade)", "revalidateTag(TAG_ARTICLES)"], "reversible": false, "final_state": "article deleted"},
+        {"id": "R-05", "category": "success_delete_comment", "conditions": "admin elimina comentario", "user_sees": "comentario desaparece", "side_effects": ["db.comment.delete", "revalidateTag(TAG_COMMENTS)"], "reversible": false, "final_state": "comment deleted"},
+        {"id": "R-06", "category": "error_session_invalid", "conditions": "sesion corrupta (sin user.id)", "user_sees": "error 'session_invalid' (en actions, no en page)", "side_effects": ["none"], "reversible": false, "final_state": "operation failed"},
+        {"id": "R-07", "category": "cascade_delete", "conditions": "admin elimina articulo con comments", "user_sees": "articulo + sus comments desaparecen (Cascade, trampa #4)", "side_effects": ["db.comment.delete cascade"], "reversible": false, "final_state": "article + comments deleted"}
+      ],
+      "config": [
+        {"key": "SESSION_COOKIE", "kind": "literal", "default": "fxnext-session", "effect": "cookie que el middleware lee"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "use_client_directive", "where": "app/components/{Nav,RegistrarForm,LoginForm,PublicarForm,CommentBox,AdminPanel}.tsx:1", "resolution": "La directiva 'use client' al inicio del archivo define el limite servidor/cliente. Los page.tsx NO la llevan (son RSC). La skill debe buscar la directiva en la primera linea de cada .tsx en app/."},
+    {"id": "TRAP-E02", "kind": "server_actions_use_server", "where": "app/actions/{auth,articles,comments}.ts:1", "resolution": "Los archivos app/actions/*.ts llevan 'use server' al inicio. Las funciones exportadas se ejecutan en el servidor y se invocan desde <form action={fn}> sin fetch explicito. La skill debe mapear cada action.ts y encontrar las funciones llamadas desde los forms."},
+    {"id": "TRAP-E03", "kind": "filesystem_routing", "where": "app/(marketing)/ + app/(marketing)/articulos/[slug]/ + app/@modal/(.)comentarios/", "resolution": "Route groups (parens), segmentos dinamicos [slug], parallel routes @slot, intercepting routes (.)Next los lee del filesystem. La skill debe listar app/ recursivamente y entender la convencion."},
+    {"id": "TRAP-E04", "kind": "middleware_redirect", "where": "middleware.ts:7-15", "resolution": "middleware.ts esta en la raiz (NO en app/). Redirige /panel-admin/* a /login?from=... cuando no hay cookie. La skill debe buscar el archivo en raiz y leer el matcher."},
+    {"id": "TRAP-E05", "kind": "cache_and_revalidation", "where": "app/actions/articles.ts:55 + app/actions/comments.ts:53 + app/(marketing)/articulos/[slug]/page.tsx:12 + app/lib/tags.ts", "resolution": "Tres mecanismos: revalidateTag() invalida una tag; revalidatePath() invalida una URL; export const revalidate=N invalida periodicamente. Las tags son constantes en app/lib/tags.ts (TAG_HOME, TAG_ARTICLES, TAG_COMMENTS, TAG_ARTICULO(slug))."},
+    {"id": "TRAP-E06", "kind": "prisma_relations", "where": "prisma/schema.prisma:55-90", "resolution": "Las relaciones viven en prisma/schema.prisma; el cliente generado en node_modules/@prisma/client NO se commitea. La skill importa tipos desde '@prisma/client' pero la fuente esta en schema.prisma."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "middleware_from_unused", "where": "app/(marketing)/login/page.tsx:8-11", "resolution": "El middleware inserta `from` en /login?from=... pero el componente de login (login/page.tsx) lee searchParams.from y NO lo pasa al LoginForm. La action `loginAction` tiene logica para procesar `from` desde FormData pero el form no lo envia. Resultado: el usuario es redirigido a / en vez de a la ruta original."},
+    {"id": "TRAP-P02", "kind": "tag_mismatch", "where": "app/actions/articles.ts:55 + app/page.tsx (consume TAG_HOME)", "resolution": "publicarArticulo invalida TAG_ARTICLES pero la home page (app/page.tsx) consume TAG_HOME (distinta). La invalidacion no se propaga a la home hasta el siguiente ciclo de ISR (60s) o reload."},
+    {"id": "TRAP-P03", "kind": "useoptimistic_no_rollback", "where": "app/components/CommentBox.tsx:42-52", "resolution": "addOptimistic es unidireccional; para revertir se necesitaria con el estado anterior. El handler setea error pero NO hace rollback; el comentario pending queda visible hasta el siguiente refresh."},
+    {"id": "TRAP-P04", "kind": "prisma_cascade", "where": "prisma/schema.prisma:70 (onDelete: Cascade)", "resolution": "Eliminar un Article borra sus Comment via cascade sin notificar al cliente. La app deberia manejar el caso edge pero deleteArticulo no tiene manejo especial."},
+    {"id": "TRAP-P05", "kind": "plaintext_password", "where": "app/actions/auth.ts:55 + prisma/schema.prisma:password", "resolution": "registrar guarda la password en texto plano (no hashea con bcryptjs, que SI esta en package.json). El callback authorize en lib/auth.ts compara en texto plano."},
+    {"id": "TRAP-P06", "kind": "react_strict_mode_disabled", "where": "next.config.js:5 (reactStrictMode: false)", "resolution": "reactStrictMode deshabilitado silencia los efectos duplicados en dev. La skill debe notar la asimetria con el default de Next 14 (true)."}
+  ],
+  "surfaces": [
+    {"id": "SRF-action-registrar", "kind": "action", "name": "registrar", "handler": "app/actions/auth.ts:38", "file": "app/actions/auth.ts"},
+    {"id": "SRF-action-login", "kind": "action", "name": "loginAction", "handler": "app/actions/auth.ts:65", "file": "app/actions/auth.ts"},
+    {"id": "SRF-action-logout", "kind": "action", "name": "logoutAction", "handler": "app/actions/auth.ts:90", "file": "app/actions/auth.ts"},
+    {"id": "SRF-action-publicar", "kind": "action", "name": "publicarArticulo", "handler": "app/actions/articles.ts:24", "file": "app/actions/articles.ts"},
+    {"id": "SRF-action-delete-article", "kind": "action", "name": "deleteArticulo", "handler": "app/actions/articles.ts:64", "file": "app/actions/articles.ts"},
+    {"id": "SRF-action-add-comment", "kind": "action", "name": "addComment", "handler": "app/actions/comments.ts:25", "file": "app/actions/comments.ts"},
+    {"id": "SRF-action-delete-comment", "kind": "action", "name": "deleteComment", "handler": "app/actions/comments.ts:60", "file": "app/actions/comments.ts"},
+    {"id": "SRF-route-comentarios-get", "kind": "http", "name": "GET /api/comentarios", "handler": "app/api/comentarios/route.ts:18", "file": "app/api/comentarios/route.ts"},
+    {"id": "SRF-route-comentarios-post", "kind": "http", "name": "POST /api/comentarios", "handler": "app/api/comentarios/route.ts:38", "file": "app/api/comentarios/route.ts"},
+    {"id": "SRF-route-health", "kind": "http", "name": "GET /api/health", "handler": "app/api/health/route.ts:3", "file": "app/api/health/route.ts"},
+    {"id": "SRF-middleware", "kind": "middleware", "name": "/panel-admin/* redirect", "handler": "middleware.ts:10", "file": "middleware.ts"},
+    {"id": "SRF-page-registro", "kind": "page", "name": "/registro", "handler": "app/(marketing)/registro/page.tsx", "file": "app/(marketing)/registro/page.tsx"},
+    {"id": "SRF-page-login", "kind": "page", "name": "/login", "handler": "app/(marketing)/login/page.tsx", "file": "app/(marketing)/login/page.tsx"},
+    {"id": "SRF-page-publicar", "kind": "page", "name": "/publicar-articulo", "handler": "app/(marketing)/publicar-articulo/page.tsx", "file": "app/(marketing)/publicar-articulo/page.tsx"},
+    {"id": "SRF-page-articulo", "kind": "page", "name": "/articulos/[slug]", "handler": "app/(marketing)/articulos/[slug]/page.tsx", "file": "app/(marketing)/articulos/[slug]/page.tsx"},
+    {"id": "SRF-page-comentarios", "kind": "page", "name": "/comentarios", "handler": "app/comentarios/page.tsx", "file": "app/comentarios/page.tsx"},
+    {"id": "SRF-page-comentario", "kind": "page", "name": "/comentarios/[id]", "handler": "app/comentarios/[id]/page.tsx", "file": "app/comentarios/[id]/page.tsx"},
+    {"id": "SRF-page-panel-admin", "kind": "page", "name": "/panel-admin", "handler": "app/panel-admin/page.tsx", "file": "app/panel-admin/page.tsx"},
+    {"id": "SRF-modal-intercepting", "kind": "parallel_route", "name": "@modal/(.)comentarios", "handler": "app/@modal/(.)comentarios/page.tsx", "file": "app/@modal/(.)comentarios/page.tsx"}
+  ]
+}

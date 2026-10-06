@@ -1,0 +1,10 @@
+/node_modules/
+/.next/
+/e2e-results/
+/.env
+/dev.db
+/dev.db-journal
+/prisma/migrations/dev.db
+/playwright-report/
+/test-results/
+/next-env.d.ts

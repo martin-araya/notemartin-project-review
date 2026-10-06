@@ -1,0 +1,63 @@
+// Prisma schema para fx-nextjs-fullstack.
+// Trampa ecosistema #6: las relaciones viven AQUI; el cliente TypeScript
+// generado (en node_modules/@prisma/client) NO se commitea. La skill debe
+// entender la indireccion: el codigo importa tipos como `import type {
+// Article } from '@prisma/client'`, pero la fuente esta en este archivo.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  // FXNEXT-DB-001: password se guarda SIN hashear (trampa paquete #5).
+  // La accion `registrar` en app/actions/auth.ts NO llama a bcrypt.
+  password  String
+  role      String   @default("user") // "user" | "admin"
+  createdAt DateTime @default(now())
+
+  sessions        Session[]
+  articles        Article[]       @relation("AuthoredArticles")
+  comments        Comment[]       @relation("CommentAuthor")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  body        String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  authorId    String
+
+  author    User     @relation("AuthoredArticles", fields: [authorId], references: [id])
+  // FXNEXT-DB-002: onDelete: Cascade (trampa paquete #4) - si se borra
+  // un articulo, sus comentarios se borran sin notificar al cliente.
+  comments  Comment[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  articleId String
+  authorId  String
+
+  article  Article @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  author    User    @relation("CommentAuthor", fields: [authorId], references: [id])
+}

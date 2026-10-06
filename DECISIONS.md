@@ -904,6 +904,108 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: el componente no contiene la logica de fetch directo;
   la skill debe mirar el router, no el componente.
 
+### D-189 — Next.js 14 App Router con route groups, parallel routes, intercepting routes (F06h)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06h · vigente
+- Contexto: el fixture debe plantar las 6 trampas del ecosistema. Las
+  trampas de routing por filesystem (route groups, parallel routes,
+  intercepting routes) son la complejidad mas caracteristica de
+  Next.js App Router.
+- Decisión: usar Next.js 14 (estable, App Router maduro) con la
+  estructura de rutas:
+  - `app/(marketing)/` — route group para paginas publicas (no afecta URL).
+  - `app/(marketing)/articulos/[slug]/page.tsx` — segmento dinamico.
+  - `app/@modal/` — slot parallel para modal de feedback.
+  - `app/(.)comentarios/@modal/page.tsx` — intercepting route desde la raiz.
+  - `app/api/comentarios/route.ts` — Route Handler.
+  - `app/panel-admin/page.tsx` — ruta bajo autenticacion.
+- Alternativas: (a) Pages Router en vez de App Router (descartado: la
+  trampa del ecosistema exige route groups + intercepting + parallel);
+  (b) Remix (descartado: no es Next.js).
+- Consecuencias: la skill debe leer `app/` con atencion a los
+  `(parens)`, `[id]`, `@` y `(.)` - todos son convenciones del filesystem.
+
+### D-190 — 'use client' directiva obligatoria en componentes interactivos (F06h)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06h · vigente
+- Contexto: la trampa #1 del ecosistema es el limite servidor/cliente
+  definido por la directiva. Next.js por defecto renderiza Server
+  Components (RSC); los componentes que usan hooks/eventos necesitan
+  `'use client'`.
+- Decisión: marcar con `'use client'` solo los componentes interactivos
+  (Nav, RegistrarForm, LoginForm, PublicarForm, CommentBox,
+  AdminPanel). Todos los `page.tsx` de marketing se quedan como RSC.
+- Alternativas: (a) marcar todos los archivos como 'use client'
+  (descartado: elimina la trampa; ademas pierde los RSC); (b) no usar
+  la directiva y dejar que Next detecte (descartado: la trampa pide que
+  el limite sea explicito).
+- Consecuencias: la skill debe buscar `'use client'` en la primera linea
+  de cada `.tsx` en `app/` para separar Server Components de Client
+  Components.
+
+### D-191 — Server Actions ('use server') en archivos separados (F06h)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06h · vigente
+- Contexto: la trampa #2 del ecosistema. Server Actions son funciones
+  asincronicas marcadas con `'use server'` que se invocan desde
+  `<form action={fn}>` sin un `fetch` explicito.
+- Decisión: las Server Actions viven en archivos separados con la
+  directiva al inicio del archivo (`app/actions/{auth,articles,comments}.ts`).
+  Se invocan desde `<form action={fn}>` directamente.
+- Alternativas: (a) inline en el page.tsx (descartado: rompe la
+  convencion y oculta la trampa); (b) usar fetch tradicional (descartado:
+  Next.js Server Actions son el patron canonico en App Router).
+- Consecuencias: la skill debe notar que la redaccion del form usa
+  `action={fn}` y no `onSubmit={async () => await fn()}`.
+
+### D-192 — middleware.ts para Auth.js + revalidacion por tags (F06h)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06h · vigente
+- Contexto: trampas #4 (middleware) y #5 (cache).
+- Decisión:
+  - `middleware.ts` en la raiz: lee `next/headers` cookies, redirige
+    `/panel-admin/*` a `/login` si no hay sesion.
+  - `next.config.js` con `reactStrictMode: false` (trampa paquete #6).
+  - Las fetches internos usan `fetch(url, { next: { tags: [...] } })`.
+  - Las mutaciones llaman a `revalidateTag('tag')` tras un POST.
+  - `app/(marketing)/articulos/[slug]/page.tsx` exporta
+    `export const revalidate = 60` (ISR).
+- Alternativas: (a) middleware en `app/` (descartado: Next.js espera
+  middleware en la raiz); (b) usar solo `revalidateTag` sin ISR
+  (descartado: elimina la mitad de la trampa).
+- Consecuencias: la skill debe distinguir fetch "estatico" de fetch
+  "dinamico con tags", y notar que `revalidate` y `revalidateTag` son
+  mecanismos distintos.
+
+### D-193 — Prisma con SQLite y cliente generado (F06h)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06h · vigente
+- Contexto: trampa #6 (relaciones solo en schema.prisma).
+- Decisión: Prisma 5 con SQLite (`file:./dev.db`). El schema define 4
+  modelos (User, Article, Comment, Session) con `onDelete: Cascade` en
+  `Comment -> Article`. `app/lib/db.ts` exporta una instancia singleton
+  de `PrismaClient`. El cliente generado vive en
+  `node_modules/@prisma/client` y NO se commitea.
+- Alternativas: (a) Drizzle (descartado: Prisma es el estandar de
+  Next.js fullstack); (b) TypeORM (descartado: mas complejo).
+- Consecuencias: la skill debe leer `prisma/schema.prisma` para entender
+  las relaciones; el codigo TS solo importa tipos via `import type {
+  Article } from '@prisma/client'`.
+
+### D-194 — Auth.js v5 con credentials provider (F06h)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06h · vigente
+- Contexto: la feature `registro` necesita autenticacion.
+- Decisión: Auth.js v5 (next-auth) con `CredentialsProvider` que valida
+  email/password contra la tabla `User`. `app/lib/auth.ts` exporta
+  `auth()`, `signIn()`, `signOut()`. La sesion se almacena en cookie
+  HTTPOnly via middleware.
+- Alternativas: (a) sesion propia en cookie firmada (descartado: Auth.js
+  es el patron canonico); (b) OAuth providers (descartado: requiere
+  secretos externos).
+- Consecuencias: la sesion se lee en Server Components via
+  `await auth()`; en Client Components via `useSession()`.
+
 ## Plantilla para nuevas decisiones
 
 ```

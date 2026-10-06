@@ -1,0 +1,15 @@
+# Metadata del fixture F06h: fx-nextjs-fullstack
+# App Next.js 14 con App Router, RSC, Server Actions, Route Handlers,
+# middleware, Prisma + SQLite, Auth.js. Ver referencias a las trampas del
+# ecosistema y del paquete en ground-truth/ground_truth.json.
+name: fx-nextjs-fullstack
+description: App Next.js 14 App Router con RSC, Server Actions, Prisma + SQLite (F06h)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-nextjs-fullstack
+  enabled: true
+ground_truth_format_version: 1

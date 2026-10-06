@@ -633,8 +633,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` sigue verde.
 - [x] Commit `F06g: fixture fx-react-spa con paquete por feature`.
  
-## F06h — Fixture `fx-nextjs-fullstack`
- 
+## F06h — Fixture `fx-nextjs-fullstack` ✅
+
 **Objetivo:** aplicación full-stack con Next.js App Router.
 **Stack:** Next.js (App Router), React Server Components, Server Actions, Route Handlers, `middleware.ts`, Prisma, Auth.js.
 **Features:** `registro`, `publicar-artículo`, `comentarios`, `panel-admin`.
@@ -646,6 +646,31 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Caché y revalidación (`revalidateTag`, `export const revalidate`, `fetch` con `next.tags`).
 6. Relaciones definidas solo en `schema.prisma`, con cliente generado.
 **Toolchain de tests:** Vitest + Playwright (contra `next start`) + SQLite, en contenedor.
+
+**Criterios de aceptación:**
+- [x] 4 features (registro, publicar-articulo, comentarios, panel-admin), cada una con 7 R-NN documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: 'use client' directive, 'use server' en actions, route groups + dynamic segments + parallel + intercepting routes, middleware.ts que redirige por cookie, revalidateTag + revalidatePath + revalidate, relaciones en schema.prisma.
+- [x] 6 trampas del paquete plantadas: middleware `from` no usado, tag mismatch TAG_ARTICLES vs TAG_HOME, useOptimistic sin rollback, onDelete: Cascade sin manejar, password en texto plano, reactStrictMode: false.
+- [x] 3 trampas superficiales: formatDate no usado, Footer.tsx no usado, seedAdminDemo nunca llamado.
+- [x] `middleware.ts` en raiz (NO en app/) que redirige `/panel-admin/*` por cookie `fxnext-session`.
+- [x] `next.config.js` con `reactStrictMode: false`.
+- [x] `app/(marketing)/{registro,login,publicar-articulo,articulos/[slug]}/page.tsx` route group + segmento dinamico.
+- [x] `app/@modal/{default.tsx,(.)comentarios/page.tsx}` parallel + intercepting routes.
+- [x] `app/api/{comentarios,health}/route.ts` Route Handlers.
+- [x] `app/actions/{auth,articles,comments}.ts` con 'use server'.
+- [x] `app/components/{Nav,RegistrarForm,LoginForm,PublicarForm,CommentBox,AdminPanel}.tsx` con 'use client' en los interactivos.
+- [x] `prisma/schema.prisma` con User/Article/Comment/Session + relaciones + onDelete: Cascade.
+- [x] 5 tests vitest (actions_auth, actions_articles, middleware, tags, traps) + 3 specs Playwright (registro, publicar_articulo, panel_admin).
+- [x] `manifest.yml`, `Makefile`, `Dockerfile.test` (basado en `node:22-bookworm-slim` + Playwright Chromium), `build-history.sh` con 8 commits, `unique_tokens.txt` (32 tokens con prefijo `NPRGT-FXNEXT-`), `README.md`, `.gitignore`, `next.config.js`, `tsconfig.json`, `playwright.config.ts`, `vitest.config.ts`.
+- [x] `dev/ground-truth/fx-nextjs-fullstack/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] `dev/tests/test_fx_nextjs_fullstack_ground_truth.py` agregado y verde (40 tests).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones en comentarios) en verde.
+- [x] `fixtures_matrix.py` extendido para detectar Next.js (next -> nextjs) y Prisma (@prisma/client -> prisma).
+- [x] `MATRIX.md` muestra fx-nextjs-fullstack cubriendo nextjs, prisma, typescript, javascript, shell.
+- [x] `pytest` total 447 passed (407 previos + 40 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot,react-spa}.
+- [x] `validate_skill.py` sigue verde.
+- [x] Commit `F06h: fixture fx-nextjs-fullstack con paquete por feature`.
  
 ## F06i — Fixture `fx-vanilla-js-legacy`
  
