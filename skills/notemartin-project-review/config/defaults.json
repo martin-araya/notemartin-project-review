@@ -1,0 +1,22 @@
+{
+  "lang": "es",
+  "workspace.dir": ".project-review",
+  "subagents.mode": "auto",
+  "subagents.max_parallel": "auto",
+  "wu.context_fraction": 0.5,
+  "files.giant_threshold_lines": 2000,
+  "files.chunk_overlap_lines": 40,
+  "symbols.backend": "auto",
+  "branches.follow_depth": null,
+  "question.graph_hops": 2,
+  "git.cochange_min": 3,
+  "verifier.sample_critical": 1.0,
+  "verifier.sample_noncritical": 0.5,
+  "mermaid.max_nodes": 40,
+  "dynamic.enabled": false,
+  "dynamic.network": false,
+  "report.formats": ["md", "json", "html"],
+  "report.snippets": true,
+  "report.snippet_max_lines": 30,
+  "secrets.redact": true
+}

@@ -335,7 +335,7 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 
 ---
 
-## F05 — CLI `npr` y creación del workspace
+## F05 — CLI `npr` y creación del workspace ✅
 
 **Objetivo:** punto de entrada único para todos los scripts, y un workspace reanudable.
 **Depende de:** F02, F03, F04
@@ -360,13 +360,13 @@ F79 → F80 → F81 → {F82,F83,F84,F85} → F86 → F87 → F88
 **Entregables:** `npr.py`, `npr/cli.py`, `npr/workspace.py`, tests.
 
 **Criterios de aceptación:**
-- [ ] `npr init` es idempotente (segunda ejecución no duplica la línea en `.git/info/exclude` ni pisa estado sin `--force`).
-- [ ] Funciona en un directorio sin git (sin SHA, con aviso).
-- [ ] `git status` del repo analizado queda limpio tras `init`.
-- [ ] `npr status --json` valida contra el esquema `state`.
-- [ ] `npr --help` lista todos los subcomandos.
-- [ ] `npr config show` refleja correctamente la precedencia en un test con los 4 niveles.
-- [ ] Todo error de usuario devuelve un código `NPR-Exxx` documentado (test que recorre el catálogo).
+- [x] `npr init` es idempotente (segunda ejecución no duplica la línea en `.git/info/exclude` ni pisa estado sin `--force`).
+- [x] Funciona en un directorio sin git (sin SHA, con aviso).
+- [x] `git status` del repo analizado queda limpio tras `init`.
+- [x] `npr status --json` valida contra el esquema `state`.
+- [x] `npr --help` lista todos los subcomandos.
+- [x] `npr config show` refleja correctamente la precedencia en un test con los 4 niveles.
+- [x] Todo error de usuario devuelve un código `NPR-Exxx` documentado (test que recorre el catálogo).
 
 ---
 

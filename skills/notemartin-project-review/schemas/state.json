@@ -5,12 +5,16 @@
   "required": ["repo", "commit", "branch", "created_at", "skill_version", "mode", "stage", "config"],
   "properties": {
     "repo": {"type": "string", "description": "Ruta absoluta del repositorio analizado."},
-    "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "SHA del HEAD en el momento del init."},
+    "commit": {"type": "string", "pattern": "^([0-9a-f]{7,40})?$", "description": "SHA del HEAD en el momento del init; vacio si no es un repo git."},
     "branch": {"type": "string", "description": "Rama activa al iniciar el analisis."},
     "created_at": {"type": "string", "description": "Fecha ISO 8601 de creacion del workspace."},
     "skill_version": {"type": "string", "description": "Version de la skill que realizo el analisis."},
     "mode": {"type": "string", "enum": ["completo", "pregunta", "feature", "reanudar", "actualizar", "comparar"], "description": "Modo de operacion."},
     "stage": {"type": "string", "enum": ["A", "B", "C", "D", "E", "F", "G", "G2", "H", "I", "J", "K", "L"], "description": "Etapa actual del pipeline."},
-    "config": {"type": "object", "description": "Configuracion efectiva del analisis (overrides sobre defaults.json)."}
+    "config": {"type": "object", "description": "Configuracion efectiva del analisis (overrides sobre defaults.json)."},
+    "coverage_pct": {"type": "number", "minimum": 0, "maximum": 100, "description": "Porcentaje de archivos cubiertos por el ledger; presente en `npr status --json`."},
+    "wus_pending": {"type": "integer", "minimum": 0, "description": "Numero de WUs pendientes segun wu/plan.md; presente en `npr status --json`."},
+    "open_questions": {"type": "integer", "minimum": 0, "description": "Numero de preguntas abiertas; presente en `npr status --json`."},
+    "next_action": {"type": "string", "description": "Accion recomendada para continuar; presente en `npr status --json`."}
   }
 }

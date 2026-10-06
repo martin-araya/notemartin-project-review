@@ -326,6 +326,62 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Alternativas consideradas: aceptar cualquier path JSON Pointer (rechazado: aumenta la superficie de ataque); los schemes pueden usar `#/properties/<X>` como shortcut (rechazado: complica la lectura).
 - Consecuencias: el validador es estricto; los esquemas están obligados a registrar sub-formas en `definitions`.
 
+### D-143 — Estructura del paquete `npr/`
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: AGENTS §10 lista `npr/` como paquete Python con módulos por dominio.
+- Decisión: módulos `cli.py`, `paths.py`, `config.py`, `workspace.py`, `logging_setup.py`, `errors_catalog.py`, `schema.py`, `citations.py` (F04, F03), y subpaquete `subcommands/` con `init_cmd`, `config_cmd`, `status_cmd`, `resume_cmd` (reales) y `stubs.py` (33 comandos pendientes). Los módulos de F08+ (inventory, classify, stack, etc.) se añaden en sus fases.
+- Alternativas consideradas: todos los subcomandos en un solo `commands.py` (rechazado: ilegible >1000 líneas); cada subcomando en su propio archivo ×35 (rechazado: explosión de archivos, baja cohesión).
+- Consecuencias: cada fase que implementa un comando añade un módulo bajo `subcommands/` y actualiza `ALL = [...]`.
+
+### D-144 — Códigos de error NPR-Exxx
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: AGENTS §17 exige mensajes de error en español con código estable.
+- Decisión: 16 códigos en `errors_catalog.py` con campos `msg`, `causa`, `accion`. NPR-E101 a NPR-E116. El formato `format_error(code, **ctx)` añade contexto y devuelve un bloque multi-línea.
+- Alternativas consideradas: jerarquía de subclases `NPRError(ValueError)` (rechazado: añade boilerplate y rompe el flujo de `sys.exit(2)` que ya usamos en el catálogo).
+- Consecuencias: cualquier subcomando que falle con un error de usuario usa `format_error(...)` y `sys.exit(2)`. Los linters futuros (F64) verifican que el catálogo sigue creciendo.
+
+### D-145 — Resolución de SKILL_DIR
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: el roadmap fija el algoritmo de 5 niveles (CLI > env > variable del runtime > rutas canónicas > error).
+- Decisión: `paths.resolve_skill_dir(cli_skill_dir)` itera la lista de candidatos, valida cada uno con `scripts/.npr-marker`, devuelve el primero que pase y exporta `NPR_HOME`. Si ninguno pasa, imprime `[NPR-E101]` y sale 2.
+- Alternativas consideradas: lazy resolver (rechazado: doble fallo de "qué skill es"); caché en disco (rechazado: complica el primer arranque).
+- Consecuencias: la CLI siempre puede operar; el `NPR_HOME` se exporta para subprocesos.
+
+### D-146 — Precedencia de configuración (defaults < workspace < cli_file < cli_set)
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: el roadmap y AGENTS §13 fijan el orden de precedencia.
+- Decisión: 4 niveles que se aplican en `config.load_effective`. El nivel 4 (`--set`) gana sobre todos. Cada clave lleva un origen (`default | workspace | cli_file | cli_set`).
+- Alternativas consideradas: merge en profundidad de diccionarios anidados (rechazado: las claves de AGENTS §13 usan notación plana con punto, no anidadas).
+- Consecuencias: `npr config show` puede imprimir un árbol legible con el origen de cada valor.
+
+### D-147 — Subcomandos como stubs con NPR-E113
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: el roadmap lista 37 subcomandos pero F05 solo implementa 4.
+- Decisión: los 33 subcomandos restantes se registran en `subcommands/stubs.py` con su fase objetivo; al invocarse, imprimen `[NPR-E113]` y salen con código 0 (no 2) — F05 no penaliza al usuario por invocar un comando futuro.
+- Alternativas consideradas: salir con código 2 cuando un subcomando es stub (rechazado: bloquea a herramientas externas que quieran iterar comandos).
+- Consecuencias: `--help` lista todos los comandos desde el primer día; el linter `npr lint vague` puede detectar referencias a fases incorrectas.
+
+### D-148 — Init idempotente
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: el criterio 1 exige idempotencia y no duplicar la línea en `.git/info/exclude`.
+- Decisión: si `state/state.json` existe y no se pasó `--force`, `NPR-E105`. La línea `.project-review/` se agrega solo si el archivo no la contiene ya (regex `^\s*\.project-review/?\s*$` sobre `info/exclude`).
+- Alternativas consideradas: sobre-escribir siempre (rechazado: destruye el progreso del usuario); backup antes de reescribir (rechazado: complica init por simplicidad).
+- Consecuencias: el usuario puede ejecutar `npr init` varias veces sin miedo; `--force` es la opción explícita para empezar de cero.
+
+### D-149 — Status con campos extendidos en el esquema state
+
+- Fecha · Fase · Estado: 2026-10-05 · F05 · vigente
+- Contexto: el criterio 4 dice "npr status --json valida contra el esquema state"; mi salida incluye `coverage_pct`, `wus_pending`, `open_questions`, `next_action` que no están en el esquema original.
+- Decisión: añadir los 4 campos como opcionales al esquema `state.json` con `description`. `npr status --json` produce el state más los campos extendidos y el validador acepta ambos.
+- Alternativas consideradas: crear un esquema `status-output` separado (rechazado: duplica el state base; la fusión es estable); permitir campos extra con `additionalProperties: true` en `state` (rechazado: abre la puerta a typos).
+- Consecuencias: el esquema `state` queda como supertipo de `state.json` y del payload de `status --json`. Los demás consumidores que solo leen `state.json` siguen funcionando.
+
 ## Plantilla para nuevas decisiones
 
 ```
