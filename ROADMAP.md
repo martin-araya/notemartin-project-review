@@ -596,8 +596,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
  
 # Frontend web
  
-## F06g — Fixture `fx-react-spa`
- 
+## F06g — Fixture `fx-react-spa` ✅
+
 **Objetivo:** SPA React moderna con router de datos, estado global, caché de servidor, formularios validados e i18n.
 **Stack:** React 19, TypeScript, Vite, React Router (data routers), Redux Toolkit + RTK Query, React Hook Form + Zod, i18next, Tailwind.
 **Features:** `autenticación`, `catálogo-y-carrito`, `checkout`, `panel-de-pedidos`.
@@ -609,6 +609,29 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Variables `import.meta.env.VITE_*` resueltas en build.
 6. Componentes exportados envueltos en `memo`/`forwardRef`/HOC con otro nombre, más `Suspense` + `ErrorBoundary` que definen rutas de error.
 **Toolchain de tests:** Vitest + Testing Library + MSW, en contenedor.
+
+**Criterios de aceptación:**
+- [x] 4 features (`autenticacion`, `catalogo-y-carrito`, `checkout`, `panel-de-pedidos`), cada una con 7 R-NN documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: loader/action, hooks autogenerados, providers anidados, useEffect chain, import.meta.env.VITE_*, memo/forwardRef/HOC/Suspense/ErrorBoundary.
+- [x] 6 trampas del paquete plantadas: deps missing useEffect, HOC sin inject, asimetria memo/forwardRef, pollingInterval chain, cart mutation, false displayName.
+- [x] 3 trampas superficiales: formatPrice no usado, exports inconsistentes, msal.ts inutil.
+- [x] `src/main.tsx` con 6 providers anidados (StoreProvider, QueryClientProvider, I18nextProvider, ThemeProvider, ToastProvider, ErrorBoundary) + Suspense.
+- [x] `src/routes/router.tsx` con createBrowserRouter + 7 loaders/actions (authGuard, productsLoader, checkoutAction).
+- [x] `src/api/baseApi.ts` con createApi + 5 endpoints; los hooks NO se definen literalmente.
+- [x] `src/store/{auth,cart}.slice.ts` con cart que muta via push (trampa paquete #5).
+- [x] `src/components/Button.tsx` (forwardRef + memo) + `src/features/cart/CartItem.tsx` (forwardRef + memo + HOC + displayName falso 'CartLineItem').
+- [x] `src/lib/env.ts` lee `import.meta.env.VITE_API_URL` y `VITE_DEFAULT_LOCALE`.
+- [x] 9 tests vitest (auth/catalog/cart/checkout/orders/routing/env/providers/traps_ecosystem) + setup.ts (MSW v2 server) + handlers.ts (MSW handlers).
+- [x] `manifest.yml`, `Makefile`, `Dockerfile.test` (basado en `node:22-bookworm-slim`), `build-history.sh` con 8 commits, `unique_tokens.txt` (26 tokens con prefijo `NPRGT-FXREACT-`), `README.md`, `.gitignore`, `index.html`.
+- [x] `dev/ground-truth/fx-react-spa/{ground_truth.json, GROUND_TRUTH.md, unique_tokens.txt}` con paquete completo por feature.
+- [x] `dev/tests/test_fx_react_spa_ground_truth.py` agregado y verde (44 tests).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones en comentarios) en verde.
+- [x] `fixtures_matrix.py` extendido para detectar SPA frameworks desde deps de package.json (`react -> react-spa`).
+- [x] `MATRIX.md` muestra fx-react-spa cubriendo `react-spa`, typescript, javascript, shell.
+- [x] `pytest` total 407 passed (363 previos + 44 nuevos), sin regresiones en fx-{python-cli,ts-agent-extension,java-micronaut,monorepo,minified,polyglot}.
+- [x] `validate_skill.py` sigue verde.
+- [x] Commit `F06g: fixture fx-react-spa con paquete por feature`.
  
 ## F06h — Fixture `fx-nextjs-fullstack`
  

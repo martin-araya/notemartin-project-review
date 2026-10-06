@@ -87,12 +87,25 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     # para que el eje frameworks los reporte como cubiertos.
     "Cargo.toml": {"cargo"},
     "go.mod": {"go-modules"},
+    # Frameworks React SPA: cualquier `vite.config.ts` indica Vite; ``react``
+    # como dep en package.json indica React. Tambien capturamos ``vite`` desde
+    # el mismo archivo.
+    "vite.config.ts": {"react-spa", "vite"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
 # archivo no este presente (util para shims de VS Code, etc.).
 PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "contributes": {"vscode-extension"},
+    # ``react`` como dep de runtime: SPA React (vite/react-spa).
+    # ``vue``: SPA Vue. ``next``: Next.js. ``svelte``: SvelteKit.
+    # ``@angular/core``: Angular standalone (ademas del angular.json).
+    # ``@reduxjs/toolkit``: indicador de Redux Toolkit (comun en React SPA).
+    "react": {"react-spa"},
+    "vue": {"vue-spa"},
+    "next": {"nextjs"},
+    "svelte": {"svelte-spa"},
+    "@reduxjs/toolkit": {"react-spa"},
 }
 
 # Tipos de archivo
@@ -178,6 +191,11 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
         # Markers adicionales (contributes -> vscode-extension).
         for marker, frameworks in PACKAGE_JSON_MARKERS.items():
             if marker in data:
+                covered["frameworks"] |= frameworks
+        # Dependencias de runtime que implican frameworks SPA: el marker del dict
+        # puede ser tambien una dep de dependencies/devDependencies.
+        for marker, frameworks in PACKAGE_JSON_MARKERS.items():
+            if marker in deps:
                 covered["frameworks"] |= frameworks
 
     # Detectar Micronaut via el plugin en build.gradle.kts.

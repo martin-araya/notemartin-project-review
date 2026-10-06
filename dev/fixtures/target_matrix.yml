@@ -39,6 +39,10 @@ axes:
     - maven
     - cargo
     - go-modules
+    - react-spa
+    - vue-spa
+    - nextjs
+    - svelte-spa
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

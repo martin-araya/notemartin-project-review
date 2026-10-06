@@ -813,6 +813,97 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: el exit code 64+ no choca con senales bash (128+N).
   El orquestador preserva los exit codes originales via `exit "$rc"`.
 
+### D-184 — Vitest con environment=jsdom, sin Chromium/Playwright (F06g)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06g · vigente
+- Contexto: F06g es una SPA React 19. Las opciones para testear son (a)
+  jsdom + Testing Library, (b) Playwright/Chromium real, (c) happy-dom.
+- Decisión: jsdom + `@testing-library/react` + `@testing-library/user-event`.
+  Justificación: jsdom es la opcion por defecto de Vitest, no requiere
+  binarios externos, los tests son deterministas y rapidos, y todas las
+  trampas que queremos plantar (loaders, actions, providers anidados,
+  hooks autogenerados, import.meta.env, memo/forwardRef) son visibles
+  sin render real.
+- Alternativas: (a) Playwright/Chromium real (descartado: ~500MB de
+  binarios + tiempo de arranque elevado); (b) happy-dom (descartado:
+  jsdom tiene mejor compatibilidad con React Testing Library).
+- Consecuencias: el contenedor `node:22-slim` no necesita apt-get de
+  Chromium; la imagen base es la misma que `fx-ts-agent-extension` y
+  `fx-monorepo`.
+
+### D-185 — MSW v2 para interceptar las llamadas de RTK Query (F06g)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06g · vigente
+- Contexto: RTK Query hace `fetch` a una API. Para testear necesitamos
+  mockear el backend sin instalar dependencias externas.
+- Decisión: MSW v2 (Mock Service Worker) en modo Node (`setupServer`)
+  intercepta las llamadas en `tests/setup.ts` antes de montar los
+  componentes. Los handlers viven en `tests/handlers.ts` y se reinician
+  entre tests via `server.resetHandlers()`.
+- Alternativas: (a) mockear `fetch` global (descartado: fragil ante
+  cambios de RTK Query); (b) usar un servidor Express real en test
+  (descartado: overhead excesivo); (c) MSW v1 (descartado: sintaxis
+  deprecada).
+- Consecuencias: la SPA funciona end-to-end con un backend simulado;
+  las trampas de RTK Query (pollingInterval, refetch encadenado,
+  autogeneracion de hooks) son testables en aislamiento.
+
+### D-186 — main.tsx con 6 providers anidados en orden especifico (F06g)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06g · vigente
+- Contexto: la trampa del ecosistema #3 exige "Providers anidados en
+  main.tsx que cambian el comportamiento de todo el arbol".
+- Decisión: el orden sera `<StoreProvider>` > `<QueryClientProvider>` >
+  `<I18nextProvider>` > `<ThemeProvider>` > `<ToastProvider>` >
+  `<ErrorBoundary>` > `<Suspense>`. Mover cualquier provider fuera del
+  orden cambia que errores se propagan y como se traduce la UI.
+- Alternativas: (a) usar una sola funcion que reciba el orden como
+  parametro (descartado: oculta la trampa); (b) invertir el orden para
+  que I18n sea el mas externo (descartado: rompe traducciones en
+  modulos que usan RTK Query).
+- Consecuencias: la skill debe leer `main.tsx` en orden para entender
+  que envuelve que; los tests verifican la cantidad y orden con
+  `indexOf`.
+
+### D-187 — useGetProductsQuery se consume via re-export tipado, no definicion literal (F06g)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06g · vigente
+- Contexto: la trampa del ecosistema #2 exige "Hooks autogenerados por
+  createApi (useGetProductsQuery) que no tienen definicion literal".
+  El comportamiento canonico de RTK Query genera el hook a partir de
+  `getProducts: builder.query(...)` en `api/baseApi.ts`.
+- Decisión: en `api/baseApi.ts` definimos `getProducts`, `getProduct`,
+  `getOrders`, `login`, `register` como endpoints de `createApi`. NO
+  exportamos `useGetProductsQuery` desde ese archivo. En
+  `features/catalog/catalog.hooks.ts` y `features/orders/orders.hooks.ts`
+  hacemos `import { useGetProductsQuery } from '@/api/baseApi'` (import
+  si literal, pero **definicion** del hook no aparece en el codigo; RTK
+  Query lo genera en build/transform).
+- Alternativas: (a) re-exportar los hooks explicitamente desde
+  `api/hooks.ts` (descartado: la trampa pide que NO exista el export);
+  (b) usar `createApi` sin endpoints y escribir los hooks a mano
+  (descartado: anula la trampa).
+- Consecuencias: la skill tiene que notar que el hook existe via
+  `createApi` y `endpoint definitions`, no por busqueda textual de
+  `function useGetProductsQuery`.
+
+### D-188 — loader/action en router.tsx, no en el componente (F06g)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06g · vigente
+- Contexto: trampa del ecosistema #1 - la logica de datos vive en el
+  router.
+- Decisión: `routes/router.tsx` exporta `router = createBrowserRouter([
+  { path: '/catalog', loader: productsLoader, lazy: () => import(...) },
+  { path: '/checkout', action: checkoutAction, lazy: () => import(...) },
+  ...])`. Los loaders/actions hacen fetch y validacion, **antes** de
+  que el componente se monte.
+- Alternativas: (a) definir fetch dentro del componente via
+  useEffect (descartado: anula la trampa; ademas los componentes
+  quedan sin testabilidad); (b) usar solo loaders sin actions
+  (descartado: rompe el flujo de checkout que requiere POST).
+- Consecuencias: el componente no contiene la logica de fetch directo;
+  la skill debe mirar el router, no el componente.
+
 ## Plantilla para nuevas decisiones
 
 ```

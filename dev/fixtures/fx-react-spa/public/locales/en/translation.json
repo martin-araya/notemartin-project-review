@@ -1,0 +1,40 @@
+{
+  "auth": {
+    "login_title": "Sign in",
+    "email_label": "Email",
+    "password_label": "Password",
+    "submit": "Sign in",
+    "logout": "Sign out"
+  },
+  "catalog": {
+    "title": "Catalog",
+    "add_to_cart": "Add to cart",
+    "no_results": "No results",
+    "search_placeholder": "Search products..."
+  },
+  "cart": {
+    "title": "Cart",
+    "empty": "Cart is empty",
+    "subtotal": "Subtotal",
+    "remove": "Remove"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "submit": "Pay",
+    "card_label": "Card number",
+    "expiry_label": "Expiry",
+    "cvv_label": "CVV"
+  },
+  "orders": {
+    "title": "My orders",
+    "no_orders": "You have no orders yet",
+    "status_pending": "Pending",
+    "status_paid": "Paid",
+    "status_shipped": "Shipped"
+  },
+  "errors": {
+    "generic": "Something went wrong",
+    "network": "Network error",
+    "unauthorized": "Session expired"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "fx-react-spa",
+  "version": "1.0.0",
+  "description": "Fixture de SPA React 19 con RTK Query, RHF, i18next y data routers (F06g) para notemartin-project-review",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run --reporter=verbose",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@reduxjs/toolkit": "^2.2.0",
+    "i18next": "^23.10.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.51.0",
+    "react-i18next": "^14.0.0",
+    "react-redux": "^9.1.0",
+    "react-router-dom": "^6.26.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^25.0.0",
+    "msw": "^2.3.0",
+    "typescript": "^5.4.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.0.0"
+  }
+}

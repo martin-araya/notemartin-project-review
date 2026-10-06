@@ -1,0 +1,214 @@
+{
+  "fixture": "fx-react-spa",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-html", "artifact": "index.html", "file": "index.html"},
+    {"id": "EP-main", "artifact": "main.tsx", "file": "src/main.tsx"},
+    {"id": "EP-router", "artifact": "router.tsx", "file": "src/routes/router.tsx"}
+  ],
+  "modules": [
+    {"id": "MOD-main", "path": "src/main.tsx", "summary": "Bootstrap con 6 providers anidados + Suspense"},
+    {"id": "MOD-app", "path": "src/App.tsx", "summary": "RootLayout con RouterProvider"},
+    {"id": "MOD-router", "path": "src/routes/router.tsx", "summary": "createBrowserRouter con loaders/actions y ErrorBoundary"},
+    {"id": "MOD-auth-guard", "path": "src/routes/AuthGuard.tsx", "summary": "Loader-level guard (redirect si no hay sesion)"},
+    {"id": "MOD-route-error", "path": "src/routes/ErrorBoundary.tsx", "summary": "ErrorBoundary para rutas (trampa ecosistema #6)"},
+    {"id": "MOD-store", "path": "src/store/index.ts", "summary": "configureStore con auth + cart + RTK Query"},
+    {"id": "MOD-store-hooks", "path": "src/store/hooks.ts", "summary": "useAppDispatch / useAppSelector tipados"},
+    {"id": "MOD-auth-slice", "path": "src/store/slices/auth.slice.ts", "summary": "user, token, isAuthenticated, lastLoginAt"},
+    {"id": "MOD-cart-slice", "path": "src/store/slices/cart.slice.ts", "summary": "items, addItem (muta via push), removeItem"},
+    {"id": "MOD-api", "path": "src/api/baseApi.ts", "summary": "createApi con login/register/getProducts/getProduct/getOrders"},
+    {"id": "MOD-env", "path": "src/lib/env.ts", "summary": "API_BASE_URL, DEFAULT_LOCALE via import.meta.env.VITE_*"},
+    {"id": "MOD-i18n", "path": "src/lib/i18n.ts", "summary": "i18next init + loadLocale"},
+    {"id": "MOD-msal", "path": "src/lib/msal.ts", "summary": "Esqueleto MSAL no usado (trampa superficial)"},
+    {"id": "MOD-button", "path": "src/components/Button.tsx", "summary": "forwardRef(memo(Inner)) - orden memo adentro"},
+    {"id": "MOD-error-boundary", "path": "src/components/ErrorBoundary.tsx", "summary": "Class component para capturar errores"},
+    {"id": "MOD-toast", "path": "src/components/Toast.tsx", "summary": "ToastHost + showToast via CustomEvent"},
+    {"id": "MOD-theme", "path": "src/components/ThemeProvider.tsx", "summary": "ThemeProvider minimal"},
+    {"id": "MOD-toast-providers", "path": "src/components/ToastProvider.tsx", "summary": "ToastProvider con contexto"},
+    {"id": "MOD-hoc-withauth", "path": "src/components/HOCs/withAuth.tsx", "summary": "HOC que NO inyecta user (trampa paquete)"},
+    {"id": "MOD-hoc-withlogger", "path": "src/components/HOCs/withLogger.tsx", "summary": "HOC para loggear renders"},
+    {"id": "MOD-hook-debounce", "path": "src/hooks/useDebounce.ts", "summary": "useDebounce basico"},
+    {"id": "MOD-hook-locale", "path": "src/hooks/useLocale.ts", "summary": "useLocale setter"},
+    {"id": "MOD-hook-cart", "path": "src/hooks/useCart.ts", "summary": "useCart combina dispatch + selector"},
+    {"id": "MOD-auth", "path": "src/features/auth/", "summary": "LoginPage, RegisterPage, schema, hooks"},
+    {"id": "MOD-catalog", "path": "src/features/catalog/", "summary": "ProductListPage, ProductCard (memo), loader"},
+    {"id": "MOD-cart-feature", "path": "src/features/cart/", "summary": "CartPage, CartItem (forwardRef+memo+HOC), utils"},
+    {"id": "MOD-checkout", "path": "src/features/checkout/", "summary": "CheckoutPage + checkoutAction (action del router)"},
+    {"id": "MOD-orders", "path": "src/features/orders/", "summary": "OrdersPanelPage + useOrdersPolling (pollingInterval 1000)"},
+    {"id": "MOD-types", "path": "src/types/index.ts", "summary": "Product, Order, User, CartItem, schemas"}
+  ],
+  "dependencies": [
+    {"name": "react", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react-dom", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react-router-dom", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@reduxjs/toolkit", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react-redux", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react-hook-form", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "@hookform/resolvers", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "zod", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "i18next", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "react-i18next", "scope": "runtime", "manifest": "package.json (dependencies)"},
+    {"name": "vitest", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@testing-library/react", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@testing-library/user-event", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "@testing-library/jest-dom", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "jsdom", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "msw", "scope": "dev", "manifest": "package.json (devDependencies)"},
+    {"name": "vite", "scope": "dev", "manifest": "package.json (devDependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "autenticacion",
+      "user_description": "El usuario inicia sesion o se registra; la sesion persiste en sessionStorage y el store.",
+      "traces": [
+        {"n": 1, "what": "User submits LoginPage form", "cite": "src/features/auth/LoginPage.tsx:38", "data_in": "email, password", "data_out": "login() call"},
+        {"n": 2, "what": "useForm + zodResolver validates", "cite": "src/features/auth/LoginPage.tsx:25", "data_in": "form values", "data_out": "valid LoginInput"},
+        {"n": 3, "what": "useLoginMutation (autogenerated)", "cite": "src/features/auth/auth.hooks.ts:14", "data_in": "LoginRequest", "data_out": "LoginResponse | error"},
+        {"n": 4, "what": "POST /api/auth/login (MSW)", "cite": "tests/handlers.ts:42", "data_in": "LoginRequest", "data_out": "LoginResponse or 401"},
+        {"n": 5, "what": "loginSuccess action dispatched", "cite": "src/features/auth/auth.hooks.ts:17", "data_in": "user, token", "data_out": "store.auth.isAuthenticated=true"},
+        {"n": 6, "what": "sessionStorage.setItem SESSION_STORAGE_KEY", "cite": "src/features/auth/auth.hooks.ts:18", "data_in": "session blob", "data_out": "fxreact.session in sessionStorage"},
+        {"n": 7, "what": "navigate to /catalog (or redirect param)", "cite": "src/features/auth/LoginPage.tsx:46", "data_in": "redirect query param", "data_out": "route change"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/features/auth/LoginPage.tsx", "line": 29, "kind": "validation", "condition_text": "useForm errors.email || errors.password", "branches": [{"label": "submit triggers", "target_line": 38}, {"label": "inline error rendered", "target_line": 35}]},
+        {"id": "DP-002", "file": "src/features/auth/auth.hooks.ts", "line": 14, "kind": "lookup", "condition_text": "MSW handler finds user", "branches": [{"label": "LoginResponse 200", "target_line": 17}, {"label": "401 + toast", "target_line": 23}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "valid credentials", "user_sees": "redirect a /catalog; token guardado en sessionStorage; toast 'Sesion iniciada'", "side_effects": ["sessionStorage update", "store.auth update", "navigate"], "reversible": true, "final_state": "authenticated"},
+        {"id": "R-02", "category": "error_credentials", "conditions": "wrong password", "user_sees": "no redirect; toast 'Credenciales invalidas'", "side_effects": ["toast"], "reversible": false, "final_state": "unauthenticated"},
+        {"id": "R-03", "category": "error_validation_email", "conditions": "email format invalid", "user_sees": "error inline 'invalid_email'", "side_effects": ["no API call"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-04", "category": "error_validation_password", "conditions": "password < 8 chars", "user_sees": "error inline 'password_too_short'", "side_effects": ["no API call"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-05", "category": "register_ok", "conditions": "new email + matching passwords", "user_sees": "redirect a /catalog; toast 'Cuenta creada'", "side_effects": ["store update", "navigate"], "reversible": false, "final_state": "account created"},
+        {"id": "R-06", "category": "register_conflict", "conditions": "email already in MSW users[]", "user_sees": "toast 'No se pudo crear la cuenta' (no hay 4xx en UI)", "side_effects": ["none"], "reversible": false, "final_state": "no account"},
+        {"id": "R-07", "category": "session_restore", "conditions": "sessionStorage contiene fxreact.session al cargar", "user_sees": "no redirect a /login en rutas guardadas", "side_effects": ["store.auth.hydrate (via App init)"], "reversible": true, "final_state": "authenticated"}
+      ],
+      "config": [
+        {"key": "SESSION_STORAGE_KEY", "kind": "literal", "default": "fxreact.session", "effect": "clave usada para persistir sesion"},
+        {"key": "TOKEN_HEADER", "kind": "literal", "default": "Authorization", "effect": "header para enviar token"},
+        {"key": "TOKEN_PREFIX", "kind": "literal", "default": "Bearer ", "effect": "prefijo del header"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "catalogo-y-carrito",
+      "user_description": "El usuario navega el catalogo, filtra por categoria y anade productos al carrito.",
+      "traces": [
+        {"n": 1, "what": "User navega a /catalog", "cite": "src/routes/router.tsx:48", "data_in": "GET /catalog", "data_out": "productsLoader executes"},
+        {"n": 2, "what": "productsLoader hace fetch al backend (MSW)", "cite": "src/features/catalog/productsLoader.ts:12", "data_in": "URL params (category, q, page)", "data_out": "Paginated<Product>"},
+        {"n": 3, "what": "ProductListPage renderiza con useLoaderData + useGetProductsQuery", "cite": "src/features/catalog/ProductListPage.tsx:13", "data_in": "data from loader + RTK Query cache", "data_out": "items rendered as MemoizedProductCard"},
+        {"n": 4, "what": "useCatalogFilters aplica debounce + useEffect chain", "cite": "src/features/catalog/catalog.hooks.ts:14", "data_in": "query, category", "data_out": "debouncedQuery"},
+        {"n": 5, "what": "User click 'Anadir al carrito' en ProductCard", "cite": "src/features/catalog/ProductCard.tsx:21", "data_in": "productId", "data_out": "addItem() dispatched"},
+        {"n": 6, "what": "cartSlice.addItem muta items[]", "cite": "src/store/slices/cart.slice.ts:23", "data_in": "productId, unitPrice, quantity", "data_out": "store.cart.items actualizado"},
+        {"n": 7, "what": "CartPage renderiza items desde store", "cite": "src/features/cart/CartPage.tsx:21", "data_in": "store.cart.items", "data_out": "LoggedCartItem list"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/features/catalog/ProductListPage.tsx", "line": 24, "kind": "loading", "condition_text": "isLoading", "branches": [{"label": "show 'Cargando...'", "target_line": 24}, {"label": "show items", "target_line": 36}]},
+        {"id": "DP-004", "file": "src/store/slices/cart.slice.ts", "line": 25, "kind": "existence", "condition_text": "existing item found", "branches": [{"label": "increment quantity", "target_line": 26}, {"label": "push new item", "target_line": 29}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load", "conditions": "GET /products sin filtros", "user_sees": "3 productos renderizados (p1, p2, p3)", "side_effects": ["RTK Query cache populated"], "reversible": true, "final_state": "items rendered"},
+        {"id": "R-02", "category": "success_filter", "conditions": "category=books", "user_sees": "solo 'El Quijote'", "side_effects": ["RTK Query cache updated"], "reversible": true, "final_state": "filtered items"},
+        {"id": "R-03", "category": "success_search", "conditions": "query='Audifonos'", "user_sees": "solo 'Audifonos BT'", "side_effects": ["debounce dispara fetch tras 300ms"], "reversible": true, "final_state": "search results"},
+        {"id": "R-04", "category": "error_load", "conditions": "MSW responde 500", "user_sees": "alert 'Error al cargar productos'", "side_effects": ["isError=true"], "reversible": true, "final_state": "error visible"},
+        {"id": "R-05", "category": "add_to_cart", "conditions": "click en Anadir al carrito", "user_sees": "store.cart.items += {productId,unitPrice,quantity:1}", "side_effects": ["dispatch addItem"], "reversible": true, "final_state": "cart updated"},
+        {"id": "R-06", "category": "add_to_cart_increment", "conditions": "productId ya en items", "user_sees": "quantity incrementada (no se duplica)", "side_effects": ["mutacion via Immer"], "reversible": true, "final_state": "cart incremented"},
+        {"id": "R-07", "category": "cart_empty", "conditions": "items.length === 0 en /cart", "user_sees": "'Carrito vacio'", "side_effects": [], "reversible": false, "final_state": "empty cart"}
+      ],
+      "config": [
+        {"key": "DEFAULT_PAGE_SIZE", "kind": "literal", "default": "20", "effect": "items por pagina en paginacion"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "checkout",
+      "user_description": "El usuario completa el formulario de pago; el action del router valida y crea la orden.",
+      "traces": [
+        {"n": 1, "what": "User navega a /checkout (authGuard)", "cite": "src/routes/router.tsx:62", "data_in": "sesion valida", "data_out": "CheckoutPage mounts"},
+        {"n": 2, "what": "useForm + zodResolver valida campos", "cite": "src/features/checkout/CheckoutPage.tsx:23", "data_in": "cardNumber, expiry, cvv", "data_out": "valid CheckoutInput o errores inline"},
+        {"n": 3, "what": "Submit va al action del router (no useMutation)", "cite": "src/features/checkout/checkoutAction.ts:15", "data_in": "FormData", "data_out": "redirect or error"},
+        {"n": 4, "what": "checkoutAction valida cardNumber", "cite": "src/features/checkout/checkoutAction.ts:21", "data_in": "cardNumber string", "data_out": "{ ok: false, error: invalid_card } o POST"},
+        {"n": 5, "what": "checkoutAction hace POST /api/orders", "cite": "src/features/checkout/checkoutAction.ts:32", "data_in": "items from store", "data_out": "Order creada o error"},
+        {"n": 6, "what": "redirect a /orders con toast", "cite": "src/features/checkout/checkoutAction.ts:48", "data_in": "Order 201", "data_out": "navigate to /orders"},
+        {"n": 7, "what": "OrdersPanelPage polling", "cite": "src/features/orders/orders.hooks.ts:9", "data_in": "pollingInterval: 1000", "data_out": "refetch cada segundo"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/features/checkout/checkoutAction.ts", "line": 21, "kind": "validation", "condition_text": "cardNumber.replace(/\\D/g, '').length < 13", "branches": [{"label": "return invalid_card", "target_line": 23}, {"label": "continue POST", "target_line": 28}]},
+        {"id": "DP-006", "file": "src/features/checkout/checkoutAction.ts", "line": 28, "kind": "empty_cart", "condition_text": "state.cart.items.length === 0", "branches": [{"label": "redirect /cart", "target_line": 29}, {"label": "POST /api/orders", "target_line": 32}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success", "conditions": "cardNumber valida + cart con items + MSW 201", "user_sees": "redirect a /orders; toast 'Pedido creado'", "side_effects": ["orders.push", "navigate"], "reversible": false, "final_state": "order created"},
+        {"id": "R-02", "category": "error_card_invalid", "conditions": "cardNumber.replace(/\\D/g, '').length < 13", "user_sees": "toast 'Numero de tarjeta invalido'", "side_effects": ["toast"], "reversible": true, "final_state": "no order"},
+        {"id": "R-03", "category": "redirect_empty_cart", "conditions": "cart vacio", "user_sees": "redirect a /cart", "side_effects": ["navigate"], "reversible": false, "final_state": "no order"},
+        {"id": "R-04", "category": "error_network", "conditions": "MSW responde 500", "user_sees": "toast 'Error al procesar el pago'", "side_effects": ["toast"], "reversible": true, "final_state": "no order"},
+        {"id": "R-05", "category": "error_zod_cardNumber", "conditions": "cardNumber no es 13-19 digitos", "user_sees": "error inline 'invalid_card_number'", "side_effects": ["no submit"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-06", "category": "error_zod_expiry", "conditions": "expiry no es MM/AA", "user_sees": "error inline 'invalid_expiry'", "side_effects": ["no submit"], "reversible": true, "final_state": "form invalid"},
+        {"id": "R-07", "category": "error_zod_cvv", "conditions": "cvv no es 3-4 digitos", "user_sees": "error inline 'invalid_cvv'", "side_effects": ["no submit"], "reversible": true, "final_state": "form invalid"}
+      ],
+      "config": []
+    },
+    {
+      "id": "FEAT-004",
+      "name": "panel-de-pedidos",
+      "user_description": "El usuario ve su historial de pedidos con polling automatico cada segundo.",
+      "traces": [
+        {"n": 1, "what": "User navega a /orders (authGuard)", "cite": "src/routes/router.tsx:68", "data_in": "sesion valida", "data_out": "OrdersPanelPage mounts"},
+        {"n": 2, "what": "useOrdersPolling define pollingInterval=1000", "cite": "src/features/orders/orders.hooks.ts:9", "data_in": "status filter", "data_out": "polling config"},
+        {"n": 3, "what": "useGetOrdersQuery (autogenerado) hace GET /api/orders", "cite": "src/api/baseApi.ts:54", "data_in": "status, page", "data_out": "Paginated<Order>"},
+        {"n": 4, "what": "MSW responde con orders[]", "cite": "tests/handlers.ts:78", "data_in": "GET /orders", "data_out": "{ items: [], total: 0, page: 1, pageSize: 20 }"},
+        {"n": 5, "what": "Tabla renderiza filas con status badge", "cite": "src/features/orders/OrdersPanelPage.tsx:48", "data_in": "data.items", "data_out": "<tr> por pedido"},
+        {"n": 6, "what": "polling dispara otro GET en 1s", "cite": "src/features/orders/orders.hooks.ts:9", "data_in": "pollingInterval", "data_out": "refetch"},
+        {"n": 7, "what": "User cambia filtro de estado", "cite": "src/features/orders/OrdersPanelPage.tsx:24", "data_in": "status nuevo", "data_out": "useOrdersPolling(status) re-fire"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "src/features/orders/OrdersPanelPage.tsx", "line": 21, "kind": "loading", "condition_text": "isLoading", "branches": [{"label": "show Cargando", "target_line": 31}, {"label": "show table", "target_line": 38}]},
+        {"id": "DP-008", "file": "src/features/orders/OrdersPanelPage.tsx", "line": 24, "kind": "filter", "condition_text": "select onChange", "branches": [{"label": "setStatus(undefined)", "target_line": 24}, {"label": "setStatus(status)", "target_line": 24}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_empty", "conditions": "orders[] vacio", "user_sees": "'Aun no tienes pedidos'", "side_effects": [], "reversible": false, "final_state": "no orders"},
+        {"id": "R-02", "category": "success_list", "conditions": "orders[] con items", "user_sees": "tabla con id, total, estado, fecha", "side_effects": ["polling continua"], "reversible": true, "final_state": "orders rendered"},
+        {"id": "R-03", "category": "success_filter", "conditions": "status filter seleccionado", "user_sees": "solo pedidos con ese estado", "side_effects": ["nueva query"], "reversible": true, "final_state": "filtered orders"},
+        {"id": "R-04", "category": "error_load", "conditions": "MSW responde 500", "user_sees": "alert 'Error al cargar pedidos'", "side_effects": ["isError=true"], "reversible": true, "final_state": "error visible"},
+        {"id": "R-05", "category": "polling_chain", "conditions": "pagina abierta >= 2s", "user_sees": "al menos 2 fetches a /api/orders (trampa #4)", "side_effects": ["refetch cada 1s"], "reversible": false, "final_state": "polling activo"},
+        {"id": "R-06", "category": "refresh_action", "conditions": "User click 'Refrescar'", "user_sees": "fetch inmediato", "side_effects": ["refetch()"], "reversible": true, "final_state": "data refrescado"},
+        {"id": "R-07", "category": "error_filter_unknown", "conditions": "status con valor vacio", "user_sees": "no filter applied (fetch all orders)", "side_effects": ["setStatus(undefined)"], "reversible": true, "final_state": "all orders"}
+      ],
+      "config": [
+        {"key": "pollingInterval", "kind": "literal", "default": "1000", "effect": "intervalo de refetch automatico (ms) - trampa #4"},
+        {"key": "refetchOnFocus", "kind": "literal", "default": "true", "effect": "refetch cuando la pestana recupera foco"},
+        {"key": "refetchOnReconnect", "kind": "literal", "default": "true", "effect": "refetch cuando la red vuelve"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "router_loader_action", "where": "src/routes/router.tsx:48 + src/features/catalog/productsLoader.ts:12 + src/features/checkout/checkoutAction.ts:15", "resolution": "El fetch de productos y el submit de checkout viven en archivos separados invocados desde el router. La skill debe buscar loaders/actions en el router, no en el componente."},
+    {"id": "TRAP-E02", "kind": "rtk_query_autogenerated_hooks", "where": "src/api/baseApi.ts:24-58 (endpoints) + features/{catalog,orders}/src/hooks.ts (imports)", "resolution": "Los hooks useGetProductsQuery/useGetOrdersQuery NO estan definidos como `function useGetProductsQuery(...)` en ninguna linea. Se generan en build por createApi. La skill debe leer los endpoints y deducir los hooks."},
+    {"id": "TRAP-E03", "kind": "nested_providers", "where": "src/main.tsx:30-50", "resolution": "6 providers anidados en orden StoreProvider QueryClient I18nextProvider ThemeProvider ToastProvider ErrorBoundary. Cambiar el orden cambia la propagacion de errores, las traducciones y los toasts."},
+    {"id": "TRAP-E04", "kind": "useEffect_chain", "where": "src/features/catalog/catalog.hooks.ts:14-29", "resolution": "Tres useEffect consecutivos que comparten state via useDebounce. Cambiar query dispara tres efectos encadenados (debounced, category, ambos)."},
+    {"id": "TRAP-E05", "kind": "import_meta_env_vite", "where": "src/lib/env.ts:3-8", "resolution": "Las variables VITE_API_URL y VITE_DEFAULT_LOCALE se reemplazan en build por Vite. En tests se mockean con vi.stubEnv. La skill debe notar que no son variables de proceso."},
+    {"id": "TRAP-E06", "kind": "memo_forwardref_hoc_suspense_errorboundary", "where": "src/components/Button.tsx (forwardRef+memo) + src/features/cart/CartItem.tsx (forwardRef+memo+withLogger) + src/routes/router.tsx (errorElement) + src/main.tsx (Suspense)", "resolution": "Multiples capas de wrapping; el orden memo/forwardRef/HOC cambia el displayName. La skill debe mapear cada export default/no-default y reconstruir el wrapping."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "missing_deps_useEffect", "where": "src/features/auth/LoginPage.tsx:29", "resolution": "useEffect con [] no declara `params` ni `setSubmitting` en deps. En estricto modo React dispara el effect dos veces; el dev deberia notar la advertencia en consola."},
+    {"id": "TRAP-P02", "kind": "hoc_no_inject_user", "where": "src/components/HOCs/withAuth.tsx:11-14", "resolution": "withAuth retorna <Wrapped {...props} user={{} as User} />, no lee del store. El componente envuelto recibe user vacio. La skill debe notar que withAuth no protege nada."},
+    {"id": "TRAP-P03", "kind": "memo_forwardref_order_asymmetry", "where": "src/components/Button.tsx (memo adentro, forwardRef afuera) + src/features/cart/CartItem.tsx (memo afuera, forwardRef adentro)", "resolution": "El orden cambia el comportamiento de displayName y la propagacion de refs. La skill debe normalizar la composicion."},
+    {"id": "TRAP-P04", "kind": "pollingInterval_refetch_chain", "where": "src/features/orders/orders.hooks.ts:9", "resolution": "pollingInterval: 1000 + refetchOnFocus: true dispara fetches encadenados. Un usuario que interactua con la pestana o la app genera rafagas de requests."},
+    {"id": "TRAP-P05", "kind": "cart_mutation", "where": "src/store/slices/cart.slice.ts:24-30", "resolution": "addItem muta el array con push (Immer lo absorbe pero rompe si state viene pre-clonado). La skill debe notar el patron fragil."},
+    {"id": "TRAP-P06", "kind": "false_displayName", "where": "src/features/cart/CartItem.tsx:23", "resolution": "displayName = 'CartLineItem' despista a la busqueda por 'CartItem'. La skill debe buscar por displayName y por archivo, no solo por el identificador esperado."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-login", "kind": "http", "name": "POST /api/auth/login", "handler": "src/api/baseApi.ts:24", "file": "src/api/baseApi.ts"},
+    {"id": "SRF-route-register", "kind": "http", "name": "POST /api/auth/register", "handler": "src/api/baseApi.ts:31", "file": "src/api/baseApi.ts"},
+    {"id": "SRF-route-products-list", "kind": "http", "name": "GET /api/products", "handler": "src/api/baseApi.ts:38", "file": "src/api/baseApi.ts"},
+    {"id": "SRF-route-product-detail", "kind": "http", "name": "GET /api/products/:id", "handler": "src/api/baseApi.ts:48", "file": "src/api/baseApi.ts"},
+    {"id": "SRF-route-orders-list", "kind": "http", "name": "GET /api/orders", "handler": "src/api/baseApi.ts:54", "file": "src/api/baseApi.ts"},
+    {"id": "SRF-route-orders-create", "kind": "http", "name": "POST /api/orders", "handler": "tests/handlers.ts:84", "file": "tests/handlers.ts"},
+    {"id": "SRF-loader-products", "kind": "loader", "name": "productsLoader", "handler": "src/features/catalog/productsLoader.ts", "file": "src/features/catalog/productsLoader.ts"},
+    {"id": "SRF-action-checkout", "kind": "action", "name": "checkoutAction", "handler": "src/features/checkout/checkoutAction.ts", "file": "src/features/checkout/checkoutAction.ts"},
+    {"id": "SRF-loader-auth-guard", "kind": "loader", "name": "authGuard", "handler": "src/routes/AuthGuard.tsx", "file": "src/routes/AuthGuard.tsx"},
+    {"id": "SRF-page-catalog", "kind": "page", "name": "/catalog", "handler": "src/routes/router.tsx:48", "file": "src/routes/router.tsx"},
+    {"id": "SRF-page-cart", "kind": "page", "name": "/cart", "handler": "src/routes/router.tsx:56", "file": "src/routes/router.tsx"},
+    {"id": "SRF-page-checkout", "kind": "page", "name": "/checkout", "handler": "src/routes/router.tsx:62", "file": "src/routes/router.tsx"},
+    {"id": "SRF-page-orders", "kind": "page", "name": "/orders", "handler": "src/routes/router.tsx:68", "file": "src/routes/router.tsx"}
+  ]
+}

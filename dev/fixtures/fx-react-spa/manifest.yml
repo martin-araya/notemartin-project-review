@@ -1,0 +1,16 @@
+# Metadata del fixture F06g: fx-react-spa
+# SPA React 19 + TypeScript con data routers, RTK Query, React Hook Form + Zod,
+# i18next. Ver referencias a las trampas del ecosistema y del paquete en
+# ground-truth/ground_truth.json.
+name: fx-react-spa
+description: SPA React 19 con RTK Query, RHF, i18next y data routers (F06g)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: npm test -- --run
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-react-spa
+  enabled: true
+ground_truth_format_version: 1
