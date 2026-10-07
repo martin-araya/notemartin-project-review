@@ -1,0 +1,9 @@
+{{define "header"}}# fx-go-service export
+format={{.Format}} count={{.Count}} generated={{.GeneratedAt}}
+{{end}}
+{{define "row"}}- id={{.ID}} type={{.Type}} at={{.CreatedAt}}
+{{end}}
+{{template "header" .}}
+{{range .Events}}
+{{template "row" .}}
+{{end}}

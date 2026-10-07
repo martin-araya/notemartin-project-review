@@ -2049,3 +2049,165 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   la deteccion).
 - Consecuencias: el MATRIX.md muestra fx-node-nestjs cubriendo
   nestjs, typeorm y bullmq.
+
+### D-248 — Stack del fixture F06s: Go 1.22 + chi v5.1 + sqlc v1.27 + wire v0.6 + go-sqlite3 v1.14 + testify v1.9 (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: el plan F06s pide un servicio HTTP en Go con workers
+  concurrentes, sqlc, wire y go:embed.
+- Decision: stack = Go 1.22 + `github.com/go-chi/chi/v5 v5.1.0`
+  + `github.com/google/wire v0.6.0` + `github.com/mattn/go-sqlite3
+  v1.14.22` + `github.com/stretchr/testify v1.9.0` (downgrade
+  desde 1.10 por conflicto con dep transitiva davecheney/profile
+  eliminada de GitHub). Imagen Docker: `golang:1.22-bookworm`
+  con `apt-get install -y make gcc` (necesario para cgo de sqlite3).
+- Alternativas: (a) `gorilla/mux` (descartado: chi es mas moderno);
+  (b) `pgx` + Postgres (descartado: agrega dependencia externa);
+  (c) `testify v1.10` (descartado: requiere davecheney/profile
+  privado eliminado de GitHub).
+- Consecuencias: la trampa E01 (interfaces implicitas), la trampa
+  E02 (init + blank imports), la trampa E03 (//go:generate),
+  la trampa E04 (goroutines/channels/select), la trampa E05
+  (build tags) y la trampa E06 (//go:embed) son utiles para
+  la skill.
+
+### D-249 — Apps y packages en ingles (orders, aggregate, export) para CC-11 (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature (en espanol) en cualquier linea del codigo del fixture.
+  Los features son `ingesta-de-eventos`, `agregacion`,
+  `exportacion`.
+- Decision: usar routers en ingles (`internal/http/handlers.go`
+  con `POST /events`, `GET /aggregate`, `GET /export`). Los
+  nombres de feature en espanol viven solo en el ground truth.
+  Los packages internos en ingles (`internal/domain/`,
+  `internal/repo/sqlite/`, `internal/service/`,
+  `internal/http/`, `internal/worker/`).
+- Alternativas: (a) packages `internal/ingesta/`, etc. (descartado:
+  los nombres de feature en espanol aparecen en strings
+  y comments; la consistencia favorece nombres en ingles);
+  (b) ofuscar con guiones (descartado: el check_ground_truth
+  detecta substrings).
+- Consecuencias: la skill debe mapear `events` <-> `ingesta-de-eventos`,
+  `aggregate` <-> `agregacion`, `export` <-> `exportacion`.
+
+### D-250 — sqlc genera codigo en `internal/repo/sqlc/` via `sqlc generate` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: la trampa E03 exige que el codigo de queries se
+  genere con `sqlc generate`, no que se commitee al repo.
+- Decision: `sqlc.yaml` apunta a `queries.sql` (con anotaciones
+  sqlc como `-- name: CreateEvent :execresult`) y
+  `migrations/001_initial.up.sql`. El Dockerfile.test hace
+  `sqlc generate` antes de `go test`. Adicionalmente, se incluye
+  un stub `internal/repo/sqlc/db.go` con funciones placeholder
+  para que el codigo compile en CI si sqlc no esta disponible
+  (mismo patron que NestJS y otros fixtures).
+- Alternativas: (a) commitear el codigo generado (descartado:
+  rompe la trampa E03); (b) requerir sqlc en CI (descartado:
+  agrega dependencia externa al build).
+- Consecuencias: la trampa E03 sigue valida. Los tests funcionan
+  con el stub; sqlc se ejecuta en build para validar que la
+  sintaxis de queries.sql es correcta.
+
+### D-251 — wire genera `wire_gen.go` con `wire gen ./...` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: la trampa E03 tambien aplica al codigo de DI
+  generado por wire.
+- Decision: `wire.go` declara los providers con
+  `//go:build wireinject`. `wire gen ./...` produce `wire_gen.go`
+  con la implementacion concreta de `InitializeApp()`.
+- Alternativas: (a) DI manual con `main()` y factories (descartado:
+  elimina la trampa E03); (b) usar `google/wire` solo en
+  documentacion sin build (descartado: no es la trampa).
+- Consecuencias: la trampa E03 (codigo generado por tools) sigue
+  valida para wire igual que para sqlc.
+
+### D-252 — Interfaces implementadas estructuralmente sin keyword `implements` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: la trampa E01 exige que las interfaces se implementen
+  sin la keyword `implements` (Go usa structural typing).
+- Decision: `domain.EventRepository` y `domain.Exporter` son
+  interfaces. `SQLiteEventRepository` y `SQLiteExporter` las
+  implementan estructuralmente: cualquier struct con todos los
+  metodos de la interface satisface la interface automaticamente.
+- Alternativas: (a) embedding explicito de la interface
+  (descartado: no es Go idiomático); (b) wrappers (descartado:
+  complica la estructura).
+- Consecuencias: la trampa E01 sigue valida. La skill debe
+  buscar la interface en `domain/` y verificar el matching de
+  signatures con los structs en `repo/`.
+
+### D-253 — Prefijo `NPRGT-FXGO-` para los unique tokens de F06s (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXGO` y exactamente 26 tokens cubriendo
+  stack (GO-VER, CHI-VER, SQLC-VER, WIRE-VER, SQLITE-VER,
+  TESTIFY-VER), tipos (IMPLICIT-INTERFACE, INIT-FUNCTION,
+  BLANK-IMPORT, GO-GENERATE, GOROUTINE-POOL, CHANNEL-SELECT,
+  BUILD-TAG, EMBED-FS, DEPENDENCY-INJECTION), features
+  (INGEST-RESULT-R01, AGGREGATE-RESULT-R01, EXPORT-RESULT-R01),
+  marcadores (MARKER-APP, MARKER-CMD, MARKER-DOMAIN,
+  MARKER-SQLC), y trampas superficiales (TRAMP-S01-LEGACY,
+  TRAMP-S02-LEGACY-BIN, TRAMP-S03-DEBUG).
+- Alternativas: (a) `FXGOASPNET` (descartado: excede 8 caracteres);
+  (b) `FXGOCHI` (descartado: no cubre sqlc/wire/embed).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-254 — `Makefile` envuelve `go test ./... -race -count=1` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: el plan F06x exige paridad con F06f.
+- Decision: `TEST_CMD ?= go test ./... -race -count=1` en el
+  Makefile; `test_cmd: make test` en `manifest.yml`.
+- Alternativas: (a) `go test` directo (descartado: rompe paridad);
+  (b) sin `-race` (descartado: el roadmap pide race detector).
+- Consecuencias: el contenedor ejecuta `make test` y los tests
+  corren con `-race` para detectar data races en el worker pool.
+
+### D-255 — Imagen Docker `golang:1.22-bookworm` con `make + gcc` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: `go-sqlite3` requiere cgo + gcc. `make` se usa
+  para ejecutar el Makefile en el contenedor.
+- Decision: `FROM golang:1.22-bookworm` + `RUN apt-get install -y
+  make gcc` antes de la copia del codigo (cache de layers).
+- Alternativas: (a) usar `golang:1.22-alpine` (descartado: alpine
+  no tiene gcc por defecto y la compilacion cgo es compleja);
+  (b) usar `golang:1.22-bookworm` sin gcc (descartado: cgo falla).
+- Consecuencias: la imagen pesa ~600 MB. El native build de
+  go-sqlite3 funciona en el contenedor.
+
+### D-256 — `requires: [linux, macos, windows]` en `manifest.yml` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: el plan F06x exige paridad con F06p.
+- Decision: `requires: [linux, macos, windows]`. Go es multiplataforma.
+- Alternativas: (a) solo Linux (descartado: rompe paridad).
+- Consecuencias: el fixture es ejecutable en los 3 sistemas.
+
+### D-257 — Deteccion extendida de go-chi/sqlc/wire/embed/sqlite en `fixtures_matrix.py` y `target_matrix.yml` (F06s)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06s · vigente
+- Contexto: el plan F06x exige extender `fixtures_matrix.py`
+  para detectar go-chi via `go.mod` (buscar `github.com/go-chi/chi`),
+  sqlc via `sqlc.yaml`, embed via grep de `//go:embed ` en archivos
+  `*.go`, wire via `github.com/google/wire` en go.mod, y sqlite
+  via `github.com/mattn/go-sqlite3` en go.mod.
+- Decision: agregar bloque de deteccion para `go.mod` que busca
+  los 4 paquetes Go (chi, wire, sqlite, etc.). Agregar bloque
+  para `sqlc.yaml` que agrega `{sqlc}`. Agregar grep recursivo de
+  `*.go` para `//go:embed ` que agrega `{embed}`. Agregar a
+  `target_matrix.yml`: `frameworks: [go-chi, sqlc, wire, embed,
+  sqlite]`.
+- Alternativas: (a) parsear `go.sum` (descartado: es menos estable
+  que go.mod); (b) detectar embed via nombre de archivo (descartado:
+  no es la directiva).
+- Consecuencias: el MATRIX.md muestra fx-go-service cubriendo
+  go-chi, sqlc, wire, embed y sqlite.

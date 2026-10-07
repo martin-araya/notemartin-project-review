@@ -1,0 +1,10 @@
+{{define "header"}}# fx-go-service export
+Generated: {{.GeneratedAt}}
+Total events: {{.Count}}
+{{end}}
+{{define "row"}}- id={{.ID}} type={{.Type}} at={{.CreatedAt}}
+{{end}}
+{{template "header" .}}
+{{range .Events}}
+{{template "row" .}}
+{{end}}

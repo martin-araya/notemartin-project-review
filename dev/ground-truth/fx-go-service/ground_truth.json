@@ -1,0 +1,165 @@
+{
+  "fixture": "fx-go-service",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "cmd/server/main.go", "file": "cmd/server/main.go"},
+    {"id": "EP-app", "artifact": "internal/http/server.go", "file": "internal/http/server.go"},
+    {"id": "EP-sqlc", "artifact": "sqlc.yaml", "file": "sqlc.yaml"},
+    {"id": "EP-wire", "artifact": "wire.go", "file": "wire.go"}
+  ],
+  "modules": [
+    {"id": "MOD-cmd-server", "path": "cmd/server/main.go", "summary": "Entry point: abre DB, crea repos/servicios/pool, monta HTTP server (chi), arranca worker pool"},
+    {"id": "MOD-cmd-legacy", "path": "cmd/legacy/main.go", "summary": "Dead binary legacy (trampa S02)"},
+    {"id": "MOD-domain", "path": "internal/domain/event.go", "summary": "Entidades Event y Aggregate"},
+    {"id": "MOD-domain-repo", "path": "internal/domain/repo.go", "summary": "Interfaces EventRepository y Exporter (trampa E01)"},
+    {"id": "MOD-domain-aggregate", "path": "internal/domain/aggregate.go", "summary": "Helper ListByType en AggregateService (trampa P03)"},
+    {"id": "MOD-repo-sqlite", "path": "internal/repo/sqlite/sqlite.go", "summary": "SQLiteEventRepository y SQLiteExporter con implementacion estructural (E01)"},
+    {"id": "MOD-repo-sqlite-driver", "path": "internal/repo/sqlite/driver.go", "summary": "init() explicito que documenta el registro del driver (E02)"},
+    {"id": "MOD-repo-sqlite-init", "path": "internal/repo/sqlite/init.go", "summary": "OpenDB con blank import del driver (E02)"},
+    {"id": "MOD-repo-sqlc", "path": "internal/repo/sqlc/db.go", "summary": "Codigo sqlc-generated stub (E03)"},
+    {"id": "MOD-service-ingest", "path": "internal/service/ingest_service.go", "summary": "IngestService que persiste eventos"},
+    {"id": "MOD-service-aggregate", "path": "internal/service/aggregate_service.go", "summary": "AggregateService que computa agregaciones por tipo"},
+    {"id": "MOD-service-export", "path": "internal/service/export_service.go", "summary": "ExportService con template embebido (E06)"},
+    {"id": "MOD-service-templates", "path": "internal/service/templates/export.tmpl", "summary": "Template embebido via //go:embed (E06)"},
+    {"id": "MOD-http-handlers", "path": "internal/http/handlers.go", "summary": "chi handlers (E04)"},
+    {"id": "MOD-http-server", "path": "internal/http/server.go", "summary": "NewApp constructor + http.Server"},
+    {"id": "MOD-http-legacy", "path": "internal/http/legacy_export.go", "summary": "LegacyExportHandler con build tag 'legacy' (E05 + S01)"},
+    {"id": "MOD-worker-pool", "path": "internal/worker/pool.go", "summary": "Pool con goroutines + channels + select (E04)"},
+    {"id": "MOD-config", "path": "internal/config/config.go", "summary": "Config desde env vars"},
+    {"id": "MOD-debug", "path": "internal/debug.go", "summary": "DebugPrintln dead (S03)"},
+    {"id": "MOD-migrations", "path": "migrations/001_initial.up.sql", "summary": "Schema SQLite para events"},
+    {"id": "MOD-templates-root", "path": "templates/export.tmpl", "summary": "Template original (duplicado en internal/service/templates/)"}
+  ],
+  "dependencies": [
+    {"name": "go-chi/chi/v5", "version": "5.1.0", "scope": "runtime", "manifest": "go.mod"},
+    {"name": "google/wire", "version": "0.6.0", "scope": "runtime", "manifest": "go.mod"},
+    {"name": "mattn/go-sqlite3", "version": "1.14.22", "scope": "runtime", "manifest": "go.mod"},
+    {"name": "stretchr/testify", "version": "1.9.0", "scope": "test", "manifest": "go.mod"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "ingesta-de-eventos",
+      "user_description": "El usuario crea eventos via POST /events. El servicio los persiste via SQLiteEventRepository.Insert. Un signal post-save NO existe; el consumer se suscribe por nombre de cola via BullMQ worker pool (E04). El ciclo ctx.Done() permite shutdown (P02 corregido).",
+      "traces": [
+        {"n": 1, "what": "User POST /events con JSON {type, payload}", "cite": "internal/http/handlers.go:65", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "Handlers.IngestEvent valida type no vacio", "cite": "internal/http/handlers.go:73", "data_in": "JSON", "data_out": "201 o 400"},
+        {"n": 3, "what": "IngestService.Ingest persiste via repo.Insert", "cite": "internal/service/ingest_service.go:30", "data_in": "Event", "data_out": "INSERT"},
+        {"n": 4, "what": "SQLiteEventRepository.Insert ejecuta INSERT en events", "cite": "internal/repo/sqlite/sqlite.go:33", "data_in": "Event", "data_out": "INSERT SQL"},
+        {"n": 5, "what": "Worker pool en background procesa jobs", "cite": "internal/worker/pool.go:48", "data_in": "Job", "data_out": "processed++"},
+        {"n": 6, "what": "Endpoint responde 201 Created", "cite": "internal/http/handlers.go:79", "data_in": "Event", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "internal/http/handlers.go", "line": 65, "kind": "routing", "condition_text": "POST /events con type no vacio", "branches": [{"label": "type valido -> 201", "target_line": 65}, {"label": "type vacio -> 400", "target_line": 73}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con type no vacio + payload valido", "user_sees": "201 Created", "side_effects": ["INSERT en events"], "reversible": true, "final_state": "event creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /events?type=X", "user_sees": "200 OK con [Event, ...]", "side_effects": ["SELECT"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_count", "conditions": "GET /events?type=X o compute", "user_sees": "200 OK con count", "side_effects": ["SELECT COUNT"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-04", "category": "success_worker_submit", "conditions": "POST /events/submit con job_id", "user_sees": "202 Accepted con queued=true", "side_effects": ["Submit a unbuffered channel (deadlock potencial P05)"], "reversible": true, "final_state": "job queued"},
+        {"id": "R-05", "category": "error_validation_400", "conditions": "POST con type vacio", "user_sees": "400 Bad Request con error='type_required'", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_invalid_json", "conditions": "POST con body malformado", "user_sees": "400 Bad Request con error='invalid_json'", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_channel_deadlock", "conditions": "POST /events/submit sin workers disponibles (P05)", "user_sees": "La request cuelga porque el channel unbuffered no tiene receiver", "side_effects": [], "reversible": false, "final_state": "deadlock"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "POST /events", "effect": "Endpoint principal"},
+        {"key": "worker.pool", "message": "chan int (unbuffered, P05)", "effect": "Submit a un channel puede causar deadlock"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "agregacion",
+      "user_description": "El usuario computa agregaciones via GET /aggregate. AggregateService agrupa eventos por tipo y devuelve conteos (P03: implicit interface mismatch en ListByType).",
+      "traces": [
+        {"n": 1, "what": "User GET /aggregate", "cite": "internal/http/handlers.go:90", "data_in": "HTTP GET", "data_out": "Routing"},
+        {"n": 2, "what": "Handlers.GetAggregate llama AggregateService.Compute", "cite": "internal/http/handlers.go:95", "data_in": "request context", "data_out": "[]Aggregate"},
+        {"n": 3, "what": "AggregateService.Compute itera sobre tipos conocidos", "cite": "internal/service/aggregate_service.go:31", "data_in": "request", "data_out": "[]Aggregate"},
+        {"n": 4, "what": "Por cada tipo, llama repo.CountByType (P03: implicit interface mismatch)", "cite": "internal/service/aggregate_service.go:39", "data_in": "type", "data_out": "int64"},
+        {"n": 5, "what": "Endpoint responde 200 OK con []Aggregate", "cite": "internal/http/handlers.go:95", "data_in": "[]Aggregate", "data_out": "200 OK"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "internal/service/aggregate_service.go", "line": 31, "kind": "iteration", "condition_text": "Por cada tipo conocido", "branches": [{"label": "count > 0 -> incluir", "target_line": 41}, {"label": "count == 0 -> skip", "target_line": 41}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_compute_empty", "conditions": "GET /aggregate sin eventos", "user_sees": "200 OK con [] (empty)", "side_effects": ["SELECT COUNT por cada tipo conocido"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_compute_with_events", "conditions": "GET /aggregate con eventos", "user_sees": "200 OK con [Aggregate{type, count}, ...]", "side_effects": ["SELECT COUNT por cada tipo con eventos"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_groups_by_type", "conditions": "GET /aggregate con eventos de multiples tipos", "user_sees": "200 OK con [Aggregate{type='user.created', count=N}, Aggregate{type='user.deleted', count=M}, ...]", "side_effects": ["SELECT COUNT por tipo"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-04", "category": "success_lists_by_type", "conditions": "GET /events?type=X", "user_sees": "200 OK con [Event, ...]", "side_effects": ["SELECT WHERE type = X"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-05", "category": "error_implicit_mismatch", "conditions": "AggregateService.ListByType con param type incorrecto (P03: implicit interface mismatch)", "user_sees": "Sin error, pero los datos son incorrectos porque la firma es distinta a la del repo", "side_effects": ["SELECT con type incorrecto"], "reversible": true, "final_state": "resultado_incorrecto"},
+        {"id": "R-06", "category": "error_internal", "conditions": "Error en la query de COUNT", "user_sees": "500 Internal Server Error", "side_effects": [], "reversible": true, "final_state": "error"},
+        {"id": "R-07", "category": "error_internal_known_types", "conditions": "Si un nuevo tipo de evento se agrega pero no esta en knownTypes", "user_sees": "El evento se persiste pero NO aparece en /aggregate", "side_effects": ["INSERT en events sin reflejarse en aggregates"], "reversible": true, "final_state": "event_no_indexed"}
+      ],
+      "config": [
+        {"key": "service.knownTypes", "message": "['user.created', 'user.deleted', 'order.placed', 'page.view']", "effect": "Lista hardcoded de tipos (P07: limite)"},
+        {"key": "service.listByType", "message": "AggregateService.ListByType", "effect": "Helper que delega al repo (P03: implicit interface mismatch)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "exportacion",
+      "user_description": "El usuario exporta eventos via GET /export?format=X. ExportService usa una plantilla Go embebida via //go:embed (E06). El formato es pluggable pero solo 'json' esta implementado realmente.",
+      "traces": [
+        {"n": 1, "what": "User GET /export?format=json", "cite": "internal/http/handlers.go:103", "data_in": "HTTP GET", "data_out": "Routing"},
+        {"n": 2, "what": "Handlers.ExportData llama ExportService.Export", "cite": "internal/http/handlers.go:108", "data_in": "format", "data_out": "[]byte"},
+        {"n": 3, "what": "ExportService lee template embebido via embed.FS", "cite": "internal/service/export_service.go:32", "data_in": "templates/*.tmpl", "data_out": "parsed template"},
+        {"n": 4, "what": "ExportService consulta eventos via repo.ListByType (P03: type=default)", "cite": "internal/service/export_service.go:48", "data_in": "context", "data_out": "[]Event"},
+        {"n": 5, "what": "ExportService ejecuta template 'header' + 'row'", "cite": "internal/service/export_service.go:58", "data_in": "data", "data_out": "[]byte"},
+        {"n": 6, "what": "Endpoint responde 200 OK text/plain con output del template", "cite": "internal/http/handlers.go:110", "data_in": "[]byte", "data_out": "200 OK text/plain"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "internal/http/handlers.go", "line": 103, "kind": "routing", "condition_text": "GET /export con format opcional", "branches": [{"label": "format vacio -> default 'json'", "target_line": 105}, {"label": "format=json -> rendered", "target_line": 108}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_export_json", "conditions": "GET /export?format=json con eventos en DB", "user_sees": "200 OK text/plain con template renderizado", "side_effects": ["SELECT events"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_export_default", "conditions": "GET /export sin format (default 'json')", "user_sees": "200 OK con format=json en output", "side_effects": ["SELECT events"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_export_empty", "conditions": "GET /export sin eventos en DB", "user_sees": "200 OK con count=0 y lista vacia", "side_effects": ["SELECT events"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-04", "category": "success_embedded_template", "conditions": "GET /export siempre", "user_sees": "Template embebido (E06) genera el output sin acceso al filesystem", "side_effects": [], "reversible": true, "final_state": "binario_autocontenido"},
+        {"id": "R-05", "category": "error_export_failed", "conditions": "Error al parsear template o consultar DB", "user_sees": "500 Internal Server Error con error='export_failed'", "side_effects": [], "reversible": true, "final_state": "error"},
+        {"id": "R-06", "category": "error_p03_mismatch", "conditions": "ExportService usa type='default' pero el evento se guardo con type='user.created' (P03)", "user_sees": "200 OK con count=0 (silenciosamente incorrecto)", "side_effects": ["SELECT events WHERE type='default'"], "reversible": true, "final_state": "resultado_incorrecto"},
+        {"id": "R-07", "category": "error_p01_race_condition", "conditions": "Worker pool modifica 'processed' sin lock durante Export", "user_sees": "Sin error visible, pero el valor de 'processed' es inconsistente", "side_effects": ["race condition en counter"], "reversible": true, "final_state": "estado_inconsistente"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "GET /export", "effect": "Endpoint principal"},
+        {"key": "embed.FS", "message": "templates/*.tmpl", "effect": "E06: template embebido, binario autocontenido"},
+        {"key": "exporter.type_filter", "message": "ListByType(ctx, 'default', 1000, 0)", "effect": "P03: el tipo 'default' puede no matchear el guardado (trampa)"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "implicit_interfaces", "where": "internal/domain/repo.go (interfaces) + internal/repo/sqlite/sqlite.go (structs)", "resolution": "Go usa structural typing. SQLiteEventRepository implementa domain.EventRepository sin keyword 'implements'. La skill debe buscar la interface en domain y verificar matching de signatures con los metodos del struct."},
+    {"id": "TRAP-E02", "kind": "init_function_and_blank_imports", "where": "internal/repo/sqlite/driver.go: func init() + internal/repo/sqlite/init.go: _ 'github.com/mattn/go-sqlite3' + cmd/server/main.go: blank import", "resolution": "El init() del driver sqlite3 se ejecuta al importar el package. La skill debe notar la linea de blank import que no usa el paquete pero lo carga como side effect."},
+    {"id": "TRAP-E03", "kind": "go_generate_code", "where": "sqlc.yaml + wire.go + internal/repo/sqlc/db.go (stub con comentario 'NO EDITAR A MANO')", "resolution": "El codigo en internal/repo/sqlc/ se genera con `sqlc generate`. wire.go genera wire_gen.go. La skill no debe buscar el codigo de DI o queries en el repo; debe regenerar con las tools."},
+    {"id": "TRAP-E04", "kind": "worker_pool_goroutines", "where": "internal/worker/pool.go: go p.worker() + chan int + select { case <-p.ctx.Done(): return; case jobID, ok := <-p.jobs: }", "resolution": "Worker pool con goroutines que reciben jobs via unbuffered channel. El select respeta ctx.Done() para shutdown. La skill debe encontrar el pool, los go statements, los channels y el select con timeout."},
+    {"id": "TRAP-E05", "kind": "build_tags", "where": "internal/http/legacy_export.go: //go:build legacy", "resolution": "El codigo con build tag 'legacy' solo se compila con `-tags legacy`. No se incluye en el binario por defecto. La skill debe notar el comentario de build tag para entender cual codigo esta activo."},
+    {"id": "TRAP-E06", "kind": "go_embed", "where": "internal/service/export_service.go: //go:embed templates/*.tmpl + embed.FS + templates/export.tmpl", "resolution": "El FS de templates se embebe via //go:embed al compilar. El binario es autocontenido y la ruta de la plantilla no aparece en el filesystem en runtime. La skill debe notar la directiva //go:embed y la lectura via embed.FS."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "race_condition_in_worker_pool", "where": "internal/worker/pool.go: p.processed++ (sin mutex)", "resolution": "El counter shared 'processed' se incrementa sin proteccion. En concurrencia, los updates se pierden. La trampa: el counter parece atomico pero solo se lee con atomic.LoadInt64 (la escritura NO es atomica)."},
+    {"id": "TRAP-P02", "kind": "goroutine_leak_on_shutdown", "where": "cmd/server/main.go: ListenAndServe + Shutdown", "resolution": "El servidor bloquea hasta SIGTERM y luego intenta Shutdown. Los workers respetan ctx.Done() en el select. La trampa: el server HTTP no implementa graceful shutdown completo (compara err.Error() con string en vez de usar http.ErrServerClosed)."},
+    {"id": "TRAP-P03", "kind": "implicit_interface_mismatch", "where": "internal/service/aggregate_service.go: ListByType(ctx, 'default', 1000, 0)", "resolution": "El exporter de SQLite usa type='default' para ListByType pero el servicio busca por type del payload. Esto es un mismatch semantico (no de tipos) porque la firma matchea pero la semantica no."},
+    {"id": "TRAP-P04", "kind": "init_side_effects_in_tests", "where": "internal/repo/sqlite/driver.go: fmt.Println en init()", "resolution": "init() imprime un mensaje a stdout al importar el package. Esto es un side effect que afecta a tests silenciosos. La trampa: los tests que importan el package muestran este mensaje en su salida."},
+    {"id": "TRAP-P05", "kind": "channel_deadlock", "where": "internal/worker/pool.go: make(chan int) (sin buffer)", "resolution": "El canal 'jobs' es unbuffered. Si un producer envia sin un receiver listo (workers no iniciados), hay deadlock. La trampa: el codigo parece correcto pero falla en runtime si los workers no estan corriendo."},
+    {"id": "TRAP-P06", "kind": "build_tag_typo", "where": "internal/http/legacy_export.go: //go:build legacy (correcto)", "resolution": "El build tag es correcto en este fixture. La trampa P06 se demuestra con el comentario en el codigo: 'Si el tag tuviera typo (lagacy), el codigo no se compilaria con el tag esperado'."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_legacy_export_go", "where": "internal/http/legacy_export.go (solo se compila con -tags legacy)", "resolution": "LegacyExportHandler solo se compila con `-tags legacy`. No se usa en runtime. La skill debe detectarlo via grep del build tag."},
+    {"id": "TRAP-S02", "kind": "dead_legacy_binary", "where": "cmd/legacy/main.go", "resolution": "Dead binary que solo imprime un mensaje. No se invoca en produccion. La skill debe detectarlo via grep del nombre 'legacy'."},
+    {"id": "TRAP-S03", "kind": "dead_debug_helper", "where": "internal/debug.go: func DebugPrintln", "resolution": "Helper que solo hace fmt.Println y no se invoca en runtime. La skill debe detectarlo via grep de 'DebugPrintln'."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-events-create", "kind": "endpoint", "name": "POST /events", "handler": "internal/http/handlers.go:65", "file": "internal/http/handlers.go"},
+    {"id": "SRF-route-events-list", "kind": "endpoint", "name": "GET /events?type=X", "handler": "internal/http/handlers.go:75", "file": "internal/http/handlers.go"},
+    {"id": "SRF-route-events-submit", "kind": "endpoint", "name": "POST /events/submit", "handler": "internal/http/handlers.go:84", "file": "internal/http/handlers.go"},
+    {"id": "SRF-route-aggregate", "kind": "endpoint", "name": "GET /aggregate", "handler": "internal/http/handlers.go:90", "file": "internal/http/handlers.go"},
+    {"id": "SRF-route-export", "kind": "endpoint", "name": "GET /export?format=X", "handler": "internal/http/handlers.go:103", "file": "internal/http/handlers.go"},
+    {"id": "SRF-domain-event-repository", "kind": "interface", "name": "domain.EventRepository", "handler": "internal/domain/repo.go:7", "file": "internal/domain/repo.go"},
+    {"id": "SRF-domain-exporter", "kind": "interface", "name": "domain.Exporter", "handler": "internal/domain/repo.go:15", "file": "internal/domain/repo.go"},
+    {"id": "SRF-repo-sqlite-event", "kind": "implementation", "name": "SQLiteEventRepository (E01)", "handler": "internal/repo/sqlite/sqlite.go:18", "file": "internal/repo/sqlite/sqlite.go"},
+    {"id": "SRF-repo-sqlite-exporter", "kind": "implementation", "name": "SQLiteExporter (E01)", "handler": "internal/repo/sqlite/sqlite.go:103", "file": "internal/repo/sqlite/sqlite.go"},
+    {"id": "SRF-worker-pool", "kind": "worker", "name": "worker.Pool (E04)", "handler": "internal/worker/pool.go:12", "file": "internal/worker/pool.go"},
+    {"id": "SRF-legacy-export", "kind": "endpoint", "name": "LegacyExportHandler (E05, dead S01)", "handler": "internal/http/legacy_export.go:15", "file": "internal/http/legacy_export.go"},
+    {"id": "SRF-embedded-template", "kind": "asset", "name": "templates/export.tmpl (E06)", "handler": "internal/service/templates/export.tmpl", "file": "internal/service/templates/export.tmpl"},
+    {"id": "SRF-sqlc-config", "kind": "config", "name": "sqlc.yaml (E03)", "handler": "sqlc.yaml:1", "file": "sqlc.yaml"},
+    {"id": "SRF-wire-config", "kind": "config", "name": "wire.go (E03)", "handler": "wire.go:1", "file": "wire.go"}
+  ]
+}

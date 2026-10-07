@@ -362,6 +362,43 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 covered["frameworks"].add("fastapi")
                 break
 
+    # Detectar go-chi via go.mod (F06s).
+    for go_mod in fixture_dir.rglob("go.mod"):
+        if not go_mod.is_file():
+            continue
+        try:
+            content = go_mod.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "github.com/go-chi/chi" in content:
+            covered["frameworks"].add("go-chi")
+        if "github.com/google/wire" in content:
+            covered["frameworks"].add("wire")
+        if "github.com/mattn/go-sqlite3" in content:
+            covered["frameworks"].add("sqlite")
+        break
+
+    # Detectar sqlc via sqlc.yaml (F06s).
+    for sqlc_yaml in fixture_dir.rglob("sqlc.yaml"):
+        if not sqlc_yaml.is_file():
+            continue
+        covered["frameworks"].add("sqlc")
+        break
+
+    # Detectar go:embed via grep (F06s).
+    for go_file in fixture_dir.rglob("*.go"):
+        if not go_file.is_file():
+            continue
+        if "stub-davecheney" in str(go_file.relative_to(fixture_dir)):
+            continue
+        try:
+            content = go_file.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "//go:embed " in content:
+            covered["frameworks"].add("embed")
+            break
+
     # Recorrido del arbol para extensiones
     for path in fixture_dir.rglob("*"):
         if not path.is_file():

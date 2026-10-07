@@ -970,8 +970,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
 - [x] Commit `F06r: fixture fx-node-nestjs con paquete por feature`.
  
-## F06s — Fixture `fx-go-service`
- 
+## F06s — Fixture `fx-go-service` ✅
+
 **Objetivo:** servicio HTTP en Go con workers concurrentes.
 **Stack:** Go, chi, sqlc, wire, `embed`.
 **Features:** `ingesta-de-eventos`, `agregación`, `exportación`.
@@ -983,6 +983,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Build tags.
 6. `//go:embed` de plantillas y migraciones.
 **Toolchain de tests:** `go test ./...` con race detector, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`ingesta-de-eventos`, `agregacion`, `exportacion`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas: `implicit_interfaces` (SQLiteEventRepository implementa domain.EventRepository sin `implements`), `init_function_and_blank_imports` (`func init()` + `_ "github.com/mattn/go-sqlite3"`), `go_generate_code` (`sqlc generate` + `wire gen ./...`), `worker_pool_goroutines` (`go p.worker()` + `chan int` + `select` con `ctx.Done()`), `build_tags` (`//go:build legacy` en legacy_export.go), `go_embed` (`//go:embed templates/*.tmpl` + `embed.FS`).
+- [x] 6 trampas del paquete: `race_condition_in_worker_pool` (counter sin mutex), `goroutine_leak_on_shutdown` (server no implementa graceful shutdown completo), `implicit_interface_mismatch` (exporter usa type='default'), `init_side_effects_in_tests` (init() imprime a stdout), `channel_deadlock` (unbuffered chan int), `build_tag_typo` (comentario en codigo).
+- [x] 3 trampas superficiales: `dead_legacy_export_go` (`//go:build legacy` con LegacyExportHandler no usado), `dead_legacy_binary` (cmd/legacy/main.go con solo println), `dead_debug_helper` (DebugPrintln no invocado en runtime).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 en verde.
+- [x] Suite Go test 24 tests passed (4 ingest + 3 aggregate + 4 export + 6 TrapsEcosystem + 6 TrapsPackage + 3 TrapsSuperficial) con `go test ./... -race -count=1`.
+- [x] `run_fixture_tests.py --fixture fx-go-service --container` -> passed.
+- [x] `dev/tests/test_fx_go_service_ground_truth.py` agregado y verde (55 tests).
+- [x] `MATRIX.md` muestra `go-chi`, `sqlc`, `wire`, `embed`, `sqlite` cubiertos por fx-go-service.
+- [x] `target_matrix.yml` extendido: `frameworks: [go-chi, sqlc, wire, embed, sqlite]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `github.com/go-chi/chi`, `github.com/google/wire`, `github.com/mattn/go-sqlite3` en `go.mod`; deteccion de `sqlc.yaml`; deteccion de `//go:embed ` en archivos `*.go`.
+- [x] `pytest` total 1094 passed (1039 anteriores + 55 nuevos), sin regresiones en los 18 fixtures previos.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] Commit `F06s: fixture fx-go-service con paquete por feature`.
  
 ## F06t — Fixture `fx-rust-axum`
  

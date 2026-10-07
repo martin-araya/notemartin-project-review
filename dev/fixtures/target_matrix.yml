@@ -67,6 +67,11 @@ axes:
     - nestjs
     - typeorm
     - bullmq
+    - go-chi
+    - sqlc
+    - wire
+    - embed
+    - sqlite
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

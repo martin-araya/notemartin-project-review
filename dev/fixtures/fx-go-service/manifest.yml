@@ -1,0 +1,16 @@
+# Metadata del fixture F06s: fx-go-service
+# Servicio HTTP en Go con workers concurrentes, sqlc, wire, embed.
+# Ver referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-go-service/ground_truth.json.
+name: fx-go-service
+description: Servicio HTTP en Go 1.22 con chi, sqlc, wire y workers concurrentes (F06s)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-go-service
+  enabled: true
+ground_truth_format_version: 1

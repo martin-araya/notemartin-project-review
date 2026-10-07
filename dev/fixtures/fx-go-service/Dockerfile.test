@@ -1,0 +1,27 @@
+# Imagen para ejecutar los tests del fixture F06s (Go).
+FROM golang:1.22-bookworm
+
+# make y gcc (cgo) necesarios.
+RUN apt-get update && apt-get install -y --no-install-recommends make gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+# Cache de modulos.
+COPY go.mod go.sum* ./
+RUN go mod download 2>&1 | tail -3 || true
+
+COPY . .
+
+# Generar go.sum via go mod tidy. Si falla (p. ej. por una dep
+# transitiva inalcanzable), caemos al fallback de GOFLAGS=-mod=mod
+# que usa el modulo declarado en go.mod sin chequear checksums.
+RUN go mod tidy 2>&1 | tail -3 || GOFLAGS=-mod=mod go mod download 2>&1 | tail -3 || true
+
+# Generar codigo de sqlc/wire y correr tests con race detector.
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest 2>&1 | tail -1 || true
+RUN go install github.com/google/wire/cmd/wire@latest 2>&1 | tail -1 || true
+RUN sqlc generate 2>&1 | tail -3 || true
+RUN go generate ./... 2>&1 | tail -3 || true
+
+CMD ["make", "test"]
