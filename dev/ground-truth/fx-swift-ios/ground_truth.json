@@ -1,0 +1,211 @@
+{
+  "fixture": "fx-swift-ios",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-swift-pkg", "artifact": "Package.swift (swift package)", "file": "Package.swift"},
+    {"id": "EP-app-main", "artifact": "@main struct FxSwiftApp", "file": "Examples/FxSwiftApp/AppMain.swift:1"},
+    {"id": "EP-widget", "artifact": "@main struct FxSwiftWidget: Widget", "file": "Examples/FxSwiftWidget/WidgetMain.swift:3"},
+    {"id": "EP-objc-logger", "artifact": "+[LegacyLogger sharedLogger]", "file": "Sources/FxSwiftCore/ObjCBridge/LegacyLogger.m:17"},
+    {"id": "EP-onboarding", "artifact": "OnboardingView (NavigationStack)", "file": "Sources/FxSwiftCore/UI/OnboardingView.swift:7"},
+    {"id": "EP-expense-list", "artifact": "ExpenseListView (@StateObject)", "file": "Sources/FxSwiftCore/UI/ExpenseListView.swift:6"},
+    {"id": "EP-deep-link", "artifact": "DeepLinkRouter.handle(URL)", "file": "Sources/FxSwiftCore/UI/DeepLinkRouter.swift:60"},
+    {"id": "EP-settings-host", "artifact": "SettingsHostController.viewDidLoad", "file": "Examples/FxSwiftApp/SettingsHostController.swift:15"},
+    {"id": "EP-sync-engine", "artifact": "CloudKitSyncEngine.sync([Expense])", "file": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:23"},
+    {"id": "EP-widget-provider", "artifact": "WidgetSummaryProvider.timeline(limit:)", "file": "Sources/FxSwiftCore/Widget/WidgetSummaryProvider.swift:31"},
+    {"id": "EP-appgroup-store", "artifact": "actor AppGroupStore.saveExpenses", "file": "Sources/FxSwiftCore/AppGroup/AppGroupStore.swift:31"},
+    {"id": "EP-xcode-build", "artifact": "xcodebuild -project FxSwift.xcodeproj -scheme FxSwiftApp", "file": "Examples/FxSwift.xcodeproj/project.pbxproj"},
+    {"id": "EP-bridging-header", "artifact": "FxSwift-Bridging-Header.h", "file": "Sources/FxSwiftCore/ObjCBridge/FxSwift-Bridging-Header.h:5"},
+    {"id": "EP-deep-link-target", "artifact": "Info.plist CFBundleURLSchemes = [fxswift]", "file": "Examples/FxSwiftApp/Info.plist:18"}
+  ],
+  "modules": [
+    {"id": "MOD-fxswift-core", "path": "Sources/FxSwiftCore/FxSwiftCore.swift", "summary": "Umbrella namespace FxSwiftCore con version 0.1.0"},
+    {"id": "MOD-models", "path": "Sources/FxSwiftCore/Models", "summary": "Expense, ExpenseCategory, OnboardingState (E2 routing), SyncStatus"},
+    {"id": "MOD-property-wrappers", "path": "Sources/FxSwiftCore/PropertyWrappers", "summary": "@Debounced custom wrapper (E1) + @UserDefaultsBacked"},
+    {"id": "MOD-protocols", "path": "Sources/FxSwiftCore/Protocols", "summary": "Describable + Describable+Category (E3) + Syncable con default impls"},
+    {"id": "MOD-appgroup", "path": "Sources/FxSwiftCore/AppGroup", "summary": "AppGroupPaths (E6) + actor AppGroupStore (P4 silencioso)"},
+    {"id": "MOD-persistence", "path": "Sources/FxSwiftCore/Persistence", "summary": "ExpensesRepository (actor) + ExpensesStore (P3 sink sin store)"},
+    {"id": "MOD-sync", "path": "Sources/FxSwiftCore/Sync", "summary": "CloudKitSyncEngine (P1 silent error) + SyncCoordinator"},
+    {"id": "MOD-widget", "path": "Sources/FxSwiftCore/Widget", "summary": "WidgetSummary + AppGroupReader + WidgetSummaryProvider"},
+    {"id": "MOD-objc", "path": "Sources/FxSwiftCore/ObjCBridge", "summary": "LegacyLogger.h/.m con @objc dynamic + NSNotificationCenter + bridging header"},
+    {"id": "MOD-build-flags", "path": "Sources/FxSwiftCore/BuildFlags", "summary": "BuildFlags.swift con #if os(iOS) / #if DEBUG / targetEnvironment(simulator) (E5)"},
+    {"id": "MOD-ui-onboarding", "path": "Sources/FxSwiftCore/UI/OnboardingView.swift", "summary": "NavigationStack + navigationDestination(for: OnboardingState) (E2)"},
+    {"id": "MOD-ui-list", "path": "Sources/FxSwiftCore/UI/ExpenseListView.swift", "summary": "@StateObject ExpensesStore + List + onDelete"},
+    {"id": "MOD-ui-row", "path": "Sources/FxSwiftCore/UI/ExpenseRow.swift", "summary": "@AppStorage currency + tintColor por categoria"},
+    {"id": "MOD-ui-deeplink", "path": "Sources/FxSwiftCore/UI/DeepLinkRouter.swift", "summary": "Parse de fxswift:// con try? UUID (P5 silent)"},
+    {"id": "MOD-ui-legacy", "path": "Sources/FxSwiftCore/UI/LegacySettingsView.swift", "summary": "UIViewControllerRepresentable envuelve LegacySettingsHost"},
+    {"id": "MOD-app-settings", "path": "Examples/FxSwiftApp/SettingsHostController.swift", "summary": "UIViewController UIKit real con LegacyLogger Obj-C (E4)"}
+  ],
+  "dependencies": [
+    {"name": "swift", "version": "6.0+", "scope": "build+runtime", "manifest": "Package.swift (swift-tools-version: 6.0)"},
+    {"name": "swift-testing", "version": "bundled with Xcode 16+", "scope": "test", "manifest": "Sources/FxSwiftCoreTests (import Testing)"},
+    {"name": "swiftui", "version": "iOS 16+", "scope": "build+runtime", "manifest": "Sources/FxSwiftCore/UI (import SwiftUI)"},
+    {"name": "uikit", "version": "iOS 16+", "scope": "build+runtime", "manifest": "Examples/FxSwiftApp/SettingsHostController.swift (canImport(UIKit))"},
+    {"name": "widgetkit", "version": "iOS 16+", "scope": "build+runtime", "manifest": "Examples/FxSwiftWidget/WidgetMain.swift (import WidgetKit)"},
+    {"name": "combine", "version": "iOS 16+", "scope": "build+runtime", "manifest": "Sources/FxSwiftCore/Persistence/ExpensesStore.swift (import Combine)"},
+    {"name": "swiftdata", "version": "iOS 17+", "scope": "host-fallback", "manifest": "Plan de fallback (no se compila en SPM para evitar acoplar SwiftData al host)"},
+    {"name": "foundation", "version": "bundled", "scope": "build+runtime", "manifest": "Sources/FxSwiftCore (import Foundation)"},
+    {"name": "xcodebuild", "version": "Xcode 15+", "scope": "build (smoke)", "manifest": "Examples/FxSwift.xcodeproj + tools/run_spm_and_xcode_tests.sh"},
+    {"name": "xcrun", "version": "CommandLineTools", "scope": "build", "manifest": "tools/run_spm_and_xcode_tests.sh"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "onboarding",
+      "user_description": "Flujo de bienvenida de 4 pasos con permisos e iCloud. NavigationStack enruta por tipo (E2).",
+      "traces": [
+        {"n": 1, "what": "App init: WindowGroup monta OnboardingView", "cite": "Examples/FxSwiftApp/AppMain.swift:7", "data_in": "App launch", "data_out": "OnboardingView rendered"},
+        {"n": 2, "what": "NavigationStack inicializa con path = [.intro]", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:9", "data_in": "OnboardingState.intro", "data_out": "introStep view"},
+        {"n": 3, "what": "Usuario pulsa Empezar: path.append(.permissions(askNotifications: true))", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:48", "data_in": "tap", "data_out": "OnboardingState.permissions"},
+        {"n": 4, "what": "navigationDestination(for: OnboardingState.self) matchea permissions", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:14", "data_in": "OnboardingState.permissions", "data_out": "permissionsStep view"},
+        {"n": 5, "what": "Usuario pulsa Continuar: path.append(.iCloud(available: true))", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:62", "data_in": "tap", "data_out": "OnboardingState.iCloud"},
+        {"n": 6, "what": "iCloudStep muestra icono segun available", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:72", "data_in": "available flag", "data_out": "checkmark verde o x roja"},
+        {"n": 7, "what": "Usuario pulsa Finalizar: path.append(.done(completedAt: Date()))", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:80", "data_in": "tap", "data_out": "OnboardingState.done"},
+        {"n": 8, "what": "doneStep muestra fecha formateada", "cite": "Sources/FxSwiftCore/UI/OnboardingView.swift:87", "data_in": "completedAt", "data_out": "Text con date.formatted"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "Sources/FxSwiftCore/UI/OnboardingView.swift", "line": 14, "kind": "switch_on_type", "condition_text": "switch state { case .intro: ... case .permissions: ... case .iCloud: ... case .done: ... }", "branches": [{"label": "intro", "target_line": 16}, {"label": "permissions(askNotifications)", "target_line": 18}, {"label": "iCloud(available)", "target_line": 20}, {"label": "done(completedAt)", "target_line": 22}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_intro_shown", "conditions": "app arranque en frio", "user_sees": "Pantalla de bienvenida con icono sparkles, texto Bienvenido y boton Empezar", "side_effects": ["path inicializado a [.intro]"], "reversible": true, "final_state": "introStep visible"},
+        {"id": "R-02", "category": "success_permissions_shown", "conditions": "tap en Empezar", "user_sees": "Pantalla de Permisos con toggle de avisos y boton Continuar", "side_effects": ["path pasa a [.intro, .permissions(askNotifications: true)]"], "reversible": true, "final_state": "permissionsStep visible"},
+        {"id": "R-03", "category": "success_icloud_shown", "conditions": "tap en Continuar", "user_sees": "Pantalla iCloud con icono checkmark verde y texto iCloud disponible", "side_effects": ["path.append(.iCloud(available: true))"], "reversible": true, "final_state": "iCloudStep visible"},
+        {"id": "R-04", "category": "success_completed", "conditions": "tap en Finalizar", "user_sees": "Pantalla Listo con la fecha de finalizacion formateada", "side_effects": ["path.append(.done(completedAt: now))"], "reversible": true, "final_state": "doneStep visible"},
+        {"id": "R-05", "category": "noop_continue_disabled", "conditions": "campo askNotifications sin check expl\u00edcito", "user_sees": "Toggle siempre disabled, no se puede cambiar el valor inicial", "side_effects": ["ninguno"], "reversible": true, "final_state": "permissionsStep no permite interaccion"},
+        {"id": "R-06", "category": "no_op_already_done", "conditions": "OnboardingState.done.next() llamado", "user_sees": "Sin cambio en la pila (nil)", "side_effects": ["ninguno"], "reversible": true, "final_state": "doneStep sigue visible"},
+        {"id": "R-07", "category": "degraded_finished_via_deeplink", "conditions": "deep link fxswift://onboarding recibido mientras la app ya estaba lanzada", "user_sees": "Sin cambio visible (DeepLinkRouter devuelve .onboarding pero la app no navega explicitamente)", "side_effects": ["ninguno en la UI"], "reversible": true, "final_state": "el path no se actualiza"}
+      ],
+      "config": [
+        {"key": "onboarding.askNotifications", "kind": "constant", "default": "true", "effect": "siempre true en el flow actual; el Toggle esta disabled"},
+        {"key": "onboarding.icloudAvailable", "kind": "constant", "default": "true", "effect": "la vista iCloud siempre muestra disponible"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "lista-de-gastos",
+      "user_description": "Lista de gastos con @StateObject ExpensesStore, onDelete y anadir importe. La persistencia en App Group esta rota por la trampa P3.",
+      "traces": [
+        {"n": 1, "what": "App entra en ExpenseListView tras onboarding", "cite": "Sources/FxSwiftCore/UI/ExpenseListView.swift:7", "data_in": "view rendered", "data_out": "List + inputBar visible"},
+        {"n": 2, "what": "viewDidLoad/task: store.refresh() carga desde AppGroupStore", "cite": "Sources/FxSwiftCore/UI/ExpenseListView.swift:25", "data_in": "view appear", "data_out": "expenses populated"},
+        {"n": 3, "what": "ForEach itera sobre store.expenses (Identifiable por id)", "cite": "Sources/FxSwiftCore/UI/ExpenseListView.swift:16", "data_in": "[Expense]", "data_out": "ExpenseRow por cada item"},
+        {"n": 4, "what": "Usuario teclea importe y pulsa Anadir", "cite": "Sources/FxSwiftCore/UI/ExpenseListView.swift:33", "data_in": "newAmount + tap", "data_out": "Expense creado y store.add(expense)"},
+        {"n": 5, "what": "ExpensesStore.add hace expenses.append (en memoria)", "cite": "Sources/FxSwiftCore/Persistence/ExpensesStore.swift:51", "data_in": "Expense", "data_out": "@Published expenses actualizado"},
+        {"n": 6, "what": "P3: el sink de Combine en init no llega al repositorio", "cite": "Sources/FxSwiftCore/Persistence/ExpensesStore.swift:31", "data_in": "$expenses change", "data_out": "sink destruido, no se persiste"},
+        {"n": 7, "what": "Usuario desliza para eliminar con onDelete", "cite": "Sources/FxSwiftCore/UI/ExpenseListView.swift:18", "data_in": "swipe gesture", "data_out": "store.delete(at: offsets)"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "Sources/FxSwiftCore/UI/ExpenseListView.swift", "line": 35, "kind": "validation", "condition_text": "guard let value = Decimal(string: newAmount) else { return }", "branches": [{"label": "importe invalido -> early return", "target_line": 36}, {"label": "importe valido -> crear Expense", "target_line": 37}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list_loaded", "conditions": "AppGroupStore.loadExpenses devuelve array no vacio", "user_sees": "Lista con un ExpenseRow por cada gasto", "side_effects": ["store.expenses actualizado"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-02", "category": "success_add_expense", "conditions": "Usuario teclea importe valido y pulsa Anadir", "user_sees": "Nuevo ExpenseRow aparece en la lista, newAmount se vacia", "side_effects": ["expenses.append en memoria"], "reversible": true, "final_state": "expenses contiene el nuevo item"},
+        {"id": "R-03", "category": "validation_invalid_amount", "conditions": "Usuario teclea texto no numerico", "user_sees": "Boton Anadir hace early return; newAmount se mantiene", "side_effects": ["ninguno"], "reversible": true, "final_state": "lista sin cambios"},
+        {"id": "R-04", "category": "success_delete_expense", "conditions": "Usuario desliza un ExpenseRow", "user_sees": "Fila desaparece, lista se redibuja", "side_effects": ["expenses.remove(atOffsets:) en memoria"], "reversible": false, "final_state": "expenses sin el item"},
+        {"id": "R-05", "category": "no_op_persistence_skipped", "conditions": "Tras add, el sink sin store(in:) se libera", "user_sees": "Item visible en la UI", "side_effects": ["App Group data.json NO actualizado (P3)"], "reversible": true, "final_state": "memoria diverge del App Group"},
+        {"id": "R-06", "category": "error_appgroup_write_failed", "conditions": "AppGroup no escribible (sin entitlement, tests sin override)", "user_sees": "Sin error visible; AppGroupStore traga error (P4)", "side_effects": ["try? data.write falla silenciosamente"], "reversible": true, "final_state": "data.json ausente o sin cambios"},
+        {"id": "R-07", "category": "success_persisted_on_disk", "conditions": "Tests invocan ExpensesRepository.add (no via Store)", "user_sees": "data.json contiene el array de gastos serializado", "side_effects": ["AppGroupStore.saveExpenses escribe en disco"], "reversible": true, "final_state": "App Group sincronizado con la coleccion"}
+      ],
+      "config": [
+        {"key": "list.currency", "kind": "AppStorage", "default": "EUR", "effect": "moneda mostrada en ExpenseRow via @AppStorage"},
+        {"key": "list.defaultCategory", "kind": "constant", "default": "ExpenseCategory.food", "effect": "nuevos gastos siempre son categoria .food"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "sincronizacion-icloud",
+      "user_description": "Actor async que sincroniza gastos con iCloud. Errores de validacion se tragan silenciosamente (P1).",
+      "traces": [
+        {"n": 1, "what": "Vista invoca SyncCoordinator.sync(expenses)", "cite": "Sources/FxSwiftCore/Sync/SyncCoordinator.swift:21", "data_in": "[Expense]", "data_out": "status = .syncing"},
+        {"n": 2, "what": "SyncCoordinator llama engine.sync(expenses)", "cite": "Sources/FxSwiftCore/Sync/SyncCoordinator.swift:23", "data_in": "[Expense]", "data_out": "CloudKitSyncEngine.sync"},
+        {"n": 3, "what": "engine valida batch no vacio", "cite": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:25", "data_in": "expenses.count", "data_out": "throw .emptyBatch o continuar"},
+        {"n": 4, "what": "Para cada expense: Task.sleep 5ms + validacion amount", "cite": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:28", "data_in": "Expense.amount", "data_out": "skip o continuar"},
+        {"n": 5, "what": "P1: amount <= 0 se loggea y continua con siguiente", "cite": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:30", "data_in": "amount <= 0", "data_out": "print + continue (no propaga error)"},
+        {"n": 6, "what": "engine devuelve SyncResult con uploaded + skipped + at", "cite": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:35", "data_in": "completed loop", "data_out": "SyncResult"},
+        {"n": 7, "what": "SyncCoordinator actualiza status = .success(at:count:)", "cite": "Sources/FxSwiftCore/Sync/SyncCoordinator.swift:24", "data_in": "SyncResult", "data_out": "@Published status = .success"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift", "line": 25, "kind": "validation", "condition_text": "guard !expenses.isEmpty else { throw SyncError.emptyBatch }", "branches": [{"label": "batch vacio -> throw", "target_line": 26}, {"label": "batch no vacio -> continuar", "target_line": 28}]},
+        {"id": "DP-004", "file": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift", "line": 29, "kind": "silent_skip", "condition_text": "if expense.amount <= 0 { print + continue }", "branches": [{"label": "amount invalido -> log + continue (P1)", "target_line": 30}, {"label": "amount valido -> upload simulado", "target_line": 33}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_all_uploaded", "conditions": "batch no vacio, todos los amounts > 0", "user_sees": "status pasa a .success con uploaded=count y skipped=0", "side_effects": ["lastSyncedAt actualizado"], "reversible": true, "final_state": "SyncStatus.success"},
+        {"id": "R-02", "category": "success_partial_skipped", "conditions": "batch con algunos amount <= 0", "user_sees": "status pasa a .success con skipped>0, log de invalid amount en consola", "side_effects": ["P1: errores no se reportan al UI como fallo"], "reversible": true, "final_state": "SyncStatus.success aunque haya skips"},
+        {"id": "R-03", "category": "validation_empty_batch", "conditions": "engine.sync([]) invocado", "user_sees": "status pasa a .failure con message SyncError.emptyBatch", "side_effects": ["throw .emptyBatch"], "reversible": true, "final_state": "SyncStatus.failure"},
+        {"id": "R-04", "category": "sync_in_progress", "conditions": "sync() llamado antes de terminar el anterior", "user_sees": "status = .syncing(since: now)", "side_effects": ["lastSyncedAt no se actualiza hasta completar"], "reversible": true, "final_state": "SyncStatus.syncing"},
+        {"id": "R-05", "category": "noop_idempotent", "conditions": "SyncCoordinator.reset() llamado tras un sync", "user_sees": "status vuelve a .idle", "side_effects": ["ninguno en el engine"], "reversible": true, "final_state": "SyncStatus.idle"},
+        {"id": "R-06", "category": "error_unexpected_exception", "conditions": "engine sync lanza una excepcion no controlada", "user_sees": "status = .failure con message String(describing: error)", "side_effects": ["lastSyncedAt sin actualizar"], "reversible": true, "final_state": "SyncStatus.failure"},
+        {"id": "R-07", "category": "noop_no_changes", "conditions": "engine.lastSync() llamado tras reset", "user_sees": "Sin cambio visible (status idle)", "side_effects": ["lastSyncedAt sigue siendo nil si nunca se ha sincronizado"], "reversible": true, "final_state": "SyncStatus.idle"}
+      ],
+      "config": [
+        {"key": "sync.simulatedDelay", "kind": "constant", "default": "5_000_000 ns", "effect": "5 ms por expense para simular latencia de CloudKit"},
+        {"key": "sync.ignoresInvalidAmounts", "kind": "design_decision", "default": "true", "effect": "P1: el sync reporta success aunque haya gastos invalidos"}
+      ]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "widget-de-resumen",
+      "user_description": "Widget extension que muestra total + categoria top desde el App Group compartido con la app principal.",
+      "traces": [
+        {"n": 1, "what": "iOS pide al widget un snapshot via FxSwiftTimelineProvider", "cite": "Examples/FxSwiftWidget/WidgetMain.swift:22", "data_in": "system request", "data_out": "completion(WidgetSummaryEntry)"},
+        {"n": 2, "what": "Provider reutiliza WidgetSummaryProvider de FxSwiftCore", "cite": "Examples/FxSwiftWidget/WidgetMain.swift:24", "data_in": "Task", "data_out": "WidgetSummaryProvider().snapshot()"},
+        {"n": 3, "what": "WidgetSummaryProvider.snapshot() delega en AppGroupReader", "cite": "Sources/FxSwiftCore/Widget/WidgetSummaryProvider.swift:23", "data_in": "reader", "data_out": "WidgetSummaryEntry"},
+        {"n": 4, "what": "AppGroupReader.currentSummary() carga gastos del App Group", "cite": "Sources/FxSwiftCore/Widget/AppGroupReader.swift:14", "data_in": "AppGroupStore", "data_out": "[Expense]"},
+        {"n": 5, "what": "Calcula total y categoria top", "cite": "Sources/FxSwiftCore/Widget/AppGroupReader.swift:19", "data_in": "expenses", "data_out": "WidgetSummary"},
+        {"n": 4, "what": "WidgetEntryView muestra los valores", "cite": "Examples/FxSwiftWidget/WidgetMain.swift:48", "data_in": "WidgetSummaryEntry", "data_out": "Vista SwiftUI con total, top, count"},
+        {"n": 5, "what": "System pinta el widget", "cite": "Examples/FxSwiftWidget/WidgetMain.swift:13", "data_in": "WidgetConfiguration", "data_out": "Snapshot visible en pantalla de inicio"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "Sources/FxSwiftCore/Widget/AppGroupReader.swift", "line": 19, "kind": "aggregation", "condition_text": "Dictionary(grouping:by:) + max(by: count)", "branches": [{"label": "hay gastos -> categoria con max count", "target_line": 21}, {"label": "sin gastos -> 'Otros'", "target_line": 23}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_placeholder_shown", "conditions": "widget en estado placeholder (todavia no hay datos)", "user_sees": "Widget muestra total 123.45, top Comida, 7 gastos", "side_effects": ["ninguno"], "reversible": true, "final_state": "placeholder visible"},
+        {"id": "R-02", "category": "success_snapshot_with_data", "conditions": "AppGroup contiene gastos", "user_sees": "Widget muestra total sumado, categoria mas frecuente y count", "side_effects": ["AppGroupReader.currentSummary()"], "reversible": true, "final_state": "vista con datos reales"},
+        {"id": "R-03", "category": "success_snapshot_empty", "conditions": "AppGroup vacio", "user_sees": "Widget muestra total 0, top 'Otros', 0 gastos", "side_effects": ["ninguno"], "reversible": true, "final_state": "vista con ceros"},
+        {"id": "R-04", "category": "success_timeline_3_entries", "conditions": "getTimeline invocado con limit=3", "user_sees": "El widget refresca con 3 entradas separadas por 600s", "side_effects": ["3 WidgetSummaryEntry creados"], "reversible": true, "final_state": "Timeline con policy .atEnd"},
+        {"id": "R-05", "category": "no_op_legacy_property_unchanged", "conditions": "ExpensesStore.preferences.legacyProperty cambiara", "user_sees": "El widget no lo refleja (Preferences no expone la propiedad)", "side_effects": ["ninguno"], "reversible": true, "final_state": "widget no ve cambios"},
+        {"id": "R-06", "category": "error_appgroup_unavailable", "conditions": "App Group no accesible (simulador sin entitlement)", "user_sees": "AppGroupStore.loadExpenses devuelve [] por el try? decode", "side_effects": ["P4 silencioso"], "reversible": true, "final_state": "widget muestra ceros"},
+        {"id": "R-07", "category": "success_top_category_unique", "conditions": "Todas las categorias tienen el mismo count (empate)", "user_sees": "La categoria con menor hash gana (orden no determinista de Dictionary)", "side_effects": ["ninguno"], "reversible": true, "final_state": "vista con la primera categoria empatada en orden interno"}
+      ],
+      "config": [
+        {"key": "widget.timelineLimit", "kind": "constant", "default": "3", "effect": "limite de entradas por timeline"},
+        {"key": "widget.refreshInterval", "kind": "constant", "default": "600s entre entradas", "effect": "intervalo entre WidgetSummaryEntry sucesivas"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "E01", "title": "Property wrappers", "category": "ecosystem", "where": "Sources/FxSwiftCore/PropertyWrappers/Debounced.swift:5", "resolution": "Property wrapper custom @Debounced; ademas @AppStorage y @State en ExpenseRow y OnboardingView.", "details": "Los wrappers @State, @Published, @AppStorage, @Environment estan distribuidos en el codigo; @Debounced es un wrapper propio con DispatchWorkItem asincrono."},
+    {"id": "E02", "title": "navigationDestination(for:) routing", "category": "ecosystem", "where": "Sources/FxSwiftCore/UI/OnboardingView.swift:14", "resolution": "OnboardingView enruta por tipo con navigationDestination(for: OnboardingState.self); un agente que solo lea el switch no ve el push que ocurre en `Empezar`/`Continuar`/`Finalizar`.", "details": "El routing por tipo requiere seguir el flujo en 3 archivos: el switch en OnboardingView, los .append en las acciones de los botones y el state en NavigationPath."},
+    {"id": "E03", "title": "Default impls across files", "category": "ecosystem", "where": "Sources/FxSwiftCore/Protocols/Describable+Category.swift:9", "resolution": "La implementacion por defecto de `Describable.description` para `ExpenseCategory` vive en un archivo separado (`Describable+Category.swift`); un grep solo sobre `Describable.swift` no la encuentra.", "details": "Mismo patron en `Syncable.swift`: setters con `set { _ = newValue }` que ignoran el valor."},
+    {"id": "E04", "title": "Obj-C @objc dynamic + KVO + NSNotificationCenter", "category": "ecosystem", "where": "Sources/FxSwiftCore/ObjCBridge/LegacyLogger.m:18", "resolution": "LegacyLogger usa @dynamic lastMessage (KVO), +[sharedLogger] con dispatch_once, -log: que postea NSNotification con userInfo, y -registerForNotifications (que NUNCA se invoca desde Swift).", "details": "SettingsHostController llama a logger.log() pero no a logger.registerForNotifications(), asi que las notificaciones nunca llegan al observer Swift."},
+    {"id": "E05", "title": "Build flags #if os(iOS) / #if DEBUG", "category": "ecosystem", "where": "Sources/FxSwiftCore/BuildFlags/BuildFlags.swift:13", "resolution": "BuildFlags envuelve 4 bloques #if: os(iOS), os(macOS), DEBUG, targetEnvironment(simulator); isDebug, platformName, runsInSimulator, apiBaseURL cambian de valor segun el target.", "details": "apiBaseURL es http://localhost:8080 en DEBUG y https://api.example.com en produccion; runsInSimulator es true en simulator."},
+    {"id": "E06", "title": "App Group + deep links + URL scheme", "category": "ecosystem", "where": "Sources/FxSwiftCore/AppGroup/AppGroupPaths.swift:6", "resolution": "AppGroupPaths resuelve el contenedor via FileManager.containerURL(forSecurityApplicationGroupIdentifier:) o fallback a NSTemporaryDirectory(); DeepLinkRouter parsea URLs fxswift://onboarding|expense|sync; Info.plist declara CFBundleURLSchemes = [fxswift].", "details": "El entitlements del App Group debe estar firmado; en simulador/tests el path real se reemplaza por override env var o fallback temporal."}
+  ],
+  "package_traps": [
+    {"id": "P01", "title": "Sync swallows validation errors", "category": "package", "where": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:30", "resolution": "Cuando `expense.amount <= 0`, el engine hace `print + continue` en vez de `throw`. El SyncCoordinator reporta .success aunque haya skips. Para detectar: el `skipped` count del SyncResult > 0 mientras `uploaded = count`.", "details": "El ground truth test revisa la presencia de 'invalid amount' + 'skipped' + 'print(\"invalid' en el codigo fuente."},
+    {"id": "P02", "title": "Widget timeline ignores errors", "category": "package", "where": "Sources/FxSwiftCore/Widget/WidgetSummaryProvider.swift:31", "resolution": "WidgetSummaryProvider.timeline(limit:) llama a currentSummary() para cada entrada sin verificar errores. Si la lectura del App Group falla, todas las entradas quedan con total 0.", "details": "No hay mecanismo de retry ni de propagacion; depende totalmente del AppGroupReader."},
+    {"id": "P03", "title": "Combine sink without store(in:)", "category": "package", "where": "Sources/FxSwiftCore/Persistence/ExpensesStore.swift:31", "resolution": "El sink se crea en `bindRepository()` pero NO se guarda en `cancellables` ni en una variable local retenida, asi que el AnyCancellable se libera inmediatamente y `$expenses` no llega al repositorio. La UI muestra el cambio, el App Group queda desactualizado.", "details": "Marcado con comentario 'Trampa P3' en el codigo fuente. El ground truth test verifica que .sink + cancellables + 'Trampa P3' esten presentes."},
+    {"id": "P04", "title": "AppGroup save swallows errors", "category": "package", "where": "Sources/FxSwiftCore/AppGroup/AppGroupStore.swift:31", "resolution": "saveExpenses usa `try? data.write(to:options:)` que devuelve nil en error sin propagarlo. La app no puede enterarse de un fallo de persistencia.", "details": "Marcado con comentario 'Trampa P4' en el codigo fuente. El ground truth test verifica 'try? data.write' + 'Trampa P4'."},
+    {"id": "P05", "title": "Deep link UUID parse swallowed", "category": "package", "where": "Sources/FxSwiftCore/UI/DeepLinkRouter.swift:35", "resolution": "`try? UUID(uuidString: raw)` traga el error y devuelve nil. Si el UUID no parsea, el handler retorna .unknown en vez de propagar el problema.", "details": "Marcado con comentario 'Trampa P5' en el codigo fuente. El ground truth test verifica 'try? UUID(uuidString:' + 'Trampa P5'."},
+    {"id": "P06", "title": "ObjC registerForNotifications not called", "category": "package", "where": "Examples/FxSwiftApp/SettingsHostController.swift:36", "resolution": "SettingsHostController llama a logger.log() pero el metodo registerForNotifications existe en LegacyLogger.h/.m y nunca se invoca. Los observers de Swift no se registran y las NSNotification se pierden.", "details": "El codigo tiene la linea comentada '// logger.registerForNotifications()' para senalizar la trampa."}
+  ],
+  "superficial_traps": [
+    {"id": "S01", "title": "Setter in protocol default that ignores value", "category": "superficial", "where": "Sources/FxSwiftCore/Protocols/Syncable.swift:16", "resolution": "Los setters de `lastSyncedAt` y `isDirty` tienen `set { _ = newValue }` que ignora el valor asignado. Conformar `Syncable` no garantiza que se persista nada.", "details": "Marcado en el codigo con el patron `set { _ = newValue }`."},
+    {"id": "S02", "title": "override env var solo usado por tests", "category": "superficial", "where": "Sources/FxSwiftCore/AppGroup/AppGroupPaths.swift:13", "resolution": "La variable de entorno `FXSWIFT_APPGROUP_OVERRIDE` solo la usan los tests para apuntar a un directorio temporal. En produccion no aporta valor y ocupa una API publica.", "details": "El ground truth test verifica que `overrideEnvVar` esta declarado y se consulta en appGroupContainerURL()."},
+    {"id": "S03", "title": "Public init() never called externally", "category": "superficial", "where": "Sources/FxSwiftCore/Sync/CloudKitSyncEngine.swift:21", "resolution": "CloudKitSyncEngine.init() se declara public pero nadie lo invoca (siempre se usa `CloudKitSyncEngine()` o el `actor` por defecto).", "details": "El ground truth test verifica la presencia de 'public init() {}' en el codigo."}
+  ],
+  "surfaces": [
+    {"id": "SRF-deeplink-onboarding", "kind": "http", "name": "fxswift://onboarding", "handler": "DeepLinkRouter.handle", "file": "Sources/FxSwiftCore/UI/DeepLinkRouter.swift:39", "pair": "AppMain.onOpenURL"},
+    {"id": "SRF-deeplink-expense", "kind": "http", "name": "fxswift://expense?id=<UUID>", "handler": "DeepLinkRouter.handle", "file": "Sources/FxSwiftCore/UI/DeepLinkRouter.swift:42", "pair": "AppMain.onOpenURL"},
+    {"id": "SRF-deeplink-sync", "kind": "http", "name": "fxswift://sync", "handler": "DeepLinkRouter.handle", "file": "Sources/FxSwiftCore/UI/DeepLinkRouter.swift:40", "pair": "AppMain.onOpenURL"},
+    {"id": "SRF-cmd-xcodebuild", "kind": "cli", "name": "xcodebuild -scheme FxSwiftApp", "handler": "tools/run_spm_and_xcode_tests.sh", "file": "tools/run_spm_and_xcode_tests.sh:55", "pair": "Makefile test"},
+    {"id": "SRF-cmd-spm-build", "kind": "cli", "name": "swift build", "handler": "tools/run_spm_and_xcode_tests.sh", "file": "tools/run_spm_and_xcode_tests.sh:31", "pair": "Makefile build-spm"},
+    {"id": "SRF-msg-legacy-logger", "kind": "message", "name": "LegacyLoggerDidLogNotification", "handler": "NSNotificationCenter defaultCenter", "file": "Sources/FxSwiftCore/ObjCBridge/LegacyLogger.m:5", "pair": "SettingsHostController (no suscrito)"},
+    {"id": "SRF-event-kvo-lastmessage", "kind": "event", "name": "lastMessage KVO change", "handler": "@dynamic lastMessage", "file": "Sources/FxSwiftCore/ObjCBridge/LegacyLogger.m:18", "pair": "SettingsHostController.darkModeChanged"},
+    {"id": "SRF-tool-sync-coordinator", "kind": "tool", "name": "SyncCoordinator.sync([Expense])", "handler": "@MainActor", "file": "Sources/FxSwiftCore/Sync/SyncCoordinator.swift:21", "pair": "SettingsView"},
+    {"id": "SRF-tool-add-expense", "kind": "tool", "name": "ExpensesStore.add(Expense)", "handler": "@MainActor", "file": "Sources/FxSwiftCore/Persistence/ExpensesStore.swift:51", "pair": "ExpenseListView input bar"},
+    {"id": "SRF-ws-widget-timeline", "kind": "ws", "name": "WidgetKit timeline refresh", "handler": "FxSwiftTimelineProvider.getTimeline", "file": "Examples/FxSwiftWidget/WidgetMain.swift:29", "pair": "WidgetCenter.getTimeline"},
+    {"id": "SRF-schema-infoplist-app", "kind": "schema", "name": "FxSwiftApp Info.plist", "handler": "CFBundleURLSchemes + UIApplicationSceneManifest", "file": "Examples/FxSwiftApp/Info.plist:17", "pair": "Info.plist key CFBundleURLTypes"},
+    {"id": "SRF-schema-infoplist-widget", "kind": "schema", "name": "FxSwiftWidget Info.plist", "handler": "NSExtensionPointIdentifier = com.apple.widgetkit-extension", "file": "Examples/FxSwiftWidget/Info.plist:24", "pair": "NSExtension dict"},
+    {"id": "SRF-ipc-app-group", "kind": "ipc", "name": "App Group group.com.example.fxswift", "handler": "FileManager.containerURL(forSecurityApplicationGroupIdentifier:)", "file": "Sources/FxSwiftCore/AppGroup/AppGroupPaths.swift:6", "pair": "AppGroupStore actor"}
+  ],
+  "unique_tokens_file": "unique_tokens.txt"
+}

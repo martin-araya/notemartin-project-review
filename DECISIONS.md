@@ -3180,3 +3180,128 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   con Qt instalado.
   triviales) sin causar UB. La skill debe detectar que la
   ausencia de locks es deliberada (documentada en el comentario).
+
+### D-312 — Stack Swift 6 + SPM + Xcode project hibrido (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: la opcion SPM-only deja fuera .xcodeproj/widget
+  extension/bridging header; .xcodeproj-only deja fuera tests en host.
+  El plan combina ambos: la logica en `Package.swift` (host testable
+  con `swift test`) y los targets iOS (FxSwiftApp + FxSwiftWidget) en
+  `Examples/FxSwift.xcodeproj/`.
+- Decision: SPM + Xcode project. Tests de logica con `swift test`
+  (36 Swift Testing en 9 suites), smoke build del target iOS con
+  `xcodebuild build` en el Xcode project.
+- Consecuencias: el fixture requiere macOS con Xcode para validar
+  la parte Xcode. SPM solo no es suficiente (faltaria widget, ObjC
+  bridge, entitlements).
+
+### D-313 — `requires: [macos]` y `container.enabled: false` (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: el fixture requiere Xcode + iOS SDK que no existen en
+  contenedores Linux. `run_fixture_tests.py` debe saltarlo en
+  Linux/Windows.
+- Decision: `manifest.requires: [macos]`, `container.enabled: false`,
+  `Dockerfile.test` con `FROM scratch + CMD ["false"]` para que
+  `check_ground_truth.py` y el harness no se quejen de su ausencia.
+- Consecuencias: el gate `coverage` global no exigira este fixture
+  en CI Linux; los gates se ejecutan en macOS con `make test`.
+
+### D-314 — Swift Testing (`import Testing`) en vez de XCTest (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: la toolchain en este host (CommandLineTools sin Xcode
+  hasta F06aa) no incluye el modulo `XCTest`. `Swift Testing` esta
+  disponible con Xcode 16+ (incluido CommandLineTools 16+) pero no
+  con la 15.
+- Decision: usar `import Testing` + `@Test` + `@Suite` + `#expect`.
+  `xcodebuild test` tambien puede correr los Swift Testing
+  directamente.
+- Consecuencias: los tests no son `XCTestCase`. El ground truth
+  los describe como "36 Swift Testing tests" en vez de XCTest.
+  El plan original preveia XCTest; el switch a Swift Testing
+  se documenta aqui y se reescribe en DECISIONS.md.
+
+### D-315 — `SettingsHostController.swift` vive en `Examples/FxSwiftApp/`, no en FxSwiftCore (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: el controller UIKit usa `LegacyLogger` Obj-C via bridging
+  header. Si viviera en `Sources/FxSwiftCore/` se compilaria en SPM
+  sin bridging header aplicado, rompiendo la build del paquete.
+- Decision: `SettingsHostController.swift` se mueve a
+  `Examples/FxSwiftApp/` (target iOS) y el SPM tiene un placeholder
+  `LegacySettingsHost` en `LegacySettingsView.swift` que el target
+  real extiende via una extension en el controller.
+- Consecuencias: `LegacySettingsView` compila en host macOS sin
+  UIKit; el target iOS real (FxSwiftApp) incluye el controller que
+  aporta la extension con `LegacyLogger` real.
+
+### D-316 — `project.pbxproj` generado a mano por script Python (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: el pbxproj es texto (formato OpenStep plist). Editarlo
+  a mano es fragil; herramientas como XcodeGen o Tuist requieren
+  dependencias externas.
+- Decision: `tools/generate_pbxproj.py` genera el pbxproj con IDs
+  estables derivados de `sha1(nombre)`, lo que hace la salida
+  determinista. Se reescribe cada vez que cambia el fixture.
+- Consecuencias: el pbxproj no se commitea a mano. `make test`
+  incluye un smoke build que lo valida; sin Xcode el harness lo
+  omite y registra la razon en `.build/xcode-skip.log`.
+
+### D-317 — Tests usan `TestPaths` helper con `#filePath` (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: los tests iniciales usaban paths absolutos hardcodeados
+  del estilo `/Users/martin/.../dev/fixtures/fx-swift-ios/...`. Esto
+  viola CC-11 (menciona `dev/fixtures` en el codigo) y no es
+  portable entre maquinas.
+- Decision: helper `TestPaths` (en `Sources/FxSwiftCoreTests/`) que
+  resuelve la raiz del fixture via `#filePath` y `deletingLastPathComponent()`
+  repetido. Asi los tests no contienen paths absolutos.
+- Consecuencias: el test runner puede ejecutarse en cualquier
+  maquina sin editar codigo; CC-11 sigue verde.
+
+### D-318 — `WidgetSummaryEntry` conforma `TimelineEntry` solo en iOS (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: SPM compila para macOS sin WidgetKit; conformar
+  `TimelineEntry` directamente hace que SPM falle.
+- Decision: `extension WidgetSummaryEntry: TimelineEntry {}` dentro
+  de un bloque `#if canImport(WidgetKit)`. Ademas `WidgetSummaryEntry.date`
+  pasa de `let` a `var` para satisfacer el requisito del protocolo.
+- Consecuencias: el target iOS real (widget) compila con la
+  conformance; SPM no.
+
+### D-319 — `FxSwiftWidgetBundle: WidgetBundle` con `@main` (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: un widget extension iOS necesita `@main` o `@main
+  WidgetBundle` segun cuantos widgets contenga. El archivo
+  `WidgetMain.swift` original solo declaraba `FxSwiftWidget: Widget`
+  sin `@main`, lo que causaba un crash silencioso.
+- Decision: declarar un `WidgetBundle` con `@main` que envuelve
+  `FxSwiftWidget()`. Esto permite extender el bundle a multiples
+  widgets en el futuro sin tocar el entry point.
+- Consecuencias: el widget extension compila y se carga en el
+  simulator; el `@main` tambien queda en la lista de entry points
+  del ground truth.
+
+### D-320 — `DEVELOPER_DIR` auto-detectado para `xcodebuild` (F06aa)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aa · vigente
+- Contexto: el `xcode-select` del sistema apunta a
+  `/Library/Developer/CommandLineTools` (no Xcode completo). Para
+  invocar `xcodebuild` y `swift` con las herramientas que
+  incluyen Testing + Swift 6.3 + SDKs iOS, hay que apuntar
+  temporalmente a `/System/Volumes/Data/Applications/Xcode.app/...`
+  o `/Applications/Xcode.app/...` via `DEVELOPER_DIR`.
+- Decision: `tools/run_spm_and_xcode_tests.sh` y `Makefile` prueban
+  Xcode en `Xcode.app/Contents/Developer` automaticamente y exportan
+  `DEVELOPER_DIR` si lo encuentran. Si no, el smoke build se omite
+  y se registra la razon; los tests SPM siguen corriendo.
+- Consecuencias: en maquinas con `xcode-select` apuntando a Xcode
+  completo, todo el pipeline corre. En maquinas con solo
+  CommandLineTools, swift test falla con `no such module 'Testing'`
+  (documentado como limitacion en el README).

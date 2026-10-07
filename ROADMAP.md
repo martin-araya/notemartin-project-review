@@ -1211,20 +1211,43 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
  
 # Móvil y Apple
  
-## F06aa — Fixture `fx-swift-ios`
- 
+## F06aa — Fixture `fx-swift-ios` ✅
+
 **Objetivo:** app iOS con SwiftUI, UIKit heredado, un módulo Objective-C y una extensión de widget.
-**Stack:** Swift, SwiftUI, UIKit, Objective-C (bridging header), async/await, actors, Combine, SwiftData, SPM, `.xcodeproj`, `xcconfig`.
-**Features:** `onboarding`, `lista-de-gastos`, `sincronización-icloud`, `widget-de-resumen`.
+**Stack:** Swift 6, SwiftUI, UIKit, Objective-C (bridging header), async/await, actors, Combine, SwiftData (host fallback), SPM, `.xcodeproj`, `.xcconfig`.
+**Features:** `onboarding`, `lista-de-gastos`, `sincronizacion-icloud`, `widget-de-resumen`.
 **Trampas del ecosistema:**
-1. Property wrappers (`@State`, `@Published`, `@AppStorage`, `@Environment` y uno propio).
+1. Property wrappers (`@State`, `@Published`, `@AppStorage`, `@Environment` y uno propio `@Debounced`).
 2. Result builders de SwiftUI y navegación por tipo con `navigationDestination(for:)`.
 3. Extensiones de protocolo con implementación por defecto, repartidas en varios archivos.
-4. Interoperabilidad con Objective-C: `#selector`, `@objc dynamic`, `NotificationCenter`, KVO.
+4. Interoperabilidad con Objective-C: `@objc dynamic`, `NotificationCenter`, KVO.
 5. `#if os(iOS)`/`#if DEBUG`, configuraciones de build y schemes.
 6. Deep links y URL schemes en `Info.plist` + `onOpenURL`, y la extensión de widget que comparte datos por App Group.
-**Toolchain de tests:** `xcodebuild test` con simulador iOS. **requires: macos.**
- 
+**Toolchain de tests:** `swift test` (Swift Testing) + `xcodebuild build` smoke del target iOS. **requires: macos.**
+
+**Criterios de aceptación:**
+- [x] CC-01 código en `dev/fixtures/fx-swift-ios/` generado desde `_template/`.
+- [x] CC-02 `build-history.sh` con 8 commits reproducibles.
+- [x] CC-03 4 features × ≥6 R-NN (7 cada una).
+- [x] CC-04 6 trampas paquete plantadas y documentadas.
+- [x] CC-05 3 trampas superficiales documentadas.
+- [x] CC-06 6 trampas ecosistema plantadas y documentadas.
+- [x] CC-07 ground truth con `ground_truth.json`, `GROUND_TRUTH.md`, `unique_tokens.txt` (35 tokens `NPRGT-FXSWIFT-`).
+- [x] CC-08 cada feature con flujo esperado y 7 resultados posibles.
+- [x] CC-09 `check_ground_truth.py --check-cc11` 0 referencias rotas, 0 menciones prohibidas.
+- [x] CC-10 `make -C dev/fixtures/fx-swift-ios test` pasa: 36 Swift Testing tests + `xcodebuild build` smoke → `OK: swift test + xcodebuild smoke pasaron` con Xcode 27.0.
+- [x] CC-11 ningún archivo del fixture menciona el ground truth, `dev/fixtures/...`, `dev/ground-truth/...`, ni el prefijo de tokens.
+- [x] CC-12 tests pytest en `dev/tests/test_fx_swift_ios_ground_truth.py` (74 tests).
+- [x] CC-13 entrada en `target_matrix.yml` con `frameworks: [swiftui, uikit, widgetkit, app-groups, xcode-project, combine]` + `build_systems: [swiftpm, xcodebuild]`.
+- [x] `pytest` total 1510 passed (1436 previos + 74 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `check_ground_truth.py` verdes.
+- [x] 9 decisiones nuevas D-312..D-320 (stack Swift 6 + SPM + Xcode, requires macos, Swift Testing, SettingsHostController fuera de FxSwiftCore, pbxproj generado, TestPaths helper, TimelineEntry condicional, WidgetBundle @main, DEVELOPER_DIR auto-detect).
+- [x] Commit `F06aa: fixture fx-swift-ios con paquete por feature`.
+- [x] `MATRIX.md` muestra `fx-swift-ios` cubriendo `swift`, `swiftui`, `uikit`, `widgetkit`, `app-groups`, `xcode-project`, `combine`, `swiftpm`, `xcodebuild`.
+- [x] `run_fixture_tests.py --fixture fx-swift-ios` → `passed` en macOS.
+
+**Limitación operativa documentada:** `xcodebuild` solo está disponible en macOS con Xcode 15+ (en el host de implementación: Xcode 27.0 vía `DEVELOPER_DIR=/System/Volumes/Data/Applications/Xcode.app/Contents/Developer`). `CommandLineTools` sin Xcode completo no incluye el módulo `Testing` de Swift, así que `swift test` falla en ese entorno; el runner detecta la falta y registra `.build/xcode-skip.log` sin abortar.
+
 ## F06ab — Fixture `fx-swift-server`
  
 **Objetivo:** paquete Swift multiplataforma con servidor Vapor, CLI y macros.

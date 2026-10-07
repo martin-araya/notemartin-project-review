@@ -94,6 +94,12 @@ axes:
     - qt6
     - qml
     - qt-test
+    - swiftui
+    - uikit
+    - widgetkit
+    - app-groups
+    - xcode-project
+    - combine
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -113,6 +119,8 @@ axes:
     - cmake
     - gnu-ld
     - qt-cmake
+    - swiftpm
+    - xcodebuild
 
   # Tipos de archivo y formatos
   file_kinds:

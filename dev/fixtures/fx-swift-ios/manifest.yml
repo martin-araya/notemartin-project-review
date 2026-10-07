@@ -1,0 +1,15 @@
+# Metadata del fixture F06aa.
+# App iOS con SwiftUI, UIKit heredado, modulo Objective-C con bridging header
+# y extension de widget que comparte datos por App Group. Ver referencias
+# exactas de las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-swift-ios/ground_truth.json.
+name: fx-swift-ios
+description: App iOS Swift 6 + SwiftUI + UIKit + ObjC bridging + widget extension via App Group (F06aa)
+requires:
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-swift-ios
+  enabled: false
+ground_truth_format_version: 1

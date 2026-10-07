@@ -57,6 +57,8 @@ EXT_LANG: Dict[str, Set[str]] = {
     ".rb": {"ruby"},
     ".ex": {"elixir"}, ".exs": {"elixir"},
     ".php": {"php"},
+    ".h": {"c", "cpp", "objective-c"},
+    ".m": {"objective-c"},
 }
 
 # Manifiestos -> sistemas de build
@@ -76,6 +78,7 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
     "requirements.txt": {"pip"},
     "pyproject.toml": {"pyproject"},
     "composer.json": {"composer"},
+    "Package.swift": {"swiftpm"},
 }
 
 # Archivos clave de frameworks
@@ -155,6 +158,11 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "Microsoft.EntityFrameworkCore": {"ef-core"},
     # ASP.NET Core (F06o): el selector public usa ``aspnet-core``.
     "aspnet-core": {"aspnet-core"},
+    # SwiftUI / Combine / WidgetKit / UIKit (F06aa): se detectan aparte
+    # en el scan de archivos .swift (ver ``_scan_swift_sources``).
+    "import WidgetKit": {"widgetkit"},
+    "import UIKit": {"uikit"},
+    "import SwiftData": {"swiftdata"},
     # Django (F06p): la dep ``Django`` indica framework Django.
     "Django": {"django"},
     # DRF (F06p): la dep ``djangorestframework`` indica API REST.
@@ -297,8 +305,46 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
         except (OSError, UnicodeDecodeError):
             pass
 
+    # Detectar SwiftUI / Combine / WidgetKit / UIKit / SwiftData en
+    # archivos ``.swift`` del fixture (F06aa). Tambien detectar App Group
+    # en ``.entitlements`` y la presencia de un ``.xcodeproj``.
+    swift_imports = {
+        "SwiftUI": "swiftui",
+        "Combine": "combine",
+        "WidgetKit": "widgetkit",
+        "UIKit": "uikit",
+        "SwiftData": "swiftdata",
+    }
+    for swift_file in list(fixture_dir.rglob("*.swift")) + list(fixture_dir.rglob("*.m")):
+        if not swift_file.is_file():
+            continue
+        try:
+            content = swift_file.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        for imp, fw in swift_imports.items():
+            if f"import {imp}" in content:
+                covered["frameworks"].add(fw)
+    # App Group en entitlements.
+    for ent in fixture_dir.rglob("*.entitlements"):
+        if not ent.is_file():
+            continue
+        try:
+            content = ent.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "application-groups" in content or "com.apple.security.application-groups" in content:
+            covered["frameworks"].add("app-groups")
+    # Xcode project: presencia de *.xcodeproj/project.pbxproj.
+    for pbx in fixture_dir.rglob("*.xcodeproj/project.pbxproj"):
+        if pbx.is_file():
+            covered["frameworks"].add("xcode-project")
+            # Si hay un .xcconfig, tambien detectamos el sistema de build.
+            if any(fixture_dir.rglob("*.xcconfig")):
+                covered["build_systems"].add("xcodebuild")
+            break
+
     # Detectar deps de NuGet via *.csproj (MediatR, EF Core, ASP.NET Core).
-    for csproj in fixture_dir.rglob("*.csproj"):
         if not csproj.is_file():
             continue
         # Cualquier *.csproj implica MSBuild como build system.

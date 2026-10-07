@@ -1,0 +1,9 @@
+# Este Dockerfile existe solo para que check_ground_truth.py y el harness
+# encuentren el archivo; el fixture requiere macOS con Xcode y un toolchain
+# Swift completo. run_fixture_tests.py detecta container.enabled=false en
+# manifest.yml y omite la construccion del contenedor. El comando fallara
+# por diseno si alguien intenta construirlo en Linux.
+FROM scratch
+LABEL maintainer="notemartin-project-review"
+LABEL note="Este fixture requiere macOS con Xcode/Swift; no se ejecuta en contenedor."
+CMD ["false"]
