@@ -1175,8 +1175,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] 9 decisiones nuevas D-294..D-302 (C99 con `-std=c99 -pedantic`, GCC 13.5 en `gcc:13-bookworm`, Unity como fork minimo en lugar de Ceedling, runner Python `test_runner.py`, host-emulation con `hal_host.c` en lugar de QEMU obligatorio, linker script `firmware.ld` con `.isr_vector` y `AT(origin)`, board selection via `-DBOARD_X`, MMIO volatile con direcciones STM32F4, prefijo `NPRGT-FXCEMB-`).
 - [x] Commit `F06y: fixture fx-c-embedded con paquete por feature`.
  
-## F06z — Fixture `fx-cpp-qt`
- 
+## F06z — Fixture `fx-cpp-qt` ✅
+  
 **Objetivo:** aplicación de escritorio Qt con Widgets y QML.
 **Stack:** C++, Qt 6 (Widgets + QML), moc, `.ui`, `.qrc`, CMake.
 **Features:** `editor`, `preferencias`, `exportar`.
@@ -1188,6 +1188,24 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Recursos `.qrc` con rutas `:/`.
 6. Código generado por moc a partir de `Q_OBJECT`.
 **Toolchain de tests:** Qt Test con `QT_QPA_PLATFORM=offscreen`, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`editor`, `preferencias`, `exportar`) con 7 R-NN cada una documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `connect_signal_slot` (QObject::connect en `src/main_window.cpp:50-72`), `autoconnect_by_name` (slots `on_<objectName>_<signal>` en `MainWindow` + `setupUi()` en el constructor), `widgets_in_ui` (`ui/main_window.ui` con QMainWindow + 4 QPushButton), `q_property_q_invokable` (Q_PROPERTY fontSize/darkTheme con NOTIFY + Q_INVOKABLE resetToDefaults/save + PreferencesProxy para QML), `qrc_resources` (`resources/resources.qrc` con SVGs y styles + `qt_add_resources` los compila con rcc), `moc_generated_code` (todos los headers con Q_OBJECT generan `moc_*.cpp` via AUTOMOC).
+- [x] 6 trampas del paquete plantadas: `connect_5_args_no_explicit` (comment en `setupConnections()`), `signal_loop_infinite` (caso `format == "loop"` en `exporter.cpp:doExport` que NO emite nada), `q_property_no_notify` (`legacyProperty` en `preferences.h:21` sin NOTIFY), `qrc_path_no_colon_slash` (comment en `test_p04`), `auto_connect_name_typo` (`on_savebutton_clicked_TYPO` con b minuscula en `main_window.h:on_savebutton_clicked_TYPO`), `qml_garbage_collected` (PreferencesProxy sin setObjectOwnership en `preferences_proxy.cpp`).
+- [x] 3 trampas superficiales: `dead_signal_slot` (`someUnusedSignal` en `editor.h` y emitido en `editor.cpp` sin receptor), `unused_resource_alias` (alias `never_referenced.svg` en `resources.qrc` nadie usa), `commented_out_code` (3 lineas con `TODO: connect` en `main_window.cpp:on_actionQuit_triggered`).
+- [x] `check_ground_truth.py dev/ground-truth/fx-cpp-qt/` → 0 referencias rotas (CC-09).
+- [x] CC-11 en verde (sin menciones del ground truth en comentarios).
+- [x] Suite Qt Test 29 tests passing en el contenedor `gcc:13-bookworm` con `apt-get install qt6-base-dev qt6-declarative-dev qt6-tools-dev qt6-tools-dev-tools libqt6test6 libqt6quick6 libqt6quickwidgets6 libqt6quickcontrols2-6` + `cmake -S . -B build` + `cmake --build build --parallel` + `QT_QPA_PLATFORM=offscreen ctest --test-dir build --output-on-failure`.
+- [x] `run_fixture_tests.py --fixture fx-cpp-qt --container` → `passed`.
+- [x] `dev/tests/test_fx_cpp_qt_ground_truth.py` agregado y verde (55 tests: 11 `TestGroundTruthShape` + 3 `TestUniqueTokensFile` + 3 `TestAllCitesValid` + 18 `TestCppStructure` + 6 `TestTrapsEcosystem` + 6 `TestTrapsPackage` + 3 `TestTrapsSuperficial` + 7 `TestManifest`).
+- [x] `MATRIX.md` muestra `fx-cpp-qt` cubriendo `cpp`, `qt6`, `qml`, `qt-test`, `qt-cmake` como frameworks.
+- [x] `target_matrix.yml` extendido: `frameworks: [qt6, qml, qt-test, qt-cmake]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `find_package(Qt6` + `qt_standard_project_setup` → `qt6` + `qt-cmake`; `qml/*.qml` → `qml`; `QTEST` en tests → `qt-test`.
+- [x] `pytest` total **1436 passed** (1381 anteriores + 55 nuevos) sin regresiones en los 25 fixtures previos.
+- [x] `validate_skill.py`, `overfit_guard.py` y `check_ground_truth.py` siguen verdes.
+- [x] 9 decisiones nuevas D-303..D-311 (Qt 6.4.2 via apt en Debian bookworm en lugar de Qt 6.6 LTS, GCC 13.5 + cmake 3.25 con `qt_standard_project_setup(REQUIRES 6.4)`, `qt_add_library(qtapp_core STATIC)` para tests, header-only fixturer `version.h`, dockefile con `libqt6test6` en lugar de `qt6-test-dev` (no hay -dev package), `qtapp_exe` como nombre del ejecutable para evitar colision con el directorio `qtapp/` de QML, `AUTOUIC_SEARCH_PATHS` para resolver `ui/main_window.ui` desde el codigo C++, `QT_QPA_PLATFORM=offscreen` para tests headless, `QTEST_GUILESS_MAIN` para un solo binario de tests).
+- [x] Commit `F06z: fixture fx-cpp-qt con paquete por feature`.
  
 ---
  

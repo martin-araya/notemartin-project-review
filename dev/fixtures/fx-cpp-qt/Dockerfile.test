@@ -1,0 +1,42 @@
+# Imagen para ejecutar los tests del fixture F06z (C++/Qt 6).
+FROM gcc:13-bookworm
+
+# Qt 6 + tools de build + librerias para QPA offscreen.
+# xvfb y libgl1 son necesarios si se quiere correr con x11; offscreen
+# no los necesita pero los incluimos por completitud.
+# qt6-test no tiene -dev en Debian bookworm; libqt6test6 provee el
+# runtime que se enlaza contra Qt6::Test (que viene con qt6-base-dev).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    make \
+    git \
+    qt6-base-dev \
+    qt6-declarative-dev \
+    qt6-tools-dev \
+    qt6-tools-dev-tools \
+    libqt6test6 \
+    qt6-qpa-plugins \
+    libgl1 \
+    libglx-mesa0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+COPY CMakeLists.txt CMakeLists.txt
+COPY Makefile Makefile
+COPY cmake cmake
+COPY include include
+COPY src src
+COPY ui ui
+COPY qml qml
+COPY resources resources
+COPY tests tests
+COPY tools tools
+COPY unique_tokens.txt unique_tokens.txt
+COPY docs docs
+
+# Configuramos y compilamos en build para acelerar la primera corrida.
+RUN mkdir -p build && cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && \
+    cmake --build build --parallel
+
+CMD ["make", "test"]

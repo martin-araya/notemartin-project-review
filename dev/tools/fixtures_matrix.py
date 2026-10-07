@@ -432,6 +432,36 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
         covered["frameworks"].add("unity")
         covered["frameworks"].add("linker-script")
 
+    # Detectar Qt 6 (F06z) via find_package(Qt6) + QML files.
+    has_qt6 = False
+    for cmakelists in fixture_dir.rglob("CMakeLists.txt"):
+        if not cmakelists.is_file():
+            continue
+        rel = cmakelists.relative_to(fixture_dir).as_posix()
+        if rel.startswith("build/"):
+            continue
+        try:
+            content = cmakelists.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "find_package(Qt6" in content or "qt_standard_project_setup" in content:
+            has_qt6 = True
+            covered["build_systems"].add("qt-cmake")
+            break
+    if has_qt6:
+        covered["frameworks"].add("qt6")
+        if list(fixture_dir.rglob("qml/*.qml")):
+            covered["frameworks"].add("qml")
+        if list(fixture_dir.rglob("tests/*.cpp")):
+            # Buscamos QTest en los tests
+            for cpp_file in fixture_dir.rglob("tests/*.cpp"):
+                try:
+                    if "QTEST" in cpp_file.read_text(encoding="utf-8", errors="replace"):
+                        covered["frameworks"].add("qt-test")
+                        break
+                except (OSError, UnicodeDecodeError):
+                    continue
+
     # Detectar FastAPI via app/main.py con constructor FastAPI() (F06q).
     for main_py in fixture_dir.rglob("main.py"):
         if not main_py.is_file():

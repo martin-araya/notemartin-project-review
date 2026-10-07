@@ -91,6 +91,9 @@ axes:
     - dlopen
     - unity
     - linker-script
+    - qt6
+    - qml
+    - qt-test
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -109,6 +112,7 @@ axes:
     - bundler
     - cmake
     - gnu-ld
+    - qt-cmake
 
   # Tipos de archivo y formatos
   file_kinds:

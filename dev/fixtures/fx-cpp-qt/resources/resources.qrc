@@ -1,0 +1,13 @@
+<!-- F06z: resources.qrc - registra iconos y styles bajo el prefijo :/. -->
+<RCC>
+    <qresource prefix="/">
+        <file>icons/save.svg</file>
+        <file>icons/open.svg</file>
+        <file>icons/export.svg</file>
+        <file>styles/app.qss</file>
+    </qresource>
+    <!-- S02 trampa superficial: alias que nadie usa. -->
+    <qresource prefix="/unused">
+        <file alias="never_referenced.svg">icons/save.svg</file>
+    </qresource>
+</RCC>

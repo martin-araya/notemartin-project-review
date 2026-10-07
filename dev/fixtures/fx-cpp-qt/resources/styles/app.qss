@@ -1,0 +1,6 @@
+/* F06z: app.qss - stylesheet basico de la aplicacion. */
+QPlainTextEdit {
+    font-family: monospace;
+    background: #fdfdfd;
+    color: #1a1a1a;
+}

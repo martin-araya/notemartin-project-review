@@ -3039,3 +3039,144 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: el test verifica el sintoma (valores no
   triviales) sin causar UB. La skill debe detectar que la
   ausencia de locks es deliberada (documentada en el comentario).
+
+### D-303 — Qt 6.4 via apt en lugar de Qt 6.6 LTS (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: el plan F06z decia Qt 6.6 LTS pero Debian bookworm
+  solo trae Qt 6.4.2. Compilar Qt 6.6 desde fuentes tarda ~2h
+  y agrega ~1GB de dependencias.
+- Decision: usar `qt6-base-dev` + `qt6-declarative-dev` + `qt6-tools-dev`
+  + `qt6-tools-dev-tools` desde apt de Debian bookworm (Qt 6.4.2).
+  Ajustar `find_package(Qt6 6.4 REQUIRED ...)` y
+  `qt_standard_project_setup(REQUIRES 6.4)`.
+- Alternativas: (a) compilar Qt 6.6 desde fuentes (descartado:
+  2h+ de build); (b) usar homebrew en macOS (descartado: no es
+  reproducible en CI); (c) bajar la version minima a Qt 5 (descartado:
+  el spec dice Qt 6).
+- Consecuencias: el fixture funciona out-of-the-box en
+  `gcc:13-bookworm`; la skill debe notar que la version es 6.4.2
+  (visible en `build/CMakeCache.txt`).
+
+### D-304 — `qt_add_library(qtapp_core STATIC)` con headers explicitos (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: AUTOMOC para una libreria estatica en Qt 6.4 no se
+  activa automaticamente cuando se usan `qt_add_library` y solo
+  aparecen headers via include en .cpp.
+- Decision: pasar explicitamente los headers con `Q_OBJECT` en
+  la lista de sources de `qt_add_library(qtapp_core STATIC ...)`.
+  Esto fuerza a AUTOMOC a procesar los headers.
+- Alternativas: (a) poner los headers en `target_sources`
+  (descartado: reduntante con qt_add_library); (b) usar
+  `set(CMAKE_AUTOMOC ON)` global (insuficiente en Qt 6.4).
+- Consecuencias: el codigo moc se genera para cada QObject; los
+  tests pueden acceder a los slots/señales via meta-object.
+
+### D-305 — `qtapp_exe` como nombre del ejecutable (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: `qt_add_qml_module(qtapp ...)` genera un directorio
+  `build/qtapp/` para el modulo QML. Si el ejecutable se llama
+  tambien `qtapp`, el linker falla con "cannot open output file
+  qtapp: Is a directory".
+- Decision: renombrar el ejecutable a `qtapp_exe`. El modulo QML
+  mantiene el nombre `qtapp` (porque es el nombre del target que
+  contiene los QObjects).
+- Alternativas: (a) cambiar el nombre del target del modulo QML
+  (descartado: invalida la convencion); (b) cambiar el URI del
+  modulo QML (descartado: tambien es molesto).
+- Consecuencias: el binario de salida es `build/qtapp_exe` y el
+  modulo QML es `QtApp`. Documentado en el Dockerfile.
+
+### D-306 — `AUTOUIC_SEARCH_PATHS` para resolver `ui/*.ui` (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: AUTOUIC busca el archivo `.ui` en el mismo directorio
+  que el .cpp que incluye `ui_<class>.h`. Si el `.ui` esta en
+  `ui/` pero el .cpp esta en `src/`, AUTOUIC no lo encuentra y
+  falla con "could not be found".
+- Decision: `set_target_properties(qtapp_core PROPERTIES AUTOUIC_SEARCH_PATHS "${CMAKE_SOURCE_DIR}/ui")`
+  para `qtapp_core`. El ejecutable y los tests heredan la propiedad
+  via `target_link_libraries(... qtapp_core)`.
+- Alternativas: (a) mover los .ui a `src/` (descartado: rompe la
+  convencion Qt); (b) cambiar la ruta del include a "ui/ui_main_window.h"
+  (descartado: feo).
+- Consecuencias: el .ui vive en `ui/main_window.ui` y se compila
+  correctamente en `build/qtapp_core_autogen/.../ui_main_window.h`.
+
+### D-307 — `libqt6test6` runtime en lugar de `qt6-test-dev` (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: Debian bookworm no provee un paquete `-dev` para
+  `Qt6::Test`. Solo esta `libqt6test6` (runtime).
+- Decision: instalar `libqt6test6` (runtime) en el Dockerfile. El
+  paquete `qt6-base-dev` provee los headers de Qt6::Test (que se
+  enlazan con `libQt6Test.so.6` en runtime).
+- Alternativas: (a) descargar el tarball de Qt 6.5 (descartado:
+  agrega ~30MB al build); (b) usar QTest manualmente (descartado:
+  reinventa la rueda).
+- Consecuencias: el build requiere `apt-get install libqt6test6`
+  ademas de `qt6-base-dev` para que el linker encuentre `Qt6Test`.
+
+### D-308 — `QTEST_GUILESS_MAIN` para tests sin GUI (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: `QTEST_MAIN` crea un `QApplication` que requiere un
+  display. En CI headless esto falla.
+- Decision: usar `QTEST_GUILESS_MAIN` (crea `QCoreApplication` en
+  su lugar) para que los tests corran sin display. Los signals
+  funcionan igual y los QObjects se pueden instanciar.
+- Alternativas: (a) `QTEST_MAIN` + `xvfb-run` (descartado: requiere
+  xvfb en la imagen); (b) `QTEST_APPLESS_MAIN` (descartado: sin
+  QCoreApplication no se pueden usar signals).
+- Consecuencias: el binario de tests corre sin display via
+  `QT_QPA_PLATFORM=offscreen`.
+
+### D-309 — Single test binary con todos los tests QtAppTests (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: el plan llamaba 10 archivos de test separados. En
+  Qt Test, la convencion es una clase QObject con private slots
+  por archivo + `QTEST_MAIN` por archivo. Con Qt 6.4 + `QGuiApplication`,
+  multiples QApplication en el mismo proceso no funcionan bien.
+- Decision: un solo archivo `test_main.cpp` con la clase
+  `QtAppTests` y todos los tests como private slots. Se usa
+  `QTEST_GUILESS_MAIN(QtAppTests)` para generar el main().
+  `tests/test_runner.py` compila y corre un solo binario.
+- Alternativas: (a) 10 archivos con QTEST_MAIN cada uno
+  (descartado: problemas con multiples QApplication); (b) un archivo
+  pero sin la clase QtAppTests (descartado: pierde la integracion
+  con QTest).
+- Consecuencias: el runner es mas simple; los tests se identifican
+  por su nombre en el output de QTest.
+
+### D-310 — prefijo `NPRGT-FXCPPQT-` para unique_tokens.txt (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: el formato canonico de unique tokens para fixtures
+  F06 (D-007, F06a2) usa prefijo `NPRGT-FX<NN>-`.
+- Decision: `NPRGT-FXCPPQT-` con 42 tokens cubriendo stack
+  (qt6, qml, qobject, etc.), 6 trampas del ecosistema, 6 del
+  paquete, 3 superficiales y conceptos Qt (moc, uic, rcc).
+- Alternativas: (a) reusar prefijo de un fixture existente
+  (descartado: violaria CC-11 al estar duplicado entre fixtures).
+- Consecuencias: `overfit_guard.py` distingue tokens de
+  `fx-cpp-qt` y los demas fixtures sin colision.
+
+### D-311 — Manifest con `linux` + `macos` (F06z)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06z · vigente
+- Contexto: el plan original tenia `windows: NO` por las mismas
+  razones que fx-cpp-cmake. Para macOS, Qt 6 esta disponible via
+  Homebrew pero no en el manifest.
+- Decision: `requires: [linux, macos]`. En CI usamos el contenedor
+  `gcc:13-bookworm` con Qt de apt. En macOS el usuario necesita
+  instalar Qt 6 via `brew install qt`.
+- Alternativas: (a) `requires: [linux]` unicamente (descartado:
+  excluye macOS sin razon); (b) `requires: [linux, macos, windows]`
+  (descartado: Windows requiere display).
+- Consecuencias: el fixture corre en Linux via Docker y en macOS
+  con Qt instalado.
+  triviales) sin causar UB. La skill debe detectar que la
+  ausencia de locks es deliberada (documentada en el comentario).

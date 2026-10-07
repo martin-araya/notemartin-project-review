@@ -1,0 +1,15 @@
+# Metadata del fixture F06z: fx-cpp-qt
+# Aplicacion de escritorio Qt 6 con Widgets y QML, build con CMake.
+# Ver referencias exactas de las trampas del ecosistema y del paquete
+# en dev/ground-truth/fx-cpp-qt/ground_truth.json.
+name: fx-cpp-qt
+description: Aplicacion de escritorio Qt 6 con Widgets + QML, connect/slots, Q_PROPERTY y .qrc (F06z)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-cpp-qt
+  enabled: true
+ground_truth_format_version: 1

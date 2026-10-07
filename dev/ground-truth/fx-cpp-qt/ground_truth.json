@@ -1,0 +1,173 @@
+{
+  "fixture": "fx-cpp-qt",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "main(int, char**)", "file": "src/main.cpp"},
+    {"id": "EP-mainwindow", "artifact": "MainWindow::MainWindow(QWidget*)", "file": "src/main_window.cpp"},
+    {"id": "EP-cmake", "artifact": "CMakeLists.txt con qt_standard_project_setup", "file": "CMakeLists.txt"},
+    {"id": "EP-uic", "artifact": "ui_main_window.h (generado por uic)", "file": "build/qtapp_core_autogen/.../ui_main_window.h"},
+    {"id": "EP-moc", "artifact": "moc_*.cpp (generado por moc para cada Q_OBJECT)", "file": "build/qtapp_core_autogen/.../moc_*.cpp"},
+    {"id": "EP-rcc", "artifact": "qrc_resources.cpp (generado por rcc)", "file": "build/.../qrc_resources.cpp"},
+    {"id": "EP-qml", "artifact": "qtapp_qmltyperegistrations.cpp (generado por qmltyperegistrar)", "file": "build/.../qtapp_qmltyperegistrations.cpp"}
+  ],
+  "modules": [
+    {"id": "MOD-version", "path": "include/qtapp/version.h", "summary": "Macros QTAPP_VERSION_{MAJOR,MINOR,PATCH,STRING}"},
+    {"id": "MOD-editor", "path": "include/qtapp/editor.h + src/editor.cpp", "summary": "QObject con signal textChanged + slot onMarkModified (E01)"},
+    {"id": "MOD-preferences", "path": "include/qtapp/preferences.h + src/preferences.cpp", "summary": "QObject con Q_PROPERTY fontSize/darkTheme + Q_INVOKABLE resetToDefaults/save (E04) + legacyProperty sin NOTIFY (P03)"},
+    {"id": "MOD-exporter", "path": "include/qtapp/exporter.h + src/exporter.cpp", "summary": "QObject con signal exportCompleted + slot doExport (E01)"},
+    {"id": "MOD-mainwindow", "path": "include/qtapp/main_window.h + src/main_window.cpp", "summary": "QMainWindow con setupUi() + auto-connect slots (E02) + typo slot (P05)"},
+    {"id": "MOD-preferences-proxy", "path": "include/qtapp/preferences_proxy.h + src/preferences_proxy.cpp", "summary": "QObject que expone Preferences a QML (E04) sin setObjectOwnership (P06)"},
+    {"id": "MOD-legacy", "path": "src/legacy_helpers.cpp", "summary": "Helpers legacy sin consumidores (S01)"},
+    {"id": "MOD-ui", "path": "ui/main_window.ui", "summary": "Archivo Qt Designer con QMainWindow + 4 QPushButton (saveButton, exitButton, exportButton, preferencesButton) (E03)"},
+    {"id": "MOD-preferences-form", "path": "ui/preferences_form.ui", "summary": "Dialog de preferencias con QSpinBox + QCheckBox"},
+    {"id": "MOD-qml-prefs", "path": "qml/PreferencesPage.qml", "summary": "ApplicationWindow con SpinBox y Switch bindeados a PreferencesProxy (E04)"},
+    {"id": "MOD-qml-theme", "path": "qml/ThemeSwitcher.qml", "summary": "Widget QML para alternar tema"},
+    {"id": "MOD-resources", "path": "resources/resources.qrc", "summary": "Registra SVGs y styles bajo :/ (E05)"},
+    {"id": "MOD-cmake-root", "path": "CMakeLists.txt", "summary": "qt_standard_project_setup + qt_add_library(qtapp_core) + qt_add_executable(qtapp_exe) + qt_add_qml_module (E04)"}
+  ],
+  "dependencies": [
+    {"name": "gcc", "version": "13.x", "scope": "build+runtime", "manifest": "Dockerfile.test (FROM gcc:13-bookworm)"},
+    {"name": "cmake", "version": "3.25+", "scope": "build", "manifest": "Dockerfile.test (apt-get install cmake)"},
+    {"name": "qt6-base-dev", "version": "6.4.2 (Debian bookworm)", "scope": "build+runtime", "manifest": "Dockerfile.test (apt-get install qt6-base-dev)"},
+    {"name": "qt6-declarative-dev", "version": "6.4.2", "scope": "build+runtime", "manifest": "Dockerfile.test (apt-get install qt6-declarative-dev)"},
+    {"name": "qt6-tools-dev", "version": "6.4.2", "scope": "build", "manifest": "Dockerfile.test (moc, uic, rcc)"},
+    {"name": "libqt6test6", "version": "6.4.2", "scope": "runtime", "manifest": "Dockerfile.test (Qt::Test runtime)"},
+    {"name": "make", "version": "GNU Make 4.x", "scope": "build", "manifest": "Dockerfile.test (apt-get install make)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "editor",
+      "user_description": "Editor de texto con undo/redo, save/open, status bar y modified flag via QPlainTextEdit.",
+      "traces": [
+        {"n": 1, "what": "Usuario teclea en QPlainTextEdit (textEdit)", "cite": "src/main_window.cpp:73", "data_in": "key event", "data_out": "textChanged signal"},
+        {"n": 2, "what": "QPlainTextEdit::textChanged dispara on_textEdit_textChanged", "cite": "src/main_window.cpp:73", "data_in": "textChanged", "data_out": "slot call"},
+        {"n": 3, "what": "MainWindow::on_textEdit_textChanged llama editor.setText()", "cite": "src/main_window.cpp:140", "data_in": "text", "data_out": "Editor::m_text actualizado"},
+        {"n": 4, "what": "Editor::setText guarda prev en undoStack y emite textChanged", "cite": "src/editor.cpp:15", "data_in": "text", "data_out": "textChanged signal + modifiedChanged"},
+        {"n": 5, "what": "Editor::onMarkModified se conecta en on_textEdit_textChanged", "cite": "src/editor.cpp:62", "data_in": "Editor::textChanged", "data_out": "m_modified = true"},
+        {"n": 6, "what": "status bar muestra longitud via lambda connect", "cite": "src/main_window.cpp:60", "data_in": "text", "data_out": "Caracteres: N"},
+        {"n": 7, "what": "on_saveButton_clicked llama FileDialog + Editor::save()", "cite": "src/main_window.cpp:93", "data_in": "path", "data_out": "archivo escrito o error"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/editor.cpp", "line": 11, "kind": "validation", "condition_text": "if (m_text == text) return;", "branches": [{"label": "sin cambios -> early return", "target_line": 12}, {"label": "con cambios -> setText emite senales", "target_line": 15}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_type_text", "conditions": "usuario teclea en QPlainTextEdit", "user_sees": "texto aparece en pantalla, status bar actualiza contador de caracteres", "side_effects": ["textChanged emitido 2 veces (QPlainTextEdit y Editor)", "modified=true"], "reversible": true, "final_state": "editor con texto nuevo"},
+        {"id": "R-02", "category": "success_undo", "conditions": "setText llamado 2+ veces; usuario llama undo()", "user_sees": "texto vuelve a la version anterior", "side_effects": ["m_redoStack = m_text", "textChanged emitido"], "reversible": true, "final_state": "texto restaurado"},
+        {"id": "R-03", "category": "success_redo", "conditions": "despues de undo, usuario llama redo()", "user_sees": "texto vuelve a la version posterior", "side_effects": ["m_undoStack = m_text", "textChanged emitido"], "reversible": true, "final_state": "texto rehecho"},
+        {"id": "R-04", "category": "success_modified_flag", "conditions": "cualquier setText con texto diferente", "user_sees": "isModified() == true", "side_effects": ["modificationChanged(true) emitido", "m_modified = true"], "reversible": false, "final_state": "modified flag set"},
+        {"id": "R-05", "category": "success_save", "conditions": "on_saveButton_clicked + QFileDialog + Editor::save", "user_sees": "archivo escrito en disco; status bar muestra 'Guardado en PATH'", "side_effects": ["QSaveFile commit", "modificationChanged(false)"], "reversible": true, "final_state": "archivo en disco, modified=false"},
+        {"id": "R-06", "category": "success_open", "conditions": "on_actionOpen_triggered + Editor::open", "user_sees": "texto cargado desde archivo; QPlainTextEdit actualizado", "side_effects": ["m_text = file content", "textChanged emitido"], "reversible": true, "final_state": "editor con texto del archivo"},
+        {"id": "R-07", "category": "error_save_failed", "conditions": "path no escribible (permisos)", "user_sees": "QMessageBox::warning 'No se pudo guardar'", "side_effects": [], "reversible": true, "final_state": "modified=true, archivo sin escribir"}
+      ],
+      "config": [
+        {"key": "editor.textChanged", "kind": "signal", "default": "void Editor::textChanged(const QString&)", "effect": "E01: senal conectada a QPlainTextEdit::setPlainText y al status bar"},
+        {"key": "editor.undo", "kind": "slot", "default": "void Editor::undo()", "effect": "usa stack interno de QString; en produccion usaria QUndoStack"},
+        {"key": "editor.someUnusedSignal", "kind": "signal", "default": "void Editor::someUnusedSignal()", "effect": "S01: senal declarada y emitida sin receptor"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "preferencias",
+      "user_description": "Panel de preferencias con QSettings, Q_PROPERTY y QML bindings declarativos.",
+      "traces": [
+        {"n": 1, "what": "Usuario abre dialogo de preferencias", "cite": "src/main_window.cpp:131", "data_in": "click on_preferencesButton", "data_out": "QMessageBox informativo (stub)"},
+        {"n": 2, "what": "QML PreferencesPage.qml carga con QQuickWidget", "cite": "qml/PreferencesPage.qml:1", "data_in": "component load", "data_out": "QML tree"},
+        {"n": 3, "what": "Binding a proxy.fontSize: SpinBox value = proxy.fontSize", "cite": "qml/PreferencesPage.qml:18", "data_in": "binding", "data_out": "value"},
+        {"n": 4, "what": "Usuario cambia SpinBox: onValueModified emite setFontSize", "cite": "qml/PreferencesPage.qml:19", "data_in": "new value", "data_out": "proxy.setFontSize(newValue)"},
+        {"n": 5, "what": "PreferencesProxy::setFontSize llama Preferences::setFontSize", "cite": "src/preferences_proxy.cpp:24", "data_in": "size", "data_out": "Preferences::m_fontSize"},
+        {"n": 6, "what": "Preferences::setFontSize emite fontSizeChanged con NOTIFY", "cite": "src/preferences.cpp:21", "data_in": "size", "data_out": "QML binding actualiza SpinBox"},
+        {"n": 7, "what": "Preferences::save persiste en QSettings", "cite": "src/preferences.cpp:45", "data_in": "values", "data_out": "QSettings::setValue"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/preferences.cpp", "line": 21, "kind": "validation", "condition_text": "if (m_fontSize == size) return;", "branches": [{"label": "sin cambios -> early return", "target_line": 22}, {"label": "con cambios -> setFontSize emite fontSizeChanged", "target_line": 24}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load_from_qsettings", "conditions": "Preferences::Preferences() constructor llama load()", "user_sees": "fontSize/darkTheme cargados desde QSettings", "side_effects": ["preferencesChanged emitido"], "reversible": true, "final_state": "Preferences inicializado"},
+        {"id": "R-02", "category": "success_qml_binding_updates", "conditions": "QML PreferencesPage lee proxy.fontSize", "user_sees": "SpinBox muestra el valor actual", "side_effects": [], "reversible": true, "final_state": "QML en sync con C++"},
+        {"id": "R-03", "category": "success_dark_theme_toggle", "conditions": "CheckBox.onCheckedChanged emite setDarkTheme", "user_sees": "stylesheet de la app cambia via connect", "side_effects": ["qApp->setStyleSheet llamado con tema oscuro o vacio"], "reversible": true, "final_state": "tema visual cambia"},
+        {"id": "R-04", "category": "success_persist", "conditions": "Preferences::save() llamado", "user_sees": "valores guardados en QSettings (seccion compania/app)", "side_effects": ["QSettings::sync()"], "reversible": true, "final_state": "valores persistidos en disco"},
+        {"id": "R-05", "category": "success_reset_to_defaults", "conditions": "Preferences::resetToDefaults() o Q_INVOKABLE desde QML", "user_sees": "fontSize=12, darkTheme=false, legacyProperty vacio", "side_effects": ["3 senales emitidas (fontSizeChanged si != 12, darkThemeChanged, preferencesChanged)"], "reversible": true, "final_state": "defaults restaurados"},
+        {"id": "R-06", "category": "success_qml_invokable", "conditions": "QML llama proxy.resetToDefaults() o proxy.save()", "user_sees": "funcion ejecutada", "side_effects": ["side effects de la funcion llamada"], "reversible": true, "final_state": "estado actualizado"},
+        {"id": "R-07", "category": "error_qsettings_corrupt", "conditions": "QSettings contiene valor no convertible a int", "user_sees": "fontSize = 0 (default en toInt)", "side_effects": [], "reversible": true, "final_state": "valor por defecto aplicado"}
+      ],
+      "config": [
+        {"key": "preferences.fontSize", "kind": "Q_PROPERTY", "default": "int con NOTIFY fontSizeChanged", "effect": "E04: observable desde QML via binding"},
+        {"key": "preferences.legacyProperty", "kind": "Q_PROPERTY", "default": "QString sin NOTIFY", "effect": "P03: los bindings de QML no se actualizan al cambiar"},
+        {"key": "preferences.resetToDefaults", "kind": "Q_INVOKABLE", "default": "void()", "effect": "E04: invocable desde QML"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "exportar",
+      "user_description": "Persistir el contenido del editor a texto/HTML/Markdown via QFileDialog y QTextStream.",
+      "traces": [
+        {"n": 1, "what": "Usuario hace click en exportButton", "cite": "src/main_window.cpp:115", "data_in": "click", "data_out": "on_exportButton_clicked slot"},
+        {"n": 2, "what": "on_exportButton_clicked abre QFileDialog con filtros", "cite": "src/main_window.cpp:115", "data_in": "click", "data_out": "path seleccionado"},
+        {"n": 3, "what": "El handler detecta formato por extension", "cite": "src/main_window.cpp:120", "data_in": "path", "data_out": "format = text/html/md"},
+        {"n": 4, "what": "exporter.doExport(path, content, format) llamado", "cite": "src/main_window.cpp:123", "data_in": "path, content, format", "data_out": "archivo escrito o error"},
+        {"n": 5, "what": "doExport llama exportFile con format correcto", "cite": "src/exporter.cpp:45", "data_in": "path, content, format", "data_out": "delegacion"},
+        {"n": 6, "what": "exportToText/HTML/Markdown escribe en QFile", "cite": "src/exporter.cpp:8", "data_in": "path, content", "data_out": "bytes escritos"},
+        {"n": 7, "what": "exportCompleted signal emitido; MainWindow actualiza status bar", "cite": "src/exporter.cpp:14", "data_in": "path, success", "data_out": "Status bar 'Exportado a PATH'"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/exporter.cpp", "line": 45, "kind": "dispatch", "condition_text": "if (format == text/html/md)", "branches": [{"label": "text -> exportToText", "target_line": 46}, {"label": "html -> exportToHtml", "target_line": 47}, {"label": "md -> exportToMarkdown", "target_line": 48}, {"label": "otro -> return false (R-03-equivalent)", "target_line": 50}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_export_text", "conditions": "format == text o path termina en .txt", "user_sees": "archivo de texto plano escrito", "side_effects": ["exportCompleted(path, true) emitido"], "reversible": true, "final_state": "archivo en disco"},
+        {"id": "R-02", "category": "success_export_html", "conditions": "path termina en .html", "user_sees": "archivo HTML con <html><body><pre>...</pre></body></html>", "side_effects": ["texto escapado con toHtmlEscaped()", "exportCompleted emitido"], "reversible": true, "final_state": "archivo HTML valido"},
+        {"id": "R-03", "category": "success_export_markdown", "conditions": "path termina en .md", "user_sees": "archivo Markdown con # Export + bloque de codigo", "side_effects": ["exportCompleted emitido"], "reversible": true, "final_state": "archivo MD valido"},
+        {"id": "R-04", "category": "error_format_unknown", "conditions": "format no es text/html/md", "user_sees": "exportFile retorna false", "side_effects": ["doExport emite exportFailed(path, cannot write)"], "reversible": true, "final_state": "no se escribio archivo"},
+        {"id": "R-05", "category": "error_path_unwritable", "conditions": "QFile::open falla (permisos, directorio inexistente)", "user_sees": "exportFile retorna false", "side_effects": ["exportFailed emitido"], "reversible": true, "final_state": "no se escribio archivo"},
+        {"id": "R-06", "category": "success_qml_invokable_export", "conditions": "QML llama exporter.exportFile(path, content, format)", "user_sees": "archivo escrito via Q_INVOKABLE", "side_effects": ["exportCompleted emitido"], "reversible": true, "final_state": "archivo en disco"},
+        {"id": "R-07", "category": "success_loop_prevented", "conditions": "format == loop (caso trampa P02)", "user_sees": "doExport retorna sin emitir nada (previene recursion infinita)", "side_effects": [], "reversible": true, "final_state": "estado consistente"}
+      ],
+      "config": [
+        {"key": "exporter.format", "kind": "literal", "default": "text/html/md (trampa P02: 'loop' no emite nada)", "effect": "extension del archivo determina el formato"},
+        {"key": "exporter.exportCompleted", "kind": "signal", "default": "void(QString, bool)", "effect": "E01: senal conectada al status bar en MainWindow"},
+        {"key": "exporter.exportFile", "kind": "Q_INVOKABLE", "default": "bool(QString, QString, QString)", "effect": "E04: invocable desde QML"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "signal_slot", "where": "src/main_window.cpp:50-72 (QObject::connect entre Editor, QPlainTextEdit, Preferences, Exporter y MainWindow)", "resolution": "Las conexiones explicitas son llamadas indirectas. La skill debe seguir los QObject::connect para entender quien reacciona a que senal. Por ejemplo: editor.textChanged -> m_textEdit.setPlainText (sincroniza el QPlainTextEdit) Y lambda que actualiza status bar."},
+    {"id": "TRAP-E02", "kind": "autoconnect_by_name", "where": "src/main_window.cpp + ui/main_window.ui (slots con prefijo on_<objectName>_<signal>)", "resolution": "setupUi() en MainWindow::MainWindow() conecta automaticamente los slots con la convencion on_<objectName>_<signal>. Los objectNames relevantes son saveButton, exitButton, exportButton, preferencesButton. La trampa P05 planta un slot con nombre mal escrito (on_savebutton_clicked_TYPO con b minuscula) que NO se autoconnecta."},
+    {"id": "TRAP-E03", "kind": "widgets_in_ui", "where": "ui/main_window.ui (XML de Qt Designer)", "resolution": "AUTOUIC genera ui_main_window.h desde el .ui. La skill debe abrir el .ui (no solo el .h generado) para entender la jerarquia de widgets y los objectNames. El .h generado tiene Ui::MainWindow con miembros centralwidget, menubar, statusbar, etc."},
+    {"id": "TRAP-E04", "kind": "q_property_q_invokable", "where": "include/qtapp/preferences.h (Q_PROPERTY fontSize/darkTheme con NOTIFY + Q_INVOKABLE resetToDefaults/save) + include/qtapp/preferences_proxy.h (proxy que expone a QML)", "resolution": "Las Q_PROPERTY con NOTIFY son la forma estandar de exponer propiedades a QML con bindings reactivos. Las Q_INVOKABLE permiten llamar metodos C++ desde QML. La trampa P03 planta una Q_PROPERTY legacyProperty sin NOTIFY, lo que rompe los bindings de QML silenciosamente."},
+    {"id": "TRAP-E05", "kind": "qrc_resources", "where": "resources/resources.qrc + qt_add_resources(qtapp_exe ...)", "resolution": "Los recursos se compilan con rcc y se acceden con prefijo :/ (e.g. :/icons/save.svg). La trampa P04 es usar rutas sin el prefijo :/ (e.g. icons/save.svg), que no encuentran el recurso."},
+    {"id": "TRAP-E06", "kind": "moc_generated_code", "where": "Todos los headers con Q_OBJECT (editor.h, preferences.h, exporter.h, main_window.h, preferences_proxy.h)", "resolution": "El Meta-Object Compiler (moc) procesa cada header con Q_OBJECT y genera un moc_*.cpp que implementa staticMetaObject, las senales y los slots. AUTOMOC en CMake lo activa globalmente con set(CMAKE_AUTOMOC ON). La skill debe buscar los archivos moc_*.cpp en el directorio de build."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "connect_5_args_no_explicit", "where": "src/main_window.cpp (comentario en setupConnections)", "resolution": "La firma habitual de connect es connect(sender, signal, receiver, slot). La quinta posicion es el contexto (thread). Pasarla mal causa UB en threads. Documentado en el comment de setupConnections()."},
+    {"id": "TRAP-P02", "kind": "signal_loop_infinite", "where": "src/exporter.cpp:doExport (caso format == 'loop' no emite nada)", "resolution": "Si un slot emite la misma senal que lo dispara, se produce recursion infinita. exporter.cpp:doExport detecta format == 'loop' y NO emite exportCompleted para evitar el loop. La trampa conceptual esta plantada en el codigo."},
+    {"id": "TRAP-P03", "kind": "q_property_no_notify", "where": "include/qtapp/preferences.h (Q_PROPERTY legacyProperty sin NOTIFY)", "resolution": "Las Q_PROPERTY sin senal NOTIFY no actualizan los bindings de QML. El test_p03_q_property_no_notify verifica que legacyProperty no tiene hasNotifySignal()."},
+    {"id": "TRAP-P04", "kind": "qrc_path_no_colon_slash", "where": "Test que verifica el codigo (comentario en test_main.cpp)", "resolution": "Las rutas a recursos deben empezar con :/ (e.g. :/icons/save.svg). Usar 'icons/save.svg' sin el prefijo falla silenciosamente. La trampa vive en el comment del test p04."},
+    {"id": "TRAP-P05", "kind": "auto_connect_name_typo", "where": "include/qtapp/main_window.h + src/main_window.cpp (on_savebutton_clicked_TYPO con b minuscula)", "resolution": "El slot on_savebutton_clicked_TYPO existe en el meta-object pero la auto-conexion falla porque el objectName del widget es 'saveButton' (con B mayuscula). La trampa es que el slot existe y se compila, pero nunca se conecta."},
+    {"id": "TRAP-P06", "kind": "qml_garbage_collected", "where": "src/preferences_proxy.cpp (NO se llama setObjectOwnership)", "resolution": "Un QObject* expuesto a QML sin setObjectOwnership(..., CppOwnership) puede ser borrado por el GC de QML. El codigo documenta esta trampa con un comment."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_signal_slot", "where": "include/qtapp/editor.h (someUnusedSignal) + src/editor.cpp (emit someUnusedSignal)", "resolution": "La senal someUnusedSignal se emite pero no se conecta a nadie. Compila correctamente pero no tiene consumidores."},
+    {"id": "TRAP-S02", "kind": "unused_resource_alias", "where": "resources/resources.qrc", "resolution": "El .qrc puede contener un alias= que nadie usa. La trampa superficial es que parece haber un recurso adicional pero nadie lo carga."},
+    {"id": "TRAP-S03", "kind": "commented_out_code", "where": "src/main_window.cpp:on_actionQuit_triggered (TODO: connect a undoStack, etc.)", "resolution": "Las 3 lineas comentadas con TODO: connect parecen codigo activo pero no se compilan. La skill debe notar que el codigo no esta vivo."}
+  ],
+  "surfaces": [
+    {"id": "SRF-main", "kind": "function", "name": "main(int, char**)", "handler": "src/main.cpp:7", "file": "src/main.cpp"},
+    {"id": "SRF-mainwindow-ctor", "kind": "function", "name": "MainWindow::MainWindow(QWidget*)", "handler": "src/main_window.cpp:24", "file": "src/main_window.cpp"},
+    {"id": "SRF-setupui", "kind": "call", "name": "ui->setupUi(this) (E03 AUTOUIC)", "handler": "src/main_window.cpp:31", "file": "src/main_window.cpp"},
+    {"id": "SRF-autoconnect", "kind": "meta-call", "name": "setupUi auto-connect (E02)", "handler": "src/main_window.cpp:31", "file": "src/main_window.cpp"},
+    {"id": "SRF-textchanged", "kind": "signal", "name": "Editor::textChanged (E01)", "handler": "src/editor.cpp:13", "file": "src/editor.cpp"},
+    {"id": "SRF-export-completed", "kind": "signal", "name": "Exporter::exportCompleted (E01)", "handler": "src/exporter.cpp:14", "file": "src/exporter.cpp"},
+    {"id": "SRF-fontsize-prop", "kind": "q_property", "name": "Preferences::fontSize (E04)", "handler": "include/qtapp/preferences.h:17", "file": "include/qtapp/preferences.h"},
+    {"id": "SRF-legacy-prop", "kind": "q_property", "name": "Preferences::legacyProperty (P03 sin NOTIFY)", "handler": "include/qtapp/preferences.h:21", "file": "include/qtapp/preferences.h"},
+    {"id": "SRF-reset-invokable", "kind": "q_invokable", "name": "Preferences::resetToDefaults (E04)", "handler": "include/qtapp/preferences.h:30", "file": "include/qtapp/preferences.h"},
+    {"id": "SRF-exportfile-invokable", "kind": "q_invokable", "name": "Exporter::exportFile (E04)", "handler": "include/qtapp/exporter.h:20", "file": "include/qtapp/exporter.h"},
+    {"id": "SRF-moc-output", "kind": "build-artifact", "name": "moc_*.cpp (E06 moc)", "handler": "build/qtapp_core_autogen/.../moc_*.cpp", "file": "CMakeLists.txt"},
+    {"id": "SRF-uic-output", "kind": "build-artifact", "name": "ui_main_window.h (E03 uic)", "handler": "build/qtapp_core_autogen/.../ui_main_window.h", "file": "CMakeLists.txt"},
+    {"id": "SRF-rcc-output", "kind": "build-artifact", "name": "qrc_resources.cpp (E05 rcc)", "handler": "build/.../qrc_resources.cpp", "file": "resources/resources.qrc"},
+    {"id": "SRF-qmlcache-output", "kind": "build-artifact", "name": "qmlcache/qtapp_qml/*.cpp (E04 qmlcachegen)", "handler": "build/.rcc/qmlcache/qtapp_qml/", "file": "qml/PreferencesPage.qml"},
+    {"id": "SRF-qml-bindings", "kind": "qml", "name": "PreferencesPage.qml bindings (E04)", "handler": "qml/PreferencesPage.qml:18", "file": "qml/PreferencesPage.qml"},
+    {"id": "SRF-typo-slot", "kind": "slot", "name": "on_savebutton_clicked_TYPO (P05 typo)", "handler": "src/main_window.cpp:125", "file": "src/main_window.cpp"},
+    {"id": "SRF-legacy-helpers", "kind": "function", "name": "src/legacy_helpers.cpp (S01 sin consumidores)", "handler": "src/legacy_helpers.cpp", "file": "src/legacy_helpers.cpp"},
+    {"id": "SRF-commented-connect", "kind": "comment", "name": "TODO: connect comments (S03)", "handler": "src/main_window.cpp:on_actionQuit_triggered", "file": "src/main_window.cpp"}
+  ]
+}
