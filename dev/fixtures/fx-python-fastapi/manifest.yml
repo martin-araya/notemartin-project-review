@@ -1,0 +1,16 @@
+# Metadata del fixture F06q: fx-python-fastapi
+# API FastAPI asincrona con Pydantic v2, SQLAlchemy 2 async, Alembic
+# y Celery en modo EAGER. Ver referencias a las trampas del ecosistema
+# y del paquete en dev/ground-truth/fx-python-fastapi/ground_truth.json.
+name: fx-python-fastapi
+description: API FastAPI 0.115 con Pydantic v2, SQLAlchemy 2 async, Alembic y Celery EAGER (F06q)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-python-fastapi
+  enabled: true
+ground_truth_format_version: 1

@@ -161,6 +161,12 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "celery": {"celery"},
     # pytest-django (F06p): la dep ``pytest-django`` indica tests Django.
     "pytest-django": {"pytest-django"},
+    # FastAPI (F06q): la dep ``fastapi`` indica framework FastAPI.
+    "fastapi": {"fastapi"},
+    # Pydantic (F06q): la dep ``pydantic`` indica validacion Pydantic.
+    "pydantic": {"pydantic"},
+    # Alembic (F06q): la dep ``alembic`` indica migraciones Alembic.
+    "alembic": {"alembic"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.
@@ -312,6 +318,14 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
             covered["frameworks"].add("celery")
         if "pytest-django" in content:
             covered["frameworks"].add("pytest-django")
+        if "fastapi" in content.lower():
+            covered["frameworks"].add("fastapi")
+        if "pydantic" in content.lower():
+            covered["frameworks"].add("pydantic")
+        if "sqlalchemy" in content.lower():
+            covered["frameworks"].add("sqlalchemy")
+        if "alembic" in content.lower():
+            covered["frameworks"].add("alembic")
 
     # Detectar presencia de apps/<app>/apps.py con AppConfig (Django).
     for apps_py in fixture_dir.rglob("apps.py"):
@@ -326,6 +340,21 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 continue
             if "AppConfig" in content:
                 covered["frameworks"].add("django")
+
+    # Detectar FastAPI via app/main.py con constructor FastAPI() (F06q).
+    for main_py in fixture_dir.rglob("main.py"):
+        if not main_py.is_file():
+            continue
+        # Solo contar si vive bajo un directorio app/ (no el raiz).
+        rel = main_py.relative_to(fixture_dir).as_posix()
+        if rel.startswith("app/") and "/" in rel[len("app/"):]:
+            try:
+                content = main_py.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if "FastAPI(" in content:
+                covered["frameworks"].add("fastapi")
+                break
 
     # Recorrido del arbol para extensiones
     for path in fixture_dir.rglob("*"):

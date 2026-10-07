@@ -910,8 +910,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
 - [x] Commit `F06p: fixture fx-python-django con paquete por feature`.
  
-## F06q — Fixture `fx-python-fastapi`
- 
+## F06q — Fixture `fx-python-fastapi` ✅
+
 **Objetivo:** API FastAPI asíncrona.
 **Stack:** Python, FastAPI, Pydantic v2, SQLAlchemy 2 async, Alembic, arq/Celery.
 **Features:** `usuarios`, `suscripciones`, `webhooks`.
@@ -923,6 +923,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Decoradores propios que registran rutas.
 6. Migraciones de Alembic que también migran datos.
 **Toolchain de tests:** pytest + httpx + SQLite async, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`usuarios`, `suscripciones`, `webhooks`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas: `depends_yield_chains` (get_db -> get_current_user -> get_active_subscription), `pydantic_validator_with_business_logic` (@field_validator('email') + @model_validator(mode='after')), `include_router_prefix_and_dependencies` (prefix + router-level dependencies en users/subscriptions, sin dependencies en webhooks), `lifespan_events` (@asynccontextmanager con init_db + try/except que swallowea, P04), `custom_decorator_registers_routes` (track_request en _REQUEST_REGISTRY + _REGISTERED_ROUTES), `alembic_migration_with_data` (002_seed_data con op.execute INSERT).
+- [x] 6 trampas del paquete: `pydantic_validator_race`, `yield_dep_no_rollback_on_error`, `include_router_order_shadows`, `lifespan_exception_swallowed`, `custom_decorator_breaks_signature`, `celery_eager_in_async_context`.
+- [x] 3 trampas superficiales: `dead_route` (`GET /webhooks/debug`), `dead_pydantic_model` (`LegacyUsuarioSchema`), `dead_dependency` (`get_optional_user`).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 (sin menciones en comentarios) en verde.
+- [x] Suite pytest-asyncio 27 tests passed (4 users + 4 subs + 4 webhooks + 6 TrapsEcosystem + 6 TrapsPackage + 3 TrapsSuperficial) en el contenedor `python:3.11-slim` con `apt-get install make` + pytest-asyncio 0.24 con `loop_scope=session`.
+- [x] `run_fixture_tests.py --fixture fx-python-fastapi --container` -> passed.
+- [x] `dev/tests/test_fx_python_fastapi_ground_truth.py` agregado y verde (51 tests).
+- [x] `MATRIX.md` muestra `fastapi`, `pydantic`, `sqlalchemy`, `alembic` cubiertos por fx-python-fastapi.
+- [x] `target_matrix.yml` extendido: `frameworks: [fastapi, pydantic, sqlalchemy, alembic]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `fastapi`/`pydantic`/`sqlalchemy`/`alembic` en `requirements.txt` + deteccion de `app/main.py` con `FastAPI(` -> `{fastapi}`.
+- [x] `pytest` total 987 passed (936 anteriores + 51 nuevos), sin regresiones en fx-{python-cli..fx-python-django} (16 fixtures).
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] Commit `F06q: fixture fx-python-fastapi con paquete por feature`.
  
 ## F06r — Fixture `fx-node-nestjs`
  

@@ -1743,3 +1743,158 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   django, drf, celery, pytest-django y pip. Las futuras
   fixtures Django (F06p ya las cubre; F06q FastAPI sera
   Python puro sin Django) reutilizan la misma deteccion.
+
+### D-230 — Stack del fixture F06q: Python 3.11 + FastAPI 0.115 + Pydantic 2.9 + Pydantic-Settings + SQLAlchemy 2 async + Alembic + aiosqlite + Celery 5.3 + httpx + pytest-asyncio 0.24 (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: el plan F06q pide una API FastAPI asincrona con
+  Pydantic v2, SQLAlchemy 2 async, Alembic y arq/Celery.
+- Decision: stack = `fastapi==0.115.0` + `pydantic==2.9.0` +
+  `pydantic-settings==2.5.2` + `sqlalchemy[asyncio]==2.0.36` +
+  `alembic==1.13.3` + `aiosqlite==0.20.0` + `celery==5.3.6` +
+  `email-validator==2.2.0` + `httpx==0.27.2` + `pytest==8.2.0` +
+  `pytest-asyncio==0.24.0`. Imagen Docker: `python:3.11-slim` con
+  `apt-get install -y make` (la imagen base no incluye make).
+- Alternativas: (a) arq (descartado: requiere Redis en runtime;
+  no encaja con el patron EAGER de F06p); (b) Flask (descartado:
+  el plan siguiente F06n/F06p ya cubre Django, y F06q pide
+  explicitamente); (c) Starlette puro (descartado: FastAPI es
+  la opcion actual).
+- Consecuencias: la trampa E01 (Depends yield chains), la trampa
+  E02 (Pydantic validators con business logic), la trampa E04
+  (lifespan events), la trampa E05 (decoradores que registran
+  rutas), la trampa E06 (Alembic data migration) y la trampa
+  P06 (Celery EAGER en contexto async) son utiles para la skill.
+
+### D-231 — Routers y modelos en ingles (users, subscriptions, webhooks) para CC-11 (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature (en espanol) en cualquier linea del codigo del fixture.
+  Los features son `usuarios`, `suscripciones`, `webhooks`.
+- Decision: usar routers `app/routers/users.py`,
+  `app/routers/subscriptions.py`, `app/routers/webhooks.py` y
+  URL paths `/users`, `/subscriptions`, `/webhooks` (todos en
+  ingles). Los nombres de feature en espanol viven solo en el
+  ground truth y en PROGRESS.md/ROADMAP. Los modelos tambien usan
+  identificadores en ingles (`User`, `Subscription`, `Webhook`).
+- Alternativas: (a) routers `app/routers/usuarios/` etc. (descartado:
+  apareceria en `INSTALLED_APPS = ['apps.usuarios']` que es string,
+  y aunque CC-11 verifica comments `#` no strings, la consistencia
+  con F06p favorece apps en ingles); (b) ofuscar con guiones
+  (descartado: el check_ground_truth detecta substrings).
+- Consecuencias: la skill debe mapear `users` <-> `usuarios`,
+  `subscriptions` <-> `suscripciones`, `webhooks` <-> `webhooks`
+  segun el ground truth.
+
+### D-232 — Celery en modo EAGER en dev/tests (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: la trampa P06 exige que el modo EAGER en tests
+  ejecute las tasks sincronamente, ocultando los errores que
+  aparecerian en un worker real con broker.
+- Decision: `CELERY_TASK_ALWAYS_EAGER = True` en dev (via
+  `configure_for_testing()` invocado en `conftest.py`). En prod,
+  el flag es False. El broker en `app/celery_app.py` es
+  `memory://` (no requiere Redis).
+- Alternativas: (a) Redis en docker-compose para tests E2E reales
+  (descartado: agrega 100 MB a la imagen y no aporta a los gates);
+  (b) Celery EAGER siempre (descartado: prod no se comporta asi);
+  (c) arq con broker de test (descartado: arq requiere Redis).
+- Consecuencias: la trampa P06 sigue valida. Los tests invocan
+  las tasks sincrónicamente y verifican el side effect.
+
+### D-233 — pytest-asyncio 0.24 con `loop_scope=session` en fixtures async (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: aiosqlite mantiene conexiones atadas al event loop;
+  pytest-asyncio por defecto crea un nuevo loop por test (function
+  scope) lo que rompe aiosqlite con 'Event loop is closed'.
+- Decision: usar `pytest-asyncio==0.24.0` (soporta `loop_scope`) y
+  declarar `loop_scope="session"` en fixtures async (`engine`,
+  `db_session`, `client`, `auth_client`). El engine se crea una
+  sola vez en el loop compartido y los tests lo reusan.
+- Alternativas: (a) `pytest-asyncio<0.24` sin loop_scope (descartado:
+  rompe aiosqlite); (b) usar una DB file-based con cleanup entre
+  tests (descartado: mas lento); (c) usar SQLite en memoria pero
+  sin event loop compartido (descartado: cada test ve una DB
+  vacia).
+- Consecuencias: la suite completa corre en 0.10s con 27 tests
+  sin warnings de 'Event loop is closed'.
+
+### D-234 — Prefijo `NPRGT-FXFAST-` para los unique tokens de F06q (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXFAST` y exactamente 29 tokens cubriendo
+  stack (`FASTAPI-VER`, `PYDANTIC-VER`, `SQLALCHEMY-VER`,
+  `ALEMBIC-VER`, `CELERY-VER`, `HTTPX-VER`, `PYTEST-VER`,
+  `PYTEST-ASYNCIO-VER`), tipos (`APIROUTER`,
+  `DEPENDENCY-INJECTION`, `FIELD-VALIDATOR`, `MODEL-VALIDATOR`,
+  `LIFESPAN-EVENT`, `INCLUDE-ROUTER`, `ASGITRANSPORT`,
+  `ASYNC-SESSION`, `ALEMBIC-DATA-MIG`), features
+  (`USER-RESULT-R01`, `SUB-RESULT-R01`, `WEBHOOK-RESULT-R01`),
+  marcadores (`MARKER-APP`, `MARKER-DEPENDENCIES`,
+  `MARKER-LIFESPAN`, `MARKER-ALEMBIC`), y trampas superficiales
+  (`TRAMP-S01-ROUTE`, `TRAMP-S02-MODEL`, `TRAMP-S03-DEP`). Ninguno
+  aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXFASTAPI` (descartado: excede 8 caracteres);
+  (b) `FXPY-FA` (descartado: confunde con).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-235 — `Makefile` envuelve `pytest -q` (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: el plan F06x exige paridad con F06p.
+- Decision: `TEST_CMD ?= pytest -q` en el Makefile;
+  `test_cmd: make test` en `manifest.yml`.
+- Alternativas: (a) invocar `pytest` directamente (descartado:
+  rompe la paridad con otros fixtures); (b) usar `tox`
+  (descartado: agrega complejidad innecesaria).
+- Consecuencias: el contenedor ejecuta `make test` y los tests
+  corren con la `asyncio_mode = auto` correcta.
+
+### D-236 — Imagen Docker `python:3.11-slim` con `apt-get install make` (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: el plan F06x exige paridad con F06p.
+- Decision: `FROM python:3.11-slim` + `RUN apt-get install -y make`
+  antes de la copia del codigo (cache de layers).
+- Alternativas: (a) usar `python:3.11-bookworm` (descartado:
+  ~300 MB mas pesada); (b) instalar make via `apk` (descartado:
+  la imagen es Debian-based).
+- Consecuencias: la imagen pesa ~180 MB frente a ~700 MB de
+  la imagen .NET SDK.
+
+### D-237 — `requires: [linux, macos, windows]` en `manifest.yml` (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: el plan F06x exige paridad con F06p.
+- Decision: `requires: [linux, macos, windows]`. El toolchain
+  es multiplataforma.
+- Alternativas: (a) solo Linux (descartado: rompe la paridad).
+- Consecuencias: el fixture es ejecutable en los 3 sistemas.
+
+### D-238 — Deteccion extendida de FastAPI/Pydantic/SQLAlchemy/Alembic en `fixtures_matrix.py` y `target_matrix.yml` (F06q)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06q · vigente
+- Contexto: el plan F06x exige extender `fixtures_matrix.py`
+  para detectar dependencias de Python via `requirements.txt`
+  y `target_matrix.yml` para listar los frameworks nuevos.
+- Decision: agregar al bloque de deteccion de `requirements.txt`
+  existente: `if "fastapi" in content.lower(): add {fastapi}`,
+  `if "pydantic" in content.lower(): add {pydantic}`,
+  `if "sqlalchemy" in content.lower(): add {sqlalchemy}`,
+  `if "alembic" in content.lower(): add {alembic}`. Anadir
+  deteccion de `app/.../main.py` con `FastAPI(` constructor ->
+  `{fastapi}`. Agregar a `target_matrix.yml`:
+  `frameworks: [fastapi, pydantic, sqlalchemy, alembic]`.
+- Alternativas: (a) parsear `pyproject.toml` (descartado: el
+  fixture usa `requirements.txt` plano); (b) inferir via la
+  presencia de `app/main.py` con `FastAPI(` sin inspeccionar
+  deps (descartado: no distingue FastAPI de Starlette puro).
+- Consecuencias: el MATRIX.md muestra fx-python-fastapi cubriendo
+  fastapi, pydantic, sqlalchemy, alembic y pip.

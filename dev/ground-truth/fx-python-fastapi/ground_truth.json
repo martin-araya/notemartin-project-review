@@ -1,0 +1,182 @@
+{
+  "fixture": "fx-python-fastapi",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "app/main.py", "file": "app/main.py"},
+    {"id": "EP-deps", "artifact": "app/dependencies.py", "file": "app/dependencies.py"},
+    {"id": "EP-celery", "artifact": "app/celery_app.py", "file": "app/celery_app.py"},
+    {"id": "EP-decorators", "artifact": "app/decorators.py", "file": "app/decorators.py"},
+    {"id": "EP-alembic", "artifact": "alembic/env.py", "file": "alembic/env.py"}
+  ],
+  "modules": [
+    {"id": "MOD-main", "path": "app/main.py", "summary": "FastAPI() con lifespan=lifespan + include_router de users, subscriptions, webhooks"},
+    {"id": "MOD-config", "path": "app/config.py", "summary": "Settings(BaseSettings) con DATABASE_URL, TESTING, SECRET_KEY, API_TITLE"},
+    {"id": "MOD-database", "path": "app/database.py", "summary": "engine = create_async_engine + AsyncSessionLocal + get_session + init_db + close_db"},
+    {"id": "MOD-dependencies", "path": "app/dependencies.py", "summary": "get_db, get_current_user, get_active_subscription (yield chains) + get_optional_user dead"},
+    {"id": "MOD-celery", "path": "app/celery_app.py", "summary": "Celery('fxfast', broker='memory://') con EAGER en dev/tests"},
+    {"id": "MOD-decorators", "path": "app/decorators.py", "summary": "track_request decorator que registra en _REQUEST_REGISTRY y _REGISTERED_ROUTES"},
+    {"id": "MOD-models-user", "path": "app/models/user.py", "summary": "User(email unique, hashed_password, is_active, created_at)"},
+    {"id": "MOD-models-subscription", "path": "app/models/subscription.py", "summary": "Subscription(user_id FK, plan, status, started_at, ends_at)"},
+    {"id": "MOD-models-webhook", "path": "app/models/webhook.py", "summary": "Webhook(url, event_type, secret, is_active)"},
+    {"id": "MOD-schemas-user", "path": "app/schemas/user.py", "summary": "UserCreate + UserOut con @field_validator('email')"},
+    {"id": "MOD-schemas-subscription", "path": "app/schemas/subscription.py", "summary": "SubscriptionCreate con @model_validator(mode='after')"},
+    {"id": "MOD-schemas-webhook", "path": "app/schemas/webhook.py", "summary": "WebhookCreate + WebhookOut"},
+    {"id": "MOD-schemas-legacy", "path": "app/schemas/legacy.py", "summary": "LegacyUsuarioSchema dead (S02)"},
+    {"id": "MOD-services-user", "path": "app/services/user_service.py", "summary": "create_user, get_user_by_id, get_user_by_email, list_users, update_user, delete_user"},
+    {"id": "MOD-services-subscription", "path": "app/services/subscription_service.py", "summary": "create_subscription, cancel_subscription, get_subscription, list_subscriptions_for_user"},
+    {"id": "MOD-services-webhook", "path": "app/services/webhook_service.py", "summary": "register_webhook, list_webhooks_for_event, get_webhook, dispatch_event"},
+    {"id": "MOD-routers-users", "path": "app/routers/users.py", "summary": "APIRouter(prefix='/users', dependencies=[Depends(get_current_user)])"},
+    {"id": "MOD-routers-subscriptions", "path": "app/routers/subscriptions.py", "summary": "APIRouter(prefix='/subscriptions', dependencies=[Depends(get_active_subscription)])"},
+    {"id": "MOD-routers-webhooks", "path": "app/routers/webhooks.py", "summary": "APIRouter(prefix='/webhooks') sin dependencies; tiene GET /debug dead (S01)"},
+    {"id": "MOD-tasks-webhook", "path": "app/tasks/webhook_tasks.py", "summary": "@shared_task async def dispatch_webhook_event (trampa P06)"},
+    {"id": "MOD-alembic-001", "path": "alembic/versions/001_initial.py", "summary": "CREATE TABLE users, subscriptions, webhooks"},
+    {"id": "MOD-alembic-002", "path": "alembic/versions/002_seed_data.py", "summary": "op.execute(INSERT INTO ...) data migration (trampa E06)"}
+  ],
+  "dependencies": [
+    {"name": "fastapi", "version": "0.115.0", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "pydantic", "version": "2.9.0", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "pydantic-settings", "version": "2.5.2", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "sqlalchemy", "version": "2.0.36", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "alembic", "version": "1.13.3", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "aiosqlite", "version": "0.20.0", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "celery", "version": "5.3.6", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "email-validator", "version": "2.2.0", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "httpx", "version": "0.27.2", "scope": "test", "manifest": "requirements.txt"},
+    {"name": "pytest", "version": "8.2.0", "scope": "test", "manifest": "requirements.txt"},
+    {"name": "pytest-asyncio", "version": "0.24.0", "scope": "test", "manifest": "requirements.txt"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "usuarios",
+      "user_description": "El usuario crea, obtiene, lista usuarios via API REST en /users/. El router requiere Authorization Bearer stub-token (dependencia a nivel de router). El validador Pydantic normaliza el email (sin lock en la unicidad, trampa P01).",
+      "traces": [
+        {"n": 1, "what": "User POST /users/ con JSON {email, password, is_active}", "cite": "app/routers/users.py:24", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "get_current_user valida Authorization Bearer stub-token", "cite": "app/dependencies.py:25", "data_in": "header", "data_out": "User o 401"},
+        {"n": 3, "what": "UserCreate con @field_validator('email') normaliza a minus", "cite": "app/schemas/user.py:23", "data_in": "email string", "data_out": "email normalizado"},
+        {"n": 4, "what": "create_user hace SELECT email (sin lock) + INSERT", "cite": "app/services/user_service.py:20", "data_in": "UserCreate", "data_out": "User"},
+        {"n": 5, "what": "UserOut serializa User para la respuesta", "cite": "app/schemas/user.py:38", "data_in": "User", "data_out": "JSON"},
+        {"n": 6, "what": "Endpoint responde 201 Created", "cite": "app/routers/users.py:24", "data_in": "UserOut", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "app/routers/users.py", "line": 24, "kind": "routing", "condition_text": "POST /users/ con Authorization valido", "branches": [{"label": "UserCreate valido -> 201", "target_line": 24}, {"label": "UserCreate invalido -> 422", "target_line": 24}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con Authorization Bearer + email + password >= 8 chars + is_active", "user_sees": "201 Created con UserOut", "side_effects": ["INSERT en users"], "reversible": true, "final_state": "user creado"},
+        {"id": "R-02", "category": "success_get", "conditions": "GET /users/{user_id} con id existente", "user_sees": "200 OK con UserOut", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_list", "conditions": "GET /users/ con auth", "user_sees": "200 OK con [UserOut, ...]", "side_effects": ["SELECT LIMIT/OFFSET"], "reversible": true, "final_state": "lista"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /users/{user_id} con cambios", "user_sees": "200 OK con UserOut actualizado", "side_effects": ["UPDATE"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /users/{user_id}", "user_sees": "204 No Content", "side_effects": ["DELETE"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_unauthorized", "conditions": "Sin Authorization Bearer stub-token", "user_sees": "401 Unauthorized con {detail: 'invalid token'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_duplicate_email_race", "conditions": "POST concurrente con email duplicado (trampa P01: sin lock)", "user_sees": "Dos requests pasan la validacion, el segundo INSERT falla con UNIQUE constraint 500", "side_effects": ["uno INSERT exitoso, otro INSERT falla"], "reversible": false, "final_state": "estado_inconsistente"}
+      ],
+      "config": [
+        {"key": "router.dependencies", "kind": "literal", "default": "dependencies=[Depends(get_current_user)]", "effect": "Todas las rutas requieren Authorization Bearer"},
+        {"key": "schema.email_validator", "kind": "literal", "default": "@field_validator('email') normaliza a minus", "effect": "La unicidad se valida sin lock en el servicio (TOCTOU)"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "suscripciones",
+      "user_description": "El usuario crea, lista y cancela suscripciones via API REST en /subscriptions/. El router requiere Authorization Bearer stub-token Y una suscripcion activa (dependencia anidada get_active_subscription -> get_current_user). El validador Pydantic verifica ends_at > started_at.",
+      "traces": [
+        {"n": 1, "what": "User POST /subscriptions/ con JSON {user_id, plan, started_at, ends_at}", "cite": "app/routers/subscriptions.py:26", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "get_active_subscription (anidada) requiere auth + suscripcion activa", "cite": "app/dependencies.py:43", "data_in": "header", "data_out": "Subscription o 401/403"},
+        {"n": 3, "what": "SubscriptionCreate con @model_validator valida fechas", "cite": "app/schemas/subscription.py:23", "data_in": "SubscriptionCreate", "data_out": "validado o 422"},
+        {"n": 4, "what": "create_subscription INSERT en subscriptions", "cite": "app/services/subscription_service.py:14", "data_in": "SubscriptionCreate", "data_out": "Subscription"},
+        {"n": 5, "what": "SubscriptionOut serializa para la respuesta", "cite": "app/schemas/subscription.py:38", "data_in": "Subscription", "data_out": "JSON"},
+        {"n": 6, "what": "Endpoint responde 201 Created", "cite": "app/routers/subscriptions.py:26", "data_in": "SubscriptionOut", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "app/routers/subscriptions.py", "line": 26, "kind": "routing", "condition_text": "POST /subscriptions/ con todo el double-Seco", "branches": [{"label": "OK -> 201", "target_line": 26}, {"label": "sin auth -> 401", "target_line": 26}, {"label": "sin sub activa -> 403", "target_line": 26}, {"label": "fechas invalidas -> 422", "target_line": 26}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con Authorization Bearer + suscripcion activa + ends_at > started_at", "user_sees": "201 Created con SubscriptionOut", "side_effects": ["INSERT en subscriptions"], "reversible": true, "final_state": "sub creada"},
+        {"id": "R-02", "category": "success_cancel", "conditions": "POST /subscriptions/{id}/cancel con sub existente", "user_sees": "200 OK con estado cancelado", "side_effects": ["UPDATE status=canceled"], "reversible": false, "final_state": "cancelada"},
+        {"id": "R-03", "category": "success_list", "conditions": "GET /subscriptions/ con auth + sub activa", "user_sees": "200 OK con [Subscription, ...]", "side_effects": ["SELECT WHERE user_id"], "reversible": true, "final_state": "lista"},
+        {"id": "R-04", "category": "success_get", "conditions": "GET /subscriptions/{id}", "user_sees": "200 OK con SubscriptionOut", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-05", "category": "error_invalid_dates", "conditions": "POST con ends_at <= started_at", "user_sees": "422 Unprocessable Entity con error de validacion", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_unauthorized", "conditions": "Sin Authorization Bearer", "user_sees": "401 Unauthorized con {detail: 'invalid token'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_no_active_subscription", "conditions": "Con Authorization pero sin suscripcion activa", "user_sees": "403 Forbidden con {detail: 'no active subscription'}", "side_effects": [], "reversible": true, "final_state": "forbidden"}
+      ],
+      "config": [
+        {"key": "router.dependencies", "kind": "literal", "default": "dependencies=[Depends(get_active_subscription)]", "effect": "Todas las rutas requieren una suscripcion activa"},
+        {"key": "schema.model_validator", "kind": "literal", "default": "@model_validator(mode='after')", "effect": "Valida que ends_at > started_at"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "webhooks",
+      "user_description": "El usuario registra, lista y dispatcha webhooks via API REST publica en /webhooks/ (sin dependencies en el router, contraste con users y subscriptions). El dispatch encola una task Celery EAGER que NO soporta async (trampa P06).",
+      "traces": [
+        {"n": 1, "what": "User POST /webhooks/ con JSON {url, event_type, secret, is_active}", "cite": "app/routers/webhooks.py:24", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "Sin router-level dependencies (publico)", "cite": "app/routers/webhooks.py:18", "data_in": "ninguno", "data_out": "accede directamente"},
+        {"n": 3, "what": "WebhookCreate valida URL via AnyHttpUrl + secret >= 16 chars", "cite": "app/schemas/webhook.py:8", "data_in": "WebhookCreate", "data_out": "validado o 422"},
+        {"n": 4, "what": "register_webhook INSERT en webhooks", "cite": "app/services/webhook_service.py:11", "data_in": "WebhookCreate", "data_out": "Webhook"},
+        {"n": 5, "what": "User POST /webhooks/dispatch?event_type=X con payload", "cite": "app/routers/webhooks.py:49", "data_in": "event_type, payload", "data_out": "dispatched"},
+        {"n": 6, "what": "dispatch_event encola Celery task por cada hook", "cite": "app/services/webhook_service.py:38", "data_in": "Webhook[], payload", "data_out": "Celery job"},
+        {"n": 7, "what": "Endpoint responde 200 OK con {dispatched: N}", "cite": "app/routers/webhooks.py:49", "data_in": "Celery result", "data_out": "200 OK"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "app/routers/webhooks.py", "line": 24, "kind": "routing", "condition_text": "POST /webhooks/ sin auth (publico)", "branches": [{"label": "WebhookCreate valido -> 201", "target_line": 24}, {"label": "secret < 16 -> 422", "target_line": 24}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_register", "conditions": "POST con URL valida + secret >= 16", "user_sees": "201 Created con WebhookOut", "side_effects": ["INSERT en webhooks"], "reversible": true, "final_state": "registrado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /webhooks/ con o sin event_type", "user_sees": "200 OK con [WebhookOut, ...]", "side_effects": ["SELECT opcional por event_type"], "reversible": true, "final_state": "lista"},
+        {"id": "R-03", "category": "success_dispatch", "conditions": "POST /webhooks/dispatch?event_type=X con hooks activos", "user_sees": "200 OK con {dispatched: N, job_ids: [...]}", "side_effects": ["Celery task por hook"], "reversible": true, "final_state": "tasks encoladas (perdidas en EAGER por trampa P06)"},
+        {"id": "R-04", "category": "success_dispatch_no_hooks", "conditions": "POST /webhooks/dispatch sin hooks registrados para el event_type", "user_sees": "200 OK con {dispatched: 0, job_ids: []}", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-05", "category": "error_secret_too_short", "conditions": "POST con secret < 16 chars", "user_sees": "422 Unprocessable Entity", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_invalid_url", "conditions": "POST con url no-URL (ej. 'no-es-url')", "user_sees": "422 Unprocessable Entity con AnyHttpUrl error", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_celery_eager_async_lost", "conditions": "Celery EAGER ejecuta dispatch_webhook_event que es 'async def' (trampa P06)", "user_sees": "La coroutine no se ejecuta; el side effect (HTTP POST al webhook URL) se pierde", "side_effects": ["warning: coroutine was never awaited"], "reversible": true, "final_state": "dispatched_count dice N pero 0 eventos enviados realmente"}
+      ],
+      "config": [
+        {"key": "router.dependencies", "kind": "literal", "default": "none (publico)", "effect": "Contraste con users/subscriptions"},
+        {"key": "celery.eager", "kind": "literal", "default": "CELERY_TASK_ALWAYS_EAGER=True en dev/tests", "effect": "Tasks ejecutan sincronamente; async tasks son problematicas (trampa P06)"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "depends_yield_chains", "where": "app/dependencies.py:20-44", "resolution": "Cadena: get_db (yield) -> get_current_user (Depends(get_db)) -> get_active_subscription (Depends(get_current_user) + Depends(get_db)). La skill debe leer este archivo para entender la cadena completa; no saltar directamente a los endpoints."},
+    {"id": "TRAP-E02", "kind": "pydantic_validator_with_business_logic", "where": "app/schemas/user.py:23-31 + app/schemas/subscription.py:23-33", "resolution": "@field_validator('email') en UserCreate normaliza el email (lower). El @model_validator(mode='after') en SubscriptionCreate valida fechas. Los validadores tienen side effects (queries / normalizacion) que parecen pura validacion. La unicidad real ocurre en el servicio sin lock (P01)."},
+    {"id": "TRAP-E03", "kind": "include_router_prefix_and_dependencies", "where": "app/routers/users.py + app/routers/subscriptions.py + app/routers/webhooks.py", "resolution": "users.router con prefix='/users' + dependencies=[Depends(get_current_user)]. subscriptions.router con prefix='/subscriptions' + dependencies=[Depends(get_active_subscription)]. webhooks.router con prefix='/webhooks' SIN dependencies (publico, contraste)."},
+    {"id": "TRAP-E04", "kind": "lifespan_events", "where": "app/main.py:14-31", "resolution": "@asynccontextmanager async def lifespan(app) con startup (init_db + try/except que swallowea, trampa P04) y shutdown (close_db). Los side effects viven en lifespan, no en endpoints."},
+    {"id": "TRAP-E05", "kind": "custom_decorator_registers_routes", "where": "app/decorators.py:23-40", "resolution": "@track_request incrementa un counter global _REQUEST_REGISTRY y registra la funcion en _REGISTERED_ROUTES. El decorador hace route registration como side effect, no solo wrap."},
+    {"id": "TRAP-E06", "kind": "alembic_migration_with_data", "where": "alembic/versions/002_seed_data.py", "resolution": "La migration 002_seed_data.py hace op.execute('INSERT INTO ...') para backfill de datos, NO solo schema. La skill debe notar que la migration incluye data migration."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "pydantic_validator_race", "where": "app/schemas/user.py:23-31 + app/services/user_service.py:20", "resolution": "El @field_validator normaliza el email pero NO consulta la DB. La unicidad se valida en user_service.create_user con un SELECT sin lock (TOCTOU). En concurrencia dos requests pueden pasar la validacion y el segundo INSERT falla con UNIQUE constraint."},
+    {"id": "TRAP-P02", "kind": "yield_dep_no_rollback_on_error", "where": "app/dependencies.py:20-23", "resolution": "get_db cierra la sesion pero NO hace rollback si hay excepcion. Cambios pendientes pueden quedar antes del close. El yield no envuelve un try/except con await session.rollback()."},
+    {"id": "TRAP-P03", "kind": "include_router_order_shadows", "where": "app/main.py:39-41", "resolution": "El orden de include_router importa. En este fixture: users, subscriptions, webhooks en ese orden. Si un router posterior tiene prefix='' y rutas como '/users', shadowearia los users. La trampa: el orden determina precedencia."},
+    {"id": "TRAP-P04", "kind": "lifespan_exception_swallowed", "where": "app/main.py:18-26", "resolution": "El startup tiene try/except Exception que swallowea init_db errors con un warning. La app arranca con DB no inicializada y los endpoints fallan con errores cripticos en runtime."},
+    {"id": "TRAP-P05", "kind": "custom_decorator_breaks_signature", "where": "app/decorators.py:23-40", "resolution": "track_request NO preserva los metadatos del callable original. El wrapper no usa functools.wraps, asi que __name__ del wrapper es 'wrapper' en lugar del nombre de la funcion decorada. FastAPI ve el endpoint con un nombre generico."},
+    {"id": "TRAP-P06", "kind": "celery_eager_in_async_context", "where": "app/tasks/webhook_tasks.py:15 + app/services/webhook_service.py:38-49", "resolution": "dispatch_webhook_event es 'async def' decorada con @shared_task. Celery 5.3 NO soporta coroutines nativamente. En EAGER mode la coroutine se retorna como resultado sin ejecutarse; el side effect (HTTP POST al webhook URL) se pierde silenciosamente. La trampa: celery_eager en contexto async engaña al programador."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_route", "where": "app/routers/webhooks.py:59-65", "resolution": "debug_webhooks() retorna {'status': 'ok'} literal. Ningun test lo invoca. La skill debe detectarlo via grep."},
+    {"id": "TRAP-S02", "kind": "dead_pydantic_model", "where": "app/schemas/legacy.py:7-15", "resolution": "LegacyUsuarioSchema existe pero nunca se importa en el codigo del fixture. La skill debe detectarlo via grep."},
+    {"id": "TRAP-S03", "kind": "dead_dependency", "where": "app/dependencies.py:64-66", "resolution": "get_optional_user existe pero no se usa en ningun router (users, subscriptions, webhooks)."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-users-create", "kind": "endpoint", "name": "POST /users/", "handler": "app/routers/users.py:24", "file": "app/routers/users.py"},
+    {"id": "SRF-route-users-list", "kind": "endpoint", "name": "GET /users/", "handler": "app/routers/users.py:33", "file": "app/routers/users.py"},
+    {"id": "SRF-route-users-get", "kind": "endpoint", "name": "GET /users/{user_id}", "handler": "app/routers/users.py:43", "file": "app/routers/users.py"},
+    {"id": "SRF-route-users-update", "kind": "endpoint", "name": "PATCH /users/{user_id}", "handler": "app/routers/users.py:55", "file": "app/routers/users.py"},
+    {"id": "SRF-route-users-delete", "kind": "endpoint", "name": "DELETE /users/{user_id}", "handler": "app/routers/users.py:69", "file": "app/routers/users.py"},
+    {"id": "SRF-route-subs-create", "kind": "endpoint", "name": "POST /subscriptions/", "handler": "app/routers/subscriptions.py:26", "file": "app/routers/subscriptions.py"},
+    {"id": "SRF-route-subs-cancel", "kind": "endpoint", "name": "POST /subscriptions/{id}/cancel", "handler": "app/routers/subscriptions.py:56", "file": "app/routers/subscriptions.py"},
+    {"id": "SRF-route-subs-list", "kind": "endpoint", "name": "GET /subscriptions/", "handler": "app/routers/subscriptions.py:47", "file": "app/routers/subscriptions.py"},
+    {"id": "SRF-route-webhooks-register", "kind": "endpoint", "name": "POST /webhooks/", "handler": "app/routers/webhooks.py:24", "file": "app/routers/webhooks.py"},
+    {"id": "SRF-route-webhooks-dispatch", "kind": "endpoint", "name": "POST /webhooks/dispatch", "handler": "app/routers/webhooks.py:49", "file": "app/routers/webhooks.py"},
+    {"id": "SRF-route-webhooks-debug-dead", "kind": "endpoint", "name": "GET /webhooks/debug (dead)", "handler": "app/routers/webhooks.py:59", "file": "app/routers/webhooks.py"},
+    {"id": "SRF-dependency-get-db", "kind": "dependency", "name": "get_db (yield)", "handler": "app/dependencies.py:20", "file": "app/dependencies.py"},
+    {"id": "SRF-dependency-get-current-user", "kind": "dependency", "name": "get_current_user", "handler": "app/dependencies.py:25", "file": "app/dependencies.py"},
+    {"id": "SRF-dependency-get-active-subscription", "kind": "dependency", "name": "get_active_subscription", "handler": "app/dependencies.py:43", "file": "app/dependencies.py"},
+    {"id": "SRF-lifespan", "kind": "lifespan", "name": "lifespan (startup + shutdown)", "handler": "app/main.py:14", "file": "app/main.py"},
+    {"id": "SRF-validator-user-email", "kind": "pydantic_validator", "name": "@field_validator('email')", "handler": "app/schemas/user.py:23", "file": "app/schemas/user.py"},
+    {"id": "SRF-validator-subscription-dates", "kind": "pydantic_validator", "name": "@model_validator(mode='after')", "handler": "app/schemas/subscription.py:23", "file": "app/schemas/subscription.py"},
+    {"id": "SRF-celery-task-dispatch", "kind": "celery_task", "name": "dispatch_webhook_event (async)", "handler": "app/tasks/webhook_tasks.py:15", "file": "app/tasks/webhook_tasks.py"},
+    {"id": "SRF-decorator-track-request", "kind": "decorator", "name": "@track_request", "handler": "app/decorators.py:23", "file": "app/decorators.py"},
+    {"id": "SRF-migration-initial", "kind": "alembic_migration", "name": "001_initial", "handler": "alembic/versions/001_initial.py:1", "file": "alembic/versions/001_initial.py"},
+    {"id": "SRF-migration-seed-data", "kind": "alembic_migration", "name": "002_seed_data (data migration)", "handler": "alembic/versions/002_seed_data.py:1", "file": "alembic/versions/002_seed_data.py"}
+  ]
+}

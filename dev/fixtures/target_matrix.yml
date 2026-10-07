@@ -60,6 +60,10 @@ axes:
     - drf
     - celery
     - pytest-django
+    - fastapi
+    - pydantic
+    - sqlalchemy
+    - alembic
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

@@ -13,6 +13,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 - `fx-polyglot`
 - `fx-python-cli`
 - `fx-python-django`
+- `fx-python-fastapi`
 - `fx-react-spa`
 - `fx-spring-boot`
 - `fx-sveltekit`
@@ -24,14 +25,14 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `python` | cubierto | fx-minified, fx-python-cli, fx-python-django |
+| `python` | cubierto | fx-minified, fx-python-cli, fx-python-django, fx-python-fastapi |
 | `typescript` | cubierto | fx-angular-ngrx, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-sveltekit, fx-ts-agent-extension, fx-vue-nuxt |
 | `javascript` | cubierto | fx-angular-ngrx, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `java` | cubierto | fx-java-micronaut, fx-minified, fx-spring-boot |
 | `kotlin` | cubierto | fx-java-micronaut, fx-kotlin-ktor |
 | `go` | cubierto | fx-minified, fx-polyglot |
 | `rust` | cubierto | fx-polyglot |
-| `shell` | cubierto | fx-angular-ngrx, fx-csharp-aspnet, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-python-django, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
+| `shell` | cubierto | fx-angular-ngrx, fx-csharp-aspnet, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-python-django, fx-python-fastapi, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `dart` | **falta** | _(ninguno)_ |
 | `swift` | **falta** | _(ninguno)_ |
 | `csharp` | cubierto | fx-csharp-aspnet |
@@ -71,30 +72,34 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `ef-core` | cubierto | fx-csharp-aspnet |
 | `django` | cubierto | fx-python-django |
 | `drf` | cubierto | fx-python-django |
-| `celery` | cubierto | fx-python-django |
-| `pytest-django` | cubierto | fx-python-django |
+| `celery` | cubierto | fx-python-django, fx-python-fastapi |
+| `pytest-django` | cubierto | fx-python-django, fx-python-fastapi |
+| `fastapi` | cubierto | fx-python-fastapi |
+| `pydantic` | cubierto | fx-python-fastapi |
+| `sqlalchemy` | cubierto | fx-python-fastapi |
+| `alembic` | cubierto | fx-python-fastapi |
 
 ## Eje: build_systems
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `pyproject` | cubierto | fx-angular-ngrx, fx-python-cli |
+| `pyproject` | cubierto | fx-angular-ngrx, fx-python-cli, fx-python-fastapi |
 | `pnpm` | cubierto | fx-monorepo |
 | `maven` | cubierto | fx-spring-boot |
 | `gradle` | cubierto | fx-java-micronaut, fx-kotlin-ktor |
 | `cargo` | cubierto | fx-polyglot |
 | `go-modules` | cubierto | fx-minified, fx-polyglot |
-| `make` | cubierto | fx-angular-ngrx, fx-csharp-aspnet, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-django, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
+| `make` | cubierto | fx-angular-ngrx, fx-csharp-aspnet, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-django, fx-python-fastapi, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `docker` | **falta** | _(ninguno)_ |
 | `gulp` | cubierto | fx-angular-ngrx, fx-vanilla-js-legacy |
 | `msbuild` | cubierto | fx-csharp-aspnet |
-| `pip` | cubierto | fx-python-django |
+| `pip` | cubierto | fx-python-django, fx-python-fastapi |
 
 ## Eje: file_kinds
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `source-text` | cubierto | fx-angular-ngrx, fx-csharp-aspnet, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-python-django, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
+| `source-text` | cubierto | fx-angular-ngrx, fx-csharp-aspnet, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-python-django, fx-python-fastapi, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `minified-js` | cubierto | fx-minified, fx-vanilla-js-legacy |
 | `bundle-with-sourcemap` | cubierto | fx-minified |
 | `bundle-without-sourcemap` | **falta** | _(ninguno)_ |
