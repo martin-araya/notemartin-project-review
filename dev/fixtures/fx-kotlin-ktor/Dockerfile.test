@@ -1,0 +1,12 @@
+# Imagen para ejecutar los tests del fixture F06n (Ktor).
+FROM gradle:8.10-jdk21-jammy
+
+WORKDIR /fixture
+
+# Cache de dependencias.
+COPY build.gradle.kts settings.gradle.kts gradle.properties ./
+RUN gradle dependencies --no-daemon 2>&1 | tail -5 || true
+
+COPY . .
+
+CMD ["make", "test"]

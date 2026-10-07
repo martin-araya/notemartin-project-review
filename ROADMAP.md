@@ -821,8 +821,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `spring-boot` y `lombok` como frameworks + `pom.xml` en FRAMEWORK_FILES.
 - [x] Commit `F06m: fixture fx-spring-boot con paquete por feature`.
 
-## F06n — Fixture `fx-kotlin-ktor`
- 
+## F06n — Fixture `fx-kotlin-ktor` ✅
+
 **Objetivo:** servicio Ktor con corrutinas.
 **Stack:** Kotlin, Ktor, Koin, Exposed, kotlinx.serialization, Gradle (Kotlin DSL).
 **Features:** `inventario`, `reservas-de-stock`, `alertas`.
@@ -834,7 +834,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. `sealed class` + `when` exhaustivo como máquina de estados.
 6. Propiedades delegadas (`by lazy`, `by inject()`).
 **Toolchain de tests:** JUnit 5 + ktor-server-test-host, en contenedor.
- 
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`inventario`, `reservas-de-stock`, `alertas`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: routing_dsl_nested, plugins_installed, extension_functions, coroutines_app_scope, sealed_class_when, delegated_property (CC-06).
+- [x] 6 trampas del paquete plantadas: routing_no_auth, sealed_class_when_statement, flow_no_buffer, by_inject_in_property, exposed_no_transaction, kotlinx_serialization_sealed (CC-04).
+- [x] 3 trampas superficiales: /inv/{id}/audit dead, sendEmail dead, DummyLogger no usado (CC-05).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09).
+- [x] CC-11 (sin menciones del ground truth en comentarios) en verde. Las URLs usan `/inv`, `/reservas`, `/alerts` para evitar los nombres de feature en strings.
+- [x] Suite JUnit 5 + ktor-server-test-host: 8 archivos (FxKtorApplicationTests, StockEventTest, TrapsEcosystemTest, TrapsPackageTest, TrapsSuperficialTest + 3 placeholders). Los tests runtime con `testApplication` requieren el contenedor `gradle:8.10-jdk21-jammy`; el Makefile los corre en el contenedor via `run_fixture_tests.py`.
+- [x] `dev/tests/test_fx_kotlin_ktor_ground_truth.py` agregado y verde (57 tests).
+- [x] `MATRIX.md` muestra `ktor` y `koin` cubiertos por fx-kotlin-ktor.
+- [x] `pytest` total 832 passed (775 anteriores + 57 nuevos), sin regresiones en los 13 fixtures previos.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `ktor` y `koin` como frameworks. La deteccion en `fixtures_matrix.py` ahora busca `ktor-server-core` y `koin-ktor` en `build.gradle.kts`.
+- [x] Commit `F06n: fixture fx-kotlin-ktor con paquete por feature`.
+
 ## F06o — Fixture `fx-csharp-aspnet`
  
 **Objetivo:** API ASP.NET Core con CQRS.

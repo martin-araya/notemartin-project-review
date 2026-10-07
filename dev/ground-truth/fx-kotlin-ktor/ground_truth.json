@@ -1,0 +1,176 @@
+{
+  "fixture": "fx-kotlin-ktor",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-app", "artifact": "FxKtorApplication.kt", "file": "src/main/kotlin/com/example/fxktor/FxKtorApplication.kt"},
+    {"id": "EP-gradle", "artifact": "build.gradle.kts", "file": "build.gradle.kts"},
+    {"id": "EP-routing", "artifact": "plugins/Routing.kt", "file": "src/main/kotlin/com/example/fxktor/plugins/Routing.kt"},
+    {"id": "EP-app-module", "artifact": "di/AppModule.kt", "file": "src/main/kotlin/com/example/fxktor/di/AppModule.kt"}
+  ],
+  "modules": [
+    {"id": "MOD-app", "path": "src/main/kotlin/com/example/fxktor/FxKtorApplication.kt", "summary": "embeddedServer(Netty) con install(ContentNegotiation) + Koin + routing { routes() }"},
+    {"id": "MOD-routing", "path": "src/main/kotlin/com/example/fxktor/plugins/Routing.kt", "summary": "Route.routes() extension function que llama inventario() + reservas() + alertas()"},
+    {"id": "MOD-auth", "path": "src/main/kotlin/com/example/fxktor/plugins/Auth.kt", "summary": "Application.auth() que instala Authentication con basic('auth-basic')"},
+    {"id": "MOD-status-pages", "path": "src/main/kotlin/com/example/fxktor/plugins/StatusPages.kt", "summary": "Application.statusPages() que mapea IllegalArgumentException -> 400 y NoSuchElementException -> 404"},
+    {"id": "MOD-serialization", "path": "src/main/kotlin/com/example/fxktor/plugins/Serializacion.kt", "summary": "Application.json() helper con ContentNegotiation + prettyPrint + isLenient"},
+    {"id": "MOD-monitoring", "path": "src/main/kotlin/com/example/fxktor/plugins/Monitoring.kt", "summary": "Application.monitoring() con CallLogging filtrado por /api/"},
+    {"id": "MOD-app-module", "path": "src/main/kotlin/com/example/fxktor/di/AppModule.kt", "summary": "Koin module con single para repos, services y DummyLogger (dead)"},
+    {"id": "MOD-item-entity", "path": "src/main/kotlin/com/example/fxktor/domain/Item.kt", "summary": "@Serializable data class con id, nombre, cantidad, precio, premium, estado, metadata"},
+    {"id": "MOD-stock-event", "path": "src/main/kotlin/com/example/fxktor/domain/StockEvent.kt", "summary": "@Serializable sealed class con ItemCreated, ItemUpdated, ItemDeleted"},
+    {"id": "MOD-alert", "path": "src/main/kotlin/com/example/fxktor/domain/Alert.kt", "summary": "@Serializable sealed class con Info, Warning, Critical"},
+    {"id": "MOD-item-repository", "path": "src/main/kotlin/com/example/fxktor/repository/ItemRepository.kt", "summary": "Exposed DAO con Items table + listAll/findById/create/update"},
+    {"id": "MOD-alert-repository", "path": "src/main/kotlin/com/example/fxktor/repository/AlertRepository.kt", "summary": "Exposed DAO con Alerts table + save/listAll"},
+    {"id": "MOD-inventario-service", "path": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt", "summary": "Service con suspend listar/obtener/crear/actualizar/eliminar + Flow + handle (when)"},
+    {"id": "MOD-alertas-service", "path": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt", "summary": "Service con CoroutineScope(Dispatchers.Default + SupervisorJob()) y emit/listAll"},
+    {"id": "MOD-inventario-routes", "path": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt", "summary": "Route.inventario() con /inv + GET/POST/PATCH/DELETE/{id} + /audit (dead)"},
+    {"id": "MOD-reservas-routes", "path": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt", "summary": "Route.reservas() con /reservas + GET/POST/DELETE"},
+    {"id": "MOD-alertas-routes", "path": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt", "summary": "Route.alertas() con /alerts + GET/POST"}
+  ],
+  "dependencies": [
+    {"name": "ktor-server-core", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-server-netty", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-server-content-negotiation", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-server-status-pages", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-server-call-logging", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-server-auth", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-serialization-kotlinx-json", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "koin-ktor", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "koin-core", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "exposed-core", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "exposed-jdbc", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "kotlinx-coroutines-core", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "kotlinx-serialization-json", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "h2", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "flyway-core", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "logback-classic", "scope": "runtime", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "ktor-server-test-host", "scope": "test", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "koin-test", "scope": "test", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "kotlin-test-junit5", "scope": "test", "manifest": "build.gradle.kts (dependencies)"},
+    {"name": "junit-jupiter", "scope": "test", "manifest": "build.gradle.kts (dependencies)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "inventario",
+      "user_description": "El usuario lista, obtiene, crea, actualiza y elimina items de stock via endpoints HTTP RESTful serializados a JSON.",
+      "traces": [
+        {"n": 1, "what": "User GET /inv con HTTP", "cite": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:21", "data_in": "HTTP request", "data_out": "GET"},
+        {"n": 2, "what": "Route.inventario() recibe la peticion via Ktor", "cite": "src/main/kotlin/com/example/fxktor/plugins/Routing.kt:13", "data_in": "ruta /inv", "data_out": "handler"},
+        {"n": 3, "what": "by inject<InventarioService>() resuelve la dependencia via Koin", "cite": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:16", "data_in": "KoinContext", "data_out": "InventarioService"},
+        {"n": 4, "what": "InventarioService.listar() delega a repo.listAll()", "cite": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt:24", "data_in": "-", "data_out": "List<Item>"},
+        {"n": 5, "what": "ItemRepository.listAll() ejecuta selectAll en Exposed (trampa: sin transaccion)", "cite": "src/main/kotlin/com/example/fxktor/repository/ItemRepository.kt:32", "data_in": "-", "data_out": "List<Row>"},
+        {"n": 6, "what": "Ktor serializa List<Item> a JSON via kotlinx.serialization", "cite": "src/main/kotlin/com/example/fxktor/FxKtorApplication.kt:21", "data_in": "List<Item>", "data_out": "JSON"},
+        {"n": 7, "what": "call.respond(json) envia 200 con el body", "cite": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:22", "data_in": "JSON", "data_out": "HTTP 200"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt", "line": 22, "kind": "routing", "condition_text": "Ktor dispatch a GET /inv", "branches": [{"label": "200 List<Item>", "target_line": 23}, {"label": "500 Exposed error", "target_line": 22}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /inv con DB inicializada", "user_sees": "200 con lista de items", "side_effects": ["SELECT en items"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_get_by_id", "conditions": "GET /inv/{id} con id existente", "user_sees": "200 con el item", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_create", "conditions": "POST /inv con body valido", "user_sees": "201 con el item creado (con id asignado)", "side_effects": ["INSERT en items"], "reversible": false, "final_state": "item created"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /inv/{id} con cambios validos", "user_sees": "200 OK", "side_effects": ["UPDATE en items"], "reversible": true, "final_state": "updated"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /inv/{id} con id existente y cantidad > 0", "user_sees": "204 No Content", "side_effects": [], "reversible": true, "final_state": "item deleted"},
+        {"id": "R-06", "category": "error_get_404", "conditions": "GET /inv/{id} con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_exposed_no_transaction", "conditions": "DB no inicializada o transaccion no activa", "user_sees": "500 con IllegalStateException", "side_effects": [], "reversible": true, "final_state": "error"}
+      ],
+      "config": [
+        {"key": "koin.dispatch", "kind": "literal", "default": "KoinComponent + by inject()", "effect": "DI por delegate property"},
+        {"key": "exposed.transactions", "kind": "literal", "default": "none (trampa)", "effect": "queries sin transaccion fallan en runtime"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "reservas-de-stock",
+      "user_description": "El usuario reserva y libera items de stock via endpoints REST. La trampa es que el POST no persiste la reserva (solo responde con el item original).",
+      "traces": [
+        {"n": 1, "what": "User GET /reservas con HTTP", "cite": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt:18", "data_in": "HTTP request", "data_out": "GET"},
+        {"n": 2, "what": "Route.reservas() maneja la peticion", "cite": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt:14", "data_in": "/reservas", "data_out": "handler"},
+        {"n": 3, "what": "service.listar() retorna la lista del modulo principal", "cite": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt:24", "data_in": "-", "data_out": "List<Item>"},
+        {"n": 4, "what": "Ktor serializa a JSON con kotlinx.serialization", "cite": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt:19", "data_in": "List<Item>", "data_out": "JSON 200"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt", "line": 25, "kind": "validation", "condition_text": "itemId presente en body", "branches": [{"label": "201 item", "target_line": 30}, {"label": "400", "target_line": 27}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /reservas", "user_sees": "200 con la lista de items (no reservas reales)", "side_effects": ["SELECT en items"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-02", "category": "success_reserve", "conditions": "POST /reservas con itemId valido", "user_sees": "201 con el item original (la reserva NO se persiste)", "side_effects": [], "reversible": true, "final_state": "noop (trampa)"},
+        {"id": "R-03", "category": "error_reserve_insufficient", "conditions": "POST con item con cantidad <= 0", "user_sees": "404 Not Found (no encuentra el item con la logica actual)", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "error_reserve_already_reserved", "conditions": "POST con item ya reservado (no implementado)", "user_sees": "201 con el item (trampa: la verificacion no existe)", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-05", "category": "error_release_not_found", "conditions": "DELETE /reservas/{id} con id inexistente", "user_sees": "404", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_concurrent_reserve", "conditions": "Dos requests simultaneos", "user_sees": "Sin bloqueo (no hay lock)", "side_effects": [], "reversible": true, "final_state": "race condition"},
+        {"id": "R-07", "category": "error_no_transaction", "conditions": "DB no inicializada", "user_sees": "500", "side_effects": [], "reversible": true, "final_state": "error"}
+      ],
+      "config": [
+        {"key": "endpoint.path", "kind": "literal", "default": "/reservas", "effect": "Extension function sobre Route en archivo separado"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "alertas",
+      "user_description": "El usuario emite alertas via POST que se persisten async via CoroutineScope.launch; el listener valida el nivel y rechaza mensajes vacios.",
+      "traces": [
+        {"n": 1, "what": "User POST /alerts con body JSON {tipo, mensaje}", "cite": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt:25", "data_in": "JSON body", "data_out": "POST"},
+        {"n": 2, "what": "Ktor deserializa el JSON polimorfico a Alert.Info/Warning/Critical", "cite": "src/main/kotlin/com/example/fxktor/FxKtorApplication.kt:21", "data_in": "JSON", "data_out": "Alert"},
+        {"n": 3, "what": "Validacion: mensaje.isBlank() -> 422", "cite": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt:29", "data_in": "Alert", "data_out": "422 o 201"},
+        {"n": 4, "what": "service.emitir(alert) lanza en el scope de la app", "cite": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt:32", "data_in": "Alert", "data_out": "Job launched"},
+        {"n": 5, "what": "save en el repository de forma async (trampa: app scope no se cancela)", "cite": "src/main/kotlin/com/example/fxktor/repository/AlertRepository.kt:28", "data_in": "Alert", "data_out": "INSERT"},
+        {"n": 6, "what": "sendEmail(alert) (dead code, no se invoca)", "cite": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt:42", "data_in": "Alert", "data_out": "noop"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt", "line": 29, "kind": "validation", "condition_text": "alert.mensaje.isBlank()", "branches": [{"label": "ok -> 201 + emitir", "target_line": 35}, {"label": "blank -> 422", "target_line": 30}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_emit_alert", "conditions": "POST con mensaje no vacio", "user_sees": "201 con el alert devuelto", "side_effects": ["launch en app scope", "INSERT async en alerts"], "reversible": true, "final_state": "alert emitido"},
+        {"id": "R-02", "category": "success_list_alerts", "conditions": "GET /alerts", "user_sees": "200 con la lista de alerts", "side_effects": ["SELECT en alerts"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "error_alert_invalid_level", "conditions": "POST con mensaje en blanco", "user_sees": "422 Unprocessable Entity", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "success_scope_cancellation", "conditions": "App se cierra", "user_sees": "Las corrutinas en el app scope no se cancelan (trampa)", "side_effects": [], "reversible": false, "final_state": "memory leak"},
+        {"id": "R-05", "category": "error_send_email_fails", "conditions": "sendEmail() se llamaria (no se invoca, dead code)", "user_sees": "noop", "side_effects": [], "reversible": true, "final_state": "noop"},
+        {"id": "R-06", "category": "success_sealed_subtype_dispatch", "conditions": "POST con Alert.Info (discriminador 'type')", "user_sees": "201 con Alert.Info serializado", "side_effects": ["INSERT"], "reversible": true, "final_state": "alert Info creado"},
+        {"id": "R-07", "category": "error_when_branch_missing", "conditions": "Se anade un nuevo subtipo sin actualizar el when", "user_sees": "Excepcion en runtime (sealed class + when statement)", "side_effects": [], "reversible": false, "final_state": "error"}
+      ],
+      "config": [
+        {"key": "alerts.scope", "kind": "literal", "default": "CoroutineScope(Dispatchers.Default + SupervisorJob())", "effect": "Trampa: app scope no se cancela"},
+        {"key": "serialization.polymorphic", "kind": "literal", "default": "kotlinx.serialization con discriminador por tipo", "effect": "trampa: sealed class con @Serializable"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "routing_dsl_nested", "where": "src/main/kotlin/com/example/fxktor/plugins/Routing.kt + routes/{InventarioRoutes,ReservasRoutes,AlertasRoutes}.kt", "resolution": "El DSL de routing se reparte entre 3 archivos: cada uno expone una extension function sobre Route (Route.inventario(), Route.reservas(), Route.alertas()). La app principal instala routing { routes() } que llama a las 3. La trampa: entender como se compone el DSL requiere leer los 3 archivos y la funcion Route.routes() en plugins/Routing.kt."},
+    {"id": "TRAP-E02", "kind": "plugins_installed", "where": "src/main/kotlin/com/example/fxktor/FxKtorApplication.kt + plugins/{Auth,StatusPages,Serialization,Monitoring}.kt", "resolution": "La app principal instala ContentNegotiation, Koin, CallLogging y routing. Auth existe como plugin pero NO se invoca en FxKtorApplication.kt, por lo que los endpoints quedan sin auth. La trampa: la firma de extension function sobre Application oculta la logica del pipeline."},
+    {"id": "TRAP-E03", "kind": "extension_functions", "where": "src/main/kotlin/com/example/fxktor/routes/{InventarioRoutes,ReservasRoutes,AlertasRoutes}.kt", "resolution": "Cada archivo de routes exporta una extension function sobre Route (Route.inventario(), etc). Tambien InventarioService declara `by inject()` (KoinComponent). La trampa: las extension functions se llaman en orden y la inicializacion lazy difiere del codigo imperativo."},
+    {"id": "TRAP-E04", "kind": "coroutines_app_scope", "where": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt:30 + FxKtorApplication.kt", "resolution": "AlertasService declara `private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())`. La trampa: el scope no esta atado al application, por lo que las corrutinas NO se cancelan cuando la app se apaga (memory leak). Ademas, InventarioService.observedItems() retorna Flow sin .buffer(), por lo que un consumidor lento bloquea al productor."},
+    {"id": "TRAP-E05", "kind": "sealed_class_when", "where": "src/main/kotlin/com/example/fxktor/domain/StockEvent.kt + service/InventarioService.kt:53", "resolution": "StockEvent es @Serializable sealed class con ItemCreated, ItemUpdated, ItemDeleted. InventarioService.handle(event) usa `when (event) { is ItemCreated -> ... }` como statement (no expression). Si se anade un nuevo subtipo, el codigo compila pero falla en runtime con NoWhenBranchMatchedException."},
+    {"id": "TRAP-E06", "kind": "delegated_property", "where": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt:25 + service/AlertasService.kt:32", "resolution": "InventarioService declara `private val repo: ItemRepository by inject()`. La trampa: la inyeccion se evalua en cada get() (no es lazy), y requiere KoinContext activo. En corrutinas con Dispatchers.Default, el KoinContext puede no estar disponible. Ademas, AlertasService tambien usa `by inject()` para repo con la misma trampa."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "routing_no_auth", "where": "src/main/kotlin/com/example/fxktor/FxKtorApplication.kt:28-34", "resolution": "El bloque `routing { routes() }` se instala sin `auth()` previo. Los endpoints quedan accesibles sin autenticacion. La trampa: Auth existe como plugin en plugins/Auth.kt pero no se invoca."},
+    {"id": "TRAP-P02", "kind": "sealed_class_when_statement", "where": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt:53", "resolution": "El when en InventarioService.handle() es statement (no devuelve valor al contexto de uso), por lo que el compilador NO exige exhaustividad. Si se anade un nuevo subtipo a StockEvent, el codigo compila pero falla en runtime con NoWhenBranchMatchedException."},
+    {"id": "TRAP-P03", "kind": "flow_no_buffer", "where": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt:43", "resolution": "InventarioService.observedItems() retorna un Flow con `flow { emit(it) }` sin .buffer() ni .conflate(). Un consumidor lento bloquea al productor. La trampa: el codigo parece correcto pero en runtime con backpressure alta los emits se pierden."},
+    {"id": "TRAP-P04", "kind": "by_inject_in_property", "where": "src/main/kotlin/com/example/fxktor/service/InventarioService.kt:25 + service/AlertasService.kt:32", "resolution": "`by inject()` se evalua en cada get(), no es lazy. Requiere KoinContext activo. En corrutinas con Dispatchers.Default, el KoinContext puede no estar disponible, lanzando KoinScopeComponent.getKoin()."},
+    {"id": "TRAP-P05", "kind": "exposed_no_transaction", "where": "src/main/kotlin/com/example/fxktor/repository/ItemRepository.kt:32", "resolution": "ItemRepository.listAll() ejecuta Items.selectAll() sin envolver en `transaction { ... }`. Exposed exige una transaccion activa para queries; en runtime lanza IllegalStateException 'newTransaction is required' o similar. La trampa: el codigo compila pero falla al primer SELECT."},
+    {"id": "TRAP-P06", "kind": "kotlinx_serialization_sealed", "where": "src/main/kotlin/com/example/fxktor/domain/StockEvent.kt:7", "resolution": "StockEvent y Alert son @Serializable sealed classes. La trampa: kotlinx.serialization con sealed class polimorfico requiere un discriminador (type) en el JSON. Sin el discriminador o con un nombre de subtipo incorrecto, la deserializacion lanza SerializationException. La skill debe notar que las pruebas e2e del JSON deben incluir el campo 'type'."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_route", "where": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:46-49", "resolution": "La ruta GET('{id}/audit') esta declarada pero su cuerpo retorna lista vacia. Trampa: el matcher existe en el codigo pero no se invoca desde ninguna otra parte del codigo. La skill debe notar que el patron 'get / path { return emptyList() }' es comun para stubs de APIs que nunca se implementan."},
+    {"id": "TRAP-S02", "kind": "dead_email", "where": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt:42", "resolution": "sendEmail(alert) esta declarado con cuerpo vacio y no se invoca desde ninguna ruta ni servicio. Es codigo muerto: la app nunca envia emails. La trampa: cualquier reviewer podria asumir que las alertas generan notificaciones por email."},
+    {"id": "TRAP-S03", "kind": "dead_dummy_logger", "where": "src/main/kotlin/com/example/fxktor/di/AppModule.kt:25", "resolution": "DummyLogger se declara como single en Koin pero la app no lo inyecta en ninguna parte. Es codigo muerto que ocupa un slot en el contenedor DI. La trampa: Koin no falla al declarar dependencias no usadas, por lo que el codigo compila sin warnings."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-inv-list", "kind": "endpoint", "name": "GET /inv", "handler": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:21", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt"},
+    {"id": "SRF-route-inv-get", "kind": "endpoint", "name": "GET /inv/{id}", "handler": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:25", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt"},
+    {"id": "SRF-route-inv-create", "kind": "endpoint", "name": "POST /inv", "handler": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:31", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt"},
+    {"id": "SRF-route-inv-update", "kind": "endpoint", "name": "PATCH /inv/{id}", "handler": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:36", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt"},
+    {"id": "SRF-route-inv-delete", "kind": "endpoint", "name": "DELETE /inv/{id}", "handler": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:42", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt"},
+    {"id": "SRF-route-inv-audit", "kind": "endpoint", "name": "GET /inv/{id}/audit", "handler": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt:47", "file": "src/main/kotlin/com/example/fxktor/routes/InventarioRoutes.kt"},
+    {"id": "SRF-route-reservas-list", "kind": "endpoint", "name": "GET /reservas", "handler": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt:19", "file": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt"},
+    {"id": "SRF-route-reservas-create", "kind": "endpoint", "name": "POST /reservas", "handler": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt:24", "file": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt"},
+    {"id": "SRF-route-reservas-delete", "kind": "endpoint", "name": "DELETE /reservas/{id}", "handler": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt:34", "file": "src/main/kotlin/com/example/fxktor/routes/ReservasRoutes.kt"},
+    {"id": "SRF-route-alerts-list", "kind": "endpoint", "name": "GET /alerts", "handler": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt:21", "file": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt"},
+    {"id": "SRF-route-alerts-emit", "kind": "endpoint", "name": "POST /alerts", "handler": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt:25", "file": "src/main/kotlin/com/example/fxktor/routes/AlertasRoutes.kt"},
+    {"id": "SRF-plugin-auth", "kind": "plugin", "name": "Application.auth()", "handler": "src/main/kotlin/com/example/fxktor/plugins/Auth.kt:13", "file": "src/main/kotlin/com/example/fxktor/plugins/Auth.kt"},
+    {"id": "SRF-plugin-status-pages", "kind": "plugin", "name": "Application.statusPages()", "handler": "src/main/kotlin/com/example/fxktor/plugins/StatusPages.kt:13", "file": "src/main/kotlin/com/example/fxktor/plugins/StatusPages.kt"},
+    {"id": "SRF-listener-alertas", "kind": "listener", "name": "AlertasService.emitir (CoroutineScope.launch)", "handler": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt:32", "file": "src/main/kotlin/com/example/fxktor/service/AlertasService.kt"},
+    {"id": "SRF-di-app-module", "kind": "di", "name": "Koin appModule", "handler": "src/main/kotlin/com/example/fxktor/di/AppModule.kt:18", "file": "src/main/kotlin/com/example/fxktor/di/AppModule.kt"}
+  ]
+}

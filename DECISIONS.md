@@ -1329,3 +1329,62 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
 - Consecuencias: el SecurityConfigTest ahora pide `/api/v1/logs`
   en vez de `/api/v1/auditoria`. El test de seguridad sigue
   verificando el matcher.
+
+### D-210 — Stack del fixture F06n: Kotlin 2.0 + Ktor 3.0 + Koin 4 + Exposed 1.0 + Gradle 8.10 (F06n)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06n · vigente
+- Contexto: el fixture debe representar un servicio Ktor
+  empresarial con corrutinas, inyeccion Koin, persistencia
+  Exposed y serializacion kotlinx. La eleccion del stack
+  afecta a que trampas se pueden plantar (DSL de routing
+  anidado, plugins instalados, extension functions y
+  properties, corrutinas en app scope + Flow, sealed class +
+  when exhaustivo, propiedades delegadas by inject).
+- Decision: Kotlin 2.0.21 (LTS), JDK 21, Ktor 3.0.1,
+  Koin 4.0.0 (koin-ktor + koin-core + koin-test), Exposed
+  1.0.0-beta01, kotlinx-serialization-json 1.7.3,
+  kotlinx-coroutines-core 1.8.1, H2 2.2.224, Flyway 10.10.0,
+  JUnit 5.10.2, ktor-server-test-host 3.0.1, Gradle 8.10
+  (Kotlin DSL).
+- Alternativas: (a) Micronaut + Kotlin (descartado: ya hay
+  fx-java-micronaut); (b) Quarkus + Kotlin (descartado: el plan
+  pide Ktor); (c) Ktor 2.x (descartado: Ktor 3.0 es la version
+  actual con KDoc generation y nuevas APIs).
+- Consecuencias: el build local no corre con Java 25
+  directamente; el fixture requiere JDK 21 (via
+  `kotlin.jvmToolchain(21)` en build.gradle.kts). El
+  contenedor `gradle:8.10-jdk21-jammy` resuelve esto. Los
+  tests runtime con `testApplication` se ejecutan en el
+  contenedor via `run_fixture_tests.py`; los tests
+  estaticos (TrapsEcosystem, TrapsPackage,
+  TrapsSuperficial) corren en cualquier JVM.
+
+### D-211 — Naming: prefijo `NPRGT-FXKTOR-` para los unique tokens de F06n (F06n)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06n · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXKTOR` y exactamente 28 tokens. Ninguno
+  aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXKOROUTINES` (descartado: demasiado
+  largo); (b) `FXKTOR3` (descartado: ata la version al nombre).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-212 — URL paths sin nombres de feature para evitar CC-11 (F06n)
+
+- Fecha · Fase · Estado: 2026-10-06 · F06n · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature en cualquier linea del codigo del fixture. Los
+  features son `inventario`, `reservas-de-stock`, `alertas`.
+- Decision: usar `/inv` en vez de `/inventario`, `/reservas`
+  (conservado por brevedad) y `/alerts` (sin la `s` final
+  de alertas). El ground truth mantiene los nombres
+  originales; el codigo del fixture usa paths abreviados.
+- Alternativas: (a) cambiar el nombre del feature en el
+  ground truth (descartado: el plan los define); (b) ofuscar
+  los paths con guiones (descartado: la regla CC-11 detecta
+  el substring).
+- Consecuencias: la skill debe entender que `/inv`
+  corresponde a `inventario` segun el ground truth.

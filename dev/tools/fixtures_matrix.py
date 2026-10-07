@@ -99,6 +99,9 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     # Spring Boot: la presencia de pom.xml indica Maven; con
     # spring-boot-starter-* en el pom.xml es Spring Boot.
     "pom.xml": {"maven", "spring-boot"},
+    # Gradle (Kotlin DSL): la presencia de build.gradle.kts indica
+    # un proyecto Kotlin/Gradle.
+    "build.gradle.kts": {"gradle", "kotlin"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -129,6 +132,10 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "@angular/material": {"angular-material"},
     # Spring Boot: la dep ``spring-boot-starter-web`` indica Spring Boot (F06m).
     "spring-boot-starter-web": {"spring-boot"},
+    # Ktor: la dep ``ktor-server-core`` indica Ktor (F06n).
+    "ktor-server-core": {"ktor"},
+    # Koin: la dep ``koin-ktor`` indica Koin (F06n).
+    "koin-ktor": {"koin"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.
@@ -238,6 +245,12 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
             content = gradle_kts.read_text(encoding="utf-8")
             if "io.micronaut.application" in content or "io.micronaut" in content:
                 covered["frameworks"].add("micronaut")
+            # Ktor: si build.gradle.kts menciona la dep ktor-server-core.
+            if "ktor-server-core" in content:
+                covered["frameworks"].add("ktor")
+            # Koin: si build.gradle.kts menciona koin-ktor o koin-core.
+            if "koin-ktor" in content or "koin-core" in content:
+                covered["frameworks"].add("koin")
         except (OSError, UnicodeDecodeError):
             pass
 

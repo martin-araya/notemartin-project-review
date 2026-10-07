@@ -51,6 +51,8 @@ axes:
     - angular-material
     - spring-boot
     - lombok
+    - ktor
+    - koin
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

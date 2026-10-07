@@ -5,6 +5,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 ## Fixtures detectados
 - `fx-angular-ngrx`
 - `fx-java-micronaut`
+- `fx-kotlin-ktor`
 - `fx-minified`
 - `fx-monorepo`
 - `fx-nextjs-fullstack`
@@ -25,10 +26,10 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `typescript` | cubierto | fx-angular-ngrx, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-sveltekit, fx-ts-agent-extension, fx-vue-nuxt |
 | `javascript` | cubierto | fx-angular-ngrx, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-react-spa, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `java` | cubierto | fx-java-micronaut, fx-minified, fx-spring-boot |
-| `kotlin` | cubierto | fx-java-micronaut |
+| `kotlin` | cubierto | fx-java-micronaut, fx-kotlin-ktor |
 | `go` | cubierto | fx-minified, fx-polyglot |
 | `rust` | cubierto | fx-polyglot |
-| `shell` | cubierto | fx-angular-ngrx, fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
+| `shell` | cubierto | fx-angular-ngrx, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `dart` | **falta** | _(ninguno)_ |
 | `swift` | **falta** | _(ninguno)_ |
 | `csharp` | **falta** | _(ninguno)_ |
@@ -45,7 +46,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `node-express` | cubierto | fx-vanilla-js-legacy |
 | `pnpm-monorepo` | cubierto | fx-monorepo |
 | `electron` | **falta** | _(ninguno)_ |
-| `gradle` | cubierto | fx-java-micronaut |
+| `gradle` | cubierto | fx-java-micronaut, fx-kotlin-ktor |
 | `maven` | cubierto | fx-spring-boot |
 | `cargo` | cubierto | fx-polyglot |
 | `go-modules` | cubierto | fx-minified, fx-polyglot |
@@ -61,6 +62,8 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `angular-material` | cubierto | fx-angular-ngrx |
 | `spring-boot` | cubierto | fx-spring-boot |
 | `lombok` | **falta** | _(ninguno)_ |
+| `ktor` | cubierto | fx-kotlin-ktor |
+| `koin` | cubierto | fx-kotlin-ktor |
 
 ## Eje: build_systems
 
@@ -69,10 +72,10 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 | `pyproject` | cubierto | fx-angular-ngrx, fx-python-cli |
 | `pnpm` | cubierto | fx-monorepo |
 | `maven` | cubierto | fx-spring-boot |
-| `gradle` | cubierto | fx-java-micronaut |
+| `gradle` | cubierto | fx-java-micronaut, fx-kotlin-ktor |
 | `cargo` | cubierto | fx-polyglot |
 | `go-modules` | cubierto | fx-minified, fx-polyglot |
-| `make` | cubierto | fx-angular-ngrx, fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
+| `make` | cubierto | fx-angular-ngrx, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `docker` | **falta** | _(ninguno)_ |
 | `gulp` | cubierto | fx-angular-ngrx, fx-vanilla-js-legacy |
 
@@ -80,7 +83,7 @@ Generada por `dev/tools/fixtures_matrix.py` a partir de `dev/fixtures/target_mat
 
 | Item | Estado | Cubierto por |
 |---|---|---|
-| `source-text` | cubierto | fx-angular-ngrx, fx-java-micronaut, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
+| `source-text` | cubierto | fx-angular-ngrx, fx-java-micronaut, fx-kotlin-ktor, fx-minified, fx-monorepo, fx-nextjs-fullstack, fx-polyglot, fx-python-cli, fx-react-spa, fx-spring-boot, fx-sveltekit, fx-ts-agent-extension, fx-vanilla-js-legacy, fx-vue-nuxt |
 | `minified-js` | cubierto | fx-minified, fx-vanilla-js-legacy |
 | `bundle-with-sourcemap` | cubierto | fx-minified |
 | `bundle-without-sourcemap` | **falta** | _(ninguno)_ |

@@ -1,0 +1,17 @@
+# Metadata del fixture F06n: fx-kotlin-ktor
+# Servicio Ktor con corrutinas, inyeccion Koin, persistencia Exposed
+# y serializacion kotlinx. Ver referencias a las trampas del
+# ecosistema y del paquete en
+# dev/ground-truth/fx-kotlin-ktor/ground_truth.json.
+name: fx-kotlin-ktor
+description: Servicio Ktor 3 con Koin 4, Exposed 1, kotlinx.serialization y corrutinas (F06n)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: gradle test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-kotlin-ktor
+  enabled: true
+ground_truth_format_version: 1
