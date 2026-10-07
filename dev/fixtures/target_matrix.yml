@@ -56,6 +56,10 @@ axes:
     - aspnet-core
     - mediatr
     - ef-core
+    - django
+    - drf
+    - celery
+    - pytest-django
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -69,6 +73,7 @@ axes:
     - docker
     - gulp
     - msbuild
+    - pip
 
   # Tipos de archivo y formatos
   file_kinds:

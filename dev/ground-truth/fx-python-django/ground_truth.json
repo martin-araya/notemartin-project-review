@@ -1,0 +1,216 @@
+{
+  "fixture": "fx-python-django",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-manage", "artifact": "manage.py", "file": "manage.py"},
+    {"id": "EP-urls", "artifact": "fxdjango/urls.py", "file": "fxdjango/urls.py"},
+    {"id": "EP-celery", "artifact": "fxdjango/celery.py", "file": "fxdjango/celery.py"},
+    {"id": "EP-apps", "artifact": "apps/enrollments/apps.py", "file": "apps/enrollments/apps.py"},
+    {"id": "EP-admin", "artifact": "apps/audit/admin.py", "file": "apps/audit/admin.py"}
+  ],
+  "modules": [
+    {"id": "MOD-manage", "path": "manage.py", "summary": "DJANGO_SETTINGS_MODULE=fxdjango.settings.dev por defecto"},
+    {"id": "MOD-fxdjango-init", "path": "fxdjango/__init__.py", "summary": "Importa celery_app para autodiscovery"},
+    {"id": "MOD-urls", "path": "fxdjango/urls.py", "summary": "include() anidados: admin/, api/enrollments/, api/payments/, api/certificates/, admin/audit/"},
+    {"id": "MOD-celery", "path": "fxdjango/celery.py", "summary": "Celery('fxdjango', broker=memory://) + autodiscover_tasks()"},
+    {"id": "MOD-settings-base", "path": "fxdjango/settings/base.py", "summary": "INSTALLED_APPS, REST_FRAMEWORK, TEMPLATES con apps.enrollments + apps.certificates context processors"},
+    {"id": "MOD-settings-dev", "path": "fxdjango/settings/dev.py", "summary": "DEBUG=True, DB :memory:, CELERY_TASK_ALWAYS_EAGER=True"},
+    {"id": "MOD-settings-prod", "path": "fxdjango/settings/prod.py", "summary": "DEBUG=False, ALLOWED_HOSTS=['*']"},
+    {"id": "MOD-enrollments-config", "path": "apps/enrollments/apps.py", "summary": "EnrollmentsConfig.ready() conecta signals via from . import signals"},
+    {"id": "MOD-enrollments-models", "path": "apps/enrollments/models.py", "summary": "Enrollment + EnrollmentItem con EnrollmentManager custom"},
+    {"id": "MOD-enrollments-managers", "path": "apps/enrollments/managers.py", "summary": "EnrollmentQuerySet con active(), paid(), by_user() + EnrollmentManager.from_queryset"},
+    {"id": "MOD-enrollments-signals", "path": "apps/enrollments/signals.py", "summary": "@receiver(post_save, Enrollment) -> procesar_inscripcion.delay()"},
+    {"id": "MOD-enrollments-tasks", "path": "apps/enrollments/tasks.py", "summary": "@shared_task procesar_inscripcion (Celery task, EAGER en dev)"},
+    {"id": "MOD-enrollments-views", "path": "apps/enrollments/views.py", "summary": "EnrollmentViewSet (ModelViewSet)"},
+    {"id": "MOD-enrollments-urls", "path": "apps/enrollments/urls.py", "summary": "DefaultRouter().register('', EnrollmentViewSet, basename='enrollment')"},
+    {"id": "MOD-enrollments-serializers", "path": "apps/enrollments/serializers.py", "summary": "EnrollmentSerializer + EnrollmentItemSerializer"},
+    {"id": "MOD-enrollments-admin", "path": "apps/enrollments/admin.py", "summary": "EnrollmentAdmin con EnrollmentItemInline"},
+    {"id": "MOD-enrollments-template-tags", "path": "apps/enrollments/templatetags/enrollment_tags.py", "summary": "enrollment_status_label + enrollment_is_active"},
+    {"id": "MOD-enrollments-context-processor", "path": "apps/enrollments/context_processors.py", "summary": "enrollment_counts con enrollments_total"},
+    {"id": "MOD-payments-config", "path": "apps/payments/apps.py", "summary": "PaymentsConfig.ready() importa signals"},
+    {"id": "MOD-payments-models", "path": "apps/payments/models.py", "summary": "Payment con FK a Enrollment.PROTECT + Index en status"},
+    {"id": "MOD-payments-managers", "path": "apps/payments/managers.py", "summary": "PaymentQuerySet con completed(), pending(), for_enrollment()"},
+    {"id": "MOD-payments-signals", "path": "apps/payments/signals.py", "summary": "@receiver(post_save, Payment) + handler_pago_fallido dead"},
+    {"id": "MOD-payments-views", "path": "apps/payments/views.py", "summary": "PaymentViewSet"},
+    {"id": "MOD-payments-urls", "path": "apps/payments/urls.py", "summary": "DefaultRouter().register('', PaymentViewSet, basename='payment')"},
+    {"id": "MOD-payments-tasks", "path": "apps/payments/tasks.py", "summary": "@shared_task emitir_recibo"},
+    {"id": "MOD-payments-template-tags", "path": "apps/payments/templatetags/payment_tags.py", "summary": "payment_status_badge"},
+    {"id": "MOD-certificates-config", "path": "apps/certificates/apps.py", "summary": "CertificatesConfig.ready() importa signals"},
+    {"id": "MOD-certificates-models", "path": "apps/certificates/models.py", "summary": "Certificate OneToOne a Enrollment"},
+    {"id": "MOD-certificates-views", "path": "apps/certificates/views.py", "summary": "CertificateViewSet + LegacyCertificateViewSet (dead, no registrado)"},
+    {"id": "MOD-certificates-urls", "path": "apps/certificates/urls.py", "summary": "DefaultRouter().register('', CertificateViewSet, basename='certificate')"},
+    {"id": "MOD-certificates-template-tags", "path": "apps/certificates/templatetags/certificate_tags.py", "summary": "format_certificate_id dead + certificate_is_valid"},
+    {"id": "MOD-certificates-context-processor", "path": "apps/certificates/context_processors.py", "summary": "certificate_metadata"},
+    {"id": "MOD-audit-models", "path": "apps/audit/models.py", "summary": "AuditLog con actor FK + level"},
+    {"id": "MOD-audit-admin", "path": "apps/audit/admin.py", "summary": "AuditLogAdmin con @admin.action export_csv + mark_reviewed"},
+    {"id": "MOD-audit-urls", "path": "apps/audit/urls_admin.py", "summary": "export_audit_csv view (no expuesta publicamente via include en urls principal)"}
+  ],
+  "dependencies": [
+    {"name": "Django", "version": "5.0.6", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "djangorestframework", "version": "3.15.1", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "celery", "version": "5.3.6", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "pytest", "version": "8.2.0", "scope": "test", "manifest": "requirements.txt"},
+    {"name": "pytest-django", "version": "4.8.0", "scope": "test", "manifest": "requirements.txt"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "matriculas",
+      "user_description": "El usuario crea, lista y obtiene detalles de una inscripcion via API REST en /api/enrollments/. Un signal post_save lanza una Celery task para procesar la inscripcion.",
+      "traces": [
+        {"n": 1, "what": "User POST /api/enrollments/ con JSON {user, status, total}", "cite": "fxdjango/urls.py:12", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "DefaultRouter dispatcha resolver de BaseRouter", "cite": "apps/enrollments/urls.py:15", "data_in": "ruta vacia", "data_out": "router.urls"},
+        {"n": 3, "what": "router encuentra EnrollmentViewSet por basename='enrollment'", "cite": "apps/enrollments/urls.py:16", "data_in": "EnrollmentViewSet", "data_out": "EnrollmentViewSet"},
+        {"n": 4, "what": "EnrollmentViewSet.create() usa EnrollmentSerializer", "cite": "apps/enrollments/views.py:8", "data_in": "EnrollmentViewSet", "data_out": "EnrollmentSerializer"},
+        {"n": 5, "what": "EnrollmentSerializer valida y crea el Enrollment via EnrollmentManager", "cite": "apps/enrollments/serializers.py:12", "data_in": "EnrollmentSerializer", "data_out": "Enrollment"},
+        {"n": 6, "what": "Enrollment.objects.create() via custom Manager", "cite": "apps/enrollments/models.py:33", "data_in": "Enrollment", "data_out": "INSERT en enrollments_enrollment"},
+        {"n": 7, "what": "post_save signal conecta procesar_inscripcion.delay() (Celery EAGER)", "cite": "apps/enrollments/signals.py:17", "data_in": "Enrollment", "data_out": "task ejecutada"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "apps/enrollments/views.py", "line": 8, "kind": "routing", "condition_text": "DRF dispatch a POST /", "branches": [{"label": "EnrollmentSerializer.valido -> 201", "target_line": 9}, {"label": "validation_error -> 400", "target_line": 9}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con todo en API valido", "user_sees": "201 Created con el Enrollment serializado", "side_effects": ["INSERT en enrollments_enrollment", "INSERT en enrollments_enrollmentitem", "signal post_save", "Celery task ejecutar (EAGER)"], "reversible": true, "final_state": "Enrollment creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /api/enrollments/", "user_sees": "200 OK con [Enrollment, ...]", "side_effects": ["SELECT en enrollments_enrollment"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /api/enrollments/{id}/ con id existente", "user_sees": "200 OK con el Enrollment y sus items", "side_effects": ["SELECT por id con JOIN a items"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /api/enrollments/{id}/ con cambios", "user_sees": "200 OK", "side_effects": ["UPDATE en enrollments_enrollment"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /api/enrollments/{id}/ con id existente", "user_sees": "204 No Content", "side_effects": ["DELETE en enrollments_enrollment + items por cascade"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_get_404", "conditions": "GET /api/enrollments/{id}/ con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_task_signal_sin_transaccion", "conditions": "post_save signal ejecuta Celery task dentro de la misma transaccion (trampa P01)", "user_sees": "Si la transaccion falla despues del signal, la task queda en estado inconsistente", "side_effects": ["Celery task ejecuta incluso si rollback posterior"], "reversible": false, "final_state": "estado_inconsistente"}
+      ],
+      "config": [
+        {"key": "routing.defaultrouter", "kind": "literal", "default": "DefaultRouter()", "effect": "Genera rutas CRUD estandar"},
+        {"key": "signal.post_save", "kind": "literal", "default": "from . import signals en apps.py:ready()", "effect": "Side effect implicito en cada creacion"},
+        {"key": "celery.eager", "kind": "literal", "default": "CELERY_TASK_ALWAYS_EAGER=True en dev", "effect": "Tasks ejecutan sincronamente en tests"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "pagos",
+      "user_description": "El usuario crea, marca como completado y lista pagos via API REST en /api/payments/. Un signal post_save esta presente pero no ejecuta logica (handler_pago_fallido es dead).",
+      "traces": [
+        {"n": 1, "what": "User POST /api/payments/ con JSON {enrollment, amount, status}", "cite": "fxdjango/urls.py:13", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "DefaultRouter dispatcha PaymentViewSet", "cite": "apps/payments/urls.py:6", "data_in": "router.urls", "data_out": "PaymentViewSet"},
+        {"n": 3, "what": "PaymentViewSet.create() usa PaymentSerializer", "cite": "apps/payments/views.py:7", "data_in": "PaymentViewSet", "data_out": "PaymentSerializer"},
+        {"n": 4, "what": "PaymentSerializer valida enrollment FK y amount > 0", "cite": "apps/payments/serializers.py:6", "data_in": "PaymentSerializer", "data_out": "Payment"},
+        {"n": 5, "what": "Payment.objects.create() con PROTECT en enrollment", "cite": "apps/payments/models.py:18", "data_in": "Payment", "data_out": "INSERT en payments_payment"},
+        {"n": 6, "what": "post_save signal conecta pero no hace nada (handler_pago_fallido dead)", "cite": "apps/payments/signals.py:13", "data_in": "Payment", "data_out": "noop"},
+        {"n": 7, "what": "Endpoint responde 201 Created", "cite": "fxdjango/urls.py:13", "data_in": "Payment", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "apps/payments/views.py", "line": 7, "kind": "routing", "condition_text": "DRF dispatch a POST /", "branches": [{"label": "PaymentSerializer.valido -> 201", "target_line": 8}, {"label": "validation_error -> 400", "target_line": 8}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con enrollment existente y amount > 0", "user_sees": "201 Created con el Payment", "side_effects": ["INSERT en payments_payment", "signal post_save vacio"], "reversible": true, "final_state": "Payment creado"},
+        {"id": "R-02", "category": "success_mark_completed", "conditions": "PATCH /api/payments/{id}/ con status=completed", "user_sees": "200 OK con status=completed", "side_effects": ["UPDATE en payments_payment"], "reversible": false, "final_state": "pagado"},
+        {"id": "R-03", "category": "success_list", "conditions": "GET /api/payments/ con o sin filtro status", "user_sees": "200 OK con [Payment, ...]", "side_effects": ["SELECT en payments_payment"], "reversible": true, "final_state": "renderizado"},
+        {"id": "R-04", "category": "success_get", "conditions": "GET /api/payments/{id}/ con id existente", "user_sees": "200 OK con el Payment", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-05", "category": "error_400", "conditions": "POST con amount = 0", "user_sees": "400 Bad Request", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_get_404", "conditions": "GET /api/payments/{id}/ con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_queryset_sin_indice", "conditions": "GET /api/payments/?status=pending sobre miles de pagos (trampa P02: indice solo en status)", "user_sees": "200 OK pero query lenta en enrollment sin indice", "side_effects": ["Full scan si filtra por enrollment"], "reversible": true, "final_state": "performance_penalty"}
+      ],
+      "config": [
+        {"key": "routing.defaultrouter", "kind": "literal", "default": "DefaultRouter()", "effect": "Genera rutas CRUD"},
+        {"key": "model.protect", "kind": "literal", "default": "on_delete=models.PROTECT en enrollment FK", "effect": "No permite borrar enrollment con pagos"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "certificados",
+      "user_description": "El usuario emite, lista y obtiene detalles de certificados via API REST en /api/certificates/. Un signal post_save no ejecuta logica relevante.",
+      "traces": [
+        {"n": 1, "what": "User POST /api/certificates/ con JSON {enrollment}", "cite": "fxdjango/urls.py:14", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "DefaultRouter dispatcha CertificateViewSet", "cite": "apps/certificates/urls.py:6", "data_in": "router.urls", "data_out": "CertificateViewSet"},
+        {"n": 3, "what": "CertificateViewSet.create() usa CertificateSerializer", "cite": "apps/certificates/views.py:7", "data_in": "CertificateViewSet", "data_out": "CertificateSerializer"},
+        {"n": 4, "what": "CertificateSerializer valida enrollment OneToOne y genera serial", "cite": "apps/certificates/serializers.py:6", "data_in": "CertificateSerializer", "data_out": "Certificate"},
+        {"n": 5, "what": "Certificate.objects.create() con OneToOne a Enrollment", "cite": "apps/certificates/models.py:4", "data_in": "Certificate", "data_out": "INSERT en certificates_certificate"},
+        {"n": 6, "what": "post_save signal conecta pero hace nada", "cite": "apps/certificates/signals.py:7", "data_in": "Certificate", "data_out": "noop"},
+        {"n": 7, "what": "Endpoint responde 201 Created con serial generado", "cite": "fxdjango/urls.py:14", "data_in": "Certificate", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "apps/certificates/views.py", "line": 7, "kind": "routing", "condition_text": "DRF dispatch a POST /", "branches": [{"label": "serial unico -> 201", "target_line": 8}, {"label": "serial duplicado -> 400", "target_line": 8}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_emit", "conditions": "POST con enrollment existente (sin certificado previo)", "user_sees": "201 Created con serial auto-generado", "side_effects": ["INSERT en certificates_certificate", "signal post_save vacio"], "reversible": true, "final_state": "certificado emitido"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /api/certificates/", "user_sees": "200 OK con [Certificate, ...]", "side_effects": ["SELECT en certificates_certificate"], "reversible": true, "final_state": "renderizado"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /api/certificates/{id}/ con id existente", "user_sees": "200 OK con el Certificate", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /api/certificates/{id}/ con cambios", "user_sees": "200 OK", "side_effects": ["UPDATE"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /api/certificates/{id}/ con id existente", "user_sees": "204 No Content", "side_effects": ["DELETE"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_get_404", "conditions": "GET /api/certificates/9999/", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_legacy_viewset_dead", "conditions": "Intentar importar LegacyCertificateViewSet (trampa S01: no en urls.py)", "user_sees": "ImportError si se referencia explicitamente; de lo contrario existe como codigo muerto", "side_effects": [], "reversible": true, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "model.onetoone", "kind": "literal", "default": "OneToOneField a Enrollment", "effect": "Un certificado por inscripcion"}
+      ]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "acciones-de-admin",
+      "user_description": "El usuario (admin) ejecuta acciones export_csv y mark_reviewed desde el admin de Django. NO tienen ruta publica accesible via API REST.",
+      "traces": [
+        {"n": 1, "what": "Admin abre /admin/audit/auditlog/ y selecciona logs", "cite": "fxdjango/urls.py:11", "data_in": "HTTP GET", "data_out": "admin shell"},
+        {"n": 2, "what": "Django Admin carga AuditLogAdmin con actions", "cite": "apps/audit/admin.py:21", "data_in": "AuditLogAdmin", "data_out": "actions = [export_csv, mark_reviewed]"},
+        {"n": 3, "what": "Admin marca export_csv y submit", "cite": "apps/audit/admin.py:24", "data_in": "POST al admin", "data_out": "export_csv(request, queryset)"},
+        {"n": 4, "what": "export_csv NO verifica permisos extra (trampa P03)", "cite": "apps/audit/admin.py:25", "data_in": "request, queryset", "data_out": "HttpResponse CSV"},
+        {"n": 5, "what": "Genera CSV con id, actor, action, target, level, reviewed, created_at", "cite": "apps/audit/admin.py:34", "data_in": "queryset", "data_out": "HttpResponse text/csv"},
+        {"n": 6, "what": "Admin recibe download del CSV", "cite": "apps/audit/admin.py:34", "data_in": "HttpResponse", "data_out": "file download"},
+        {"n": 7, "what": "mark_reviewed marca queryset.update(reviewed=True) y llama self.message_user", "cite": "apps/audit/admin.py:49", "data_in": "request, queryset", "data_out": "mensaje flash"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "apps/audit/admin.py", "line": 21, "kind": "admin", "condition_text": "admin ejecuta action sobre queryset seleccionado", "branches": [{"label": "export_csv -> CSV download", "target_line": 24}, {"label": "mark_reviewed -> update + flash", "target_line": 49}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_export_csv", "conditions": "Admin selecciona >=1 log y ejecuta export_csv", "user_sees": "Download de archivo audit_logs.csv con headers y filas", "side_effects": ["SELECT sobre queryset"], "reversible": true, "final_state": "CSV generado"},
+        {"id": "R-02", "category": "success_mark_reviewed", "conditions": "Admin selecciona >=1 log y ejecuta mark_reviewed", "user_sees": "Mensaje flash 'N logs marcados como revisados' y queryset con reviewed=True", "side_effects": ["UPDATE audit_logs SET reviewed=True"], "reversible": false, "final_state": "logs revisados"},
+        {"id": "R-03", "category": "success_list", "conditions": "Admin abre /admin/audit/auditlog/", "user_sees": "Lista paginada de AuditLog con filtros", "side_effects": ["SELECT en audit_log"], "reversible": true, "final_state": "renderizado"},
+        {"id": "R-04", "category": "success_filter", "conditions": "Admin filtra por level=error", "user_sees": "Lista filtrada", "side_effects": ["SELECT con WHERE level"], "reversible": true, "final_state": "filtrado"},
+        {"id": "R-05", "category": "error_no_public_route", "conditions": "Intentar GET /api/audit/export/ (no existe)", "user_sees": "404 Not Found (trampa E05: acciones son admin-only)", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-06", "category": "error_permission_no_check", "conditions": "Staff user sin is_superuser ejecuta export_csv (trampa P03)", "user_sees": "Download exitoso (NO se verifica permiso extra)", "side_effects": ["SELECT queryset con datos sensibles"], "reversible": false, "final_state": "data_exfiltrated"},
+        {"id": "R-07", "category": "error_no_select_action", "conditions": "Admin no selecciona ningun log y ejecuta action", "user_sees": "Mensaje '0 objects' o download CSV vacio", "side_effects": [], "reversible": true, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "admin.actions", "kind": "literal", "default": "actions = [export_csv, mark_reviewed]", "effect": "Solo disponibles desde Django admin shell"},
+        {"key": "admin.no_permission_check", "kind": "literal", "default": "NO se verifica has_perm extra", "effect": "Trampa P03: cualquier staff user puede exportar"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "signals_in_apps_ready", "where": "apps/enrollments/apps.py:10 + apps/enrollments/signals.py:17", "resolution": "EnrollmentsConfig.ready() ejecuta 'from . import signals' que conecta @receiver(post_save, sender=Enrollment). La skill no encuentra el handler mirando solo models.py; debe saltar a apps.py:ready() y a signals.py."},
+    {"id": "TRAP-E02", "kind": "drf_router_generated_routes", "where": "apps/enrollments/urls.py:15-18 + apps/payments/urls.py + apps/certificates/urls.py", "resolution": "Las rutas /api/enrollments/<id>/ se generan por DefaultRouter de DRF a partir del basename. La skill no encuentra path() literales para los IDs; debe leer el router y entender el basename y el queryset."},
+    {"id": "TRAP-E03", "kind": "custom_manager_queryset", "where": "apps/enrollments/managers.py + apps/enrollments/models.py:33", "resolution": "EnrollmentQuerySet expone .active(), .paid(), .by_user(); EnrollmentManager.from_queryset() los expone via Enrollment.objects. La skill no encuentra estos metodos en el Manager estandar."},
+    {"id": "TRAP-E04", "kind": "settings_split_by_env", "where": "fxdjango/settings/{base,dev,prod}.py", "resolution": "DJANGO_SETTINGS_MODULE=fxdjango.settings.{dev,prod} elige archivo. dev usa SQLite :memory: + EAGER + AllowAny. prod usa SQLite file-based + EAGER=False + IsAuthenticated. La skill debe leer fxdjango/settings/dev.py para entender como correr los tests."},
+    {"id": "TRAP-E05", "kind": "admin_action_no_public_route", "where": "apps/audit/admin.py:21-50 + apps/audit/urls_admin.py (no incluido en urls principal)", "resolution": "Las acciones export_csv y mark_reviewed estan registradas en AuditLogAdmin pero NO expuestas como URL publica (solo desde Django admin shell). La skill debe notar que son features accesibles via admin, no via API REST."},
+    {"id": "TRAP-E06", "kind": "template_tags_and_context_processors", "where": "apps/*/templatetags/*_tags.py + apps/*/context_processors.py + fxdjango/settings/base.py:42-48", "resolution": "enrollment_status_label, payment_status_badge, certificate_is_valid son template tags; enrollment_counts, certificate_metadata son context processors. Registrados en TEMPLATES['OPTIONS']['context_processors'] de base.py. La skill debe leer fxdjango/settings/base.py para encontrarlos."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "signals_sin_transaction_envelope", "where": "apps/enrollments/signals.py:17-26", "resolution": "El receiver post_save ejecuta procesar_inscripcion.delay() sin transaction.on_commit. Si la transaccion principal falla despues, la task queda ejecutada con datos parciales. La trampa: el codigo parece correcto pero no es atómico respecto a la transaccion."},
+    {"id": "TRAP-P02", "kind": "queryset_metodo_sin_indice", "where": "apps/payments/managers.py + apps/payments/models.py", "resolution": "PaymentQuerySet expone .completed(), .pending(), .for_enrollment() pero el modelo solo declara Index en status. Queries por enrollment hacen full scan en tablas grandes. La trampa: el manager expone una API comoda que enmascara la falta de indice."},
+    {"id": "TRAP-P03", "kind": "admin_action_sin_permission_check", "where": "apps/audit/admin.py:24-43", "resolution": "export_csv NO verifica request.user.has_perm('audit.export_auditlog'). Cualquier staff user (sin is_superuser) puede exportar el log. La trampa es que la verificacion de permisos adicional debe hacerse explicita dentro del action."},
+    {"id": "TRAP-P04", "kind": "celery_eager_swallows_exceptions", "where": "fxdjango/settings/dev.py:21 + fxdjango/celery.py", "resolution": "CELERY_TASK_ALWAYS_EAGER=True en dev/tests ejecuta las tasks sincronamente dentro del request. Excepciones se propagan al caller; en prod con un worker real, los errores van al broker y la respuesta HTTP no los ve."},
+    {"id": "TRAP-P05", "kind": "router_basename_payment", "where": "apps/payments/urls.py:6", "resolution": "router.register('', PaymentViewSet, basename='payment') genera rutas con prefijo 'payment'. Cualquier codigo que use reverse('payment-list') depende de ese basename. Si cambia a 'payments' o se omite, reverse() lanza NoReverseMatch en runtime."},
+    {"id": "TRAP-P06", "kind": "settings_prod_no_secret_key_env", "where": "fxdjango/settings/base.py:5 + fxdjango/settings/prod.py", "resolution": "SECRET_KEY = os.environ.get('FXDJ_SECRET_KEY', 'fxdjango-insecure-...'). En prod sin la env var, se usa el valor inseguro. Ademas, prod.py no sobreescribe DEBUG=False explicitamente en ALLOWED_HOSTS si no hay env var. La trampa: deployar sin configurar el env expone secrets debil."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_viewset", "where": "apps/certificates/views.py:12-15", "resolution": "LegacyCertificateViewSet(viewsets.ReadOnlyModelViewSet) existe y compila pero ningun router la importa. La skill debe detectar el dead code via grep."},
+    {"id": "TRAP-S02", "kind": "dead_signal_handler", "where": "apps/payments/signals.py:21-25", "resolution": "handler_pago_fallido existe como funcion pero NO esta conectado como signal (@receiver ausente). Cualquier reviewer podria asumir que el handler se ejecuta."},
+    {"id": "TRAP-S03", "kind": "dead_template_tag", "where": "apps/certificates/templatetags/certificate_tags.py:11-13", "resolution": "format_certificate_id existe pero NO se usa en ninguna template del fixture. La trampa: parece util pero la skill debe detectarlo."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-enrollments-create", "kind": "endpoint", "name": "POST /api/enrollments/", "handler": "apps/enrollments/views.py:8", "file": "apps/enrollments/views.py"},
+    {"id": "SRF-route-enrollments-list", "kind": "endpoint", "name": "GET /api/enrollments/", "handler": "apps/enrollments/urls.py:16", "file": "apps/enrollments/urls.py"},
+    {"id": "SRF-route-enrollments-get", "kind": "endpoint", "name": "GET /api/enrollments/{id}/", "handler": "apps/enrollments/views.py:8", "file": "apps/enrollments/views.py"},
+    {"id": "SRF-route-payments-create", "kind": "endpoint", "name": "POST /api/payments/", "handler": "apps/payments/views.py:7", "file": "apps/payments/views.py"},
+    {"id": "SRF-route-payments-list", "kind": "endpoint", "name": "GET /api/payments/", "handler": "apps/payments/urls.py:6", "file": "apps/payments/urls.py"},
+    {"id": "SRF-route-payments-mark-completed", "kind": "endpoint", "name": "PATCH /api/payments/{id}/", "handler": "apps/payments/views.py:7", "file": "apps/payments/views.py"},
+    {"id": "SRF-route-certificates-emit", "kind": "endpoint", "name": "POST /api/certificates/", "handler": "apps/certificates/views.py:7", "file": "apps/certificates/views.py"},
+    {"id": "SRF-route-certificates-list", "kind": "endpoint", "name": "GET /api/certificates/", "handler": "apps/certificates/urls.py:6", "file": "apps/certificates/urls.py"},
+    {"id": "SRF-admin-export-csv", "kind": "admin_action", "name": "export_csv (AuditLogAdmin)", "handler": "apps/audit/admin.py:24", "file": "apps/audit/admin.py"},
+    {"id": "SRF-admin-mark-reviewed", "kind": "admin_action", "name": "mark_reviewed (AuditLogAdmin)", "handler": "apps/audit/admin.py:49", "file": "apps/audit/admin.py"},
+    {"id": "SRF-signal-enrollment-saved", "kind": "signal", "name": "post_save on Enrollment", "handler": "apps/enrollments/signals.py:17", "file": "apps/enrollments/signals.py"},
+    {"id": "SRF-task-procesar-inscripcion", "kind": "celery_task", "name": "procesar_inscripcion", "handler": "apps/enrollments/tasks.py:10", "file": "apps/enrollments/tasks.py"},
+    {"id": "SRF-task-emitir-recibo", "kind": "celery_task", "name": "emitir_recibo", "handler": "apps/payments/tasks.py:5", "file": "apps/payments/tasks.py"},
+    {"id": "SRF-task-generar-pdf", "kind": "celery_task", "name": "generar_pdf", "handler": "apps/certificates/tasks.py:5", "file": "apps/certificates/tasks.py"},
+    {"id": "SRF-template-tag-enrollment-status", "kind": "template_tag", "name": "{% enrollment_status_label %}", "handler": "apps/enrollments/templatetags/enrollment_tags.py:10", "file": "apps/enrollments/templatetags/enrollment_tags.py"},
+    {"id": "SRF-context-processor-enrollments", "kind": "context_processor", "name": "enrollment_counts", "handler": "apps/enrollments/context_processors.py:8", "file": "apps/enrollments/context_processors.py"}
+  ]
+}

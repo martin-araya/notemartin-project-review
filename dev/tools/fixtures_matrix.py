@@ -72,6 +72,8 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
     "gulpfile.js": {"gulp"},
     ".csproj": {"msbuild"},
     ".sln": {"msbuild"},
+    "requirements.txt": {"pip"},
+    "pyproject.toml": {"pyproject"},
 }
 
 # Archivos clave de frameworks
@@ -107,6 +109,10 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     # ASP.NET Core: la presencia de *.csproj indica un proyecto .NET
     # Web SDK. Cualquier *.csproj cubre el framework aspnet-core.
     ".csproj": {"aspnet-core", "csharp"},
+    # Django: manage.py + apps/<app>/apps.py con AppConfig.
+    "manage.py": {"django"},
+    # pytest-django: pytest.ini con DJANGO_SETTINGS_MODULE.
+    "pytest.ini": {"pytest-django"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -147,6 +153,14 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "Microsoft.EntityFrameworkCore": {"ef-core"},
     # ASP.NET Core (F06o): el selector public usa ``aspnet-core``.
     "aspnet-core": {"aspnet-core"},
+    # Django (F06p): la dep ``Django`` indica framework Django.
+    "Django": {"django"},
+    # DRF (F06p): la dep ``djangorestframework`` indica API REST.
+    "djangorestframework": {"drf"},
+    # Celery (F06p): la dep ``celery`` indica tareas asincronas.
+    "celery": {"celery"},
+    # pytest-django (F06p): la dep ``pytest-django`` indica tests Django.
+    "pytest-django": {"pytest-django"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.
@@ -281,6 +295,37 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
             covered["frameworks"].add("ef-core")
         if "Microsoft.AspNetCore" in content:
             covered["frameworks"].add("aspnet-core")
+
+    # Detectar deps de PyPI via requirements.txt o pyproject.toml.
+    for req_file in fixture_dir.rglob("requirements.txt"):
+        if not req_file.is_file():
+            continue
+        try:
+            content = req_file.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "Django" in content:
+            covered["frameworks"].add("django")
+        if "djangorestframework" in content:
+            covered["frameworks"].add("drf")
+        if "celery" in content:
+            covered["frameworks"].add("celery")
+        if "pytest-django" in content:
+            covered["frameworks"].add("pytest-django")
+
+    # Detectar presencia de apps/<app>/apps.py con AppConfig (Django).
+    for apps_py in fixture_dir.rglob("apps.py"):
+        if not apps_py.is_file():
+            continue
+        # Solo contar si vive bajo un directorio apps/ (no el raiz).
+        rel = apps_py.relative_to(fixture_dir).as_posix()
+        if rel.startswith("apps/") and "/" in rel:
+            try:
+                content = apps_py.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if "AppConfig" in content:
+                covered["frameworks"].add("django")
 
     # Recorrido del arbol para extensiones
     for path in fixture_dir.rglob("*"):

@@ -880,8 +880,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
 - [x] Commit `F06o: fixture fx-csharp-aspnet con paquete por feature`.
  
-## F06p — Fixture `fx-python-django`
- 
+## F06p — Fixture `fx-python-django` ✅
+
 **Objetivo:** proyecto Django con API REST y tareas asíncronas.
 **Stack:** Python, Django, Django REST Framework, Celery, settings por entorno.
 **Features:** `matrículas`, `pagos`, `certificados`, `acciones-de-admin`.
@@ -893,6 +893,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Acciones de admin como features que no tienen ruta pública.
 6. Template tags personalizados y context processors.
 **Toolchain de tests:** pytest-django + SQLite, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 4 features (`matriculas`, `pagos`, `certificados`, `acciones-de-admin`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `signals_in_apps_ready` (EnrollmentsConfig.ready() importa signals), `drf_router_generated_routes` (DefaultRouter().register('', ViewSet, basename='enrollment')), `custom_manager_queryset` (EnrollmentQuerySet con .active()/.paid()/.by_user()), `settings_split_by_env` (base/dev/prod), `admin_action_no_public_route` (export_csv y mark_reviewed en AuditLogAdmin sin ruta DRF), `template_tags_and_context_processors` (enrollment_status_label, payment_status_badge, certificate_is_valid + enrollment_counts, certificate_metadata en TEMPLATES['OPTIONS']).
+- [x] 6 trampas del paquete plantadas: `signals_sin_transaction_envelope`, `queryset_metodo_sin_indice`, `admin_action_sin_permission_check`, `celery_eager_swallows_exceptions`, `router_basename_payment`, `settings_prod_no_secret_key_env`.
+- [x] 3 trampas superficiales: `dead_viewset` (LegacyCertificateViewSet no registrado), `dead_signal_handler` (handler_pago_fallido sin @receiver), `dead_template_tag` (format_certificate_id no usado).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 (sin menciones de feature/outcome/trap en comentarios `#`) en verde.
+- [x] Suite pytest-django 30 tests passed (4 Enrollments + 4 Payments + 4 Certificates + 3 AdminActions + 6 TrapsEcosystem + 6 TrapsPackage + 3 TrapsSuperficial) en el contenedor `python:3.11-slim` con `apt-get install make`.
+- [x] `run_fixture_tests.py --fixture fx-python-django --container` -> passed.
+- [x] `dev/tests/test_fx_python_django_ground_truth.py` agregado y verde (53 tests: 11 TestGroundTruthShape + 3 TestUniqueTokensFile + 2 TestAllCitesValid + 13 TestDjangoStructure + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 9 TestManifest).
+- [x] `MATRIX.md` muestra `django`, `drf`, `celery`, `pytest-django`, `pip` cubiertos por fx-python-django.
+- [x] `target_matrix.yml` extendido: `frameworks: [django, drf, celery, pytest-django]` + `build_systems: [pip]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `requirements.txt` -> `{django, drf, celery, pytest-django}` + deteccion de `apps/<app>/apps.py` con `AppConfig` -> `{django}` + `manage.py` -> `{django}` + `pytest.ini` -> `{pytest-django}`.
+- [x] `pytest` total 936 passed (883 anteriores + 53 nuevos), sin regresiones en fx-{python-cli..fx-csharp-aspnet} (15 fixtures).
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] Commit `F06p: fixture fx-python-django con paquete por feature`.
  
 ## F06q — Fixture `fx-python-fastapi`
  

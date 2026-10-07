@@ -1582,3 +1582,164 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   La skill debe notar que el codigo del handler hace
   `OrderBy` despues de `ToListAsync` (cliente), no antes
   (SQL).
+
+### D-221 — Stack del fixture F06p: Python 3.11 + Django 5.0 + DRF 3.15 + Celery 5.3 + pytest-django 4.8 (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: el plan F06p pide un proyecto Django con API REST,
+  tareas asincronas y settings por entorno.
+- Decision: stack = Django 5.0.6 + djangorestframework 3.15.1
+  + celery 5.3.6 + pytest 8.2.0 + pytest-django 4.8.0. Imagen
+  Docker: `python:3.11-slim` con `apt-get install -y make` (la
+  imagen base no incluye make, requerido para `run_fixture_tests.py`).
+- Alternativas: (a) Django 4.2 LTS (descartado: Django 5.0 es
+  el LTS actual y cubre Signal mejor); (b) FastAPI (descartado:
+  el plan siguiente F06q lo hara); (c) Postgres en docker-compose
+  (descartado: SQLite funciona con `EnsureCreated` en dev/tests).
+- Consecuencias: la trampa E04 (settings split) y la trampa
+  P06 (SECRET_KEY default inseguro en prod) son utiles para la
+  skill. El `build-history.sh` no corre `pip install` (costoso),
+  solo crea 8 commits incrementales con placeholders.
+
+### D-222 — Apps en ingles (enrollments, payments, certificates, audit) para CC-11 (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature (en espanol) en cualquier linea del codigo del fixture
+  (`matriculas`, `pagos`, `certificados`, `acciones-de-admin`).
+  Los Django apps usan `apps/<label>/` en el filesystem y
+  `label = 'enrollments'` (ingles) en `AppConfig`.
+- Decision: usar `apps/enrollments/`, `apps/payments/`,
+  `apps/certificates/`, `apps/audit/`. Los nombres de feature en
+  espanol viven solo en el ground truth y en PROGRESS.md/ROADMAP.
+  Los modelos, ViewSets y routers tambien usan identificadores en
+  ingles (`Enrollment`, `PaymentViewSet`, `basename='enrollment'`).
+- Alternativas: (a) `apps/matriculas/` con modelos en espanol
+  (descartado: los nombres en `INSTALLED_APPS = ['apps.matriculas']`
+  aparecerian en strings Python; el CC-11 verifica comments `#` pero
+  no strings, pero la consistencia con los otros fixtures favorece
+  apps en ingles); (b) ofuscar con guiones (descartado: el
+  check_ground_truth detecta substrings).
+- Consecuencias: la skill debe mapear `enrollments` <-> `matriculas`,
+  `payments` <-> `pagos`, `certificates` <-> `certificados`,
+  `audit` <-> `acciones-de-admin` segun el ground truth.
+
+### D-223 — Celery en modo EAGER en dev/tests (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: la trampa P04 exige que el modo EAGER en tests
+  ejecute las tasks sincronamente, ocultando los errores que
+  aparecerian en un worker real con broker.
+- Decision: `CELERY_TASK_ALWAYS_EAGER = True` en
+  `fxdjango/settings/dev.py` (el test runner usa `--ds=fxdjango.settings.dev`).
+  En prod (`fxdjango/settings/prod.py`) el flag es `False`. El broker
+  en `fxdjango/celery.py` es `memory://` (no requiere Redis/RabbitMQ).
+- Alternativas: (a) Redis en docker-compose para tests E2E reales
+  (descartado: agrega 100 MB a la imagen y no aporta a los gates);
+  (b) Celery EAGER siempre (descartado: prod no se comporta asi).
+- Consecuencias: la trampa P04 sigue valida. Los tests invocan
+  las tasks sincrónicamente y verifican el side effect.
+
+### D-224 — Settings split: base / dev / prod con DJANGO_SETTINGS_MODULE (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: la trampa E04 exige que la eleccion del settings
+  module no sea estatica.
+- Decision: `fxdjango/settings/{base,dev,prod}.py` con
+  `from .base import *` en cada uno. `pytest.ini` declara
+  `DJANGO_SETTINGS_MODULE = fxdjango.settings.dev`. El `manage.py`
+  default es `fxdjango.settings.dev` (env var override).
+- Alternativas: (a) un solo settings.py con `if DEBUG` (descartado:
+  no hay trampa visible); (b) `settings.py` con `import *` de
+  `base_local.py` / `base_prod.py` (descartado: menos visible).
+- Consecuencias: la trampa E04 sigue valida. La skill debe leer
+  `fxdjango/settings/dev.py` para entender como correr los tests.
+
+### D-225 — Naming: prefijo `NPRGT-FXDJ-` para los unique tokens de F06p (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXDJ` y exactamente 29 tokens cubriendo
+  stack (`DJANGO-VER`, `DRF-VER`, `CELERY-VER`, `PYTEST-VER`),
+  tipos (`APPCONFIG`, `MODELVIEWSET`, `DEFAULTS-ROUTER`,
+  `POST-SAVE-SIGNAL`, `EAGER-MODE`, `CUSTOM-QUERYSET`,
+  `CUSTOM-MANAGER`, `TEMPLATE-TAG`, `CONTEXT-PROCESSOR`,
+  `CELERY-TASK`, `ADMIN-ACTION`), features
+  (`ENROLLMENT-RESULT-R01`, `PAYMENT-RESULT-R01`,
+  `CERTIFICATE-RESULT-R01`, `AUDIT-ACTION-R01`), marcadores
+  (`MARKER-APP`, `MARKER-SETTINGS`, `MARKER-URLS`), y trampas
+  superficiales (`TRAMP-S01-VIEWSET`, `TRAMP-S02-SIGNAL`,
+  `TRAMP-S03-TAG`). Ninguno aparece en el codigo del fixture
+  (verificado por `TestUniqueTokensFile`).
+- Alternativas: (a) `FXDJANGO` (descartado: excede 8 caracteres);
+  (b) `FXPY-DJ` (descartado: confunde con).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-226 — `Makefile` envuelve `pytest -q --ds=fxdjango.settings.dev` (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: el plan F06x exige paridad con F06n (Kotlin Ktor)
+  en `run_fixture_tests.py --fixture <fx> --container` que
+  ejecuta `make test`.
+- Decision: `TEST_CMD ?= pytest -q --ds=fxdjango.settings.dev` en
+  el Makefile; `test_cmd: make test` en `manifest.yml`.
+- Alternativas: (a) invocar `pytest` directamente (descartado:
+  rompe la paridad con otros fixtures); (b) usar `tox`
+  (descartado: agrega complejidad innecesaria).
+- Consecuencias: el contenedor ejecuta `make test` y los tests
+  corren con la DJANGO_SETTINGS_MODULE correcta.
+
+### D-227 — Imagen Docker `python:3.11-slim` con `apt-get install make` (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: el plan F06x exige paridad con F06o y `make` no
+  viene en la imagen base `python:3.11-slim`.
+- Decision: `FROM python:3.11-slim` + `RUN apt-get install -y make`
+  antes de la copia del codigo (cache de layers). El
+  `requirements.txt` se copia primero para cachear `pip install`.
+- Alternativas: (a) usar `python:3.11-bookworm` (descartado:
+  ~300 MB mas pesada); (b) instalar make via `apk` (descartado:
+  la imagen es Debian-based).
+- Consecuencias: la imagen pesa ~180 MB frente a ~700 MB de
+  la imagen .NET SDK. El `make test` funciona en el contenedor.
+
+### D-228 — `requires: [linux, macos, windows]` en `manifest.yml` (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: el plan F06x exige paridad con F06n.
+- Decision: `requires: [linux, macos, windows]`. El toolchain
+  es multiplataforma (Python 3.11 + Django + DRF + Celery +
+  pytest-django corren en cualquier OS). CC-10 se cumple con
+  el contenedor en Linux; el `Makefile` tambien funciona en
+  host con Python 3.11 + `pip install -r requirements.txt`.
+- Alternativas: (a) solo Linux (descartado: rompe la paridad
+  con F06n).
+- Consecuencias: el fixture es ejecutable en los 3 sistemas.
+
+### D-229 — Deteccion extendida de Django/DRF/Celery/pytest-django en `fixtures_matrix.py` y `target_matrix.yml` (F06p)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06p · vigente
+- Contexto: el plan F06x exige extender `fixtures_matrix.py`
+  para detectar dependencias de Python via `requirements.txt`
+  y `target_matrix.yml` para listar los frameworks nuevos.
+- Decision: agregar a `MANIFEST_BUILD` la entrada
+  `requirements.txt -> {pip}`. Agregar a `FRAMEWORK_FILES`
+  `manage.py -> {django}` y `pytest.ini -> {pytest-django}`.
+  Agregar a `PACKAGE_JSON_MARKERS` las entradas
+  `Django -> {django}`, `djangorestframework -> {drf}`,
+  `celery -> {celery}`, `pytest-django -> {pytest-django}`.
+  Bloque de deteccion: `for req_file in requirements.txt rglob(...):`
+  parsea; adiciona los frameworks si el nombre del paquete esta en
+  el contenido. Deteccion adicional via `apps/.../apps.py` con
+  `AppConfig`. Agregar a `target_matrix.yml`: `frameworks: [django,
+  drf, celery, pytest-django]` + `build_systems: [pip]`.
+- Alternativas: (a) parsear `pyproject.toml` (descartado: el
+  fixture usa `requirements.txt` plano); (b) inferir via la
+  presencia de `manage.py` sin inspeccionar `requirements.txt`
+  (descartado: eso no distingue Django de Flask o FastAPI).
+- Consecuencias: el MATRIX.md muestra fx-python-django cubriendo
+  django, drf, celery, pytest-django y pip. Las futuras
+  fixtures Django (F06p ya las cubre; F06q FastAPI sera
+  Python puro sin Django) reutilizan la misma deteccion.
