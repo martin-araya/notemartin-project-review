@@ -1,0 +1,13 @@
+/.bundle/
+/vendor/
+/node_modules/
+/log/*.log
+/tmp/
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*.log
+/coverage/
+/.byebug_history
+/.rspec_status
+/Gemfile.lock

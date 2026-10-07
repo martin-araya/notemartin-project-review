@@ -1,0 +1,9 @@
+<h1>Factura #<%= @factura.id %></h1>
+<dl>
+  <dt>Proyecto</dt><dd><%= @factura.proyecto_id %></dd>
+  <dt>Monto</dt><dd><%= number_to_currency(@factura.monto_euros) %></dd>
+  <dt>IVA</dt><dd><%= @factura.tarifa_iva %>%</dd>
+  <dt>Total</dt><dd><%= number_to_currency(@factura.total_con_iva) %></dd>
+  <dt>Estado</dt><dd><%= @factura.estado %></dd>
+  <dt>Tracking</dt><dd><%= @factura.tracking_code %></dd>
+</dl>

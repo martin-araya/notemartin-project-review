@@ -26,6 +26,7 @@ axes:
     - csharp
     - ruby
     - elixir
+    - php
 
   # Frameworks y plataformas (al menos un fixture debe usar cada uno)
   frameworks:
@@ -75,6 +76,13 @@ axes:
     - axum
     - tokio
     - thiserror
+    - laravel
+    - eloquent
+    - blade
+    - rails
+    - hotwire
+    - sidekiq
+    - rspec
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -89,6 +97,8 @@ axes:
     - gulp
     - msbuild
     - pip
+    - composer
+    - bundler
 
   # Tipos de archivo y formatos
   file_kinds:

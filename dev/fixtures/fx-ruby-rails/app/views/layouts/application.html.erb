@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>FX Rails</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag if false %>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <%= link_to "Proyectos", proyectos_path %>
+        <%= link_to "Facturas", facturas_path %>
+        <%= link_to "Recordatorios", recordatorios_path %>
+      </nav>
+    </header>
+    <main>
+      <%= yield %>
+    </main>
+  </body>
+</html>

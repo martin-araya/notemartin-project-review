@@ -1,0 +1,190 @@
+{
+  "fixture": "fx-ruby-rails",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-rails-cli", "artifact": "rails (gem)", "file": "Gemfile"},
+    {"id": "EP-application", "artifact": "FxRails::Application < Rails::Application", "file": "config/application.rb"},
+    {"id": "EP-routes", "artifact": "config/routes.rb with resources", "file": "config/routes.rb"},
+    {"id": "EP-schema", "artifact": "db/schema.rb", "file": "db/schema.rb"},
+    {"id": "EP-gemfile", "artifact": "Gemfile with rails 7.0, sidekiq 7, turbo-rails", "file": "Gemfile"}
+  ],
+  "modules": [
+    {"id": "MOD-application", "path": "config/application.rb", "summary": "Aplicacion Rails 7.0 con ActiveRecord, ActiveJob, ActionController, ActionView; load_defaults 7.0; queue_adapter :test"},
+    {"id": "MOD-routes", "path": "config/routes.rb", "summary": "resources :proyectos, :facturas, :recordatorios con member cancel + ruta dead /panel/legacy (P05)"},
+    {"id": "MOD-initializers-sidekiq", "path": "config/initializers/sidekiq.rb", "summary": "Sidekiq 7 con MockRedis en test/dev; redis real en produccion"},
+    {"id": "MOD-initializers-monkey", "path": "config/initializers/patch_array.rb", "summary": "E06: monkey patch sobre Array#sum_safe"},
+    {"id": "MOD-initializers-legacy", "path": "config/initializers/legacy_constants.rb", "summary": "E04: define_method + method_missing legacy con LegacyConstants::Resolver"},
+    {"id": "MOD-model-proyecto", "path": "app/models/proyecto.rb", "summary": "ActiveRecord con before_save :normaliza_codigo, after_destroy, include Trackable, scope activos, validaciones y N+1 latente (P05)"},
+    {"id": "MOD-model-factura", "path": "app/models/factura.rb", "summary": "E02: after_commit :encolar_generacion_pdf (P01), include Trackable, validacion de transicion de estado"},
+    {"id": "MOD-model-recordatorio", "path": "app/models/recordatorio.rb", "summary": "E05: STI con columna `type`; P04: find_sti_class que devuelve Recordatorio base si la clase no existe"},
+    {"id": "MOD-model-recordatorio-email", "path": "app/models/recordatorio/email.rb", "summary": "STI subclase con validacion de email"},
+    {"id": "MOD-model-recordatorio-sms", "path": "app/models/recordatorio/sms.rb", "summary": "STI subclase con validacion de telefono"},
+    {"id": "MOD-model-recordatorio-push", "path": "app/models/recordatorio/push.rb", "summary": "STI subclase plantada sin uso directo en tests"},
+    {"id": "MOD-concern-trackable", "path": "app/models/concerns/trackable.rb", "summary": "E03: concern con `included do`; P03: incluido en Proyecto y Factura"},
+    {"id": "MOD-concern-softdeletable", "path": "app/models/concerns/soft_deletable.rb", "summary": "Concern con scope active/cancelled y cancel!"},
+    {"id": "MOD-controller-proyectos", "path": "app/controllers/proyectos_controller.rb", "summary": "CRUD estandar; E01 convencion sobre configuracion; P05 n_plus_one en index"},
+    {"id": "MOD-controller-facturas", "path": "app/controllers/facturas_controller.rb", "summary": "CRUD JSON con includes(:proyecto); P01 silent_retry via after_commit"},
+    {"id": "MOD-controller-recordatorios", "path": "app/controllers/recordatorios_controller.rb", "summary": "STI via switch por type; Turbo Stream en create exitoso"},
+    {"id": "MOD-job-enviar-recordatorio", "path": "app/jobs/enviar_recordatorio_job.rb", "summary": "P01: retry_on StandardError, attempts: 3, wait 5s; marcar_caducado via update_columns"},
+    {"id": "MOD-job-generar-factura-pdf", "path": "app/jobs/generar_factura_pdf_job.rb", "summary": "P01: retry_on StandardError attempts 2; P02 empty catch"},
+    {"id": "MOD-service-legacy", "path": "app/services/legacy_text_formatter.rb", "summary": "S01: servicio sin consumidores"},
+    {"id": "MOD-service-calculadora-iva", "path": "app/services/calculadora_iva.rb", "summary": "CalculadoraIva con tarifas 0/4/10/21"},
+    {"id": "MOD-view-proyectos-index", "path": "app/views/proyectos/index.html.erb", "summary": "Vista HTML con tabla y N+1 latente en `recordatorios_pendientes`"},
+    {"id": "MOD-view-recordatorios-index", "path": "app/views/recordatorios/index.html.erb", "summary": "Vista con form_for STI; usa Turbo Stream si esta disponible"},
+    {"id": "MOD-view-recordatorios-partial", "path": "app/views/recordatorios/_recordatorio.html.erb", "summary": "Partial usado por el index"},
+    {"id": "MOD-view-recordatorios-unused", "path": "app/views/recordatorios/_unused_partial.html.erb", "summary": "S03: partial huerfano no referenciado"},
+    {"id": "MOD-partial-form", "path": "app/views/proyectos/_form.html.erb", "summary": "Form parcial compartido entre new y edit"},
+    {"id": "MOD-migration-proyectos", "path": "db/migrate/001_create_proyectos.rb", "summary": "Migracion con codigo unique index"},
+    {"id": "MOD-migration-facturas", "path": "db/migrate/002_create_facturas.rb", "summary": "Migracion con referencia a proyectos"},
+    {"id": "MOD-migration-recordatorios", "path": "db/migrate/003_create_recordatorios.rb", "summary": "Migracion STI con columna type"}
+  ],
+  "dependencies": [
+    {"name": "rails", "version": "7.0.8", "scope": "runtime", "manifest": "Gemfile"},
+    {"name": "sqlite3", "version": "1.6.9", "scope": "runtime", "manifest": "Gemfile"},
+    {"name": "puma", "version": "6.4.2", "scope": "runtime", "manifest": "Gemfile"},
+    {"name": "turbo-rails", "version": "2.0.5", "scope": "runtime", "manifest": "Gemfile"},
+    {"name": "stimulus-rails", "version": "1.3.3", "scope": "runtime", "manifest": "Gemfile"},
+    {"name": "sidekiq", "version": "7.2.4", "scope": "runtime", "manifest": "Gemfile"},
+    {"name": "rspec-rails", "version": "6.1.2", "scope": "test", "manifest": "Gemfile"},
+    {"name": "factory_bot", "version": "6.6.0", "scope": "test", "manifest": "Gemfile"},
+    {"name": "capybara", "version": "3.40.0", "scope": "test", "manifest": "Gemfile"},
+    {"name": "mock_redis", "version": "0.45.0", "scope": "test", "manifest": "Gemfile"},
+    {"name": "ruby", "version": "~> 3.1.0", "scope": "runtime", "manifest": "Gemfile"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "proyectos",
+      "user_description": "CRUD de proyectos via web (HTML) con callbacks de normalizacion y logging al destruir. E01 convencion sobre configuracion con resources; P05 N+1 latente en index al contar recordatorios por proyecto.",
+      "traces": [
+        {"n": 1, "what": "User GET /proyectos", "cite": "config/routes.rb:3", "data_in": "HTTP GET", "data_out": "Routing a proyectos#index"},
+        {"n": 2, "what": "ProyectosController#index carga proyectos activos", "cite": "app/controllers/proyectos_controller.rb:5", "data_in": "request", "data_out": "@proyectos = Proyecto.activos.limit(50)"},
+        {"n": 3, "what": "View itera proyectos y muestra recordatorios_pendientes (N+1)", "cite": "app/views/proyectos/index.html.erb:13", "data_in": "@proyectos", "data_out": "HTML con N queries adicionales"},
+        {"n": 4, "what": "Trackable before_create asigna tracking_id", "cite": "app/models/concerns/trackable.rb:9", "data_in": "Proyecto nuevo", "data_out": "tracking_id asignado"},
+        {"n": 5, "what": "before_save :normaliza_codigo pone codigo en mayusculas", "cite": "app/models/proyecto.rb:10", "data_in": "Proyecto", "data_out": "codigo normalizado"},
+        {"n": 6, "what": "after_destroy :registrar_baja_en_log emite un log", "cite": "app/models/proyecto.rb:11", "data_in": "Proyecto", "data_out": "log info"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "app/models/proyecto.rb", "line": 18, "kind": "validation", "condition_text": "validates :estado, inclusion: { in: %w[activo pausado cerrado] }", "branches": [{"label": "estado valido -> save OK", "target_line": 35}, {"label": "estado invalido -> 422", "target_line": 35}]},
+        {"id": "DP-002", "file": "app/controllers/proyectos_controller.rb", "line": 6, "kind": "callback", "condition_text": "View llama a recordatorios_pendientes por cada proyecto (P05)", "branches": [{"label": "0 recordatorios -> no queries", "target_line": 5}, {"label": "N proyectos con recordatorios -> N queries", "target_line": 5}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_list", "conditions": "GET /proyectos con proyectos existentes", "user_sees": "200 OK con tabla de proyectos y conteo de recordatorios", "side_effects": ["N+1 query a recordatorios por cada proyecto (P05)"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-02", "category": "success_create", "conditions": "POST con codigo, nombre, presupuesto, estado validos", "user_sees": "redirect a proyectos/:id con flash 'Proyecto creado.'", "side_effects": ["INSERT en proyectos", "Trackable asigna tracking_id", "log si after_destroy"], "reversible": true, "final_state": "Proyecto creado"},
+        {"id": "R-03", "category": "success_show", "conditions": "GET /proyectos/:id con codigo existente", "user_sees": "200 OK con el proyecto, tracking_code, links a edit/delete", "side_effects": ["SELECT por codigo"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /proyectos/:id con cambios validos", "user_sees": "redirect a proyectos/:id con flash 'Proyecto actualizado.'", "side_effects": ["UPDATE en proyectos", "before_save normaliza codigo"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_destroy", "conditions": "DELETE /proyectos/:id con codigo existente", "user_sees": "redirect a /proyectos con flash 'Proyecto eliminado.'", "side_effects": ["DELETE en proyectos + cascade facturas/recordatorios", "log destroy"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_404", "conditions": "GET /proyectos/:id con codigo inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_422", "conditions": "POST con nombre vacio o presupuesto < 0 o estado invalido", "user_sees": "422 Unprocessable Entity con errores de validacion", "side_effects": [], "reversible": true, "final_state": "rejected"}
+      ],
+      "config": [
+        {"key": "callback.before_save", "kind": "literal", "default": "normaliza_codigo en Proyecto", "effect": "Strip + upcase del codigo antes de guardar (E02)"},
+        {"key": "callback.after_destroy", "kind": "literal", "default": "registrar_baja_en_log en Proyecto", "effect": "Log de la baja en Rails.logger (E02)"},
+        {"key": "concern.included", "kind": "literal", "default": "Trackable en Proyecto y Factura (P03)", "effect": "before_create asigna tracking_id, before_save stamp last_seen_at"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "facturas",
+      "user_description": "CRUD JSON de facturas con after_commit que encola GenerarFacturaPdfJob. P01 silent_retry; P02 empty catch; P05 n_plus_one mitigado con includes(:proyecto).",
+      "traces": [
+        {"n": 1, "what": "User POST /facturas con JSON {proyecto_id, monto_cents, tarifa_iva}", "cite": "config/routes.rb:4", "data_in": "HTTP POST JSON", "data_out": "Routing a facturas#create"},
+        {"n": 2, "what": "FacturasController#create crea Factura", "cite": "app/controllers/facturas_controller.rb:18", "data_in": "Request", "data_out": "Factura con datos validados"},
+        {"n": 3, "what": "after_commit :encolar_generacion_pdf dispara el job", "cite": "app/models/factura.rb:22", "data_in": "Factura persistida", "data_out": "GenerarFacturaPdfJob.perform_later(id)"},
+        {"n": 4, "what": "Job renderiza PDF y logea", "cite": "app/jobs/generar_factura_pdf_job.rb:17", "data_in": "factura_id", "data_out": "log info con bytesize"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "app/models/factura.rb", "line": 18, "kind": "validation", "condition_text": "validates :tarifa_iva, inclusion: { in: [0, 4, 10, 21] }", "branches": [{"label": "tarifa valida -> 201", "target_line": 25}, {"label": "tarifa invalida -> 422", "target_line": 25}]},
+        {"id": "DP-004", "file": "app/models/factura.rb", "line": 38, "kind": "transition", "condition_text": "estado cambia respetando la matriz de transiciones (borrador->emitida->pagada)", "branches": [{"label": "transicion valida -> update", "target_line": 42}, {"label": "transicion invalida -> 422", "target_line": 42}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con proyecto existente, tarifa valida, monto > 0", "user_sees": "201 Created con la Factura serializada (monto_cents, monto_euros, tarifa_iva, total_con_iva, tracking_code)", "side_effects": ["INSERT en facturas", "after_commit encola GenerarFacturaPdfJob"], "reversible": true, "final_state": "Factura creada + job encolado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /facturas con N facturas", "user_sees": "200 OK con [Factura, ...] (N+1 mitigado con includes)", "side_effects": ["SELECT facturas JOIN proyectos"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-03", "category": "success_show", "conditions": "GET /facturas/:id con id existente", "user_sees": "200 OK con la Factura", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /facturas/:id con campos validos", "user_sees": "200 OK con la Factura actualizada", "side_effects": ["UPDATE en facturas"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /facturas/:id con id existente", "user_sees": "204 No Content", "side_effects": ["DELETE en facturas"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_422", "conditions": "POST con tarifa invalida o monto negativo", "user_sees": "422 Unprocessable Entity con errors", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "success_job_silently_retried", "conditions": "GenerarFacturaPdfJob falla en handle() y retry_on mantiene 2 intentos (P01)", "user_sees": "El job se reencola 1 vez mas antes de fail()", "side_effects": ["retry con backoff 5s", "Log::error registrado", "no se notifica al controller"], "reversible": false, "final_state": "job_failed"}
+      ],
+      "config": [
+        {"key": "job.retry", "kind": "literal", "default": "retry_on StandardError, wait: 5s, attempts: 2 en GenerarFacturaPdfJob", "effect": "P01 silent_retry"},
+        {"key": "callback.after_commit", "kind": "literal", "default": "encolar_generacion_pdf en Factura (E02)", "effect": "Encola el job solo tras commit"},
+        {"key": "model.transition", "kind": "literal", "default": "estado_target_valido en Factura", "effect": "Solo permite transiciones borrador->emitida->pagada"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "recordatorios",
+      "user_description": "CRUD con STI (Recordatorio::Email, Recordatorio::Sms, Recordatorio::Push) y cancel via soft-delete. E05 STI con columna `type`; P04 sti_invalid_type_silent via find_sti_class; P02 update_columns en job para evitar validacion fecha_envio_no_pasada.",
+      "traces": [
+        {"n": 1, "what": "User POST /recordatorios con type=Recordatorio::Email y destinatario_email", "cite": "config/routes.rb:5", "data_in": "HTTP POST", "data_out": "Routing a recordatorios#create"},
+        {"n": 2, "what": "RecordatoriosController#create dispatch por type", "cite": "app/controllers/recordatorios_controller.rb:23", "data_in": "params[:type]", "data_out": "Recordatorio::Email.new"},
+        {"n": 3, "what": "STI: find_sti_class devuelve Recordatorio::Email", "cite": "app/models/recordatorio.rb:10", "data_in": "type='Recordatorio::Email'", "data_out": "clase resuelta"},
+        {"n": 4, "what": "Validacion: destinatario_email formato email", "cite": "app/models/recordatorio/email.rb:3", "data_in": "destinatario_email", "data_out": "valid OK o errors"},
+        {"n": 5, "what": "Save: before_save :asegurar_clase_sti no-op (E05 ya resuelto)", "cite": "app/models/recordatorio.rb:17", "data_in": "Recordatorio", "data_out": "save"},
+        {"n": 6, "what": "EnviarRecordatorioJob.perform_later (no se encola automaticamente en este modelo)", "cite": "app/jobs/enviar_recordatorio_job.rb:5", "data_in": "recordatorio_id", "data_out": "job encolado"},
+        {"n": 7, "what": "redirect_to recordatorios_path con flash 'Recordatorio creado.'", "cite": "app/controllers/recordatorios_controller.rb:27", "data_in": "Recordatorio", "data_out": "302 redirect"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "app/controllers/recordatorios_controller.rb", "line": 22, "kind": "stitch", "condition_text": "case params[:type] when Recordatorio::Email / Sms / Push / nil", "branches": [{"label": "type conocido -> subclase", "target_line": 31}, {"label": "type nil -> Recordatorio base", "target_line": 31}, {"label": "type invalido -> Recordatorio base (P04)", "target_line": 31}]},
+        {"id": "DP-006", "file": "app/models/recordatorio.rb", "line": 10, "kind": "sti", "condition_text": "find_sti_class(type_name)", "branches": [{"label": "type es subclase valida -> devuelve subclase", "target_line": 17}, {"label": "type desconocido -> devuelve Recordatorio base (P04)", "target_line": 17}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con type=Recordatorio::Email y destinatario_email valido", "user_sees": "302 redirect a /recordatorios con flash 'Recordatorio creado.'", "side_effects": ["INSERT en recordatorios con type='Recordatorio::Email'"], "reversible": true, "final_state": "Recordatorio::Email creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /recordatorios", "user_sees": "200 OK con tabla de recordatorios y form STI", "side_effects": ["SELECT recordatorios ORDER BY fecha_envio ASC LIMIT 50"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-03", "category": "success_show", "conditions": "GET /recordatorios/:id con id existente", "user_sees": "200 OK con el recordatorio", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_cancel", "conditions": "PATCH /recordatorios/:id/cancel", "user_sees": "302 redirect a /recordatorios con flash 'Recordatorio cancelado.'", "side_effects": ["UPDATE cancelled_at = NOW() (SoftDeletable concern)"], "reversible": false, "final_state": "cancelled"},
+        {"id": "R-05", "category": "success_sti_sms", "conditions": "POST con type=Recordatorio::Sms y destinatario_telefono valido", "user_sees": "302 redirect a /recordatorios", "side_effects": ["INSERT con type='Recordatorio::Sms'"], "reversible": true, "final_state": "Recordatorio::Sms creado"},
+        {"id": "R-06", "category": "success_sti_silent", "conditions": "POST con type='NoExiste::Clase' (P04 trampa)", "user_sees": "302 redirect OK; el recordatorio se guarda como Recordatorio base", "side_effects": ["INSERT con type original 'NoExiste::Clase'"], "reversible": true, "final_state": "Recordatorio silenciosamente mal clasificado"},
+        {"id": "R-07", "category": "error_422", "conditions": "POST con fecha_envio en el pasado", "user_sees": "422 Unprocessable Entity con mensaje 'Fecha envio no puede estar en el pasado'", "side_effects": [], "reversible": true, "final_state": "rejected"}
+      ],
+      "config": [
+        {"key": "sti.inheritance_column", "kind": "literal", "default": "Recordatorio.inheritance_column = :type (E05)", "effect": "STI con columna `type`"},
+        {"key": "sti.find_sti_class", "kind": "literal", "default": "Recordatorio.find_sti_class devuelve Recordatorio base si type invalido (P04)", "effect": "sti_invalid_type_silent"},
+        {"key": "job.retry", "kind": "literal", "default": "retry_on StandardError, wait: 5s, attempts: 3 en EnviarRecordatorioJob", "effect": "P01 silent_retry; P02 update_columns cuando fecha_envio paso"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "convention_over_configuration", "where": "config/routes.rb:2-7 + app/controllers/proyectos_controller.rb + app/controllers/facturas_controller.rb + app/controllers/recordatorios_controller.rb", "resolution": "Rails resuelve 7 rutas por cada `resources`. La skill debe notar el mapping implicito entre nombre del recurso y nombre del controlador (pluralizacion, snake_case)."},
+    {"id": "TRAP-E02", "kind": "callbacks", "where": "app/models/proyecto.rb:10-11 (before_save, after_destroy) + app/models/factura.rb:22 (after_commit) + app/models/concerns/trackable.rb:8-9 (included do)", "resolution": "Los callbacks de ActiveRecord (before_save, after_commit, after_destroy) se ejecutan en el orden definido. La skill debe seguir el flujo INSERT/UPDATE/DELETE y notar los side effects no obvios (logs, jobs encolados)."},
+    {"id": "TRAP-E03", "kind": "concerns_included", "where": "app/models/concerns/trackable.rb:6-9 (included do con before_create y before_save) + app/models/proyecto.rb:4 (include Trackable) + app/models/factura.rb:4 (include Trackable)", "resolution": "Los concerns con `included do` ejecutan sus bloques en el contexto de la clase que los incluye. Trackable se incluye en Proyecto y Factura, por lo que ambas tienen before_create :assign_tracking_id y before_save :stamp_last_seen_at (trampa P03: duplicacion sutil entre ambos modelos)."},
+    {"id": "TRAP-E04", "kind": "metaprogramming", "where": "config/initializers/legacy_constants.rb:1-30 (module LegacyConstants + module Resolver con define_method y method_missing)", "resolution": "Define_method genera metodos en runtime; method_missing captura nombres que empiezan con 'lookup_'. La skill debe leer config/initializers/ para descubrir la API implicita."},
+    {"id": "TRAP-E05", "kind": "sti_type_column", "where": "app/models/recordatorio.rb:9 (self.inheritance_column = :type) + app/models/recordatorio/email.rb, sms.rb, push.rb + db/migrate/003_create_recordatorios.rb (t.string :type)", "resolution": "STI con columna `type`. La skill debe seguir la jerarquia Recordatorio -> Email/Sms/Push via la columna type. La migracion declara la columna como string con default 'Recordatorio'."},
+    {"id": "TRAP-E06", "kind": "monkey_patches", "where": "config/initializers/patch_array.rb:1-7 (class Array; def sum_safe; end; end)", "resolution": "Monkey patch sobre Array#sum_safe que redefine el comportamiento para colecciones grandes. La skill debe listar todos los archivos en config/initializers/ para descubrir la API modificada."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "job_silent_retry", "where": "app/jobs/enviar_recordatorio_job.rb:9 (retry_on StandardError, wait: 5s, attempts: 3) + app/jobs/generar_factura_pdf_job.rb:9 (retry_on StandardError, wait: 5s, attempts: 2)", "resolution": "El job se reintenta 2-3 veces con backoff de 5s antes de fail. El controller responde 202 sin esperar al job, por lo que el usuario nunca ve si fallo o no."},
+    {"id": "TRAP-P02", "kind": "stale_record_in_callback", "where": "app/jobs/enviar_recordatorio_job.rb:14-17 (update_columns para saltar validacion fecha_envio_no_pasada) + app/models/recordatorio.rb:20-22 (validacion que rechazaria update normal)", "resolution": "El job usa update_columns para saltarse la validacion de fecha_envio_no_pasada. La trampa: en el flujo normal, la validacion bloquea la actualizacion del estado a 'caducado' cuando fecha_envio esta en el pasado."},
+    {"id": "TRAP-P03", "kind": "concern_included_twice", "where": "app/models/proyecto.rb:4 + app/models/factura.rb:4 (ambos `include Trackable`)", "resolution": "Trackable esta duplicado en Proyecto y Factura. La skill debe notar que la logica de tracking_id y last_seen_at se aplica en ambos modelos y que un cambio en el concern afecta a los dos."},
+    {"id": "TRAP-P04", "kind": "sti_invalid_type_silent", "where": "app/models/recordatorio.rb:10-15 (find_sti_class que devuelve Recordatorio base si la clase no existe)", "resolution": "Sobreescribimos find_sti_class para evitar ActiveRecord::SubclassNotFound. Si type='NoExiste::Clase', el recordatorio se guarda silenciosamente como Recordatorio base."},
+    {"id": "TRAP-P05", "kind": "route_convention_override", "where": "config/routes.rb:9 (get 'panel/legacy', to: 'application#legacy_panel') + app/controllers/application_controller.rb:4-6 (legacy_panel que solo renderiza 'legacy')", "resolution": "Ruta dead que aparece en `rails routes` pero nunca es invocada por la suite de tests ni por los controladores. La skill debe listar rutas y notar cuales no tienen consumidores."},
+    {"id": "TRAP-P06", "kind": "initializer_load_order", "where": "config/initializers/legacy_constants.rb (sin `to_prepare`) + config/initializers/patch_array.rb", "resolution": "Los initializers se cargan en orden alfabetico por defecto; legacy_constants.rb corre antes que patch_array.rb. La trampa: si legacy_constants referencia Array#sum_safe, fallara; afortunadamente solo define un Resolver independiente."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_service", "where": "app/services/legacy_text_formatter.rb (LegacyTextFormatter.legacy_format sin consumidores)", "resolution": "Servicio dead con un unico metodo de clase. La skill debe listar archivos en app/services/ y notar la falta de referencias."},
+    {"id": "TRAP-S02", "kind": "empty_concern_dir", "where": "app/controllers/concerns/.keep (directorio vacio, sin concerns)", "resolution": "Directorio con solo .keep, sin archivos .rb. La skill debe distinguir entre `app/controllers/concerns/` y `app/models/concerns/` (este ultimo tiene trackable.rb y soft_deletable.rb)."},
+    {"id": "TRAP-S03", "kind": "unused_partial", "where": "app/views/recordatorios/_unused_partial.html.erb (partial huerfano, no referenciado)", "resolution": "Partial nunca referenciado por el index. La skill debe parsear todos los partials con nombre _*.html.erb y verificar que esten invocados desde una vista."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-proyectos", "kind": "endpoint", "name": "resources :proyectos (E01)", "handler": "config/routes.rb:3", "file": "config/routes.rb"},
+    {"id": "SRF-route-facturas", "kind": "endpoint", "name": "resources :facturas (E01)", "handler": "config/routes.rb:4", "file": "config/routes.rb"},
+    {"id": "SRF-route-recordatorios", "kind": "endpoint", "name": "resources :recordatorios + member cancel (E01)", "handler": "config/routes.rb:5-9", "file": "config/routes.rb"},
+    {"id": "SRF-route-legacy", "kind": "endpoint", "name": "GET /panel/legacy (P05 dead)", "handler": "config/routes.rb:9", "file": "config/routes.rb"},
+    {"id": "SRF-controller-proyectos", "kind": "controller", "name": "ProyectosController", "handler": "app/controllers/proyectos_controller.rb:1", "file": "app/controllers/proyectos_controller.rb"},
+    {"id": "SRF-controller-facturas", "kind": "controller", "name": "FacturasController", "handler": "app/controllers/facturas_controller.rb:1", "file": "app/controllers/facturas_controller.rb"},
+    {"id": "SRF-controller-recordatorios", "kind": "controller", "name": "RecordatoriosController (STI dispatch)", "handler": "app/controllers/recordatorios_controller.rb:1", "file": "app/controllers/recordatorios_controller.rb"},
+    {"id": "SRF-callback-proyecto", "kind": "callback", "name": "before_save :normaliza_codigo (E02)", "handler": "app/models/proyecto.rb:10", "file": "app/models/proyecto.rb"},
+    {"id": "SRF-callback-factura", "kind": "callback", "name": "after_commit :encolar_generacion_pdf (E02)", "handler": "app/models/factura.rb:22", "file": "app/models/factura.rb"},
+    {"id": "SRF-concern-trackable", "kind": "concern", "name": "Trackable (E03 + P03)", "handler": "app/models/concerns/trackable.rb:1", "file": "app/models/concerns/trackable.rb"},
+    {"id": "SRF-sti-recordatorio", "kind": "sti", "name": "Recordatorio STI (E05 + P04)", "handler": "app/models/recordatorio.rb:9", "file": "app/models/recordatorio.rb"},
+    {"id": "SRF-monkey-array", "kind": "initializer", "name": "Array#sum_safe (E06)", "handler": "config/initializers/patch_array.rb:1", "file": "config/initializers/patch_array.rb"},
+    {"id": "SRF-legacy-resolver", "kind": "initializer", "name": "LegacyConstants::Resolver (E04)", "handler": "config/initializers/legacy_constants.rb:1", "file": "config/initializers/legacy_constants.rb"},
+    {"id": "SRF-job-enviar-recordatorio", "kind": "job", "name": "EnviarRecordatorioJob (P01 + P02)", "handler": "app/jobs/enviar_recordatorio_job.rb:1", "file": "app/jobs/enviar_recordatorio_job.rb"},
+    {"id": "SRF-job-generar-factura-pdf", "kind": "job", "name": "GenerarFacturaPdfJob (P01 + P02)", "handler": "app/jobs/generar_factura_pdf_job.rb:1", "file": "app/jobs/generar_factura_pdf_job.rb"},
+    {"id": "SRF-sidekiq-init", "kind": "initializer", "name": "Sidekiq con MockRedis (E04 + P04)", "handler": "config/initializers/sidekiq.rb:1", "file": "config/initializers/sidekiq.rb"},
+    {"id": "SRF-migration-proyectos", "kind": "schema", "name": "001_create_proyectos", "handler": "db/migrate/001_create_proyectos.rb:1", "file": "db/migrate/001_create_proyectos.rb"},
+    {"id": "SRF-migration-facturas", "kind": "schema", "name": "002_create_facturas", "handler": "db/migrate/002_create_facturas.rb:1", "file": "db/migrate/002_create_facturas.rb"},
+    {"id": "SRF-migration-recordatorios", "kind": "schema", "name": "003_create_recordatorios (STI column type)", "handler": "db/migrate/003_create_recordatorios.rb:1", "file": "db/migrate/003_create_recordatorios.rb"}
+  ]
+}

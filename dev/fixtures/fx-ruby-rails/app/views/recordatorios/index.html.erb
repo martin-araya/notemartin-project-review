@@ -1,0 +1,23 @@
+<h1>Recordatorios</h1>
+
+<%= form_with url: recordatorios_path, method: :post, data: { turbo: true } do %>
+  <select name="recordatorio[type]">
+    <option value="Recordatorio::Email">Email</option>
+    <option value="Recordatorio::Sms">SMS</option>
+    <option value="Recordatorio::Push">Push</option>
+  </select>
+  <input type="text" name="recordatorio[mensaje]" placeholder="Mensaje">
+  <input type="datetime-local" name="recordatorio[fecha_envio]">
+  <input type="email" name="recordatorio[destinatario_email]" placeholder="email">
+  <input type="text" name="recordatorio[destinatario_telefono]" placeholder="+34...">
+  <input type="text" name="recordatorio[device_token]" placeholder="device token">
+  <input type="text" name="recordatorio[sujeto_type]" value="Proyecto" hidden>
+  <input type="number" name="recordatorio[sujeto_id]" placeholder="id proyecto">
+  <button type="submit">Crear</button>
+<% end %>
+
+<div id="recordatorios">
+  <% @recordatorios.each do |r| %>
+    <%= render partial: "recordatorio", locals: { recordatorio: r } %>
+  <% end %>
+</div>

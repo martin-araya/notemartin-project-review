@@ -1,0 +1,30 @@
+# Imagen para ejecutar los tests del fixture F06v (Rails).
+# F06v: usamos ruby:3.1.6-bookworm en lugar de 3.2 para evitar bugs de
+# actionview 7.0 con Ruby 3.2.11+ (ENCODING_FLAG load order). 3.1 es
+# la ultima version menor donde Rails 7.0 funciona sin workarounds.
+FROM ruby:3.1.6-bookworm
+
+# build-essential, libsqlite3-dev y libffi-dev son necesarios para compilar
+# las gemas nativas (sqlite3, racc, nokogiri, bcrypt, etc.).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libsqlite3-dev \
+    libffi-dev \
+    git \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+# Cache de dependencias: copiamos solo el Gemfile para aprovechar la cache de
+# Docker si las gemas no cambian.
+COPY Gemfile ./
+RUN bundle config set --local without 'production' && \
+    bundle install --jobs=4 --quiet
+
+COPY . .
+
+# Asegurar que tmp/ y log/ existen para Rails.
+RUN mkdir -p tmp/cache log storage/framework/{cache/data,sessions,views}
+
+CMD ["make", "test"]

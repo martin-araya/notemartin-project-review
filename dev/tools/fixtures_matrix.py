@@ -56,6 +56,7 @@ EXT_LANG: Dict[str, Set[str]] = {
     ".cs": {"csharp"},
     ".rb": {"ruby"},
     ".ex": {"elixir"}, ".exs": {"elixir"},
+    ".php": {"php"},
 }
 
 # Manifiestos -> sistemas de build
@@ -74,6 +75,7 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
     ".sln": {"msbuild"},
     "requirements.txt": {"pip"},
     "pyproject.toml": {"pyproject"},
+    "composer.json": {"composer"},
 }
 
 # Archivos clave de frameworks
@@ -173,6 +175,10 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "typeorm": {"typeorm"},
     # BullMQ (F06r): la dep ``bullmq`` indica cola de mensajes.
     "bullmq": {"bullmq"},
+    # Laravel (F06u): la dep ``laravel/framework`` indica framework Laravel.
+    "laravel/framework": {"laravel"},
+    # Eloquent: parte de Laravel, cubierto por la misma dep.
+    # Blade: parte de Laravel, cubierto por la misma dep.
 }
 
 # Dependencias que definen el ecosistema por si mismas.
@@ -346,6 +352,53 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 continue
             if "AppConfig" in content:
                 covered["frameworks"].add("django")
+
+    # Detectar Laravel via composer.json con laravel/framework (F06u).
+    for composer_json in fixture_dir.rglob("composer.json"):
+        if not composer_json.is_file():
+            continue
+        # Solo contar composer.json en la raiz o en un subdirectorio (no en vendor/).
+        rel = composer_json.relative_to(fixture_dir).as_posix()
+        if rel.startswith("vendor/"):
+            continue
+        try:
+            data = json.loads(composer_json.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        deps = {}
+        deps.update(data.get("require", {}) or {})
+        deps.update(data.get("require-dev", {}) or {})
+        if "laravel/framework" in deps:
+            covered["frameworks"].add("laravel")
+            covered["frameworks"].add("eloquent")
+            covered["frameworks"].add("blade")
+        # Markers adicionales para Laravel.
+        for marker, frameworks in PACKAGE_JSON_MARKERS.items():
+            if marker in deps:
+                covered["frameworks"] |= frameworks
+        break
+
+    # Detectar Rails via Gemfile (F06v).
+    for gemfile in fixture_dir.rglob("Gemfile"):
+        if not gemfile.is_file():
+            continue
+        rel = gemfile.relative_to(fixture_dir).as_posix()
+        if rel.startswith("vendor/") or rel.startswith(".bundle/"):
+            continue
+        try:
+            content = gemfile.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "gem \"rails\"" in content or "gem 'rails'" in content:
+            covered["frameworks"].add("rails")
+            covered["build_systems"].add("bundler")
+            if "turbo-rails" in content or "turbo" in content:
+                covered["frameworks"].add("hotwire")
+            if "sidekiq" in content:
+                covered["frameworks"].add("sidekiq")
+            if "rspec-rails" in content:
+                covered["frameworks"].add("rspec")
+        break
 
     # Detectar FastAPI via app/main.py con constructor FastAPI() (F06q).
     for main_py in fixture_dir.rglob("main.py"):

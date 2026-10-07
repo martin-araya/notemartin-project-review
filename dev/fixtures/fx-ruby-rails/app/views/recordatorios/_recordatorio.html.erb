@@ -1,0 +1,9 @@
+<div class="recordatorio" data-testid="recordatorio-<%= recordatorio.id %>">
+  <strong><%= recordatorio.type %></strong>
+  <span><%= recordatorio.mensaje %></span>
+  <span><%= recordatorio.fecha_envio %></span>
+  <span><%= recordatorio.estado %></span>
+  <% if recordatorio.respond_to?(:cancelled?) && !recordatorio.cancelled? %>
+    <%= button_to "Cancelar", cancel_recordatorio_path(recordatorio), method: :patch %>
+  <% end %>
+</div>

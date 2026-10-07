@@ -1,0 +1,17 @@
+# Metadata del fixture F06v: fx-ruby-rails
+# Aplicacion Rails 7.1 con ActiveRecord, STI, concerns, callbacks, initializers
+# con monkey patches, jobs Sidekiq con retry silencioso y vistas Hotwire.
+# Ver referencias exactas de las trampas en
+# dev/ground-truth/fx-ruby-rails/ground_truth.json.
+name: fx-ruby-rails
+description: Aplicacion Rails 7.1 con ActiveRecord STI, concerns, callbacks, jobs Sidekiq y Hotwire (F06v)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-ruby-rails
+  enabled: true
+ground_truth_format_version: 1

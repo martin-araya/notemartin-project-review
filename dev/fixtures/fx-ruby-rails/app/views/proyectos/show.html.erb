@@ -1,0 +1,11 @@
+<h1>Proyecto <%= @proyecto.codigo %></h1>
+<dl>
+  <dt>Nombre</dt><dd><%= @proyecto.nombre %></dd>
+  <dt>Estado</dt><dd><%= @proyecto.estado %></dd>
+  <dt>Presupuesto</dt><dd><%= @proyecto.presupuesto %></dd>
+  <dt>Tracking</dt><dd><%= @proyecto.tracking_code %></dd>
+</dl>
+
+<%= link_to "Editar", edit_proyecto_path(@proyecto) %>
+<%= button_to "Eliminar", proyecto_path(@proyecto), method: :delete, data: { confirm: "Seguro?" } %>
+<%= link_to "Volver", proyectos_path %>

@@ -1,0 +1,21 @@
+<h1>Proyectos</h1>
+
+<p data-testid="proyectos-count"><%= @proyectos.size %> proyectos</p>
+
+<table>
+  <thead>
+    <tr><th>Codigo</th><th>Nombre</th><th>Estado</th><th>Recordatorios pendientes</th></tr>
+  </thead>
+  <tbody>
+    <% @proyectos.each do |p| %>
+      <tr>
+        <td><%= link_to p.codigo, proyecto_path(p) %></td>
+        <td><%= p.nombre %></td>
+        <td><%= p.estado %></td>
+        <td data-testid="recordatorios-<%= p.codigo %>"><%= p.recordatorios_pendientes %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<%= link_to "Nuevo proyecto", new_proyecto_path %>

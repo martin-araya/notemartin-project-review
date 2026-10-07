@@ -2355,3 +2355,324 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   pierde la trampa E06).
 - Consecuencias: el MATRIX.md muestra fx-rust-axum cubriendo
   axum, tokio, thiserror y cargo-build-script.
+
+### D-267 — Stack: PHP 8.2 + Laravel 10.43 + PHPUnit 10 + Eloquent (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: el plan F06u exige PHP y Laravel para el fixture
+  de la trampa E01 (Facades) que requiere `config/app.php` con
+  aliases personalizados.
+- Decision: PHP 8.2 (CLI) + Laravel 10.43 (LTS) + Eloquent
+  ORM + Blade (vista de ejemplo) + PHPUnit 10 + SQLite
+  en memoria para tests.
+- Alternativas: (a) Laravel 11 (descartado: ya no usa
+  `config/app.php` para Facades, pierde autenticidad de E01);
+  (b) MySQL real (descartado: requiere servicio externo en el
+  contenedor); (c) Pest (descartado: PHPUnit es mas simple).
+- Consecuencias: el fixture usa Laravel 10 con la convencion
+  tradicional de `app/Http/Kernel.php` y `app/Console/Kernel.php`.
+
+### D-268 — Single-app Laravel con estructura estandar (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: el plan F06u define single-app vs multi-app.
+- Decision: single-app Laravel 10 con la estructura estandar
+  de `laravel/laravel` (app/Models, app/Http/Controllers,
+  app/Providers, database/migrations, routes/web.php,
+  routes/api.php, routes/console.php). Mismas convenciones
+  que un proyecto Laravel real.
+- Alternativas: (a) Laravel como libreria (descartado: la
+  trampa E04 de auto-discovery de listeners requiere Kernel
+  Laravel completo).
+- Consecuencias: el fixture es ejecutable con `make test` y
+  reproduce las trampas del ecosistema de Laravel.
+
+### D-269 — Modelos y nombres en ingles (F06u, CC-11)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: CC-11 obliga a no mencionar los nombres
+  espagnoles de los features en strings/comentarios.
+- Decision: modelos y clases en ingles (`Property`, `Visit`,
+  `Contract`); features en espanol (`inmuebles`, `visitas`,
+  `contratos`); URL paths en ingles (`/api/properties`,
+  `/api/visits`, `/api/contracts`).
+- Alternativas: (a) clases en espanol (descartado: rompe CC-11).
+- Consecuencias: la skill debe mapear `Property ↔ inmuebles`,
+  etc.
+
+### D-270 — Driver SQLite :memory: para tests (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: la spec menciona MySQL pero el toolchain indica
+  SQLite. Levantar MySQL real en el contenedor agrega
+  complejidad.
+- Decision: SQLite en memoria via `phpunit.xml` con
+  `<env name="DB_CONNECTION" value="sqlite"/>` y
+  `<env name="DB_DATABASE" value=":memory:"/>`. La
+  `config/database.php` declara ambos drivers (sqlite y
+  mysql) pero los tests usan sqlite (trampa P04: el driver
+  efectivo difiere del declarado en config).
+- Alternativas: (a) MySQL real con `docker-php-ext-install
+  pdo_mysql` y bind-mount (descartado: agrega servicio).
+- Consecuencias: el fixture es 100% autocontenido.
+
+### D-271 — Prefijo `NPRGT-FXPLAR-` para unique tokens (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: el plan F06u exige >=25 tokens unicos.
+- Decision: prefijo `NPRGT-FXPLAR-` con 30 tokens en
+  `unique_tokens.txt` (fixture y ground truth).
+- Alternativas: ninguna (mantener patron).
+- Consecuencias: `overfit_guard.py` y `check_ground_truth.py`
+  verifican que los tokens no aparezcan en otros archivos.
+
+### D-272 — `Makefile` envuelve `vendor/bin/phpunit --testdox` (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: el plan F06u exige paridad con F06p.
+- Decision: `TEST_CMD ?= vendor/bin/phpunit --testdox` en
+  el Makefile; el `run_fixture_tests.py` ejecuta
+  `make test` en el contenedor.
+- Alternativas: ninguna (mantener patron).
+- Consecuencias: el fixture es ejecutable via
+  `run_fixture_tests.py --fixture fx-php-laravel --container`.
+
+### D-273 — Imagen Docker `php:8.2-cli` con extensiones PDO SQLite (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: el plan F06u exige Docker para tests (PHP/Composer
+  no disponibles localmente).
+- Decision: `FROM php:8.2-cli` + `apt-get install -y make git
+  unzip libsqlite3-dev` + `docker-php-ext-install pdo pdo_sqlite`
+  + composer 2.x. Tiempo de build: ~3-5 min la primera vez,
+  cache de deps en rebuilds.
+- Alternativas: (a) `php:8.3-cli` (descartado: Laravel 10
+  testado en 8.2).
+- Consecuencias: el fixture compila y ejecuta tests sin
+  requerir PHP/Composer en la maquina host.
+
+### D-274 — Composer `policy.advisories.block: false` para Advisories (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: Composer 2.7+ bloquea instalaciones de paquetes
+  con advisories de seguridad. Laravel 10.43+ tiene advisories
+  conocidos (PKSA-d5tc-s1qs-h781, etc.).
+- Decision: agregar `--no-security-blocking` al `composer
+  install` en el Dockerfile y `audit.abandoned: ignore` en
+  `composer.json`. Las advisories son para versiones viejas
+  de Laravel; en el fixture se usan con fines de testing
+  aislado.
+- Alternativas: (a) actualizar a Laravel 11 (descartado:
+  pierde la trampa E01); (b) instalar versiones mas nuevas
+  con advisories corregidas (descartado: no compatibles
+  con Laravel 10.x).
+- Consecuencias: el fixture compila en CI/contenedor con
+  las advisories presentes.
+
+### D-275 — Deteccion extendida de PHP/Laravel en `fixtures_matrix.py` y `target_matrix.yml` (F06u)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06u · vigente
+- Contexto: el plan F06u exige extender `fixtures_matrix.py`
+  para detectar PHP y Laravel.
+- Decision: agregar `".php"` a `EXT_LANG`, `"composer.json"`
+  a `MANIFEST_BUILD` (build system `composer`), agregar
+  `"laravel/framework"` a `PACKAGE_JSON_MARKERS` (renombrado
+  a `DEPENDENCY_MARKERS` en la practica), y agregar un
+  bloque que lee `composer.json` y detecta `laravel/framework`
+  para anadir `laravel`, `eloquent`, `blade` a frameworks.
+  Actualizar `target_matrix.yml` con `languages: php`,
+  `frameworks: [laravel, eloquent, blade]`, `build_systems:
+  [composer]`.
+- Alternativas: (a) parsear `composer.lock` (descartado:
+  no se commitea); (b) grep basico (descartado: no es
+  determinista).
+- Consecuencias: `MATRIX.md` muestra fx-php-laravel
+  cubriendo `php`, `laravel`, `eloquent`, `blade`, `composer`.
+
+### D-276 — Stack Ruby 3.1.6 + Rails 7.0.8 para fx-ruby-rails (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: el plan F06v exige una app Rails con jobs y
+  Hotwire. Rails 7.1 con Ruby 3.2.11 (la imagen por defecto
+  `ruby:3.2-bookworm` que trae Docker Hub) tiene un bug de
+  orden de carga con `ActionView::ENCODING_FLAG` que rompe
+  el arranque de rspec-rails. Rails 7.0 con Ruby 3.2.11
+  tiene el mismo bug y ademas incompatibilidad con `active_support/dependencies`
+  (FrozenError en `set_autoload_paths`).
+- Decision: usar `ruby:3.1.6-bookworm` y `gem "rails", "7.0.8"`.
+  Ruby 3.1.6 es la ultima version menor donde Rails 7.0
+  funciona sin los workarounds de Ruby 3.2. Rails 7.0.8
+  es la ultima patch de la serie 7.0.
+- Alternativas: (a) Rails 7.1 + Ruby 3.1 (descartado: 7.1
+  requiere Ruby 3.0+ pero tiene su propio bug con la gema
+  `logger`); (b) Rails 6.1 LTS (descartado: no soporta
+  Hotwire nativo, y el plan pide Hotwire); (c) Ruby 3.3+
+  (descartado: mismas incompatibilidades que 3.2.11+).
+- Consecuencias: el fixture se construye sobre Rails 7.0 +
+  Ruby 3.1. La skill queda probada contra el stack tipico
+  de apps Rails empresariales pequenas en 2024-2025.
+
+### D-277 — Sidekiq 7 con `mock_redis` en tests (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: Sidekiq 7 requiere Redis. El fixture debe correr
+  en el contenedor sin servicio externo.
+- Decision: declarar `gem "sidekiq", "7.2.4"` para runtime
+  y `gem "mock_redis", "0.45.0"` solo en test/dev. En
+  `config/initializers/sidekiq.rb` instanciar `REDIS_CLIENT = MockRedis.new`
+  cuando `Rails.env.test? || Rails.env.development?`. En
+  produccion, `REDIS_URL` apunta a un Redis real.
+- Alternativas: (a) levantar Redis en el contenedor via
+  docker-compose (descartado: el harness `run_fixture_tests.py`
+  no soporta servicios adicionales); (b) usar `:async` queue
+  adapter sin Sidekiq (descartado: el plan pide Sidekiq
+  explicito como dependencia para detectar la trampa de
+  configuracion); (c) stubear `Sidekiq::Client` (descartado:
+  demasiado intrusivo).
+- Consecuencias: la suite RSpec ejecuta sin Redis; las
+  pruebas de jobs usan `ActiveJob::Base.queue_adapter = :test`
+  en lugar de Sidekiq directamente, pero el codigo de
+  aplicacion sigue llamando `perform_later` que se enruta
+  al adapter configurado.
+
+### D-278 — ActiveJob `:test` como queue adapter por defecto (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: la aplicacion debe encolar jobs Sidekiq pero
+  los tests necesitan verificar la intencion sin ejecutar
+  la cola real.
+- Decision: en `config/application.rb` declarar
+  `config.active_job.queue_adapter = :test`. En
+  `config/environments/{development,production}.rb` usar
+  `:async` y `:sidekiq` respectivamente. En el initializer
+  de Sidekiq configurar el cliente solo en production.
+- Alternativas: (a) `:inline` adapter (descartado: ejecuta
+  el job sincrónicamente, oculta el callback after_commit
+  que es parte de la trampa P01); (b) siempre `:sidekiq`
+  (descartado: requiere Redis en tests).
+- Consecuencias: los tests verifican la intencion de encolar
+  (`expect(after - before).to eq(1)` sobre
+  `ActiveJob::Base.queue_adapter.enqueued_jobs`) sin
+  ejecutar la cola real.
+
+### D-279 — Sin rspec-rails: setup manual para evitar bug ENCODING_FLAG (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: rspec-rails 6.1.2 + actionview 7.0 + Ruby 3.x
+  tiene un bug de orden de carga donde `ActionView::ENCODING_FLAG`
+  no esta disponible cuando `action_view/template/handlers/erb.rb:22`
+  lo referencia. rspec-rails 7.0.1 es incompatible con
+  rspec 3.13. No hay forma de trabajar con ambos.
+- Decision: NO requerir rspec-rails. Cargar el environment
+  Rails manualmente, configurar `ActionDispatch::Integration::Session`
+  para request specs via un helper custom
+  (`RequestSpecHelper`), y envolver cada test en una
+  transaccion manual (`ActiveRecord::Base.transaction { ...
+  raise ActiveRecord::Rollback }`) en lugar de
+  `use_transactional_fixtures`. El spec_helper usa
+  `FactoryBot.find_definitions` manualmente.
+- Alternativas: (a) parchear actionview en runtime
+  (descartado: fragil y fuera del scope del fixture);
+  (b) usar solo Ruby puro sin Rails (descartado: el plan
+  exige una app Rails completa).
+- Consecuencias: las specs son un poco mas verbosas
+  (`session.response.status` en vez de
+  `expect(response).to have_http_status(:ok)`) pero
+  funcionales. El fixture demuestra un patron real para
+  equipos que tropiecen con el mismo bug.
+
+### D-280 — prefijo `NPRGT-FXRAILS-` para unique_tokens.txt (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: el formato canónico de unique tokens para
+  fixtures F06 (D-007, F06a2) usa prefijo `NPRGT-FX<NN>-`.
+- Decision: `NPRGT-FXRAILS-` con ≥ 25 tokens cubriendo
+  stack, callbacks, STI, concerns, traps y marcadores de
+  las 8 trampas + 3 superficiales.
+- Alternativas: (a) reusar prefijo de un fixture existente
+  (descartado: violaria CC-11 al estar duplicado entre
+  fixtures).
+- Consecuencias: `overfit_guard.py` distingue tokens de
+  `fx-ruby-rails` y los demas fixtures sin colision.
+
+### D-281 — ruby:3.1.6-bookworm con libs de compilacion para fx-ruby-rails (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: las gemas nativas (`sqlite3`, `racc`, `nokogiri`,
+  `bcrypt`) requieren compilacion C. La imagen
+  `ruby:3.1.6-bookworm` no trae compilador.
+- Decision: en `Dockerfile.test` instalar
+  `apt-get install -y build-essential libsqlite3-dev libffi-dev git make`
+  antes de `bundle install`. Copiar solo `Gemfile` primero
+  para aprovechar la cache de Docker.
+- Alternativas: (a) precompilar gemas en una imagen base
+  custom (descartado: agrega mantenimiento); (b) usar
+  `ruby:slim` (descartado: `ruby:3.1.6-bookworm` es la
+  variante oficial mas estable para 3.1.6).
+- Consecuencias: la imagen final ocupa ~1.2GB y tarda
+  ~30s en construirse desde cero; ~5s si solo cambia
+  el codigo de aplicacion.
+
+### D-282 — Monkey patch `Array#sum_safe` como trampa del ecosistema (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: el plan F06v exige una trampa de monkey patch
+  en `config/initializers/`. Rails tiene un initializer
+  propio de Array en `active_support/core_ext/array/`
+  que es seguro, pero queremos plantar una API custom
+  para que la skill tenga que descubrirla.
+- Decision: crear `config/initializers/patch_array.rb` con
+  `class Array; def sum_safe; end; end`. La trampa
+  categoriza como E06: cualquier codigo que confie en
+  `Array#sum` para colecciones grandes se beneficia (o
+  sufre) este cambio global sin una llamada explicita.
+- Alternativas: (a) parchear `Hash` o `String` (descartado:
+  Array es mas representativo del patron); (b) parchear
+  una gema de la app (descartado: el initializer debe ser
+  en config/initializers/ segun la trampa).
+- Consecuencias: la skill debe listar todos los archivos
+  en `config/initializers/` para descubrir la API
+  modificada (CC-01 cobertura).
+
+### D-283 — `find_sti_class` que silencia tipos invalidos (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: el plan F06v exige una trampa del paquete
+  `sti_invalid_type_silent`. La trampa natural seria
+  que un `type` desconocido levante
+  `ActiveRecord::SubclassNotFound`, pero eso es el
+  comportamiento por defecto de Rails.
+- Decision: sobreescribir `Recordatorio.find_sti_class`
+  para devolver `Recordatorio` base si la clase no
+  existe o no es subclase de Recordatorio. Asi un
+  `Recordatorio.new(type: "NoExiste::Clase")` se guarda
+  silenciosamente como Recordatorio base.
+- Alternativas: (a) hacer la validacion explicita en un
+  `validates :type, inclusion: ...` (descartado: rompe
+  la dinamica STI legitima); (b) dejar el comportamiento
+  por defecto (descartado: la trampa se manifestaria
+  como un error 500 en lugar de una aceptacion silenciosa).
+- Consecuencias: la skill debe notar la sobreescritura
+  de `find_sti_class` para entender la trampa P04.
+
+### D-284 — `update_columns` en `EnviarRecordatorioJob` para saltar validacion (F06v)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06v · vigente
+- Contexto: el plan F06v exige que un recordatorio
+  con `fecha_envio` en el pasado se marque como `caducado`
+  (R-04 de la feature `recordatorios`). Pero la validacion
+  `fecha_envio_no_pasada` rechaza el `update!` normal.
+- Decision: en `EnviarRecordatorioJob#perform` cuando
+  `fecha_envio < Time.current`, usar `recordatorio.update_columns(estado: "caducado", updated_at: Time.current)`
+  en lugar de `recordatorio.marcar_caducado!` (que llama
+  `update!`). Esto salta las validaciones de forma
+  deliberada y documenta la trampa P02 (stale_record_in_callback).
+- Alternativas: (a) relajar la validacion (descartado:
+  perderia la trampa P02 que es la E02 + paquete); (b)
+  condicionar la validacion al estado (descartado:
+  complica el modelo y oculta la trampa).
+- Consecuencias: el test `marca como caducado si la
+  fecha_envio ya paso` pasa con `update_columns` aunque
+  la validacion rechazaria `update!` normal. La skill
+  debe notar el uso de `update_columns` y entender que
+  el job salta las validaciones a proposito.

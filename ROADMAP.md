@@ -1030,8 +1030,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
 - [x] Commit `F06t: fixture fx-rust-axum con paquete por feature`.
  
-## F06u — Fixture `fx-php-laravel`
- 
+## F06u — Fixture `fx-php-laravel` ✅
+  
 **Objetivo:** aplicación Laravel con MySQL.
 **Stack:** PHP, Laravel, Eloquent, Blade, colas, MySQL.
 **Features:** `inmuebles`, `visitas`, `contratos`.
@@ -1043,11 +1043,28 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Grupos de middleware y route model binding en `routes/web.php`.
 6. Comandos y tareas programadas en `routes/console.php`.
 **Toolchain de tests:** PHPUnit/Pest + SQLite, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`inmuebles`, `visitas`, `contratos`) con 8 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `facades` (`Pricing` en `config/app.php` aliases + `PricingFacade::getFacadeAccessor`), `eloquent_magic` (`getPriceEurosAttribute`/`scopeAvailable`/`visits()`/`static::observe` en `Property.php`), `service_providers_bindings` (`InmuebleServiceProvider` con `bind(VisitRepository)` + `singleton('pricing.service')` + `bind('legacy.helper')`), `events_observers_listeners` (`EventServiceProvider::$listen` con `VisitScheduled => [SendVisitConfirmation]` + `PropertyObserver`), `middleware_groups_route_model_binding` (`app/Http/Kernel.php` con `'web' => [...]` + `routes/web.php` con `{property}`), `console_schedule` (`app/Console/Kernel.php::schedule()` con `command(ExpireContracts)->dailyAt('00:00')->withoutOverlapping()`).
+- [x] 6 trampas del paquete plantadas: `job_silent_retry` (`SendVisitReminder` con `tries=3`, `backoff=10` y `fail()` en el ultimo intento), `job_empty_catch` (`GenerateContractPdf` con `catch (\Throwable)` que `Log::error` sin rethrow), `facade_alias_typo` (latente en `config/app.php` aliases), `queue_driver_mismatch` (phpunit.xml fuerza `database`, `config/queue.php` declara `database` y `redis`), `eloquent_n_plus_one` (`PropertyController::index()` con `->visits()->count()` por cada property en el map), `unused_middleware` (`EnsureTenant` registrado en grupo web pero handler vacio).
+- [x] 3 trampas superficiales: `dead_provider` (`LegacyServiceProvider` registrado en `config/app.php` con comentario `// legacy only`), `dead_helper_reference` (`InmuebleServiceProvider` referencia `\App\Pricing\LegacyHelper` que no existe), `dead_route` (`/legacy` en `routes/web.php` apuntando a `LegacyController` inexistente).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 en verde.
+- [x] Suite PHPUnit 31 tests passed (6 Property + 4 Visit + 4 Contract + 2 PricingService + 6 TrapsEcosystem + 6 TrapsPackage + 3 TrapsSuperficial) con `vendor/bin/phpunit --testdox` en el contenedor `php:8.2-cli` con `apt-get install -y make git unzip libsqlite3-dev` + `docker-php-ext-install pdo pdo_sqlite` + `composer install --no-security-blocking`.
+- [x] `run_fixture_tests.py --fixture fx-php-laravel --container` -> passed.
+- [x] `dev/tests/test_fx_php_laravel_ground_truth.py` agregado y verde (10 TestGroundTruthShape + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 23 TestPhpStructure + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest = 61 tests, mas 2 extras = 63 totales).
+- [x] `MATRIX.md` muestra `php`, `laravel`, `eloquent`, `blade`, `composer` cubiertos por fx-php-laravel.
+- [x] `target_matrix.yml` extendido: `languages: [php]`, `frameworks: [laravel, eloquent, blade]`, `build_systems: [composer]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `.php` en EXT_LANG, `composer.json` en MANIFEST_BUILD (build_system `composer`), `laravel/framework` en PACKAGE_JSON_MARKERS, bloque para `composer.json` que anade `laravel`, `eloquent`, `blade` a frameworks.
+- [x] `pytest` total 1209 passed (1145 anteriores + 64 nuevos), sin regresiones en fx-python-cli..fx-rust-axum (20 fixtures).
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] 9 decisiones nuevas D-267..D-275 (stack Laravel 10.43 + PHP 8.2, single-app Laravel, modelos en ingles CC-11, driver SQLite :memory:, prefijo NPRGT-FXPLAR-, Makefile phpunit, docker php:8.2-cli + tools, composer no-security-blocking, deteccion extendida).
+- [x] Commit `F06u: fixture fx-php-laravel con paquete por feature`.
  
-## F06v — Fixture `fx-ruby-rails`
- 
+## F06v — Fixture `fx-ruby-rails` ✅
+  
 **Objetivo:** aplicación Rails con jobs y Hotwire.
-**Stack:** Ruby, Rails, ActiveRecord, Sidekiq, Hotwire.
+**Stack:** Ruby 3.1, Rails 7.0, ActiveRecord, ActiveJob, ActionController, ActionView, Sidekiq 7 (con `mock_redis` en tests), Hotwire (turbo-rails + stimulus-rails), RSpec, Capybara.
 **Features:** `proyectos`, `facturas`, `recordatorios`.
 **Trampas del ecosistema:**
 1. Convención sobre configuración: controlador ↔ vista ↔ ruta implícitos.
@@ -1057,6 +1074,24 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. STI con columna `type`.
 6. Monkey patches en `config/initializers`.
 **Toolchain de tests:** RSpec + SQLite, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`proyectos`, `facturas`, `recordatorios`) con 7 R-NN cada una documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `convention_over_configuration` (resources en `config/routes.rb`), `callbacks` (before_save/after_destroy en Proyecto, after_commit en Factura), `concerns_included` (Trackable con `included do` en `app/models/concerns/trackable.rb`), `metaprogramming` (`method_missing` y `define_method` en `config/initializers/legacy_constants.rb`), `sti_type_column` (`self.inheritance_column = :type` en Recordatorio + columna en `db/migrate/003_create_recordatorios.rb`), `monkey_patches` (`Array#sum_safe` en `config/initializers/patch_array.rb`).
+- [x] 6 trampas del paquete plantadas: `job_silent_retry` (`retry_on StandardError, wait: 5s, attempts: 3` en `EnviarRecordatorioJob` y `attempts: 2` en `GenerarFacturaPdfJob`), `stale_record_in_callback` (job usa `update_columns` para saltar `fecha_envio_no_pasada`), `concern_included_twice` (Trackable en Proyecto y Factura), `sti_invalid_type_silent` (`find_sti_class` que devuelve Recordatorio base si la clase no existe), `route_convention_override` (`get 'panel/legacy'` en `config/routes.rb` + N+1 en `ProyectosController#index`), `initializer_load_order` (legacy_constants carga antes de patch_array).
+- [x] 3 trampas superficiales: `dead_service` (LegacyTextFormatter sin consumidores), `empty_concern_dir` (`app/controllers/concerns/` solo con `.keep`), `unused_partial` (`_unused_partial.html.erb` huerfano).
+- [x] `check_ground_truth.py dev/ground-truth/fx-ruby-rails/` → 0 referencias rotas.
+- [x] CC-11 en verde (sin menciones del ground truth en comentarios). Verificado por `test_tokens_not_in_fixture_source` que recorre toda la fuente del fixture.
+- [x] Suite RSpec 65 tests passed (12 modelo + 2 jobs + 3 features + 3 requests + 6 routing + 6 ecosystem + 6 package + 3 superficial + 24 varios) en el contenedor `ruby:3.1.6-bookworm` con `build-essential`, `libsqlite3-dev`, `libffi-dev`, `bundle install --jobs=4` y `bundle exec rspec --format documentation`.
+- [x] `run_fixture_tests.py --fixture fx-ruby-rails --container` → `passed`.
+- [x] `dev/tests/test_fx_ruby_rails_ground_truth.py` agregado y verde (60 tests: 11 TestGroundTruthShape + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 16 TestRubyStructure + 10 TestTrapsEcosystem + 7 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest).
+- [x] `MATRIX.md` muestra `fx-ruby-rails` cubriendo `rails`, `hotwire`, `sidekiq`, `rspec` como frameworks y `bundler` como build system. `ruby` ya estaba en `target_matrix.yml` (ahora cubierto).
+- [x] `target_matrix.yml` extendido: `frameworks: [rails, hotwire, sidekiq, rspec]`, `build_systems: [bundler]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `Gemfile` con `gem "rails"` → `rails` + `bundler`; `turbo-rails` → `hotwire`; `sidekiq` → `sidekiq`; `rspec-rails` → `rspec`.
+- [x] `pytest` total **1269 passed** (1209 anteriores + 60 nuevos), sin regresiones en los 22 fixtures previos.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] 9 decisiones nuevas D-276..D-284 (Ruby 3.1.6 / Rails 7.0.8 / Sidekiq 7 con `mock_redis` en tests / ActiveJob `:test` por entorno / prefijo `NPRGT-FXRAILS-` / `ruby:3.1.6-bookworm` + libs de compilacion / monkey patch `Array#sum_safe` como eco-trampa / `to_prepare` faltante como paquete-trampa / `find_sti_class` que silencia tipos invalidos / `update_columns` en job para saltar validacion de fecha pasada).
+- [x] Commit `F06v: fixture fx-ruby-rails con paquete por feature`.
  
 ## F06w — Fixture `fx-elixir-phoenix`
  

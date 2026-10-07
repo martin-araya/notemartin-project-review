@@ -1,0 +1,26 @@
+<%= form_with model: proyecto, local: true do |f| %>
+  <% if proyecto.errors.any? %>
+    <ul class="errors">
+      <% proyecto.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  <% end %>
+  <div>
+    <%= f.label :codigo %><br>
+    <%= f.text_field :codigo %>
+  </div>
+  <div>
+    <%= f.label :nombre %><br>
+    <%= f.text_field :nombre %>
+  </div>
+  <div>
+    <%= f.label :presupuesto %><br>
+    <%= f.number_field :presupuesto %>
+  </div>
+  <div>
+    <%= f.label :estado %><br>
+    <%= f.select :estado, %w[activo pausado cerrado] %>
+  </div>
+  <%= f.submit %>
+<% end %>
