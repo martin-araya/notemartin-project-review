@@ -1388,3 +1388,197 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   el substring).
 - Consecuencias: la skill debe entender que `/inv`
   corresponde a `inventario` segun el ground truth.
+
+### D-213 — Stack del fixture F06o: .NET 9 + MediatR 11.0 + EF Core 9 + xUnit 2.9 + ASP.NET Core 9 (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: el plan F06o pide C# / .NET 9 / ASP.NET Core con
+  CQRS (MediatR), EF Core, minimal APIs y `BackgroundService`.
+- Decision: stack = `Microsoft.NET.Sdk.Web` con
+  `MediatR 11.0.0` + `MediatR.Extensions.Microsoft.DependencyInjection
+  11.0.0` (la DI extension es un paquete separado, requerido
+  para que `AddMediatR` exista; no estaba claro en la primera
+  iteracion), `Microsoft.EntityFrameworkCore.Sqlite 9.0.0`,
+  `Microsoft.EntityFrameworkCore.Design 9.0.0`,
+  xUnit 2.9.2 + xunit.runner.visualstudio 2.8.2 +
+  Microsoft.NET.Test.Sdk 17.11.1 + `Microsoft.AspNetCore.Mvc.Testing
+  9.0.0`. Imagen Docker: `mcr.microsoft.com/dotnet/sdk:9.0`
+  con `apt-get install -y make` (la imagen base no incluye
+  make, necesario para `run_fixture_tests.py`).
+- Alternativas: (a) MediatR 12.x (descartado: la discusion
+  sobre comercializacion es 13.x; 11.x es la mas estable y
+  100 % Apache-2.0); (b) Postgres en vez de SQLite (descartado:
+  agrega dependencias, SQLite funciona con `WebApplicationFactory`
+  en `:memory:?cache=shared`); (c) Hot Reload en el Dockerfile
+  (descartado: agrega 200 MB y no aporta a los gates).
+- Consecuencias: la trampa P06 (cache=shared en SQLite) y la
+  trampa E03 (source generators de MediatR + EF Core en obj/)
+  son utiles para la skill. La `build-history.sh` no corre el
+  build de dotnet (seria costoso), solo crea 8 commits
+  incrementales con placeholders.
+
+### D-214 — Top-level statements + `public partial class Program` en namespace `FxAspNet` (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: `WebApplicationFactory<Program>` requiere que el
+  tipo `Program` del proyecto web sea visible desde el
+  proyecto de tests. Con top-level statements el compilador
+  genera un `internal class Program`. Anadir `public partial
+  class Program { }` no basta en .NET 9 (el compilador no
+  siempre eleva la visibilidad). La skill ademas requiere que
+  `Program` viva en un namespace publico para que las pruebas
+  la importen con `FxAspNet.Program`.
+- Decision: declarar `public partial class Program { }` dentro
+  de `namespace FxAspNet { ... }` al final de `Program.cs`.
+  Ademas, `<InternalsVisibleTo Include="FxAspNet.Tests" />` en
+  `FxAspNet.csproj` para que cualquier tipo internal auxiliar
+  sea visible al proyecto de tests.
+- Alternativas: (a) Program.cs tradicional con `static void
+  Main` (descartado: el plan pide top-level statements);
+  (b) declarar `Program` en un archivo separado
+  (`src/Program.cs`) (descartado: complica la trampa E05 sobre
+  el orden del middleware).
+- Consecuencias: la skill debe notar que `Program.cs` tiene
+  dos declaraciones de la clase `Program` (la del top-level
+  statements + la del `namespace FxAspNet`); eso refuerza la
+  trampa E05 (el pipeline queda declarado en el mismo archivo
+  que la clase, dificultando el trazado).
+
+### D-215 — MediatR 11.0.0 con `AddMediatR(typeof(Program).Assembly)` en vez de `RegisterServicesFromAssembly` (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: en MediatR 11.0.0 el metodo
+  `cfg.RegisterServicesFromAssembly` / `RegisterServicesFromAssemblies`
+  no existe en `MediatRServiceConfiguration`. Los metodos
+  disponibles son `Using`, `AsSingleton`, `AsScoped`,
+  `AsTransient` y `WithEvaluator`. La forma soportada es la
+  sobrecarga `AddMediatR(IServiceCollection, params Assembly[])`.
+- Decision: `builder.Services.AddMediatR(typeof(Program).Assembly)`
+  (sin lambda de configuracion). Esta forma es equivalente y
+  es la API oficial de MediatR 11.
+- Alternativas: (a) `AddMediatR(11.0.0, Assembly[])` con
+  overload que acepta version (descartado, deprecated en 11+);
+  (b) migrar a MediatR 12 (descartado: la API cambia y la
+  trampa E01 se debilita).
+- Consecuencias: la trampa E01 sigue valida porque la skill
+  debe saltar del endpoint al handler via el tipo generico
+  `IRequestHandler<TRequest, TResponse>`. La "no hay
+  configuracion lambda" es trivial de saltar y la skill no
+  nota la diferencia.
+
+### D-216 — Naming: prefijo `NPRGT-FXCS-` para los unique tokens de F06o (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXCS` y exactamente 29 tokens cubriendo
+  stack (`DOTNET-VER`, `ASPNET-VER`, `MEDIATR-VER`, `EFCORE-VER`,
+  `XUNIT-VER`), tipos (`PARTIAL-CLASS`, `BACKGROUND-SERVICE`,
+  `MINIMAL-API`, `WEBAPPFACTORY`, `FLUENT-API`, `SOURCE-GEN`),
+  partial-class split (`PARTIAL-PEDIDOITEM`, `PARTIAL-CREAR-HANDLER`,
+  `PARTIAL-OBTENER-HANDLER`, `PARTIAL-ENCOLAR-HANDLER`),
+  trampas E06 (`ADD-ORDERS-MODULE`), E05 (`USE-REQUEST-ID`,
+  `MAP-EXCEPTION-HANDLER`), rutas (`MAP-GROUP-ORDERS`,
+  `MAP-GROUP-BILLING`, `MAP-GROUP-RETRIES`), features
+  (`PEDIDO-RESULT-R01`, `FACTURA-RESULT-R01`,
+  `REINTENTO-RESULT-R01`), marcadores (`MARKER-APP`,
+  `MARKER-PIPELINE`) y trampas superficiales
+  (`TRAMP-S01-VALIDATOR`, `TRAMP-S02-LOGGER`, `TRAMP-S03-HEALTH`).
+  Ninguno aparece en el codigo del fixture (verificado por
+  `TestUniqueTokensFile`).
+- Alternativas: (a) `FXASPNET` (descartado: excede 8 caracteres);
+  (b) `FXDOTNET` (descartado: confunde con .NET en general);
+  (c) `FXCSPROJ` (descartado: ata al formato, no al ecosistema).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-217 — URL paths en ingles sin nombres de feature para evitar CC-11 (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature en cualquier string del codigo del fixture. Los
+  features son `pedidos`, `facturacion`, `reintentos`.
+- Decision: usar `/api/orders` en vez de `/api/pedidos`,
+  `/api/billing` en vez de `/api/facturacion` y
+  `/api/retries` en vez de `/api/reintentos`. Los nombres de
+  feature viven solo en identificadores (`Features/Pedidos/`,
+  `Features/Facturacion/`, `Features/Reintentos/`, clases
+  `CrearPedidoCommand`, `EmitirFacturaCommand`, etc.).
+- Alternativas: (a) cambiar el nombre del feature en el
+  ground truth (descartado: el plan los define); (b) ofuscar
+  con guiones (descartado: la regla CC-11 detecta el substring).
+- Consecuencias: la skill debe mapear `/api/orders` a
+  `pedidos`, `/api/billing` a `facturacion`, `/api/retries`
+  a `reintentos` segun el ground truth.
+
+### D-218 — SQLite con `DataSource=file:test-{guid}?mode=memory&cache=shared` en `WebApplicationFactory` (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: `WebApplicationFactory<Program>` abre varias
+  conexiones a la DB durante un test. SQLite `:memory:`
+  puro asigna una DB distinta por conexion, asi que los tests
+  verian datos parciales. Para CC-10 (tests en contenedor
+  verde), la factory debe garantizar una sola DB compartida.
+- Decision: connection string
+  `DataSource=file:test-{Guid}?mode=memory&cache=shared` en
+  `FxAspNetFactory` y `EnsureCreated` en startup para crear
+  el esquema. El Guid aleatorio evita colisiones entre
+  tests paralelos.
+- Alternativas: (a) SQLite file-based en `/tmp/` (descartado:
+  requiere cleanup entre tests); (b) Postgres en
+  Testcontainers (descartado: agrega 800 MB de imagen);
+  (c) InMemory provider de EF Core (descartado: requiere
+  reescribir el model porque InMemory no soporta `decimal`).
+- Consecuencias: la trampa P06 queda plantada en el codigo
+  del factory. Los tests no necesitan pre/post limpieza.
+
+### D-219 — `CrearPedidoHandler` con dos `SaveChangesAsync` separados (P03 trap) (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: la trampa P03 exige dos `SaveChangesAsync`
+  consecutivos en `CrearPedidoHandler` sin transaccion.
+  EF Core intenta guardar en cascada, lo que provoca
+  UNIQUE constraint en la segunda llamada si los items
+  ya fueron guardados en la primera.
+- Decision: el handler crea los `PedidoItem` primero en una
+  lista local sin asignarles `PedidoId`, hace
+  `SaveChangesAsync` del Pedido solo, asigna
+  `item.PedidoId = pedido.Id` a cada item, y hace un segundo
+  `SaveChangesAsync` para los items. Esto funciona, pero NO
+  es atomico: si la segunda llamada falla, el Pedido queda
+  persistido sin sus items.
+- Alternativas: (a) una sola `SaveChangesAsync` con cascade
+  (descartado: elimina la trampa); (b) `BeginTransactionAsync`
+  + 2 saves dentro (descartado: corrige la trampa); (c)
+  batch insert con SQL crudo (descartado: agrega codigo
+  extraño no idiomático).
+- Consecuencias: la trampa P03 sigue valida. La skill debe
+  detectar la falta de `BeginTransaction` y reportarla. El
+  codigo compila y los tests pasan en condiciones normales,
+  pero un fallo del segundo save deja el sistema en estado
+  inconsistente.
+
+### D-220 — `OrderBy(t => t.CreadoEn)` en cliente (no en SQL) para SQLite (F06o)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06o · vigente
+- Contexto: SQLite no soporta `ORDER BY` sobre columnas
+  `DateTimeOffset` (error: `SQLite does not support expressions
+  of type 'DateTimeOffset' in ORDER BY clauses`). Tanto el
+  `BackgroundService` como `ListarPendientesHandler` hacian
+  el `OrderBy` antes del `ToListAsync`, lo que enviaba el
+  `ORDER BY` al SQL.
+- Decision: mover el `OrderBy` a cliente (despues del
+  `ToListAsync`). El rendimiento es menor pero la API sigue
+  funcionando. La trampa P04 (no actualizar `UltimoIntentoEn`)
+  y el resto del flujo siguen validos.
+- Alternativas: (a) cambiar `CreadoEn` a `DateTime` (descartado:
+  rompe la trampa de "fechas que no se actualizan"); (b)
+  usar `EF.Functions.DateDiffSecond` (descartado: requiere
+  paquetes adicionales); (c) aceptar la excepcion en el
+  BackgroundService (descartado: el BackgroundService ya
+  la swallowa con try/catch y los tests no detectan el
+  problema).
+- Consecuencias: la trampa sigue valida. Los tests pasan.
+  La skill debe notar que el codigo del handler hace
+  `OrderBy` despues de `ToListAsync` (cliente), no antes
+  (SQL).

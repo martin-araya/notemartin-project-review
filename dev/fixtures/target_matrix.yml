@@ -53,6 +53,9 @@ axes:
     - lombok
     - ktor
     - koin
+    - aspnet-core
+    - mediatr
+    - ef-core
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -65,6 +68,7 @@ axes:
     - make
     - docker
     - gulp
+    - msbuild
 
   # Tipos de archivo y formatos
   file_kinds:

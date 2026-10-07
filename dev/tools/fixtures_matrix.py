@@ -70,6 +70,8 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
     "Makefile": {"make"},
     "Dockerfile": {"docker"},
     "gulpfile.js": {"gulp"},
+    ".csproj": {"msbuild"},
+    ".sln": {"msbuild"},
 }
 
 # Archivos clave de frameworks
@@ -102,6 +104,9 @@ FRAMEWORK_FILES: Dict[str, Set[str]] = {
     # Gradle (Kotlin DSL): la presencia de build.gradle.kts indica
     # un proyecto Kotlin/Gradle.
     "build.gradle.kts": {"gradle", "kotlin"},
+    # ASP.NET Core: la presencia de *.csproj indica un proyecto .NET
+    # Web SDK. Cualquier *.csproj cubre el framework aspnet-core.
+    ".csproj": {"aspnet-core", "csharp"},
 }
 
 # Markers adicionales en package.json que indican el framework aunque el
@@ -136,6 +141,12 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "ktor-server-core": {"ktor"},
     # Koin: la dep ``koin-ktor`` indica Koin (F06n).
     "koin-ktor": {"koin"},
+    # MediatR: la dep ``MediatR`` indica CQRS con MediatR (F06o).
+    "MediatR": {"mediatr"},
+    # EF Core: la dep ``Microsoft.EntityFrameworkCore`` indica EF Core (F06o).
+    "Microsoft.EntityFrameworkCore": {"ef-core"},
+    # ASP.NET Core (F06o): el selector public usa ``aspnet-core``.
+    "aspnet-core": {"aspnet-core"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.
@@ -253,6 +264,23 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 covered["frameworks"].add("koin")
         except (OSError, UnicodeDecodeError):
             pass
+
+    # Detectar deps de NuGet via *.csproj (MediatR, EF Core, ASP.NET Core).
+    for csproj in fixture_dir.rglob("*.csproj"):
+        if not csproj.is_file():
+            continue
+        # Cualquier *.csproj implica MSBuild como build system.
+        covered["build_systems"].add("msbuild")
+        try:
+            content = csproj.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "MediatR" in content:
+            covered["frameworks"].add("mediatr")
+        if "Microsoft.EntityFrameworkCore" in content:
+            covered["frameworks"].add("ef-core")
+        if "Microsoft.AspNetCore" in content:
+            covered["frameworks"].add("aspnet-core")
 
     # Recorrido del arbol para extensiones
     for path in fixture_dir.rglob("*"):

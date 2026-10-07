@@ -1,0 +1,16 @@
+# Metadata del fixture F06o: fx-csharp-aspnet
+# API ASP.NET Core con CQRS via MediatR, EF Core con SQLite, minimal APIs
+# y BackgroundService. Ver referencias a las trampas del ecosistema y del
+# paquete en dev/ground-truth/fx-csharp-aspnet/ground_truth.json.
+name: fx-csharp-aspnet
+description: API ASP.NET Core 9 con CQRS (MediatR), EF Core (SQLite), minimal APIs y BackgroundService (F06o)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-csharp-aspnet
+  enabled: true
+ground_truth_format_version: 1

@@ -850,8 +850,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `target_matrix.yml` y `fixtures_matrix.py` extendidos con `ktor` y `koin` como frameworks. La deteccion en `fixtures_matrix.py` ahora busca `ktor-server-core` y `koin-ktor` en `build.gradle.kts`.
 - [x] Commit `F06n: fixture fx-kotlin-ktor con paquete por feature`.
 
-## F06o — Fixture `fx-csharp-aspnet`
- 
+## F06o — Fixture `fx-csharp-aspnet` ✅
+
 **Objetivo:** API ASP.NET Core con CQRS.
 **Stack:** C#, .NET 9, ASP.NET Core (minimal APIs + controllers), EF Core, MediatR, `BackgroundService`.
 **Features:** `pedidos`, `facturación`, `reintentos-en-segundo-plano`.
@@ -863,6 +863,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. El orden del pipeline de middleware en `Program.cs`.
 6. Métodos de extensión de registro (`AddFeatureX()`) y escaneo por reflexión (`Assembly.GetTypes()`).
 **Toolchain de tests:** xUnit + WebApplicationFactory + SQLite, en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`pedidos`, `facturacion`, `reintentos`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `mediator_dispatch_by_type`, `efcore_fluent_no_dataannotations`, `source_generators_not_in_repo`, `partial_class_split` (PedidoItem + CrearPedidoHandler + ObtenerPedidoHandler + EncolarTrabajoHandler), `middleware_pipeline_order` (UseExceptionHandler registrado despues de MapEndpoints + UseRequestId declarado pero no invocado), `extension_method_registration` (AddOrdersModule no invocado).
+- [x] 6 trampas del paquete plantadas y documentadas: `handler_throws_no_handler_mapeado`, `mediator_silent_no_handler` (ComandoSinHandler), `efcore_no_transaction_envelope` (dos SaveChangesAsync en CrearPedidoHandler), `background_no_update_ultimo_intento`, `endpoint_group_route_prefix`, `sqlite_inmemory_shared_cache_required`.
+- [x] 3 trampas superficiales: `dead_validator` (CrearPedidoValidator), `dead_logger_field` (AppDbContext._log), `dead_endpoint` (MapGet("/api/orders/health")).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 (sin menciones de feature en comentarios) en verde.
+- [x] Suite xUnit 26 tests passed (4 Pedidos + 4 Facturacion + 3 Reintentos + 6 TrampasEcosistema + 7 TrampasPaquete + 3 TrampasSuperficiales) en el contenedor `mcr.microsoft.com/dotnet/sdk:9.0`.
+- [x] `run_fixture_tests.py --fixture fx-csharp-aspnet --container` -> passed.
+- [x] `dev/tests/test_fx_csharp_aspnet_ground_truth.py` agregado y verde (51 tests: 12 TestGroundTruthShape + 3 TestUniqueTokensFile + 2 TestAllCitesValid + 13 TestDotnetStructure + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest - 1 redundante).
+- [x] `MATRIX.md` muestra `csharp`, `aspnet-core`, `mediatr`, `ef-core`, `msbuild` cubiertos por fx-csharp-aspnet.
+- [x] `target_matrix.yml` extendido: `frameworks: aspnet-core, mediatr, ef-core`; `build_systems: msbuild`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `*.csproj` -> `aspnet-core, csharp, msbuild` + deteccion de `MediatR`, `Microsoft.EntityFrameworkCore`, `Microsoft.AspNetCore` en el csproj -> `mediatr`, `ef-core`, `aspnet-core`.
+- [x] `pytest` total 883 passed (832 anteriores + 51 nuevos), sin regresiones en fx-{python-cli, ts-agent-extension, java-micronaut, monorepo, minified, polyglot, react-spa, nextjs-fullstack, vanilla-js-legacy, vue-nuxt, sveltekit, angular-ngrx, spring-boot, kotlin-ktor}.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] Commit `F06o: fixture fx-csharp-aspnet con paquete por feature`.
  
 ## F06p — Fixture `fx-python-django`
  

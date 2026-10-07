@@ -1,0 +1,17 @@
+# Imagen para ejecutar los tests del fixture F06o (ASP.NET Core).
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+
+# make no viene en la imagen base; instalamos build-essential.
+RUN apt-get update && apt-get install -y --no-install-recommends make \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+# Cache de dependencias (preservando rutas reales para dotnet).
+COPY FxAspNet.csproj FxAspNet.csproj
+COPY tests/FxAspNet.Tests/FxAspNet.Tests.csproj tests/FxAspNet.Tests/FxAspNet.Tests.csproj
+RUN dotnet restore FxAspNet.csproj --nologo 2>&1 | tail -5 || true
+
+COPY . .
+
+CMD ["make", "test"]

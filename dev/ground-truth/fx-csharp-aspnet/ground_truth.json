@@ -1,0 +1,197 @@
+{
+  "fixture": "fx-csharp-aspnet",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-app", "artifact": "Program.cs", "file": "Program.cs"},
+    {"id": "EP-csproj", "artifact": "FxAspNet.csproj", "file": "FxAspNet.csproj"},
+    {"id": "EP-dbcontext", "artifact": "AppDbContext.cs", "file": "src/Infrastructure/Persistence/AppDbContext.cs"},
+    {"id": "EP-orders-endpoints", "artifact": "OrdersEndpoints.cs", "file": "src/Web/Endpoints/OrdersEndpoints.cs"},
+    {"id": "EP-mediator-registration", "artifact": "MediatorRegistration.cs", "file": "src/Infrastructure/Mediator/MediatorRegistration.cs"},
+    {"id": "EP-background", "artifact": "ReintentosBackgroundService.cs", "file": "src/Infrastructure/Background/ReintentosBackgroundService.cs"}
+  ],
+  "modules": [
+    {"id": "MOD-program", "path": "Program.cs", "summary": "Top-level statements + public partial class Program + pipeline de middleware (UseExceptionHandler registrado despues de MapEndpoints)"},
+    {"id": "MOD-pedido-entity", "": "src/Domain/Pedidos/Pedido.cs", "summary": "Entidad Pedido con Id, Cliente, CreadoEn, Total, Estado, Items"},
+    {"id": "MOD-pedido-item-entity", "": "src/Domain/Pedidos/PedidoItem.cs", "summary": "Entidad PedidoItem con Sku, Cantidad, PrecioUnitario"},
+    {"id": "MOD-pedido-item-entity-b", "": "src/Domain/Pedidos/PedidoItem.ParteB.cs", "summary": "Segunda parte de PedidoItem (partial class)"},
+    {"id": "MOD-factura-entity", "": "src/Domain/Facturacion/Factura.cs", "summary": "Entidad Factura con PedidoId, Numero unico, Importe, Estado"},
+    {"id": "MOD-trabajo-entity", "": "src/Domain/Reintentos/TrabajoPendiente.cs", "summary": "Entidad TrabajoPendiente con Tipo, Payload, Intentos, UltimoIntentoEn"},
+    {"id": "MOD-app-dbcontext", "": "src/Infrastructure/Persistence/AppDbContext.cs", "summary": "DbContext con DbSet<Pedido>, DbSet<PedidoItem>, DbSet<Factura>, DbSet<TrabajoPendiente> + OnModelCreating"},
+    {"id": "MOD-db-init", "": "src/Infrastructure/Persistence/DbInitializer.cs", "summary": "DbInitializer.InicializarAsync que llama EnsureCreated"},
+    {"id": "MOD-pedido-config", "": "src/Infrastructure/Persistence/Configurations/PedidoConfiguration.cs", "summary": "IEntityTypeConfiguration<Pedido> con Fluent API"},
+    {"id": "MOD-pedido-item-config", "": "src/Infrastructure/Persistence/Configurations/PedidoItemConfiguration.cs", "summary": "IEntityTypeConfiguration<PedidoItem> con Fluent API"},
+    {"id": "MOD-factura-config", "": "src/Infrastructure/Persistence/Configurations/FacturaConfiguration.cs", "summary": "IEntityTypeConfiguration<Factura> con Fluent API"},
+    {"id": "MOD-trabajo-config", "": "src/Infrastructure/Persistence/Configurations/TrabajoConfiguration.cs", "summary": "IEntityTypeConfiguration<TrabajoPendiente> con Fluent API"},
+    {"id": "MOD-mediator-registration", "": "src/Infrastructure/Mediator/MediatorRegistration.cs", "summary": "Extension AddOrdersModule() no invocada desde Program.cs"},
+    {"id": "MOD-background", "": "src/Infrastructure/Background/ReintentosBackgroundService.cs", "summary": "BackgroundService que procesa TrabajosPendiente cada 5s"},
+    {"id": "MOD-crear-pedido-cmd", "": "src/Features/Pedidos/Commands/CrearPedidoCommand.cs", "summary": "CrearPedidoCommand (IRequest<int>) + PedidoItemDto"},
+    {"id": "MOD-crear-pedido-handler", "": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs", "summary": "CrearPedidoHandler (partial class) implementando IRequestHandler"},
+    {"id": "MOD-crear-pedido-handler-b", "": "src/Features/Pedidos/Commands/CrearPedidoHandler.ParteB.cs", "summary": "Segunda parte del CrearPedidoHandler (partial class)"},
+    {"id": "MOD-crear-pedido-validator", "": "src/Features/Pedidos/Commands/CrearPedidoValidator.cs", "summary": "CrearPedidoValidator estatico nunca invocado"},
+    {"id": "MOD-comando-sin-handler", "": "src/Features/Pedidos/Commands/ComandoSinHandler.cs", "summary": "ComandoSinHandler (IRequest<string>) sin handler registrado"},
+    {"id": "MOD-obtener-pedido-query", "": "src/Features/Pedidos/Queries/ObtenerPedidoQuery.cs", "summary": "ObtenerPedidoQuery (IRequest<Pedido?>)"},
+    {"id": "MOD-obtener-pedido-handler", "": "src/Features/Pedidos/Queries/ObtenerPedidoHandler.cs", "summary": "ObtenerPedidoHandler (partial class)"},
+    {"id": "MOD-obtener-pedido-handler-b", "": "src/Features/Pedidos/Queries/ObtenerPedidoHandler.ParteB.cs", "summary": "Segunda parte del ObtenerPedidoHandler (partial class)"},
+    {"id": "MOD-listar-pedidos-query", "": "src/Features/Pedidos/Queries/ListarPedidosQuery.cs", "summary": "ListarPedidosQuery (IRequest<List<int>>)"},
+    {"id": "MOD-listar-pedidos-handler", "": "src/Features/Pedidos/Queries/ListarPedidosHandler.cs", "summary": "ListarPedidosHandler que pagina el DbSet<Pedido>"},
+    {"id": "MOD-emitir-factura-cmd", "": "src/Features/Facturacion/Commands/EmitirFacturaCommand.cs", "summary": "EmitirFacturaCommand (IRequest<int>)"},
+    {"id": "MOD-emitir-factura-handler", "": "src/Features/Facturacion/Commands/EmitirFacturaHandler.cs", "summary": "EmitirFacturaHandler que crea Factura desde Pedido"},
+    {"id": "MOD-marcar-pagada-cmd", "": "src/Features/Facturacion/Commands/MarcarPagadaCommand.cs", "summary": "MarcarPagadaCommand (IRequest<FacturaEstado>)"},
+    {"id": "MOD-marcar-pagada-handler", "": "src/Features/Facturacion/Commands/MarcarPagadaHandler.cs", "summary": "MarcarPagadaHandler que cambia Estado a Pagada"},
+    {"id": "MOD-obtener-factura-query", "": "src/Features/Facturacion/Queries/ObtenerFacturaQuery.cs", "summary": "ObtenerFacturaQuery (IRequest<Factura?>)"},
+    {"id": "MOD-obtener-factura-handler", "": "src/Features/Facturacion/Queries/ObtenerFacturaHandler.cs", "summary": "ObtenerFacturaHandler"},
+    {"id": "MOD-listar-facturas-query", "": "src/Features/Facturacion/Queries/ListarFacturasQuery.cs", "summary": "ListarFacturasQuery (IRequest<List<Factura>>)"},
+    {"id": "MOD-listar-facturas-handler", "": "src/Features/Facturacion/Queries/ListarFacturasHandler.cs", "summary": "ListarFacturasHandler con filtro opcional por Estado"},
+    {"id": "MOD-reintentos-commands", "": "src/Features/Reintentos/TrabajoCommands.cs", "summary": "EncolarTrabajoCommand, ListarPendientesQuery, AckTrabajoCommand"},
+    {"id": "MOD-encolar-handler", "": "src/Features/Reintentos/EncolarTrabajoHandler.cs", "summary": "EncolarTrabajoHandler (partial class)"},
+    {"id": "MOD-encolar-handler-b", "": "src/Features/Reintentos/EncolarTrabajoHandler.ParteB.cs", "summary": "Segunda parte del EncolarTrabajoHandler (partial class)"},
+    {"id": "MOD-listar-pendientes-handler", "": "src/Features/Reintentos/ListarPendientesHandler.cs", "summary": "ListarPendientesHandler que filtra por Pendiente o Fallido"},
+    {"id": "MOD-ack-handler", "": "src/Features/Reintentos/AckTrabajoHandler.cs", "summary": "AckTrabajoHandler que marca Completado + UltimoIntentoEn"},
+    {"id": "MOD-orders-endpoints", "": "src/Web/Endpoints/OrdersEndpoints.cs", "summary": "MapGroup('/api/orders') con POST, GET/{id:int}, GET/, GET/health"},
+    {"id": "MOD-billing-endpoints", "": "src/Web/Endpoints/BillingEndpoints.cs", "summary": "MapGroup('/api/billing') con POST, POST/{id:int}/paid, GET/{id:int}, GET/"},
+    {"id": "MOD-retries-endpoints", "": "src/Web/Endpoints/RetriesEndpoints.cs", "summary": "MapGroup('/api/retries') con POST, GET/pending, POST/{id:int}/ack"},
+    {"id": "MOD-request-id-mw", "": "src/Web/Middleware/RequestIdMiddleware.cs", "summary": "Middleware que anade fx_request_id al HttpContext.Items"},
+    {"id": "MOD-request-id-ext", "": "src/Web/Middleware/RequestIdMiddlewareExtensions.cs", "summary": "Extension UseRequestId() no invocada en Program.cs"}
+  ],
+  "dependencies": [
+    {"name": "MediatR", "version": "11.0.0", "scope": "runtime", "manifest": "FxAspNet.csproj (PackageReference)"},
+    {"name": "Microsoft.EntityFrameworkCore.Sqlite", "version": "9.0.0", "scope": "runtime", "manifest": "FxAspNet.csproj (PackageReference)"},
+    {"name": "Microsoft.EntityFrameworkCore.Design", "version": "9.0.0", "scope": "runtime", "manifest": "FxAspNet.csproj (PackageReference)"},
+    {"name": "Microsoft.NET.Test.Sdk", "version": "17.11.1", "scope": "test", "manifest": "tests/FxAspNet.Tests/FxAspNet.Tests.csproj"},
+    {"name": "xunit", "version": "2.9.2", "scope": "test", "manifest": "tests/FxAspNet.Tests/FxAspNet.Tests.csproj"},
+    {"name": "xunit.runner.visualstudio", "version": "2.8.2", "scope": "test", "manifest": "tests/FxAspNet.Tests/FxAspNet.Tests.csproj"},
+    {"name": "Microsoft.AspNetCore.Mvc.Testing", "version": "9.0.0", "scope": "test", "manifest": "tests/FxAspNet.Tests/FxAspNet.Tests.csproj"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "pedidos",
+      "user_description": "El usuario crea, obtiene por id y lista ordenes via endpoints HTTP en /api/orders. La creacion mapea cliente vacio a 400 y crea el pedido con sus items en SQLite.",
+      "traces": [
+        {"n": 1, "what": "User POST /api/orders/ con JSON {Cliente, Items[]}", "cite": "src/Web/Endpoints/OrdersEndpoints.cs:16", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "MapPost recibe el CrearPedidoCommand y llama a IMediator.Send", "cite": "src/Web/Endpoints/OrdersEndpoints.cs:16", "data_in": "CrearPedidoCommand", "data_out": "int"},
+        {"n": 3, "what": "MediatR resuelve CrearPedidoHandler por tipo IRequestHandler<CrearPedidoCommand, int>", "cite": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs:8", "data_in": "request type", "data_out": "CrearPedidoHandler"},
+        {"n": 4, "what": "CrearPedidoHandler valida cliente no blanco", "cite": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs:19", "data_in": "Cliente", "data_out": "InvalidOperationException o Pedido"},
+        {"n": 5, "what": "Handler hace dos SaveChangesAsync sin transaccion (trampa P03)", "cite": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs:48", "data_in": "Pedido + Items", "data_out": "int Id"},
+        {"n": 6, "what": "AppDbContext persiste en SQLite via PedidoConfiguration Fluent", "cite": "src/Infrastructure/Persistence/Configurations/PedidoConfiguration.cs:7", "data_in": "Pedido", "data_out": "row"},
+        {"n": 7, "what": "Endpoint responde 201 Created con Location /api/orders/{id}", "cite": "src/Web/Endpoints/OrdersEndpoints.cs:17", "data_in": "int", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/Web/Endpoints/OrdersEndpoints.cs", "line": 16, "kind": "routing", "condition_text": "POST /api/orders/ con body", "branches": [{"label": "cliente vacio -> 400", "target_line": 23}, {"label": "items vacios -> 400", "target_line": 27}, {"label": "ok -> 201 con id", "target_line": 17}]},
+        {"id": "DP-002", "file": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs", "line": 19, "kind": "validation", "condition_text": "string.IsNullOrWhiteSpace(request.Cliente)", "branches": [{"label": "true -> throw InvalidOperationException", "target_line": 22}, {"label": "false -> continuar", "target_line": 25}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con cliente no vacio e items validos", "user_sees": "201 Created con {id}", "side_effects": ["INSERT en pedidos", "INSERT en pedido_items"], "reversible": true, "final_state": "pedido creado"},
+        {"id": "R-02", "category": "success_get", "conditions": "GET /api/orders/{id} con id existente", "user_sees": "200 OK con el pedido y sus items", "side_effects": ["SELECT en pedidos + pedido_items"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_list", "conditions": "GET /api/orders/", "user_sees": "200 OK con [id1, id2, ...]", "side_effects": ["SELECT en pedidos"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-04", "category": "error_get_404", "conditions": "GET /api/orders/{id} con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-05", "category": "error_cliente_vacio", "conditions": "POST con cliente = ''", "user_sees": "400 Bad Request con {error: 'cliente_requerido'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_items_vacios", "conditions": "POST con items = []", "user_sees": "400 Bad Request con {error: 'items_requeridos'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_sin_transaccion", "conditions": "POST con items validos pero SaveChangesAsync del segundo bloque falla", "user_sees": "500 Internal Server Error", "side_effects": ["INSERT en pedidos (sin rollback)"], "reversible": false, "final_state": "estado_inconsistente"}
+      ],
+      "config": [
+        {"key": "routing.group", "kind": "literal", "default": "/api/orders", "effect": "MapGroup minimal API"},
+        {"key": "mediator.resolution", "kind": "literal", "default": "RegisterServicesFromAssembly(typeof(Program).Assembly)", "effect": "Discovery por reflection de IRequestHandler<,>"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "facturacion",
+      "user_description": "El usuario emite facturas desde un pedido existente, marca como pagada, obtiene por id y lista. Idempotencia por pedido (segunda emision devuelve 409).",
+      "traces": [
+        {"n": 1, "what": "User POST /api/billing/ con {PedidoId}", "cite": "src/Web/Endpoints/BillingEndpoints.cs:16", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "Endpoint invoca IMediator.Send(new EmitirFacturaCommand)", "cite": "src/Web/Endpoints/BillingEndpoints.cs:16", "data_in": "EmitirFacturaCommand", "data_out": "int"},
+        {"n": 3, "what": "EmitirFacturaHandler valida que el pedido existe", "cite": "src/Features/Facturacion/Commands/EmitirFacturaHandler.cs:21", "data_in": "PedidoId", "data_out": "Pedido o throw"},
+        {"n": 4, "what": "Handler verifica que no exista ya una Factura para ese PedidoId", "cite": "src/Features/Facturacion/Commands/EmitirFacturaHandler.cs:30", "data_in": "PedidoId", "data_out": "throw o continuar"},
+        {"n": 5, "what": "Handler crea Factura con Numero unico 'F-{pedidoId}-{timestamp}'", "cite": "src/Features/Facturacion/Commands/EmitirFacturaHandler.cs:42", "data_in": "Pedido", "data_out": "Factura"},
+        {"n": 6, "what": "AppDbContext persiste en facturas via FacturaConfiguration Fluent con index unique", "cite": "src/Infrastructure/Persistence/Configurations/FacturaConfiguration.cs:11", "data_in": "Factura", "data_out": "row"},
+        {"n": 7, "what": "Endpoint responde 201 Created con {id}", "cite": "src/Web/Endpoints/BillingEndpoints.cs:17", "data_in": "int", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/Features/Facturacion/Commands/EmitirFacturaHandler.cs", "line": 21, "kind": "validation", "condition_text": "pedido is null", "branches": [{"label": "true -> throw 'pedido_inexistente'", "target_line": 24}, {"label": "false -> continuar", "target_line": 27}]},
+        {"id": "DP-004", "file": "src/Features/Facturacion/Commands/EmitirFacturaHandler.cs", "line": 30, "kind": "validation", "condition_text": "factura ya existe para este PedidoId", "branches": [{"label": "true -> throw 'factura_duplicada'", "target_line": 33}, {"label": "false -> continuar", "target_line": 36}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_emit", "conditions": "POST con PedidoId existente y sin factura previa", "user_sees": "201 Created con {id}", "side_effects": ["INSERT en facturas"], "reversible": true, "final_state": "factura emitida"},
+        {"id": "R-02", "category": "success_mark_paid", "conditions": "POST /api/billing/{id}/paid con factura existente y no anulada", "user_sees": "200 OK con {id, estado: 'Pagada'}", "side_effects": ["UPDATE en facturas"], "reversible": false, "final_state": "pagada"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /api/billing/{id} con id existente", "user_sees": "200 OK con la factura", "side_effects": ["SELECT en facturas"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-04", "category": "success_list", "conditions": "GET /api/billing/ con o sin filtro estado", "user_sees": "200 OK con [Factura, ...]", "side_effects": ["SELECT en facturas"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-05", "category": "error_pedido_inexistente", "conditions": "POST con PedidoId inexistente", "user_sees": "404 Not Found con {error: 'pedido_inexistente'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_factura_duplicada", "conditions": "POST con PedidoId que ya tiene factura", "user_sees": "409 Conflict con {error: 'factura_duplicada'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_factura_anulada", "conditions": "POST /api/billing/{id}/paid con factura anulada", "user_sees": "500 Internal Server Error (la excepcion no se mapea a 4xx por E05)", "side_effects": [], "reversible": true, "final_state": "error"}
+      ],
+      "config": [
+        {"key": "endpoint.group", "kind": "literal", "default": "/api/billing", "effect": "MapGroup minimal API"},
+        {"key": "factura.numero_format", "kind": "literal", "default": "F-{pedidoId}-{unix_timestamp}", "effect": "Numero unico por timestamp"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "reintentos",
+      "user_description": "El usuario encola trabajos en una cola persistente, lista los pendientes o fallidos, y marca como completado via ack. Un BackgroundService procesa la cola cada 5s.",
+      "traces": [
+        {"n": 1, "what": "User POST /api/retries/ con {Tipo, Payload}", "cite": "src/Web/Endpoints/RetriesEndpoints.cs:15", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "Endpoint invoca IMediator.Send(new EncolarTrabajoCommand)", "cite": "src/Web/Endpoints/RetriesEndpoints.cs:15", "data_in": "EncolarTrabajoCommand", "data_out": "int"},
+        {"n": 3, "what": "EncolarTrabajoHandler (partial class) crea TrabajoPendiente con Estado = Pendiente", "cite": "src/Features/Reintentos/EncolarTrabajoHandler.cs:7", "data_in": "Tipo, Payload", "data_out": "TrabajoPendiente"},
+        {"n": 4, "what": "AppDbContext persiste en trabajos via TrabajoConfiguration Fluent", "cite": "src/Infrastructure/Persistence/Configurations/TrabajoConfiguration.cs:7", "data_in": "TrabajoPendiente", "data_out": "row"},
+        {"n": 5, "what": "BackgroundService cada 5s lee Pendiente o Fallido (TOP 20)", "cite": "src/Infrastructure/Background/ReintentosBackgroundService.cs:34", "data_in": "TrabajoPendiente", "data_out": "List<TrabajoPendiente>"},
+        {"n": 6, "what": "BackgroundService marca EnProgreso + IntentarTrabajo", "cite": "src/Infrastructure/Background/ReintentosBackgroundService.cs:43", "data_in": "TrabajoPendiente", "data_out": "TrabajoPendiente en Progreso"},
+        {"n": 7, "what": "User POST /api/retries/{id}/ack cambia Estado a Completado y UltimoIntentoEn", "cite": "src/Features/Reintentos/AckTrabajoHandler.cs:21", "data_in": "int TrabajoId", "data_out": "bool"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/Infrastructure/Background/ReintentosBackgroundService.cs", "line": 52, "kind": "control", "condition_text": "exito de IntentarTrabajo", "branches": [{"label": "true -> Estado = Completado", "target_line": 53}, {"label": "false -> Estado = Fallido (no actualiza UltimoIntentoEn)", "target_line": 57}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_enqueue", "conditions": "POST con Tipo y Payload no vacios", "user_sees": "201 Created con {id}", "side_effects": ["INSERT en trabajos"], "reversible": true, "final_state": "trabajo encolado"},
+        {"id": "R-02", "category": "success_list_pending", "conditions": "GET /api/retries/pending", "user_sees": "200 OK con [TrabajoPendiente, ...]", "side_effects": ["SELECT en trabajos"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_ack", "conditions": "POST /api/retries/{id}/ack con trabajo existente", "user_sees": "204 No Content", "side_effects": ["UPDATE en trabajos (Estado, UltimoIntentoEn)"], "reversible": false, "final_state": "trabajo completado"},
+        {"id": "R-04", "category": "success_process_in_background", "conditions": "Trabajo encolado, background loop lo recoge en <= 5s", "user_sees": "Ninguno directo (proceso asincrono); la proxima GET /api/retries/pending lo refleja", "side_effects": ["UPDATE en trabajos (Estado, Intentos)"], "reversible": false, "final_state": "trabajo procesado"},
+        {"id": "R-05", "category": "error_ack_404", "conditions": "POST /api/retries/{id}/ack con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-06", "category": "error_fallo_no_actualiza_ultimo_intento", "conditions": "Trabajo falla y background loop lo marca Fallido", "user_sees": "Ninguno directo (proceso asincrono); el proximo GET /api/retries/pending lo ve igual porque UltimoIntentoEn no se actualiza", "side_effects": ["UPDATE en trabajos (Estado=Fallido, sin UltimoIntentoEn)"], "reversible": false, "final_state": "trabajo fallido sin reintento"},
+        {"id": "R-07", "category": "error_unhandled_en_background", "conditions": "Excepcion no controlada en ProcesarUnaVuelta", "user_sees": "Log warning del BackgroundService (proceso continua)", "side_effects": [], "reversible": true, "final_state": "trabajo sin procesar en esa vuelta"}
+      ],
+      "config": [
+        {"key": "background.interval", "kind": "literal", "default": "5s", "effect": "Task.Delay entre vueltas del loop"},
+        {"key": "background.batch_size", "kind": "literal", "default": "20", "effect": "Take(20) por vuelta"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "mediator_dispatch_by_type", "where": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs:8 + src/Features/Pedidos/Queries/ObtenerPedidoHandler.cs:8 + Program.cs:16", "resolution": "Los handlers implementan IRequestHandler<TRequest, TResponse>. AddMediatR usa RegisterServicesFromAssembly para descubrir todos los handlers por tipo generico. La skill no encuentra un mapeo literal request->handler en los endpoints; tiene que saltar al archivo del handler y reconocer el contrato del tipo."},
+    {"id": "TRAP-E02", "kind": "efcore_fluent_no_dataannotations", "where": "src/Infrastructure/Persistence/AppDbContext.cs:23 + src/Infrastructure/Persistence/Configurations/{Pedido,PedidoItem,Factura,Trabajo}Configuration.cs", "resolution": "Todo el modelo se configura en Fluent API (HasKey, Property.HasMaxLength, ToTable, HasIndex, HasConversion) dentro de IEntityTypeConfiguration<T>. No hay data annotations ([Key], [MaxLength], [Table]) en las entidades. La skill no debe buscar anotaciones; debe saltar a OnModelCreating y a las Configurations."},
+    {"id": "TRAP-E03", "kind": "source_generators_not_in_repo", "where": "FxAspNet.csproj", "resolution": "MediatR 11 usa code generation interno (no visible en el repo). Ademas, EF Core genera el modelo y las migraciones en runtime. Los archivos generados viven en obj/ y se excluyen via .gitignore. La skill debe notar que 'no hay archivos' no significa 'no hay codigo'."},
+    {"id": "TRAP-E04", "kind": "partial_class_split", "where": "src/Domain/Pedidos/PedidoItem.cs + src/Domain/Pedidos/PedidoItem.ParteB.cs + src/Features/Pedidos/Commands/CrearPedidoHandler.cs + CrearPedidoHandler.ParteB.cs + src/Features/Pedidos/Queries/ObtenerPedidoHandler.cs + ObtenerPedidoHandler.ParteB.cs + src/Features/Reintentos/EncolarTrabajoHandler.cs + EncolarTrabajoHandler.ParteB.cs", "resolution": "PedidoItem, CrearPedidoHandler, ObtenerPedidoHandler y EncolarTrabajoHandler son partial class repartidas en dos archivos cada una. La skill tiene que juntar ambos archivos para reconstruir la clase completa. Las 'ParteB' contienen miembros adicionales (ReferenciaCircular, Diagnostico, Etiqueta)."},
+    {"id": "TRAP-E05", "kind": "middleware_pipeline_order", "where": "Program.cs:22-26", "resolution": "app.MapOrdersEndpoints() / MapBillingEndpoints() / MapRetriesEndpoints() se ejecutan ANTES de app.UseExceptionHandler(). Resultado: las excepciones lanzadas por los handlers (CrearPedidoHandler) NO se traducen a 500 limpio via ExceptionHandler; ademas, UseRequestId() declarada en src/Web/Middleware/RequestIdMiddlewareExtensions.cs:7 NUNCA se invoca. La skill debe notar que el orden del pipeline afecta que middleware envuelve los endpoints."},
+    {"id": "TRAP-E06", "kind": "extension_method_registration", "where": "src/Infrastructure/Mediator/MediatorRegistration.cs:9", "resolution": "AddOrdersModule(this IServiceCollection) esta declarado y registra los handlers, pero NO se invoca desde Program.cs. Los handlers se descubren via AddMediatR(cfg => cfg.RegisterServicesFromAssembly(...)). La extension es codigo huerfano que compila pero no tiene efecto en runtime."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "handler_throws_no_handler_mapeado", "where": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs:19-22 + src/Web/Endpoints/OrdersEndpoints.cs:23-30", "resolution": "El endpoint atrapa InvalidOperationException con mensajes especificos ('cliente_requerido', 'items_requeridos') y los mapea a 400. Pero otros InvalidOperationException (p. ej. 'pedido_inexistente' en EmitirFacturaHandler, 'factura_anulada' en MarcarPagadaHandler) NO se mapean a 4xx en el endpoint y burbujean a UseExceptionHandler, que esta registrado tarde (E05). La trampa: cualquier nuevo mensaje de error necesitara un catch explicito en el endpoint o sera 500."},
+    {"id": "TRAP-P02", "kind": "mediator_silent_no_handler", "where": "src/Features/Pedidos/Commands/ComandoSinHandler.cs", "resolution": "ComandoSinHandler implementa IRequest<string> pero NO tiene handler registrado. MediatR no avisa en build; en runtime lanza InvalidOperationException 'No handler for command'. La skill debe detectar que el comando existe pero no tiene handler emparejado."},
+    {"id": "TRAP-P03", "kind": "efcore_no_transaction_envelope", "where": "src/Features/Pedidos/Commands/CrearPedidoHandler.cs:46-52", "resolution": "El handler hace dos _db.SaveChangesAsync() consecutivos (uno para Pedido, otro para PedidoItem) sin envolver en BeginTransaction. Si el segundo save falla, el Pedido queda persistido sin sus items. La trampa: el codigo parece correcto pero no es atomico."},
+    {"id": "TRAP-P04", "kind": "background_no_update_ultimo_intento", "where": "src/Infrastructure/Background/ReintentosBackgroundService.cs:52-60", "resolution": "Cuando un trabajo falla, el background service lo marca Estado=Fallido y loguea, pero NO actualiza UltimoIntentoEn (la excepcion queda en IntentarTrabajo que solo verifica Tipo/Payload no vacios). Un trabajo que siempre falla seguira apareciendo en /api/retries/pending sin cambio, dando la falsa impresion de que no se ha reintentado."},
+    {"id": "TRAP-P05", "kind": "endpoint_group_route_prefix", "where": "src/Web/Endpoints/OrdersEndpoints.cs:39 vs 33", "resolution": "MapGet('/') y MapGet('/{id:int}') conviven en el mismo grupo. El orden importa: ASP.NET Core valida la ruta mas especifica ({id:int}) antes que la raiz, pero un bug sutil seria invertir el orden. La skill debe verificar que las rutas se registran en orden determinista."},
+    {"id": "TRAP-P06", "kind": "sqlite_inmemory_shared_cache_required", "where": "tests/FxAspNet.Tests/Fixtures/FxAspNetFactory.cs:14", "resolution": "SQLite en memoria sin cache=shared asigna una DB distinta por conexion; WebApplicationFactory abre varias conexiones en su ciclo de vida y los tests verian datos parciales. La conexion usa 'DataSource=file:test-{guid}?mode=memory&cache=shared' que mantiene una sola DB compartida entre todas las conexiones."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_validator", "where": "src/Features/Pedidos/Commands/CrearPedidoValidator.cs", "resolution": "CrearPedidoValidator.Validar() existe y devuelve errores, pero nadie lo invoca. La validacion real ocurre en CrearPedidoHandler (trampa P03). La skill debe notar que 'hay un archivo de validacion' no significa 'se ejecuta'."},
+    {"id": "TRAP-S02", "kind": "dead_logger_field", "where": "src/Infrastructure/Persistence/AppDbContext.cs:8", "resolution": "AppDbContext declara private static readonly ILogger _log y lo inicializa con LoggerFactory.Create(b=>AddConsole()).CreateLogger. Nadie lo usa en la clase. La trampa: ILogger en EF Core DbContext es accesible via DbContextOptions, no necesita un campo estatico."},
+    {"id": "TRAP-S03", "kind": "dead_endpoint", "where": "src/Web/Endpoints/OrdersEndpoints.cs:45", "resolution": "MapGet('/health') retorna 200 OK literal con {status: 'ok'}. Ningun test lo invoca. La trampa: parece util (health check) pero es dead code."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-orders-create", "kind": "endpoint", "name": "POST /api/orders/", "handler": "src/Web/Endpoints/OrdersEndpoints.cs:16", "file": "src/Web/Endpoints/OrdersEndpoints.cs"},
+    {"id": "SRF-route-orders-get", "kind": "endpoint", "name": "GET /api/orders/{id:int}", "handler": "src/Web/Endpoints/OrdersEndpoints.cs:33", "file": "src/Web/Endpoints/OrdersEndpoints.cs"},
+    {"id": "SRF-route-orders-list", "kind": "endpoint", "name": "GET /api/orders/", "handler": "src/Web/Endpoints/OrdersEndpoints.cs:39", "file": "src/Web/Endpoints/OrdersEndpoints.cs"},
+    {"id": "SRF-route-orders-health", "kind": "endpoint", "name": "GET /api/orders/health", "handler": "src/Web/Endpoints/OrdersEndpoints.cs:45", "file": "src/Web/Endpoints/OrdersEndpoints.cs"},
+    {"id": "SRF-route-billing-emit", "kind": "endpoint", "name": "POST /api/billing/", "handler": "src/Web/Endpoints/BillingEndpoints.cs:16", "file": "src/Web/Endpoints/BillingEndpoints.cs"},
+    {"id": "SRF-route-billing-paid", "kind": "endpoint", "name": "POST /api/billing/{id:int}/paid", "handler": "src/Web/Endpoints/BillingEndpoints.cs:33", "file": "src/Web/Endpoints/BillingEndpoints.cs"},
+    {"id": "SRF-route-billing-get", "kind": "endpoint", "name": "GET /api/billing/{id:int}", "handler": "src/Web/Endpoints/BillingEndpoints.cs:46", "file": "src/Web/Endpoints/BillingEndpoints.cs"},
+    {"id": "SRF-route-billing-list", "kind": "endpoint", "name": "GET /api/billing/", "handler": "src/Web/Endpoints/BillingEndpoints.cs:52", "file": "src/Web/Endpoints/BillingEndpoints.cs"},
+    {"id": "SRF-route-retries-enqueue", "kind": "endpoint", "name": "POST /api/retries/", "handler": "src/Web/Endpoints/RetriesEndpoints.cs:15", "file": "src/Web/Endpoints/RetriesEndpoints.cs"},
+    {"id": "SRF-route-retries-pending", "kind": "endpoint", "name": "GET /api/retries/pending", "handler": "src/Web/Endpoints/RetriesEndpoints.cs:21", "file": "src/Web/Endpoints/RetriesEndpoints.cs"},
+    {"id": "SRF-route-retries-ack", "kind": "endpoint", "name": "POST /api/retries/{id:int}/ack", "handler": "src/Web/Endpoints/RetriesEndpoints.cs:27", "file": "src/Web/Endpoints/RetriesEndpoints.cs"},
+    {"id": "SRF-bg-reintentos", "kind": "background", "name": "ReintentosBackgroundService", "handler": "src/Infrastructure/Background/ReintentosBackgroundService.cs:10", "file": "src/Infrastructure/Background/ReintentosBackgroundService.cs"},
+    {"id": "SRF-mediator-dispatch", "kind": "mediator", "name": "AddMediatR(RegisterServicesFromAssembly)", "handler": "Program.cs:16", "file": "Program.cs"},
+    {"id": "SRF-mw-exception-handler", "kind": "middleware", "name": "UseExceptionHandler", "handler": "Program.cs:26", "file": "Program.cs"},
+    {"id": "SRF-ext-orders-module", "kind": "extension", "name": "AddOrdersModule", "handler": "src/Infrastructure/Mediator/MediatorRegistration.cs:9", "file": "src/Infrastructure/Mediator/MediatorRegistration.cs"}
+  ]
+}
