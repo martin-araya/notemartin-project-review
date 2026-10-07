@@ -1,0 +1,210 @@
+{
+  "fixture": "fx-node-nestjs",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "src/main.ts", "file": "src/main.ts"},
+    {"id": "EP-app-module", "artifact": "src/app.module.ts", "file": "src/app.module.ts"},
+    {"id": "EP-nest-cli", "artifact": "nest-cli.json", "file": "nest-cli.json"},
+    {"id": "EP-microservice-controller", "artifact": "src/messaging/microservice.controller.ts", "file": "src/messaging/microservice.controller.ts"},
+    {"id": "EP-health", "artifact": "src/health/health.controller.ts", "file": "src/health/health.controller.ts"}
+  ],
+  "modules": [
+    {"id": "MOD-main", "path": "src/main.ts", "summary": "Bootstrap con NestFactory.create + connectMicroservice (trampas E05 + P06)"},
+    {"id": "MOD-app", "path": "src/app.module.ts", "summary": "Root module con ConfigModule.forRoot + TypeOrmModule.forRootAsync + imports de los 3 modulos + APP_GUARD/APP_INTERCEPTOR/APP_FILTER providers (trampas E01 + E02 + E06)"},
+    {"id": "MOD-config-database", "path": "src/config/database.config.ts", "summary": "registerAs('database', ...) (E06)"},
+    {"id": "MOD-config-redis", "path": "src/config/redis.config.ts", "summary": "registerAs('redis', ...) (E06)"},
+    {"id": "MOD-config-app", "path": "src/config/app.config.ts", "summary": "registerAs('app', ...) (E06)"},
+    {"id": "MOD-validation", "path": "src/config/validation.schema.ts", "summary": "Joi validation schema (E06)"},
+    {"id": "MOD-guard-auth", "path": "src/common/guards/auth.guard.ts", "summary": "AuthGuard APP_GUARD con Reflector (trampas E02 + E03 + P02)"},
+    {"id": "MOD-interceptor-timing", "path": "src/common/interceptors/timing.interceptor.ts", "summary": "TimingInterceptor APP_INTERCEPTOR (trampas E02 + E03 + P04 + P05)"},
+    {"id": "MOD-interceptor-metrics", "path": "src/common/interceptors/metrics.interceptor.ts", "summary": "MetricsInterceptor dead (S03)"},
+    {"id": "MOD-decorator-roles", "path": "src/common/decorators/roles.decorator.ts", "summary": "@Roles decorator con SetMetadata('roles', ...) (E03)"},
+    {"id": "MOD-decorator-current-user", "path": "src/common/decorators/current-user.decorator.ts", "summary": "@CurrentUser createParamDecorator (E03)"},
+    {"id": "MOD-decorator-log-execution", "path": "src/common/decorators/log-execution.decorator.ts", "summary": "@LogExecutionTime SetMetadata('log_execution_time', true) (E03 + P05: typo en key)"},
+    {"id": "MOD-filter-http-exception", "path": "src/common/filters/http-exception.filter.ts", "summary": "HttpExceptionFilter APP_FILTER"},
+    {"id": "MOD-orders", "path": "src/orders/orders.module.ts", "summary": "OrdersModule con forwardRef(() => ShipmentsModule) (E01 + P01)"},
+    {"id": "MOD-orders-controller", "path": "src/orders/orders.controller.ts", "summary": "@Controller('orders') con CRUD endpoints"},
+    {"id": "MOD-orders-service", "path": "src/orders/orders.service.ts", "summary": "OrdersService con notifyCreated que publica a 'order-queue' (E04)"},
+    {"id": "MOD-orders-entity", "path": "src/orders/entities/order.entity.ts", "summary": "@Entity('orders') con columnas"},
+    {"id": "MOD-shipments", "path": "src/shipments/shipments.module.ts", "summary": "ShipmentsModule sin imports de OrdersModule (rompe ciclo)"},
+    {"id": "MOD-shipments-controller", "path": "src/shipments/shipments.controller.ts", "summary": "@Controller('shipments') con CRUD + markShipped/markDelivered"},
+    {"id": "MOD-shipments-service", "path": "src/shipments/shipments.service.ts", "summary": "ShipmentsService basico"},
+    {"id": "MOD-shipments-entity", "path": "src/shipments/entities/shipment.entity.ts", "summary": "@Entity('shipments') con FK a Order"},
+    {"id": "MOD-notifications", "path": "src/notifications/notifications.module.ts", "summary": "NotificationsModule"},
+    {"id": "MOD-notifications-controller", "path": "src/notifications/notifications.controller.ts", "summary": "@Controller('notifications') con CRUD"},
+    {"id": "MOD-notifications-service", "path": "src/notifications/notifications.service.ts", "summary": "NotificationsService.create publica a 'order-queue' (E04 + P03)"},
+    {"id": "MOD-notifications-gateway", "path": "src/notifications/notifications.gateway.ts", "summary": "@WebSocketGateway dead (S02)"},
+    {"id": "MOD-notifications-entity", "path": "src/notifications/entities/notification.entity.ts", "summary": "@Entity('notifications')"},
+    {"id": "MOD-messaging-queue", "path": "src/messaging/message-queue.service.ts", "summary": "MessageQueueService interface (E04)"},
+    {"id": "MOD-messaging-bullmq", "path": "src/messaging/bullmq-message-queue.ts", "summary": "BullMQMessageQueue (D-F06r-3: implementacion real)"},
+    {"id": "MOD-messaging-in-memory", "path": "src/messaging/in-memory-message-queue.ts", "summary": "InMemoryMessageQueue (D-F06r-3: implementacion para tests)"},
+    {"id": "MOD-messaging-controller", "path": "src/messaging/microservice.controller.ts", "summary": "@MessagePattern handlers (E05)"},
+    {"id": "MOD-messaging-event-handler", "path": "src/messaging/order-event.handler.ts", "summary": "@EventPattern handler (E05)"},
+    {"id": "MOD-messaging-module", "path": "src/messaging/messaging.module.ts", "summary": "MessagingModule providers"},
+    {"id": "MOD-health", "path": "src/health/health.controller.ts", "summary": "@Controller('health') con GET /deep dead (S01) + GET /"}
+  ],
+  "dependencies": [
+    {"name": "@nestjs/common", "version": "10.4.4", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/core", "version": "10.4.4", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/config", "version": "3.2.3", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/microservices", "version": "10.4.4", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/platform-express", "version": "10.4.4", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/typeorm", "version": "10.0.2", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/websockets", "version": "10.4.4", "scope": "runtime", "manifest": "package.json"},
+    {"name": "better-sqlite3", "version": "9.6.0", "scope": "runtime", "manifest": "package.json"},
+    {"name": "bullmq", "version": "5.21.0", "scope": "runtime", "manifest": "package.json"},
+    {"name": "class-transformer", "version": "0.5.1", "scope": "runtime", "manifest": "package.json"},
+    {"name": "class-validator", "version": "0.14.1", "scope": "runtime", "manifest": "package.json"},
+    {"name": "ioredis", "version": "5.4.1", "scope": "runtime", "manifest": "package.json"},
+    {"name": "joi", "version": "17.13.3", "scope": "runtime", "manifest": "package.json"},
+    {"name": "nestjs-joi", "version": "1.12.0", "scope": "runtime", "manifest": "package.json"},
+    {"name": "reflect-metadata", "version": "0.2.2", "scope": "runtime", "manifest": "package.json"},
+    {"name": "rxjs", "version": "7.8.1", "scope": "runtime", "manifest": "package.json"},
+    {"name": "typeorm", "version": "0.3.20", "scope": "runtime", "manifest": "package.json"},
+    {"name": "@nestjs/cli", "version": "10.4.5", "scope": "dev", "manifest": "package.json"},
+    {"name": "@nestjs/schematics", "version": "10.2.3", "scope": "dev", "manifest": "package.json"},
+    {"name": "@nestjs/testing", "version": "10.4.4", "scope": "dev", "manifest": "package.json"},
+    {"name": "@types/jest", "version": "29.5.13", "scope": "dev", "manifest": "package.json"},
+    {"name": "@types/node", "version": "22.7.5", "scope": "dev", "manifest": "package.json"},
+    {"name": "@types/supertest", "version": "6.0.2", "scope": "dev", "manifest": "package.json"},
+    {"name": "jest", "version": "29.7.0", "scope": "dev", "manifest": "package.json"},
+    {"name": "supertest", "version": "7.0.0", "scope": "dev", "manifest": "package.json"},
+    {"name": "ts-jest", "version": "29.2.5", "scope": "dev", "manifest": "package.json"},
+    {"name": "ts-loader", "version": "9.5.1", "scope": "dev", "manifest": "package.json"},
+    {"name": "ts-node", "version": "10.9.2", "scope": "dev", "manifest": "package.json"},
+    {"name": "typescript", "version": "5.6.3", "scope": "dev", "manifest": "package.json"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "ordenes",
+      "user_description": "El usuario crea, lista, obtiene, actualiza y elimina ordenes via API REST en /orders/. El servicio publica a la cola 'order-queue' al crear (E04). El ciclo OrdersModule <-> ShipmentsModule se resuelve con forwardRef (P01).",
+      "traces": [
+        {"n": 1, "what": "User POST /orders con JSON {customer, total}", "cite": "src/orders/orders.controller.ts:24", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "ValidationPipe valida DTO con class-validator", "cite": "src/orders/dto/create-order.dto.ts:1", "data_in": "CreateOrderDto", "data_out": "validated or 400"},
+        {"n": 3, "what": "OrdersController.create llama OrdersService.create", "cite": "src/orders/orders.controller.ts:24", "data_in": "CreateOrderDto", "data_out": "Promise<Order>"},
+        {"n": 4, "what": "OrdersService.create usa @InjectRepository(Order)", "cite": "src/orders/orders.service.ts:14", "data_in": "Order", "data_out": "Repository<Order>"},
+        {"n": 5, "what": "TypeORM INSERT en orders table", "cite": "src/orders/entities/order.entity.ts:1", "data_in": "Order", "data_out": "INSERT"},
+        {"n": 6, "what": "OrdersService.notifyCreated publica a 'order-queue' (trampa E04)", "cite": "src/orders/orders.service.ts:42", "data_in": "Order", "data_out": "queue.publish"},
+        {"n": 7, "what": "Endpoint responde 201 Created con Order", "cite": "src/orders/orders.controller.ts:24", "data_in": "Order", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/orders/orders.controller.ts", "line": 24, "kind": "routing", "condition_text": "POST /orders con body valido", "branches": [{"label": "valido -> 201", "target_line": 24}, {"label": "validacion falla -> 400", "target_line": 24}, {"label": "auth falla -> 500 (P02)", "target_line": 24}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con customer no vacio + total >= 0", "user_sees": "201 Created con Order", "side_effects": ["INSERT en orders", "queue.publish a 'order-queue'"], "reversible": true, "final_state": "order creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /orders con auth valida", "user_sees": "200 OK con [Order, ...]", "side_effects": ["SELECT"], "reversible": true, "final_state": "renderizado"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /orders/{id} con id existente", "user_sees": "200 OK con Order", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /orders/{id} con cambios", "user_sees": "200 OK con Order actualizado", "side_effects": ["UPDATE"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /orders/{id}", "user_sees": "204 No Content", "side_effects": ["DELETE"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_404", "conditions": "GET /orders/{id} con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_validation_400", "conditions": "POST con customer vacio o total negativo", "user_sees": "400 Bad Request", "side_effects": [], "reversible": true, "final_state": "rejected"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "@Controller('orders')", "effect": "URL base /orders"},
+        {"key": "router.dependencies", "message": "Ninguno a nivel de router; APP_GUARD global valida auth (P02)"},
+        {"key": "queue.publish", "message": "'order-queue'", "effect": "Nombre de cola acopla producer + consumer (E04)"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "envios",
+      "user_description": "El usuario crea, marca shipped/delivered y lista envios via API REST en /shipments/. ShipmentsModule NO importa OrdersModule para romper el ciclo (P01).",
+      "traces": [
+        {"n": 1, "what": "User POST /shipments con JSON {orderId, address}", "cite": "src/shipments/shipments.controller.ts:23", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "ValidationPipe valida DTO con class-validator", "cite": "src/shipments/dto/create-shipment.dto.ts:1", "data_in": "CreateShipmentDto", "data_out": "validated or 400"},
+        {"n": 3, "what": "ShipmentsController.create llama ShipmentsService.create", "cite": "src/shipments/shipments.controller.ts:23", "data_in": "CreateShipmentDto", "data_out": "Promise<Shipment>"},
+        {"n": 4, "what": "ShipmentsService.create persiste Shipment", "cite": "src/shipments/shipments.service.ts:18", "data_in": "create params", "data_out": "INSERT"},
+        {"n": 5, "what": "Endpoint responde 201 Created con Shipment", "cite": "src/shipments/shipments.controller.ts:23", "data_in": "Shipment", "data_out": "201 Created"},
+        {"n": 6, "what": "User POST /shipments/{id}/ship llama markShipped", "cite": "src/shipments/shipments.service.ts:33", "data_in": "Shipment", "data_out": "UPDATE status='shipped'"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/shipments/shipments.controller.ts", "line": 23, "kind": "routing", "condition_text": "POST /shipments con body valido", "branches": [{"label": "valido -> 201", "target_line": 23}, {"label": "orderId falta -> 400", "target_line": 23}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con orderId valido + address no vacio", "user_sees": "201 Created con Shipment", "side_effects": ["INSERT en shipments"], "reversible": true, "final_state": "shipment creado"},
+        {"id": "R-02", "category": "success_mark_shipped", "conditions": "POST /shipments/{id}/ship con id existente", "user_sees": "200 OK con status='shipped'", "side_effects": ["UPDATE status"], "reversible": false, "final_state": "enviado"},
+        {"id": "R-03", "category": "success_mark_delivered", "conditions": "POST /shipments/{id}/deliver con id existente", "user_sees": "200 OK con status='delivered'", "side_effects": ["UPDATE status"], "reversible": false, "final_state": "entregado"},
+        {"id": "R-04", "category": "success_list", "conditions": "GET /shipments con auth", "user_sees": "200 OK con [Shipment, ...]", "side_effects": ["SELECT"], "reversible": true, "final_state": "renderizado"},
+        {"id": "R-05", "category": "success_get", "conditions": "GET /shipments/{id} con id existente", "user_sees": "200 OK con Shipment", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-06", "category": "error_404", "conditions": "GET /shipments/{id} con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_validation_400", "conditions": "POST sin orderId o sin address", "user_sees": "400 Bad Request", "side_effects": [], "reversible": true, "final_state": "rejected"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "@Controller('shipments')", "effect": "URL base /shipments"},
+        {"key": "module.no_cyclic", "message": "ShipmentsModule NO importa OrdersModule", "effect": "Rompe el ciclo a nivel de imports (P01)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "notificaciones",
+      "user_description": "El usuario crea y obtiene notificaciones via Notification API REST en /notifications/. Al crear, el servicio publica a 'order-queue' (E04) pero NO verifica que haya un consumer registrado (P03).",
+      "traces": [
+        {"n": 1, "what": "User POST /notifications con JSON {eventType, payload}", "cite": "src/notifications/notifications.controller.ts:23", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "NotificationsController.create llama NotificationsService.create", "cite": "src/notifications/notifications.controller.ts:23", "data_in": "CreateNotificationDto", "data_out": "Promise<Notification>"},
+        {"n": 3, "what": "NotificationsService.create persiste Notification", "cite": "src/notifications/notifications.service.ts:22", "data_in": "Notification", "data_out": "INSERT"},
+        {"n": 4, "what": "NotificationsService.create publica a 'order-queue' (trampa P03)", "cite": "src/notifications/notifications.service.ts:27", "data_in": "Notification", "data_out": "queue.publish sin verificar consumer"},
+        {"n": 5, "what": "Endpoint responde 201 Created con Notification", "cite": "src/notifications/notifications.controller.ts:23", "data_in": "Notification", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/notifications/notifications.controller.ts", "line": 23, "kind": "routing", "condition_text": "POST /notifications con body valido", "branches": [{"label": "valido -> 201", "target_line": 23}, {"label": "eventType falta -> 400", "target_line": 23}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con eventType no vacio + payload", "user_sees": "201 Created con Notification", "side_effects": ["INSERT en notifications", "queue.publish a 'order-queue'"], "reversible": true, "final_state": "notificacion creada"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /notifications", "user_sees": "200 OK con [Notification, ...]", "side_effects": ["SELECT"], "reversible": true, "final_state": "lista"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /notifications/{id} con id existente", "user_sees": "200 OK con Notification", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-04", "category": "success_update_404", "conditions": "GET /notifications/{id} con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-05", "category": "error_validation_400", "conditions": "POST sin eventType", "user_sees": "400 Bad Request", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "error_publish_no_consumer", "conditions": "POST crea notificacion y publica pero nadie escucha 'order-queue'", "user_sees": "201 Created pero el mensaje se pierde silenciosamente (P03)", "side_effects": ["INSERT en notifications", "queue.publish sin handler"], "reversible": false, "final_state": "mensaje perdido"},
+        {"id": "R-07", "category": "error_celery_eager_async", "conditions": "Producer publica async task que Celery no soporta", "user_sees": "200 OK pero la coroutine no se ejecuta", "side_effects": ["INSERT en notifications"], "reversible": true, "final_state": "noop"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "@Controller('notifications')", "effect": "URL base /notifications"},
+        {"key": "queue.publish", "message": "'order-queue' sin verificar consumer", "effect": "Mensajes se pierden si nadie escucha (P03)"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "modules_di_decorators", "where": "src/app.module.ts:34 + src/orders/orders.module.ts:18 + src/shipments/shipments.module.ts:14 + src/notifications/notifications.module.ts + nest-cli.json", "resolution": "Cada @Module({imports, providers, controllers}) define el grafo DI. La skill debe leer nest-cli.json + app.module.ts + cada .module.ts para entender la estructura completa."},
+    {"id": "TRAP-E02", "kind": "app_guard_app_interceptor", "where": "src/app.module.ts:58-70 providers: [{provide: APP_GUARD, useClass: AuthGuard}, {provide: APP_INTERCEPTOR, useClass: TimingInterceptor}, {provide: APP_FILTER, useClass: HttpExceptionFilter}]", "resolution": "Los guards/interceptors/filters globales se registran via providers con tokens especiales APP_GUARD, APP_INTERCEPTOR, APP_FILTER. La skill debe notar el array providers de app.module.ts, no solo buscar @UseGuards() en controllers."},
+    {"id": "TRAP-E03", "kind": "custom_decorator_reflector", "where": "src/common/decorators/roles.decorator.ts + src/common/guards/auth.guard.ts:Reflector.getAllAndOverride + src/common/interceptors/timing.interceptor.ts:Reflector.get + src/common/decorators/log-execution.decorator.ts", "resolution": "Los decoradores usan SetMetadata(key, value); los guards/interceptors leen via Reflector.get(key, target). La skill debe correlacionar la key en SetMetadata con la key en Reflector.get."},
+    {"id": "TRAP-E04", "kind": "bullmq_producer_consumer_by_name", "where": "src/orders/orders.service.ts:48 publish('order-queue', ...) + src/notifications/notifications.service.ts:27 publish('order-queue', ...)", "resolution": "Productor y consumidor estan acoplados SOLO por el string 'order-queue'. La skill debe grep este string en toda la codebase."},
+    {"id": "TRAP-E05", "kind": "event_pattern_message_pattern", "where": "src/messaging/microservice.controller.ts:17 @MessagePattern('order_created') + src/messaging/order-event.handler.ts:17 @EventPattern('order_created') + src/main.ts:30 app.connectMicroservice(...)", "resolution": "Los handlers con @MessagePattern/@EventPattern solo se registran si app.connectMicroservice se llama. La skill debe encontrar este bootstrap en main.ts."},
+    {"id": "TRAP-E06", "kind": "config_module_namespaces", "where": "src/config/{database,redis,app}.config.ts:registerAs(...) + src/config/validation.schema.ts + src/app.module.ts:load: [databaseConfig, redisConfig, appConfig], validationSchema", "resolution": "Cada config tiene un namespace; ConfigType<typeof XxxConfig> da tipos. La skill debe leer el array load: de ConfigModule.forRoot para entender los namespaces."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "circular_module_dependency", "where": "src/orders/orders.module.ts:21 forwardRef(() => ShipmentsModule) + src/shipments/shipments.module.ts (NO importa OrdersModule)", "resolution": "El ciclo existia pero se resolvio con forwardRef en OrdersModule. NestJS ahora puede construir ambos modulos. La trampa: sin forwardRef, la app falla al boot."},
+    {"id": "TRAP-P02", "kind": "global_guard_throws_on_missing_context", "where": "src/common/guards/auth.guard.ts:33 throw new InternalServerErrorException('user context missing')", "resolution": "El guard deberia lanzar una excepcion de autenticacion (401) cuando no hay request.user. En su lugar lanza InternalServerErrorException (500). El codigo HTTP es incorrecto."},
+    {"id": "TRAP-P03", "kind": "bullmq_producer_no_consumer_validation", "where": "src/notifications/notifications.service.ts:27 await this.queue.publish('order-queue', ...)", "resolution": "El productor no verifica que haya un consumer suscrito a la cola. Si nadie escucha, el mensaje se pierde silenciosamente."},
+    {"id": "TRAP-P04", "kind": "interceptor_breaks_streaming", "where": "src/common/interceptors/timing.interceptor.ts (resuelto con .pipe(tap(...)))", "resolution": "El codigo original tenia return next.handle() sin .pipe() para observables de stream. La version actual usa .pipe(tap(...)) para preservar el stream."},
+    {"id": "TRAP-P05", "kind": "custom_decorator_metadata_key_typo", "where": "src/common/decorators/log-execution.decorator.ts:'log_execution_time' vs src/common/interceptors/timing.interceptor.ts:'LogExecutionTime'", "resolution": "Las keys no coinciden (case-sensitive). El decorator pone la key en minusculas pero el interceptor lee con mayusculas. El interceptor nunca encuentra metadata y nunca actua."},
+    {"id": "TRAP-P06", "kind": "microservice_transport_not_connected", "where": "src/main.ts:30 app.connectMicroservice<MicroserviceOptions>({transport: Transport.TCP, options: {host: '0.0.0.0', port: port + 1}})", "resolution": "La llamada ESTA presente. Sin embargo, en algunas rutas de configuracion (e.g. si NODE_ENV no esta definido o la lista de transports falla), el microservice no se registra y los handlers @MessagePattern/@EventPattern quedan sin escuchar."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_route", "where": "src/health/health.controller.ts:6 @Get('/deep')", "resolution": "Endpoint dead que retorna {status: 'ok'} literal. Ningun test lo invoca."},
+    {"id": "TRAP-S02", "kind": "dead_websocket_gateway", "where": "src/notifications/notifications.gateway.ts", "resolution": "NotificationsGateway con @WebSocketGateway definido pero NINGUN modulo lo importa. La skill debe detectarlo via grep."},
+    {"id": "TRAP-S03", "kind": "dead_interceptor", "where": "src/common/interceptors/metrics.interceptor.ts", "resolution": "MetricsInterceptor definido pero NO registrado en app.module.ts. La skill debe detectarlo via grep."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-orders-create", "kind": "endpoint", "name": "POST /orders", "handler": "src/orders/orders.controller.ts:24", "file": "src/orders/orders.controller.ts"},
+    {"id": "SRF-route-orders-list", "kind": "endpoint", "name": "GET /orders", "handler": "src/orders/orders.controller.ts:33", "file": "src/orders/orders.controller.ts"},
+    {"id": "SRF-route-orders-get", "kind": "endpoint", "name": "GET /orders/{id}", "handler": "src/orders/orders.controller.ts:43", "file": "src/orders/orders.controller.ts"},
+    {"id": "SRF-route-orders-update", "kind": "endpoint", "name": "PATCH /orders/{id}", "handler": "src/orders/orders.controller.ts:55", "file": "src/orders/orders.controller.ts"},
+    {"id": "SRF-route-orders-delete", "kind": "endpoint", "name": "DELETE /orders/{id}", "handler": "src/orders/orders.controller.ts:69", "file": "src/orders/orders.controller.ts"},
+    {"id": "SRF-route-shipments-create", "kind": "endpoint", "name": "POST /shipments", "handler": "src/shipments/shipments.controller.ts:23", "file": "src/shipments/shipments.controller.ts"},
+    {"id": "SRF-route-shipments-ship", "kind": "endpoint", "name": "POST /shipments/{id}/ship", "handler": "src/shipments/shipments.controller.ts:32", "file": "src/shipments/shipments.controller.ts"},
+    {"id": "SRF-route-shipments-deliver", "kind": "endpoint", "name": "POST /shipments/{id}/deliver", "handler": "src/shipments/shipments.controller.ts:39", "file": "src/shipments/shipments.controller.ts"},
+    {"id": "SRF-route-shipments-list", "kind": "endpoint", "name": "GET /shipments", "handler": "src/shipments/shipments.controller.ts:14", "file": "src/shipments/shipments.controller.ts"},
+    {"id": "SRF-route-notifications-create", "kind": "endpoint", "name": "POST /notifications", "handler": "src/notifications/notifications.controller.ts:23", "file": "src/notifications/notifications.controller.ts"},
+    {"id": "SRF-route-notifications-list", "kind": "endpoint", "name": "GET /notifications", "handler": "src/notifications/notifications.controller.ts:14", "file": "src/notifications/notifications.controller.ts"},
+    {"id": "SRF-route-health-deep-dead", "kind": "endpoint", "name": "GET /health/deep (dead)", "handler": "src/health/health.controller.ts:6", "file": "src/health/health.controller.ts"},
+    {"id": "SRF-guard-auth", "kind": "guard", "name": "AuthGuard (APP_GUARD)", "handler": "src/common/guards/auth.guard.ts:18", "file": "src/common/guards/auth.guard.ts"},
+    {"id": "SRF-interceptor-timing", "kind": "interceptor", "name": "TimingInterceptor (APP_INTERCEPTOR)", "handler": "src/common/interceptors/timing.interceptor.ts:22", "file": "src/common/interceptors/timing.interceptor.ts"},
+    {"id": "SRF-microservice-message-pattern", "kind": "handler", "name": "@MessagePattern('order_created')", "handler": "src/messaging/microservice.controller.ts:17", "file": "src/messaging/microservice.controller.ts"},
+    {"id": "SRF-event-pattern-order-created", "kind": "handler", "name": "@EventPattern('order_created')", "handler": "src/messaging/order-event.handler.ts:17", "file": "src/messaging/order-event.handler.ts"},
+    {"id": "SRF-decorator-roles", "kind": "decorator", "name": "@Roles('admin')", "handler": "src/common/decorators/roles.decorator.ts:11", "file": "src/common/decorators/roles.decorator.ts"},
+    {"id": "SRF-decorator-log-execution", "kind": "decorator", "name": "@LogExecutionTime()", "handler": "src/common/decorators/log-execution.decorator.ts:14", "file": "src/common/decorators/log-execution.decorator.ts"},
+    {"id": "SRF-websocket-gateway-dead", "kind": "gateway", "name": "NotificationsGateway (dead)", "handler": "src/notifications/notifications.gateway.ts:6", "file": "src/notifications/notifications.gateway.ts"},
+    {"id": "SRF-config-namespace-database", "kind": "config", "name": "registerAs('database', ...)", "handler": "src/config/database.config.ts:4", "file": "src/config/database.config.ts"}
+  ]
+}

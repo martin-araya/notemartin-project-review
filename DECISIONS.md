@@ -1898,3 +1898,154 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   deps (descartado: no distingue FastAPI de Starlette puro).
 - Consecuencias: el MATRIX.md muestra fx-python-fastapi cubriendo
   fastapi, pydantic, sqlalchemy, alembic y pip.
+
+### D-239 — Stack del fixture F06r: Node 22 + TypeScript 5.6 + NestJS 10.4 + TypeORM 0.3.20 + BullMQ 5.21 + better-sqlite3 9.6 + supertest 7 + Jest 29 + ts-jest 29 (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: el plan F06r pide backend NestJS modular con TypeORM,
+  BullMQ y transporte de microservicios.
+- Decision: stack = Node 22 + TypeScript 5.6.3 + NestJS 10.4.4
+  (core, common, config, microservices, platform-express, typeorm,
+  websockets) + TypeORM 0.3.20 + BullMQ 5.21.0 + better-sqlite3 9.6.0
+  + ioredis 5.4.1 + joi 17.13.3 + nestjs-joi 1.12.0 + class-validator 0.14.1
+  + reflect-metadata 0.2.2 + rxjs 7.8.1. Imagen Docker:
+  `node:22-bookworm-slim` con `apt-get install -y make python3
+  build-essential` (necesario para el native build de better-sqlite3).
+- Alternativas: (a) Sequelize (descartado: el plan siguiente
+  F06s es Go; NestJS oficial recomienda TypeORM); (b) arq con
+  Redis en docker-compose (descartado: agrega complejidad
+  innecesaria para los gates); (c) `sqlite3` en vez de
+  `better-sqlite3` (descartado: better-sqlite3 es sync y mas
+  simple para tests en memoria).
+- Consecuencias: la trampa E01 (modulos con `@Module`), la trampa
+  E02 (APP_GUARD/APP_INTERCEPTOR/APP_FILTER), la trampa E03
+  (decoradores propios con Reflector), la trampa E04
+  (BullMQ productor/consumidor por nombre de cola), la trampa
+  E05 (`@MessagePattern`/`@EventPattern`), y la trampa E06
+  (ConfigModule con namespaces) son utiles para la skill.
+
+### D-240 — Apps y modulos en ingles (orders, shipments, notifications) para CC-11 (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature (en espanol) en cualquier linea del codigo del fixture.
+  Los features son `ordenes`, `envios`, `notificaciones`.
+- Decision: usar `src/orders/`, `src/shipments/`, `src/notifications/`
+  y URL paths en ingles (`/orders`, `/shipments`, `/notifications`).
+  Los nombres de feature en espanol viven solo en el ground truth.
+- Alternativas: (a) `src/ordenes/`, etc. (descartado: apareceria en
+  `INSTALLED_APPS` y en los TypeORM entity labels; aunque CC-11
+  verifica comments `#` no strings, la consistencia con F06p
+  favorece apps en ingles); (b) ofuscar con guiones.
+- Consecuencias: la skill debe mapear `orders` <-> `ordenes`,
+  `shipments` <-> `envios`, `notifications` <-> `notificaciones`.
+
+### D-241 — Abstraccion `MessageQueueService` con BullMQ (real) y `InMemoryMessageQueue` (tests) (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: la trampa E04 exige que productor y consumidor se
+  acoplen por nombre de cola. BullMQ requiere Redis en runtime.
+  Para los tests queremos evitar la dependencia de Redis.
+- Decision: `MessageQueueService` interface abstracta con metodos
+  `publish(queue, payload)` y `subscribe(queue, handler)`. Dos
+  implementaciones: `BullMQMessageQueue` (real, con Queue de
+  BullMQ y Worker) y `InMemoryMessageQueue` (tests, con un Map
+  interno). En el modulo de tests, el provider
+  `MessageQueueService` se sobreescribe con `InMemoryMessageQueue`.
+- Alternativas: (a) `ioredis-mock` (descartado: requiere envolver
+  ioredis, fragil); (b) mockear `bullmq.Queue` directamente con
+  jest.mock (descartado: el codigo queda menos idiomatico); (c)
+  Redis en docker-compose (descartado: agrega complejidad).
+- Consecuencias: la trampa E04 sigue valida. Los tests invocan
+  el `InMemoryMessageQueue` y verifican que el mensaje se entrega
+  al handler suscrito.
+
+### D-242 — `npm install --legacy-peer-deps` para resolver conflictos con better-sqlite3 (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: typeorm 0.3.20 requiere `better-sqlite3@^7.1.2 || ^8.0.0
+  || ^9.0.0` pero la ultima version es 11.x. Sin `--legacy-peer-deps`,
+  npm rechaza la instalacion.
+- Decision: usar `better-sqlite3@9.6.0` (la mas alta compatible)
+  + `npm install --legacy-peer-deps` en el Dockerfile.
+- Alternativas: (a) usar `sqlite3` en vez de `better-sqlite3`
+  (descartado: requiere build tools de C y no aporta); (b) usar
+  Postgres en docker-compose (descartado: agrega 200 MB).
+- Consecuencias: el fixture compila sin warnings de peer dep.
+
+### D-243 — Prefijo `NPRGT-FXNEST-` para los unique tokens de F06r (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXNEST` y exactamente 26 tokens cubriendo
+  stack (NESTJS-VER, TYPEORM-VER, BULLMQ-VER, JEST-VER,
+  SUPERTEST-VER, TYPESCRIPT-VER), tipos (MODULE-DECORATOR,
+  APP-GUARD, APP-INTERCEPTOR, REFLECTOR-METADATA,
+  BULLMQ-QUEUE-NAME, MESSAGE-PATTERN, EVENT-PATTERN,
+  CONFIG-NAMESPACE, WEBSOCKET-GATEWAY, DEPENDENCY-INJECTION),
+  features (ORDERS-RESULT-R01, SHIPMENTS-RESULT-R01,
+  NOTIFICATIONS-RESULT-R01), marcadores (MARKER-APP,
+  MARKER-MESSAGING, MARKER-COMMON, MARKER-NESTCLI), y trampas
+  superficiales (TRAMP-S01-ROUTE, TRAMP-S02-GATEWAY,
+  TRAMP-S03-INTERCEPTOR). Ninguno aparece en el codigo del
+  fixture (verificado por `TestUniqueTokensFile`).
+- Alternativas: (a) `FXNESTJS` (descartado: excede 8 caracteres);
+  (b) `FXTS-NEST` (descartado: confunde con).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-244 — `Makefile` envuelve `npm test -- --colors=false --runInBand` (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: el plan F06x exige paridad con F06g/F06h.
+- Decision: `TEST_CMD ?= npm test -- --colors=false --runInBand`
+  en el Makefile; `test_cmd: make test` en `manifest.yml`.
+- Alternativas: (a) `npm test` directo (descartado: rompe
+  paridad); (b) `jest --ci` (descartado: jest no tiene ese flag).
+- Consecuencias: el contenedor ejecuta `make test` y los tests
+  corren con `--runInBand` (sin paralelismo, deterministas).
+
+### D-245 — Imagen Docker `node:22-bookworm-slim` con `make + python3 + build-essential` (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: better-sqlite3 requiere node-gyp + python3 para el
+  native build. La imagen base `node:22-bookworm-slim` no incluye
+  ni make ni python ni build-essential.
+- Decision: `FROM node:22-bookworm-slim` + `RUN apt-get install -y
+  make python3 build-essential` antes de la copia del codigo
+  (cache de layers).
+- Alternativas: (a) usar `node:22-bookworm` (sin `-slim`)
+  (descartado: ~300 MB mas pesada); (b) usar una imagen
+  pre-construida con las tools (descartado: menos reproducible).
+- Consecuencias: la imagen pesa ~450 MB. El native build de
+  better-sqlite3 funciona en el contenedor.
+
+### D-246 — `requires: [linux, macos, windows]` en `manifest.yml` (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: el plan F06x exige paridad con F06p.
+- Decision: `requires: [linux, macos, windows]`. El toolchain
+  es multiplataforma (Node 22 + NestJS + TypeORM + Jest).
+- Alternativas: (a) solo Linux (descartado: rompe paridad).
+- Consecuencias: el fixture es ejecutable en los 3 sistemas.
+
+### D-247 — Deteccion extendida de NestJS/TypeORM/BullMQ en `fixtures_matrix.py` y `target_matrix.yml` (F06r)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06r · vigente
+- Contexto: el plan F06x exige extender `fixtures_matrix.py`
+  para detectar NestJS via `nest-cli.json` + `@nestjs/core` en
+  `package.json`, y TypeORM/BullMQ via package.json.
+- Decision: agregar a `FRAMEWORK_FILES` la entrada
+  `nest-cli.json: {nestjs}` (reemplazando el previo
+  `{node-express}`). Agregar a `PACKAGE_JSON_MARKERS`:
+  `@nestjs/core -> {nestjs}`, `typeorm -> {typeorm}`,
+  `bullmq -> {bullmq}`. Agregar a `target_matrix.yml`:
+  `frameworks: [nestjs, typeorm, bullmq]`.
+- Alternativas: (a) inferir NestJS solo de package.json sin
+  nest-cli.json (descartado: otros proyectos pueden tener
+  @nestjs/core como dep sin ser NestJS CLI); (b) parsear el
+  campo `peerDependencies` (descartado: no es necesario para
+  la deteccion).
+- Consecuencias: el MATRIX.md muestra fx-node-nestjs cubriendo
+  nestjs, typeorm y bullmq.

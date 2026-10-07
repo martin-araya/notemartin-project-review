@@ -79,7 +79,7 @@ MANIFEST_BUILD: Dict[str, Set[str]] = {
 # Archivos clave de frameworks
 FRAMEWORK_FILES: Dict[str, Set[str]] = {
     "angular.json": {"angular", "javascript"},
-    "nest-cli.json": {"node-express"},
+    "nest-cli.json": {"nestjs"},
     "micronaut-cli.yml": {"micronaut"},
     "settings.gradle": {"gradle"}, "settings.gradle.kts": {"gradle"},
     ".vscode/extension.js": {"vscode-extension"},
@@ -167,6 +167,12 @@ PACKAGE_JSON_MARKERS: Dict[str, Set[str]] = {
     "pydantic": {"pydantic"},
     # Alembic (F06q): la dep ``alembic`` indica migraciones Alembic.
     "alembic": {"alembic"},
+    # NestJS (F06r): la dep ``@nestjs/core`` indica framework NestJS.
+    "@nestjs/core": {"nestjs"},
+    # TypeORM (F06r): la dep ``typeorm`` indica ORM TypeORM.
+    "typeorm": {"typeorm"},
+    # BullMQ (F06r): la dep ``bullmq`` indica cola de mensajes.
+    "bullmq": {"bullmq"},
 }
 
 # Dependencias que definen el ecosistema por si mismas.

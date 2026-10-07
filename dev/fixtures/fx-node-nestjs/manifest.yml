@@ -1,0 +1,16 @@
+# Metadata del fixture F06r: fx-node-nestjs
+# Backend NestJS modular con TypeORM, BullMQ y transporte de microservicios.
+# Ver referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-node-nestjs/ground_truth.json.
+name: fx-node-nestjs
+description: Backend NestJS 10 con TypeORM 0.3, BullMQ 5 y transporte de microservicios (F06r)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-node-nestjs
+  enabled: true
+ground_truth_format_version: 1

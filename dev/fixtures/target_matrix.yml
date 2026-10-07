@@ -64,6 +64,9 @@ axes:
     - pydantic
     - sqlalchemy
     - alembic
+    - nestjs
+    - typeorm
+    - bullmq
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

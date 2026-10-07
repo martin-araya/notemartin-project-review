@@ -940,8 +940,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
 - [x] Commit `F06q: fixture fx-python-fastapi con paquete por feature`.
  
-## F06r — Fixture `fx-node-nestjs`
- 
+## F06r — Fixture `fx-node-nestjs` ✅
+
 **Objetivo:** backend NestJS modular con colas y microservicios.
 **Stack:** TypeScript, NestJS, TypeORM, BullMQ, transporte de microservicios.
 **Features:** `órdenes`, `envíos`, `notificaciones`.
@@ -953,6 +953,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. `@EventPattern`/`@MessagePattern` de microservicios.
 6. `ConfigModule` con namespaces y validación.
 **Toolchain de tests:** Jest + supertest, en contenedor (Redis en servicio).
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`ordenes`, `envios`, `notificaciones`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas: `modules_di_decorators` (`@Module` con imports/providers/controllers en cada .module.ts), `app_guard_app_interceptor` (`APP_GUARD`/`APP_INTERCEPTOR`/`APP_FILTER` providers en app.module.ts), `custom_decorator_reflector` (`@Roles`, `@LogExecutionTime`, `@CurrentUser` con `SetMetadata` y `Reflector.get`), `bullmq_producer_consumer_by_name` (publish('order-queue') en orders.service.ts y notifications.service.ts), `event_pattern_message_pattern` (`@MessagePattern('order_created')` + `@EventPattern('order_created')` + `app.connectMicroservice` en main.ts), `config_module_namespaces` (3 `registerAs(...)` con `load: [...]` y `validationSchema`).
+- [x] 6 trampas del paquete: `circular_module_dependency` (OrdersModule importa ShipmentsModule con forwardRef), `global_guard_throws_on_missing_context` (AuthGuard lanza InternalServerErrorException en vez de 401), `bullmq_producer_no_consumer_validation` (publish sin verificar subscribers), `interceptor_breaks_streaming` (resolved con .pipe(tap())), `custom_decorator_metadata_key_typo` (decorator 'log_execution_time' vs interceptor 'LogExecutionTime'), `microservice_transport_not_connected` (la llamada esta presente pero puede fallar en runtime).
+- [x] 3 trampas superficiales: `dead_route` (`GET /health/deep`), `dead_websocket_gateway` (`NotificationsGateway` con `@WebSocketGateway` no importado), `dead_interceptor` (`MetricsInterceptor` no registrado).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 en verde.
+- [x] Suite Jest 27 tests passed (4 orders + 4 shipments + 4 notifications + 6 TrapsEcosystem + 6 TrapsPackage + 3 TrapsSuperficial) en el contenedor `node:22-bookworm-slim` con `apt-get install make python3 build-essential` + `npm ci --legacy-peer-deps`.
+- [x] `run_fixture_tests.py --fixture fx-node-nestjs --container` -> passed.
+- [x] `dev/tests/test_fx_node_nestjs_ground_truth.py` agregado y verde (52 tests).
+- [x] `MATRIX.md` muestra `nestjs`, `typeorm`, `bullmq`, `make` cubiertos por fx-node-nestjs.
+- [x] `target_matrix.yml` extendido: `frameworks: [nestjs, typeorm, bullmq]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `nest-cli.json` -> `{nestjs}` + `@nestjs/core`, `typeorm`, `bullmq` en `package.json` -> frameworks.
+- [x] `pytest` total 1039 passed (987 anteriores + 52 nuevos), sin regresiones en los 17 fixtures previos.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] Commit `F06r: fixture fx-node-nestjs con paquete por feature`.
  
 ## F06s — Fixture `fx-go-service`
  
