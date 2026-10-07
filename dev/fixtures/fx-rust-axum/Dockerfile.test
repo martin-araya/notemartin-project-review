@@ -1,0 +1,26 @@
+# Imagen para ejecutar los tests del fixture F06t (Rust/Axum).
+FROM rust:1.81-bookworm
+
+# make y gcc (cgo de sqlite) necesarios.
+RUN apt-get update && apt-get install -y --no-install-recommends make gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+# Cache de dependencias.
+COPY Cargo.toml Cargo.lock* ./
+COPY derive-macro/Cargo.toml derive-macro/Cargo.toml
+RUN mkdir -p src && echo 'fn main() {}' > src/main.rs
+RUN cargo fetch 2>&1 | tail -3 || true
+
+COPY derive-macro/src derive-macro/src
+COPY src src
+COPY migrations migrations
+COPY build.rs build.rs
+COPY Makefile Makefile
+COPY unique_tokens.txt unique_tokens.txt
+COPY rust-toolchain.toml rust-toolchain.toml
+COPY tests tests
+
+# Tests con cargo test --workspace.
+CMD ["make", "test"]

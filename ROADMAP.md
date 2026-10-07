@@ -1000,8 +1000,8 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
 - [x] Commit `F06s: fixture fx-go-service con paquete por feature`.
  
-## F06t — Fixture `fx-rust-axum`
- 
+## F06t — Fixture `fx-rust-axum` ✅
+
 **Objetivo:** servicio Rust asíncrono en workspace multi-crate.
 **Stack:** Rust, Axum, tokio, sqlx, serde, thiserror.
 **Features:** `catálogo`, `precios`, `sincronización`.
@@ -1013,6 +1013,22 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. Flujo de errores implícito con `?` y conversiones `From`.
 6. `build.rs` que genera código y un bloque `unsafe` con FFI.
 **Toolchain de tests:** `cargo test --workspace` (sqlx offline), en contenedor.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`catalogo`, `precios`, `sincronizacion`) con 7 R-NN cada una (CC-03).
+- [x] 6 trampas del ecosistema plantadas: `proc_macro_derive` (derive `Entity` que genera `impl` con `ENTITY_NAME` y `entity_name()`), `blanket_impl` (`impl<T: Serialize> Json for T`), `cargo_features` (`#[cfg(feature = "legacy")]` en `features_legacy.rs`), `axum_extractors` (`State<SqlitePool>`, `Json<Req>`, `Path<id>` en handlers), `error_flow_with_question` (`AppError` con `#[from]` derivations + `?` operator), `build_rs_and_unsafe_ffi` (`build.rs` con `cargo:warning` + `extern "C"` con `unsafe { c_legacy_hash }`).
+- [x] 6 trampas del paquete: `proc_macro_generates_wrong_impl`, `blanket_impl_conflict`, `cargo_feature_typo`, `axum_extractor_order`, `from_impl_cycles` (verificada que AppError no tiene From para si mismo), `build_rs_fails`.
+- [x] 3 trampas superficiales: `dead_debug_helper` (`debug_println` no usado), `dead_legacy_feature` (`LegacyEvent` gated por `#[cfg(feature = "legacy")]`), `dead_unused_function` (`pub fn hash` de `LegacyEvent`).
+- [x] `check_ground_truth.py` pasa sin referencias rotas (CC-09) y CC-11 en verde.
+- [x] Suite Rust test 27 tests passed (4 catalog + 4 pricing + 4 sync + 6 TrapsEcosystem + 6 TrapsPackage + 3 TrapsSuperficial) con `cargo test --workspace` en el contenedor `rust:1.81-bookworm` con `apt-get install make gcc` + `cargo fetch` + `cargo build`.
+- [x] `run_fixture_tests.py --fixture fx-rust-axum --container` -> passed.
+- [x] `dev/tests/test_fx_rust_axum_ground_truth.py` agregado y verde (51 tests).
+- [x] `MATRIX.md` muestra `axum`, `tokio`, `thiserror` cubiertos por fx-rust-axum.
+- [x] `target_matrix.yml` extendido: `frameworks: [axum, tokio, thiserror]`.
+- [x] `fixtures_matrix.py` extendido: deteccion de `axum`/`tokio`/`sqlx`/`thiserror`/`serde` en `Cargo.toml`; deteccion de `build.rs` para `cargo-build-script`.
+- [x] `pytest` total 1145 passed (1094 anteriores + 51 nuevos), sin regresiones en los 19 fixtures previos.
+- [x] `validate_skill.py` y `overfit_guard.py` siguen verdes.
+- [x] Commit `F06t: fixture fx-rust-axum con paquete por feature`.
  
 ## F06u — Fixture `fx-php-laravel`
  

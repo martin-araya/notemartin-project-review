@@ -1,0 +1,185 @@
+{
+  "fixture": "fx-rust-axum",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "src/main.rs", "file": "src/main.rs"},
+    {"id": "EP-server", "artifact": "src/bin/server.rs", "file": "src/bin/server.rs"},
+    {"id": "EP-app-module", "artifact": "src/lib.rs", "file": "src/lib.rs"},
+    {"id": "EP-derive", "artifact": "derive-macro/src/lib.rs", "file": "derive-macro/src/lib.rs"},
+    {"id": "EP-build", "artifact": "build.rs", "file": "build.rs"}
+  ],
+  "modules": [
+    {"id": "MOD-main", "path": "src/main.rs", "summary": "Entry point binario placeholder"},
+    {"id": "MOD-server", "path": "src/bin/server.rs", "summary": "axum::serve con Router anidado por feature (E04: extractors)"},
+    {"id": "MOD-lib", "path": "src/lib.rs", "summary": "mod exports: catalog, pricing, sync, infra, debug, features_legacy, unsafe_ffi"},
+    {"id": "MOD-catalog", "path": "src/catalog/mod.rs", "summary": "Router con rutas CRUD para items"},
+    {"id": "MOD-catalog-entity", "path": "src/catalog/entity.rs", "summary": "Item con #[derive(Entity)] (E01) + FromRow"},
+    {"id": "MOD-catalog-service", "path": "src/catalog/service.rs", "summary": "Logica de negocio con `?` (E05: From derivations)"},
+    {"id": "MOD-catalog-handler", "path": "src/catalog/handler.rs", "summary": "axum handlers con State, Json, Path (E04)"},
+    {"id": "MOD-pricing", "path": "src/pricing/mod.rs", "summary": "Router CRUD para prices"},
+    {"id": "MOD-pricing-entity", "path": "src/pricing/entity.rs", "summary": "Price con #[derive(Entity)] (E01)"},
+    {"id": "MOD-pricing-service", "path": "src/pricing/service.rs", "summary": "Logica con `?` (E05)"},
+    {"id": "MOD-pricing-handler", "path": "src/pricing/handler.rs", "summary": "axum handlers (E04)"},
+    {"id": "MOD-sync", "path": "src/sync/mod.rs", "summary": "Router CRUD para sync_jobs"},
+    {"id": "MOD-sync-entity", "path": "src/sync/entity.rs", "summary": "SyncJob con #[derive(Entity)] (E01)"},
+    {"id": "MOD-sync-service", "path": "src/sync/service.rs", "summary": "Logica con `?` (E05)"},
+    {"id": "MOD-sync-handler", "path": "src/sync/handler.rs", "summary": "axum handlers (E04)"},
+    {"id": "MOD-infra-db", "path": "src/infra/db.rs", "summary": "sqlx::SqlitePool + migrate"},
+    {"id": "MOD-infra-error", "path": "src/infra/error.rs", "summary": "AppError con thiserror + From (E05) + IntoResponse"},
+    {"id": "MOD-infra-config", "path": "src/infra/config.rs", "summary": "Config desde env vars"},
+    {"id": "MOD-infra-blanket", "path": "src/infra/blanket_impl.rs", "summary": "Blanket impl<T: Serialize> Json for T (E02)"},
+    {"id": "MOD-features-legacy", "path": "src/features_legacy.rs", "summary": "Codigo gated por #[cfg(feature = \"legacy\")] (E03 + S02)"},
+    {"id": "MOD-debug", "path": "src/debug.rs", "summary": "debug_println dead (S03)"},
+    {"id": "MOD-unsafe-ffi", "path": "src/unsafe_ffi.rs", "summary": "extern \"C\" block + unsafe wrapper (E06)"},
+    {"id": "MOD-derive", "path": "derive-macro/src/lib.rs", "summary": "proc_macro_derive(Entity) que genera impl (E01)"},
+    {"id": "MOD-build-rs", "path": "build.rs", "summary": "Build script con cargo:warning (E06)"},
+    {"id": "MOD-migrations", "path": "migrations/001_initial.sql", "summary": "Schema para items, prices, sync_jobs"}
+  ],
+  "dependencies": [
+    {"name": "axum", "version": "0.7", "scope": "runtime", "manifest": "Cargo.toml"},
+    {"name": "tokio", "version": "1.40", "scope": "runtime", "manifest": "Cargo.toml"},
+    {"name": "sqlx", "version": "0.8", "scope": "runtime", "manifest": "Cargo.toml (features = [\"runtime-tokio\", \"sqlite\"])"},
+    {"name": "serde", "version": "1.0", "scope": "runtime", "manifest": "Cargo.toml (features = [\"derive\"])"},
+    {"name": "serde_json", "version": "1.0", "scope": "runtime", "manifest": "Cargo.toml"},
+    {"name": "thiserror", "version": "1.0", "scope": "runtime", "manifest": "Cargo.toml"},
+    {"name": "anyhow", "version": "1.0", "scope": "runtime", "manifest": "Cargo.toml"},
+    {"name": "fxrust-derive", "version": "0.1.0", "scope": "runtime", "manifest": "Cargo.toml (path = derive-macro)"},
+    {"name": "proc-macro2", "version": "1", "scope": "build", "manifest": "derive-macro/Cargo.toml"},
+    {"name": "quote", "version": "1", "scope": "build", "manifest": "derive-macro/Cargo.toml"},
+    {"name": "syn", "version": "2", "scope": "build", "manifest": "derive-macro/Cargo.toml"},
+    {"name": "tokio-test", "version": "0.4", "scope": "dev", "manifest": "Cargo.toml"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "catalogo",
+      "user_description": "El usuario crea, lista, obtiene, actualiza y elimina items via API REST en /catalog/items. Los handlers usan extractors de axum (State, Json, Path). El proc macro derive genera ENTITY_NAME.",
+      "traces": [
+        {"n": 1, "what": "User POST /catalog/items con JSON {sku, name, price_cents}", "cite": "src/catalog/handler.rs:33", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "Handler extrae State<SqlitePool> y Json<CreateItemReq> (E04: extractors)", "cite": "src/catalog/handler.rs:35", "data_in": "Json", "data_out": "service call"},
+        {"n": 3, "what": "create_item valida sku no vacio", "cite": "src/catalog/service.rs:41", "data_in": "Item", "data_out": "INSERT o AppError::Invalid"},
+        {"n": 4, "what": "INSERT INTO items (sku, name, price_cents) VALUES (?, ?, ?)", "cite": "src/catalog/service.rs:47", "data_in": "Item", "data_out": "INSERT"},
+        {"n": 5, "what": "get_item devuelve el item creado (E05: ? usa From para sqlx::Error)", "cite": "src/catalog/service.rs:51", "data_in": "Item", "data_out": "Item"},
+        {"n": 6, "what": "Endpoint responde 201 Created con el item (E04: IntoResponse via StatusCode+Json)", "cite": "src/catalog/handler.rs:38", "data_in": "Item", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/catalog/service.rs", "line": 41, "kind": "validation", "condition_text": "sku.trim().is_empty()", "branches": [{"label": "vacio -> AppError::Invalid", "target_line": 42}, {"label": "no vacio -> INSERT", "target_line": 47}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con sku no vacio + name + price_cents >= 0", "user_sees": "201 Created con Item en JSON", "side_effects": ["INSERT en items"], "reversible": true, "final_state": "item creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /catalog/items", "user_sees": "200 OK con [Item, ...]", "side_effects": ["SELECT ORDER BY id"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /catalog/items/:id con id existente", "user_sees": "200 OK con Item en JSON", "side_effects": ["SELECT WHERE id = ?"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /catalog/items/:id con body", "user_sees": "200 OK con Item actualizado", "side_effects": ["UPDATE"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /catalog/items/:id", "user_sees": "204 No Content", "side_effects": ["DELETE"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_404", "conditions": "GET /catalog/items/:id con id inexistente", "user_sees": "404 Not Found con {error: 'not_found'}", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_validation_400", "conditions": "POST con sku vacio o name vacio", "user_sees": "400 Bad Request con {error: 'invalid_input'}", "side_effects": [], "reversible": true, "final_state": "rejected"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "POST /catalog/items", "effect": "Endpoint principal"},
+        {"key": "derive.entity_name", "message": "Item::ENTITY_NAME (generado por proc macro, E01)", "effect": "Metadata generada en compile time"},
+        {"key": "blanket.json", "message": "impl<T: Serialize> Json for T (E02)", "effect": "Cualquier Serialize puede serializarse a JSON"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "precios",
+      "user_description": "El usuario crea, lista, obtiene, actualiza y elimina precios via API REST en /catalog/prices. Validacion: amount_cents >= 0.",
+      "traces": [
+        {"n": 1, "what": "User POST /catalog/prices con JSON {item_id, amount_cents, currency}", "cite": "src/pricing/handler.rs:33", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "Handler extrae State, Json (E04: extractors)", "cite": "src/pricing/handler.rs:35", "data_in": "Json", "data_out": "service call"},
+        {"n": 3, "what": "create_price valida amount_cents >= 0 (E05: ? propagates)", "cite": "src/pricing/service.rs:50", "data_in": "Price", "data_out": "INSERT o AppError::Invalid"},
+        {"n": 4, "what": "INSERT INTO prices (item_id, amount_cents, currency) VALUES (?, ?, ?)", "cite": "src/pricing/service.rs:53", "data_in": "Price", "data_out": "INSERT"},
+        {"n": 5, "what": "get_price devuelve el price creado (E05)", "cite": "src/pricing/service.rs:59", "data_in": "Price", "data_out": "Price"},
+        {"n": 6, "what": "Endpoint responde 201 Created con el price", "cite": "src/pricing/handler.rs:38", "data_in": "Price", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/pricing/service.rs", "line": 50, "kind": "validation", "condition_text": "amount_cents < 0", "branches": [{"label": "negativo -> AppError::Invalid", "target_line": 51}, {"label": "no negativo -> INSERT", "target_line": 53}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con amount_cents >= 0 + currency", "user_sees": "201 Created con Price en JSON", "side_effects": ["INSERT en prices"], "reversible": true, "final_state": "price creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /catalog/prices", "user_sees": "200 OK con [Price, ...]", "side_effects": ["SELECT ORDER BY id"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /catalog/prices/:id con id existente", "user_sees": "200 OK con Price en JSON", "side_effects": ["SELECT WHERE id = ?"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /catalog/prices/:id con body", "user_sees": "200 OK con Price actualizado", "side_effects": ["UPDATE"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /catalog/prices/:id", "user_sees": "204 No Content", "side_effects": ["DELETE"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_404", "conditions": "GET /catalog/prices/:id con id inexistente", "user_sees": "404 Not Found con {error: 'not_found'}", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_validation_400", "conditions": "POST con amount_cents negativo", "user_sees": "400 Bad Request con {error: 'invalid_input'}", "side_effects": [], "reversible": true, "final_state": "rejected"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "POST /catalog/prices", "effect": "Endpoint principal"},
+        {"key": "service.default", "message": "currency = 'USD' (default si vacio)", "effect": "Valor por defecto"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "sincronizacion",
+      "user_description": "El usuario crea, lista, obtiene y marca como completado jobs de sync via API REST en /sync/jobs. Validacion: payload no vacio.",
+      "traces": [
+        {"n": 1, "what": "User POST /sync/jobs con JSON {payload}", "cite": "src/sync/handler.rs:33", "data_in": "HTTP POST", "data_out": "Routing"},
+        {"n": 2, "what": "Handler extrae State, Json (E04: extractors)", "cite": "src/sync/handler.rs:35", "data_in": "Json", "data_out": "service call"},
+        {"n": 3, "what": "create_job valida payload no vacio (E05)", "cite": "src/sync/service.rs:40", "data_in": "SyncJob", "data_out": "INSERT o AppError::Invalid"},
+        {"n": 4, "what": "INSERT INTO sync_jobs (payload, status) VALUES (?, 'pending')", "cite": "src/sync/service.rs:43", "data_in": "SyncJob", "data_out": "INSERT"},
+        {"n": 5, "what": "POST /sync/jobs/:id/complete llama complete_job", "cite": "src/sync/handler.rs:43", "data_in": "id", "data_out": "SyncJob"},
+        {"n": 6, "what": "complete_job actualiza status a 'completed' (E05)", "cite": "src/sync/service.rs:42", "data_in": "id", "data_out": "SyncJob completado"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/sync/service.rs", "line": 40, "kind": "validation", "condition_text": "payload.trim().is_empty()", "branches": [{"label": "vacio -> AppError::Invalid", "target_line": 41}, {"label": "no vacio -> INSERT", "target_line": 43}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con payload no vacio", "user_sees": "201 Created con SyncJob{status: 'pending'}", "side_effects": ["INSERT en sync_jobs"], "reversible": true, "final_state": "job creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /sync/jobs", "user_sees": "200 OK con [SyncJob, ...]", "side_effects": ["SELECT ORDER BY id"], "reversible": true, "final_state": "rendered"},
+        {"id": "R-03", "category": "success_get", "conditions": "GET /sync/jobs/:id con id existente", "user_sees": "200 OK con SyncJob en JSON", "side_effects": ["SELECT WHERE id = ?"], "reversible": true, "final_state": "detalle"},
+        {"id": "R-04", "category": "success_complete", "conditions": "POST /sync/jobs/:id/complete con id existente", "user_sees": "200 OK con SyncJob{status: 'completed'}", "side_effects": ["UPDATE status, completed_at"], "reversible": false, "final_state": "job completado"},
+        {"id": "R-05", "category": "error_404", "conditions": "GET /sync/jobs/:id con id inexistente", "user_sees": "404 Not Found con {error: 'not_found'}", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-06", "category": "error_validation_400", "conditions": "POST con payload vacio", "user_sees": "400 Bad Request con {error: 'invalid_input'}", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "error_complete_404", "conditions": "POST /sync/jobs/:id/complete con id inexistente", "user_sees": "404 Not Found", "side_effects": [], "reversible": true, "final_state": "not_found"}
+      ],
+      "config": [
+        {"key": "router.path", "message": "POST /sync/jobs", "effect": "Endpoint principal"},
+        {"key": "service.default", "message": "status = 'pending' (default)", "effect": "Status inicial al crear"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "proc_macro_derive", "where": "derive-macro/src/lib.rs (proc macro) + src/catalog/entity.rs + src/pricing/entity.rs + src/sync/entity.rs (derive)", "resolution": "El derive #[derive(Entity)] invoca el proc macro entity_derive que genera un impl con ENTITY_NAME y entity_name(). La skill debe notar el derive, buscar el proc macro, y entender que los metodos generados no estan en la declaracion del struct."},
+    {"id": "TRAP-E02", "kind": "blanket_impl", "where": "src/infra/blanket_impl.rs (impl<T: Serialize> Json for T)", "resolution": "La blanket impl sobre cualquier tipo que implemente Serialize es generica. Cualquier struct que derive Serialize automaticamente satisface Json. La firma generica es invisible sin leer la firma completa."},
+    {"id": "TRAP-E03", "kind": "cargo_features", "where": "Cargo.toml [features] legacy = [] + src/features_legacy.rs con #[cfg(feature = \"legacy\")]", "resolution": "El codigo gated por la feature 'legacy' solo se compila con --features legacy. La skill debe notar el atributo cfg y la lista de features en Cargo.toml."},
+    {"id": "TRAP-E04", "kind": "axum_extractors", "where": "src/catalog/handler.rs + src/pricing/handler.rs + src/sync/handler.rs", "resolution": "Los handlers reciben argumentos como State<SqlitePool>, Json<Req>, Path<id>, Query<T>. axum los ejecuta en orden y los fallos hacen 400/422."},
+    {"id": "TRAP-E05", "kind": "error_flow_with_question", "where": "src/infra/error.rs (AppError con #[from]) + todos los service.rs (uso de ?)", "resolution": "AppError implementa From<sqlx::Error> y From<anyhow::Error> via thiserror. El operador ? en los services convierte errores automaticamente."},
+    {"id": "TRAP-E06", "kind": "build_rs_and_unsafe_ffi", "where": "build.rs (cargo:warning) + src/unsafe_ffi.rs (extern \"C\" + unsafe block)", "resolution": "El build.rs se ejecuta en compile time y emite warnings. El bloque unsafe declara funciones C externas con FFI. La skill debe notar ambos archivos."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "proc_macro_generates_wrong_impl", "where": "derive-macro/src/lib.rs: la funcion entity_derive podria generar codigo que no compila", "resolution": "El proc macro genera un impl con ENTITY_NAME y entity_name(). Si la logica del macro es incorrecta, los entities no compilan. La trampa: el codigo generado es silencioso hasta que se compila."},
+    {"id": "TRAP-P02", "kind": "blanket_impl_conflict", "where": "src/infra/blanket_impl.rs: la blanket impl<T: Serialize> Json for T podria entrar en conflicto con impl especifica", "resolution": "La blanket es la unica impl de Json. Si se anade una impl especifica de Json para un tipo en particular, Rust lanzara error de compilacion por conflicto de impls."},
+    {"id": "TRAP-P03", "kind": "cargo_feature_typo", "where": "Cargo.toml: si la feature 'legacy' tuviera typo (lagacy), el cfg(feature = \"legacy\") no se activaria", "resolution": "El feature typo en Cargo.toml haria que #[cfg(feature = \"legacy\")] no se compile. Aqui el feature es correcto pero la trampa esta documentada."},
+    {"id": "TRAP-P04", "kind": "axum_extractor_order", "where": "src/catalog/handler.rs: los handlers tienen State(pool), Json(req) en ese orden", "resolution": "axum ejecuta los extractors en el orden en que aparecen en la firma. Si un extractor falla, los siguientes no se ejecutan. La trampa: cambiar el orden afecta cual validacion corre primero."},
+    {"id": "TRAP-P05", "kind": "from_impl_cycles", "where": "src/infra/error.rs: AppError no debe tener From<AppError> (ciclo)", "resolution": "Trampa: si AppError tuviera From<AppError>, Rust rechazaria la impl por ciclo. Aqui no hay ciclo."},
+    {"id": "TRAP-P06", "kind": "build_rs_fails", "where": "build.rs: si el build script falla, cargo build falla", "resolution": "El build.rs actual solo imprime warnings. Si tuviera codigo que falla (e.g. println! con argumentos incorrectos), el build fallaria."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_debug_helper", "where": "src/debug.rs: pub fn debug_println(s: &str)", "resolution": "La funcion existe pero no se invoca en produccion. La skill debe detectarlo via grep."},
+    {"id": "TRAP-S02", "kind": "dead_legacy_feature", "where": "src/features_legacy.rs: LegacyEvent gated by #[cfg(feature = \"legacy\")]", "resolution": "Codigo que no se compila con el feature default. La skill debe detectarlo via grep de #[cfg(feature = \"legacy\")]."},
+    {"id": "TRAP-S03", "kind": "dead_unused_function", "where": "src/features_legacy.rs: pub fn hash (gated by legacy feature)", "resolution": "Metodo del struct LegacyEvent que no se invoca en runtime. La skill debe detectarlo via grep."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-catalog-create", "kind": "endpoint", "name": "POST /catalog/items", "handler": "src/catalog/handler.rs:33", "file": "src/catalog/handler.rs"},
+    {"id": "SRF-route-catalog-list", "kind": "endpoint", "name": "GET /catalog/items", "handler": "src/catalog/handler.rs:43", "file": "src/catalog/handler.rs"},
+    {"id": "SRF-route-catalog-get", "kind": "endpoint", "name": "GET /catalog/items/:id", "handler": "src/catalog/handler.rs:50", "file": "src/catalog/handler.rs"},
+    {"id": "SRF-route-catalog-update", "kind": "endpoint", "name": "PATCH /catalog/items/:id", "handler": "src/catalog/handler.rs:58", "file": "src/catalog/handler.rs"},
+    {"id": "SRF-route-catalog-delete", "kind": "endpoint", "name": "DELETE /catalog/items/:id", "handler": "src/catalog/handler.rs:67", "file": "src/catalog/handler.rs"},
+    {"id": "SRF-route-pricing-create", "kind": "endpoint", "name": "POST /catalog/prices", "handler": "src/pricing/handler.rs:33", "file": "src/pricing/handler.rs"},
+    {"id": "SRF-route-pricing-list", "kind": "endpoint", "name": "GET /catalog/prices", "handler": "src/pricing/handler.rs:43", "file": "src/pricing/handler.rs"},
+    {"id": "SRF-route-pricing-get", "kind": "endpoint", "name": "GET /catalog/prices/:id", "handler": "src/pricing/handler.rs:50", "file": "src/pricing/handler.rs"},
+    {"id": "SRF-route-pricing-update", "kind": "endpoint", "name": "PATCH /catalog/prices/:id", "handler": "src/pricing/handler.rs:58", "file": "src/pricing/handler.rs"},
+    {"id": "SRF-route-pricing-delete", "kind": "endpoint", "name": "DELETE /catalog/prices/:id", "handler": "src/pricing/handler.rs:67", "file": "src/pricing/handler.rs"},
+    {"id": "SRF-route-sync-create", "kind": "endpoint", "name": "POST /sync/jobs", "handler": "src/sync/handler.rs:33", "file": "src/sync/handler.rs"},
+    {"id": "SRF-route-sync-list", "kind": "endpoint", "name": "GET /sync/jobs", "handler": "src/sync/handler.rs:43", "file": "src/sync/handler.rs"},
+    {"id": "SRF-route-sync-get", "kind": "endpoint", "name": "GET /sync/jobs/:id", "handler": "src/sync/handler.rs:50", "file": "src/sync/handler.rs"},
+    {"id": "SRF-route-sync-complete", "kind": "endpoint", "name": "POST /sync/jobs/:id/complete", "handler": "src/sync/handler.rs:58", "file": "src/sync/handler.rs"},
+    {"id": "SRF-derive-macro", "kind": "proc_macro", "name": "Entity derive (E01)", "handler": "derive-macro/src/lib.rs:13", "file": "derive-macro/src/lib.rs"},
+    {"id": "SRF-blanket-impl", "kind": "trait_impl", "name": "blanket impl<T: Serialize> Json (E02)", "handler": "src/infra/blanket_impl.rs:14", "file": "src/infra/blanket_impl.rs"},
+    {"id": "SRF-feature-legacy", "kind": "feature_gate", "name": "#[cfg(feature = \"legacy\")] (E03)", "handler": "src/features_legacy.rs:8", "file": "src/features_legacy.rs"},
+    {"id": "SRF-unsafe-ffi", "kind": "ffi", "name": "extern \"C\" c_legacy_hash (E06)", "handler": "src/unsafe_ffi.rs:8", "file": "src/unsafe_ffi.rs"},
+    {"id": "SRF-build-rs", "kind": "build_script", "name": "build.rs (E06)", "handler": "build.rs:3", "file": "build.rs"},
+    {"id": "SRF-error-from", "kind": "error", "name": "AppError con #[from] (E05)", "handler": "src/infra/error.rs:14", "file": "src/infra/error.rs"}
+  ]
+}

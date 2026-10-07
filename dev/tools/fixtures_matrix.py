@@ -385,6 +385,33 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
         covered["frameworks"].add("sqlc")
         break
 
+    # Detectar Rust frameworks via Cargo.toml (F06t).
+    for cargo_toml in fixture_dir.rglob("Cargo.toml"):
+        if not cargo_toml.is_file():
+            continue
+        # No detectar el Cargo.toml del workspace hijo.
+        rel = cargo_toml.relative_to(fixture_dir).as_posix()
+        if rel.startswith("derive-macro/"):
+            continue
+        try:
+            content = cargo_toml.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "axum" in content:
+            covered["frameworks"].add("axum")
+        if "tokio" in content:
+            covered["frameworks"].add("tokio")
+        if "sqlx" in content:
+            covered["frameworks"].add("sqlx")
+        if "thiserror" in content:
+            covered["frameworks"].add("thiserror")
+        if "serde" in content and "derive" in content:
+            covered["frameworks"].add("serde")
+        # Cargo build script.
+        if "build.rs" in rel or (fixture_dir / "build.rs").is_file():
+            covered["build_systems"].add("cargo-build-script")
+        break
+
     # Detectar go:embed via grep (F06s).
     for go_file in fixture_dir.rglob("*.go"):
         if not go_file.is_file():

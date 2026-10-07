@@ -1,0 +1,16 @@
+# Metadata del fixture F06t: fx-rust-axum
+# Servicio Rust asincrono con Axum, tokio, sqlx, serde, thiserror.
+# Ver referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-rust-axum/ground_truth.json.
+name: fx-rust-axum
+description: Servicio Rust asincrono con Axum 0.7, tokio, sqlx 0.8 y proc macro derive (F06t)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-rust-axum
+  enabled: true
+ground_truth_format_version: 1

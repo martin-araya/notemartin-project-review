@@ -72,6 +72,9 @@ axes:
     - wire
     - embed
     - sqlite
+    - axum
+    - tokio
+    - thiserror
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:

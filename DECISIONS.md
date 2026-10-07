@@ -2211,3 +2211,147 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   no es la directiva).
 - Consecuencias: el MATRIX.md muestra fx-go-service cubriendo
   go-chi, sqlc, wire, embed y sqlite.
+
+### D-258 — Stack del fixture F06t: Rust 1.81 + Axum 0.7 + tokio 1.40 + sqlx 0.8 + serde 1.0 + thiserror 1.0 (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: el plan F06t pide un servicio Rust asincrono con
+  Axum, tokio, sqlx, serde, thiserror.
+- Decision: stack = Rust 1.81 + `axum = "0.7"` + `tokio = "1.40"`
+  + `sqlx = "0.8"` (features = ["runtime-tokio", "sqlite"]) + `serde = "1.0"`
+  + `thiserror = "1.0"` + `anyhow = "1.0"` + proc-macro2 1 + quote 1 +
+  syn 2. Imagen Docker: `rust:1.81-bookworm` con `apt-get install -y
+  make gcc` (cgo de sqlite).
+- Alternativas: (a) actix-web (descartado: axum es mas moderno y
+  el plan lo pide); (b) diesel (descartado: sqlx es async); (c) tokio
+  + smol (descartado: tokio es el runtime mas usado); (d) prost o
+  diesel-async (descartado: sqlx es la opcion canonica para
+  servicios).
+- Consecuencias: la trampa E01 (proc macro derive), la trampa
+  E02 (blanket impl generica), la trampa E03 (cargo features),
+  la trampa E04 (axum extractors), la trampa E05 (error flow
+  con ?) y la trampa E06 (build.rs + unsafe FFI) son utiles para
+  la skill.
+
+### D-259 — Single-crate con modulos + crate `fxrust-derive` separado (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: la trampa E01 exige un proc macro derive custom.
+  Un workspace multi-crate agrega complejidad; un single-crate
+  con modulos es mas simple.
+- Decision: usar single-crate `fxrust-axum` con modulos (`catalog`,
+  `pricing`, `sync`, `infra`) + crate `fxrust-derive` separado
+  para el proc macro. Esto permite que el proc macro se compile
+  independientemente y que los entities (`Item`, `Price`, `SyncJob`)
+  usen `#[derive(Entity)]`.
+- Alternativas: (a) workspace multi-crate con `core/`, `web/`,
+  `db/`, `proc-macro/` (descartado: agrega complejidad innecesaria);
+  (b) inline proc macro (descartado: los proc macros no pueden
+  estar en el mismo crate que el codigo que los usa).
+- Consecuencias: la trampa E01 sigue valida. La skill debe
+  entender que `derive-macro/` es un crate separado.
+
+### D-260 — Apps y handlers en ingles (catalog, pricing, sync) para CC-11 (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: la regla CC-11 detecta menciones del nombre de
+  feature (en espanol) en cualquier linea del codigo del fixture.
+  Los features son `catalogo`, `precios`, `sincronizacion`.
+- Decision: usar modulos `src/catalog/`, `src/pricing/`,
+  `src/sync/` y URLs `/catalog/items`, `/catalog/prices`,
+  `/sync/jobs`. Los nombres de feature en espanol viven solo
+  en el ground truth. Los models usan identificadores en ingles
+  (`Item`, `Price`, `SyncJob`).
+- Alternativas: (a) `src/catalogo/`, etc. (descartado: el nombre
+  aparece en muchos strings, comentarios, errores); (b) `Catalog`,
+  `Pricing`, `Sync` con mayusculas (descartado: por convencion
+  Rust usa PascalCase en struct names, no en module names).
+- Consecuencias: la skill debe mapear `catalog` <-> `catalogo`,
+  `pricing` <-> `precios`, `sync` <-> `sincronizacion`.
+
+### D-261 — sqlx con query builder programatico (no macro compile-time) (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: sqlx tiene macros `sqlx::query!` que requieren una DB
+  en compile time o `SQLX_OFFLINE=true` + cache pre-generado.
+  El modo offline requiere ejecutar `sqlx prepare` antes de build.
+- Decision: usar `sqlx::query_as::<_, T>("...")` con strings y
+  derivar `FromRow` en los entities (`#[derive(FromRow)]`). Esto
+  evita el chequeo de schema en compile time y solo requiere una
+  DB en runtime.
+- Alternativas: (a) `sqlx::query!` con cache offline (descartado:
+  requiere step adicional en el build); (b) `sea-orm` (descartado:
+  agrega una dep no incluida en el plan).
+- Consecuencias: las queries son strings en runtime. La skill
+  debe notar `sqlx::query_as` + `FromRow` para entender la
+  validacion de tipos.
+
+### D-262 — Prefijo `NPRGT-FXRUST-` para los unique tokens de F06t (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: AGENTS §8 y §23 establecen prefijos `NPRGT-<FX>-`
+  para los unique tokens de cada fixture.
+- Decision: prefijo `FXRUST` y exactamente 26 tokens cubriendo
+  stack (RUST-VER, AXUM-VER, TOKIO-VER, SQLX-VER, SERDE-VER,
+  THISERROR-VER), tipos (PROC-MACRO, BLANKET-IMPL,
+  CARGO-FEATURES, AXUM-EXTRACTOR, ERROR-FROM, BUILD-RS,
+  UNSAFE-FFI, DEPENDENCY-INJECTION), features
+  (CATALOG-RESULT-R01, PRICING-RESULT-R01, SYNC-RESULT-R01),
+  marcadores (MARKER-APP, MARKER-CRATE, MARKER-INFRA,
+  MARKER-LEGACY, MARKER-ENTRYPOINT, MARKER-EXTRACTOR), y
+  trampas superficiales (TRAMP-S01-DEBUG, TRAMP-S02-LEGACY,
+  TRAMP-S03-UNUSED).
+- Alternativas: (a) `FXRUSTAXUM` (descartado: excede 8 caracteres);
+  (b) `FXRUSTAPI` (descartado: confunde con framework web).
+- Consecuencias: `overfit_guard.py` falla si cualquiera de
+  estos tokens aparece en `skills/`.
+
+### D-263 — `Makefile` envuelve `cargo test --workspace` (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: el plan F06x exige paridad con F06s.
+- Decision: `TEST_CMD ?= cargo test --workspace` en el Makefile;
+  `test_cmd: make test` en `manifest.yml`.
+- Alternativas: (a) `cargo test` sin `--workspace` (descartado:
+  no cubre el crate del proc macro); (b) `cargo test -- --nocapture`
+  (descartado: agrega ruido al output).
+- Consecuencias: el contenedor ejecuta `make test` que corre
+  todos los tests del workspace.
+
+### D-264 — Imagen Docker `rust:1.81-bookworm` con `make` + `gcc` (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: `better-sqlite3` (en el path de sqlx) requiere cgo + gcc
+  para compilar el binding C. `make` se usa para ejecutar el
+  Makefile.
+- Decision: `FROM rust:1.81-bookworm` + `RUN apt-get install -y
+  make gcc` antes de la copia del codigo (cache de layers).
+- Alternativas: (a) usar `rust:1.81-alpine` (descartado: alpine
+  usa musl y la compilacion cgo es compleja); (b) pre-instalar
+  las tools (descartado: menos reproducible).
+- Consecuencias: la imagen pesa ~500 MB. El native build de
+  better-sqlite3 funciona en el contenedor.
+
+### D-265 — `requires: [linux, macos, windows]` en `manifest.yml` (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: el plan F06x exige paridad con F06p.
+- Decision: `requires: [linux, macos, windows]`. Rust es multiplataforma.
+- Alternativas: (a) solo Linux (descartado: rompe paridad).
+- Consecuencias: el fixture es ejecutable en los 3 sistemas.
+
+### D-266 — Deteccion extendida de axum/tokio/sqlx/serde en `fixtures_matrix.py` y `target_matrix.yml` (F06t)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06t · vigente
+- Contexto: el plan F06x exige extender `fixtures_matrix.py`
+  para detectar frameworks Rust via `Cargo.toml`.
+- Decision: agregar bloque de deteccion para `Cargo.toml` que
+  busca `axum`, `tokio`, `sqlx`, `thiserror`, `serde` (con
+  `derive`) y agrega los frameworks correspondientes. Tambien
+  detectar `build.rs` para `cargo-build-script`. Agregar a
+  `target_matrix.yml`: `frameworks: [axum, tokio, thiserror]`.
+- Alternativas: (a) parsear `Cargo.lock` (descartado: es menos
+  estable que Cargo.toml); (b) no detectar build.rs (descartado:
+  pierde la trampa E06).
+- Consecuencias: el MATRIX.md muestra fx-rust-axum cubriendo
+  axum, tokio, thiserror y cargo-build-script.
