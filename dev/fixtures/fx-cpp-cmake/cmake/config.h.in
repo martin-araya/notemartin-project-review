@@ -1,0 +1,10 @@
+// E04: header generado por CMake via configure_file.
+// Las macros aqui no existen como tales en el codigo fuente de la app:
+// la skill debe ejecutar CMake para descubrirlas.
+#pragma once
+
+#define FX_VERSION "@FXPROC_VERSION@"
+#define FX_PROJECT_NAME "@FXPROC_PROJECT_NAME@"
+
+// FX_HAS_PLUGINS se define solo si CMake la pasa con cmakedefine.
+#cmakedefine FX_HAS_PLUGINS

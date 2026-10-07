@@ -1,0 +1,17 @@
+# Metadata del fixture F06x: fx-cpp-cmake
+# Motor de procesamiento en C++ con plugins cargados via dlopen, registro
+# estatico, templates, x-macros, headers generados por CMake y dispatch
+# virtual con un bug de orden de inicializacion estatica plantado.
+# Ver referencias exactas de las trampas en
+# dev/ground-truth/fx-cpp-cmake/ground_truth.json.
+name: fx-cpp-cmake
+description: Motor de procesamiento C++20 con CMake 3.25, plugins dlopen, registry estatico, templates/CRTP y x-macros (F06x)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-cpp-cmake
+  enabled: true
+ground_truth_format_version: 1

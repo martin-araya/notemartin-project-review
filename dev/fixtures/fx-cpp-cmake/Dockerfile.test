@@ -1,0 +1,28 @@
+# Imagen para ejecutar los tests del fixture F06x (C++/CMake).
+FROM gcc:13-bookworm
+
+# cmake 3.25+ necesario para C++20 con GCC 13.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cmake \
+    make \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+# Configuracion y build incremental.
+COPY CMakeLists.txt ./
+COPY cmake cmake
+COPY include include
+COPY src src
+COPY plugins plugins
+COPY apps apps
+COPY tests tests
+COPY Makefile Makefile
+COPY unique_tokens.txt unique_tokens.txt
+
+RUN mkdir -p build
+RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+RUN cmake --build build --parallel
+
+CMD ["make", "test"]

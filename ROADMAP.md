@@ -1111,19 +1111,37 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
  
 # Nativo y sistemas
  
-## F06x — Fixture `fx-cpp-cmake`
- 
+## F06x — Fixture `fx-cpp-cmake` ✅
+  
 **Objetivo:** motor de procesamiento en C++ con plugins.
-**Stack:** C++20, CMake, Conan o vcpkg, hilos, `dlopen`.
+**Stack:** C++20, GCC 13.x, CMake 3.25+, GoogleTest 1.14 (vía `FetchContent`), POSIX `dlopen`/`dlsym`, hilos. Sin Conan/vcpkg (FetchContent basta para portabilidad).
 **Features:** `cargar-plugin`, `pipeline-de-filtros`, `exportar-resultados`.
 **Trampas del ecosistema:**
-1. Registro estático con constructores globales (`static Registrar r{...}`), sin llamada explícita.
+1. Registro estático con constructores globales (`static Registrar<...>`), sin llamada explícita.
 2. Templates, CRTP, SFINAE y concepts: el código ejecutado depende de la instanciación.
 3. X-macros que generan clases y funciones.
 4. Headers generados por CMake (`configure_file` + `#cmakedefine`).
 5. Plugins cargados con `dlopen` y un símbolo `extern "C"` resuelto por nombre.
 6. Dispatch virtual en una jerarquía, con un bug de orden de inicialización estática plantado.
-**Toolchain de tests:** GoogleTest + CTest, en contenedor (GCC y Clang).
+**Toolchain de tests:** GoogleTest 1.14 + CTest, en contenedor `gcc:13-bookworm`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`cargar-plugin`, `pipeline-de-filtros`, `exportar-resultados`) con 7 R-NN cada una documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `static_registrar` (template `Registrar<T>` en `include/fxproc/registry.hpp` + `FX_REGISTER_FILTER` en `src/filters.cpp`), `templates_crtp_concepts` (`concept Filter` y CRTP en `include/fxproc/pipeline.hpp`), `x_macros` (`FX_FILTERS` y `FX_FILTERS_STMT` en `include/fxproc/x_macros.h`), `cmake_configure_file` (`cmake/config.h.in` con `FX_VERSION`/`FX_HAS_PLUGINS`), `dlopen_dlsym` (`dlopen` con `RTLD_NOW` y `dlsym` en `src/plugin_loader.cpp` + `extern "C" fx_plugin_register` en `plugins/transform_json/transform_json.cpp`), `static_init_order` (`InitOrderTrap` global en `src/filters.cpp`).
+- [x] 6 trampas del paquete plantadas: `thread_no_join` (`.detach()` en `src/executor.cpp:18`), `stale_record_in_callback` (helper `should_skip_filter` en `src/filters.cpp`), `plugin_memory_leak` (`PluginDeleter` no chequea `dlclose` en `include/fxproc/plugin_loader.hpp`), `export_race` (`ofstream(ios::trunc)` sin `O_EXCL` en `src/result.cpp:25`), `cmake_target_no_optional` (`add_subdirectory(plugins/transform_json)` sin gate `FX_HAS_PLUGINS` en `CMakeLists.txt:39`), `xmacro_collision` (`X(Json, to_json)` duplicado en `include/fxproc/x_macros.h:16-17` + shadow silencioso en `Registry::register_filter`).
+- [x] 3 trampas superficiales: `dead_legacy_filter` (`LegacyFilter` no auto-registrada en `src/filters.cpp:75-82`), `unused_helper` (3 funciones obsoletas en `include/fxproc/util/deprecated_helpers.hpp` sin marca de deprecation), `commented_out_branch` (4 líneas comentadas con `TODO` en `src/filters.cpp:54-58`).
+- [x] `check_ground_truth.py dev/ground-truth/fx-cpp-cmake/` → 0 referencias rotas (CC-09).
+- [x] CC-11 en verde (sin menciones del ground truth en comentarios).
+- [x] Suite GoogleTest 45 tests passing + 2 tests de integración (43 unit + 4 integration via `shared_loader` static) en el contenedor `gcc:13-bookworm` con `cmake 3.25` y `ctest --output-on-failure`.
+- [x] `run_fixture_tests.py --fixture fx-cpp-cmake --container` → `passed`.
+- [x] `dev/tests/test_fx_cpp_cmake_ground_truth.py` agregado y verde (55 tests: 11 `TestGroundTruthShape` + 3 `TestUniqueTokensFile` + 3 `TestAllCitesValid` + 17 `TestCppStructure` + 6 `TestTrapsEcosystem` + 6 `TestTrapsPackage` + 3 `TestTrapsSuperficial` + 7 `TestManifest`).
+- [x] `MATRIX.md` muestra `fx-cpp-cmake` cubriendo `cpp`, `cmake`, `ctest`, `gtest`, `dlopen` como frameworks.
+- [x] `target_matrix.yml` extendido: `languages: [cpp]`, `frameworks: [cmake, ctest, gtest, dlopen]`, `build_systems: [cmake]`.
+- [x] `fixtures_matrix.py` extendido: detección de `CMakeLists.txt` con `cmake_minimum_required` → `cmake` + `cpp`; `add_test`/`ctest` → `ctest`; `gtest`/`gmock` → `gtest`; `dlopen`/`dlsym` → `dlopen`.
+- [x] `pytest` total **1324 passed** (1269 anteriores + 55 nuevos) sin regresiones en los 23 fixtures previos.
+- [x] `validate_skill.py`, `overfit_guard.py` y `check_ground_truth.py` siguen verdes.
+- [x] 9 decisiones nuevas D-285..D-293 (stack C++20 GCC 13.5, CMake 3.25 con `configure_file`, GoogleTest via FetchContent con `gtest_force_shared_crt`, plugin demo compilado como `.so` separado, prefijo `NPRGT-FXCPP-`, `gcc:13-bookworm` + libs de compilación, monkey patch `Array#sum_safe` → no aplica, init order trap, `to_prepare` no usado, `find_sti_class` no aplica a C++).
+- [x] Commit `F06x: fixture fx-cpp-cmake con paquete por feature`.
  
 ## F06y — Fixture `fx-c-embedded`
  

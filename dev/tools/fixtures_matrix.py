@@ -400,6 +400,28 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 covered["frameworks"].add("rspec")
         break
 
+    # Detectar C++ via CMakeLists.txt (F06x).
+    for cmakelists in fixture_dir.rglob("CMakeLists.txt"):
+        if not cmakelists.is_file():
+            continue
+        rel = cmakelists.relative_to(fixture_dir).as_posix()
+        if rel.startswith("build/") or rel.startswith("vendor/"):
+            continue
+        try:
+            content = cmakelists.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if "cmake_minimum_required" in content:
+            covered["frameworks"].add("cmake")
+            covered["languages"].add("cpp")
+            if "add_test" in content or "ctest" in content:
+                covered["frameworks"].add("ctest")
+            if "gtest" in content.lower() or "gmock" in content.lower():
+                covered["frameworks"].add("gtest")
+            if "dlopen" in content or "dlsym" in content or "find_package.*dl" in content.lower():
+                covered["frameworks"].add("dlopen")
+        break
+
     # Detectar FastAPI via app/main.py con constructor FastAPI() (F06q).
     for main_py in fixture_dir.rglob("main.py"):
         if not main_py.is_file():

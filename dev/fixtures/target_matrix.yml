@@ -27,6 +27,7 @@ axes:
     - ruby
     - elixir
     - php
+    - cpp
 
   # Frameworks y plataformas (al menos un fixture debe usar cada uno)
   frameworks:
@@ -83,6 +84,10 @@ axes:
     - hotwire
     - sidekiq
     - rspec
+    - cmake
+    - ctest
+    - gtest
+    - dlopen
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -99,6 +104,7 @@ axes:
     - pip
     - composer
     - bundler
+    - cmake
 
   # Tipos de archivo y formatos
   file_kinds:

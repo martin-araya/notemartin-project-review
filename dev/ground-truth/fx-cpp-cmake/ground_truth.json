@@ -1,0 +1,167 @@
+{
+  "fixture": "fx-cpp-cmake",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "src/main.cpp", "file": "src/main.cpp"},
+    {"id": "EP-application", "artifact": "config/application CMake setup", "file": "CMakeLists.txt"},
+    {"id": "EP-config-in", "artifact": "cmake/config.h.in (configure_file input)", "file": "cmake/config.h.in"},
+    {"id": "EP-plugin", "artifact": "plugins/transform_json/transform_json.cpp (libtransform_json.so)", "file": "plugins/transform_json/transform_json.cpp"},
+    {"id": "EP-app-export", "artifact": "apps/export_demo.cpp", "file": "apps/export_demo.cpp"}
+  ],
+  "modules": [
+    {"id": "MOD-version", "path": "include/fxproc/version.hpp", "summary": "version() lee FX_VERSION (generado por CMake E04)"},
+    {"id": "MOD-filter-base", "path": "include/fxproc/filter_base.hpp", "summary": "Clase abstracta FilterBase con destructor virtual (E06)"},
+    {"id": "MOD-registry", "path": "include/fxproc/registry.hpp", "summary": "Registry singleton + macro FX_REGISTER_FILTER (E01)"},
+    {"id": "MOD-xmacros", "path": "include/fxproc/x_macros.h", "summary": "FX_FILTERS y FX_FILTERS_STMT con duplicado (E03 + P06)"},
+    {"id": "MOD-pipeline", "path": "include/fxproc/pipeline.hpp", "summary": "Pipeline<Filter...> con concept Filter y CRTP (E02)"},
+    {"id": "MOD-plugin-loader", "path": "include/fxproc/plugin_loader.hpp", "summary": "PluginLoader wrapper sobre dlopen/dlsym + PluginDeleter (E05 + P03)"},
+    {"id": "MOD-executor", "path": "include/fxproc/executor.hpp", "summary": "Executor con submit() que detach() (P01)"},
+    {"id": "MOD-filters", "path": "include/fxproc/filters.hpp", "summary": "Headers de ToUpper, Reverse, Json + init_order_marker"},
+    {"id": "MOD-result", "path": "include/fxproc/result.hpp", "summary": "Exporter con to_stdout/to_file/to_json_string/to_csv_string"},
+    {"id": "MOD-deprecated", "path": "include/fxproc/util/deprecated_helpers.hpp", "summary": "3 helpers sin marca [[deprecated]] (S02)"},
+    {"id": "MOD-plugin", "path": "plugins/transform_json/transform_json.cpp", "summary": "Plugin que exporta extern \"C\" fx_plugin_register"},
+    {"id": "MOD-filters-cpp", "path": "src/filters.cpp", "summary": "Implementacion de ToUpper, Reverse, Json + InitOrderTrap (E06) + LegacyFilter dead (S01) + bloque comentado (S03)"},
+    {"id": "MOD-result-cpp", "path": "src/result.cpp", "summary": "Implementacion de Exporter con ofstream|ios::trunc (P04)"},
+    {"id": "MOD-executor-cpp", "path": "src/executor.cpp", "summary": "submit() hace .detach() (P01)"},
+    {"id": "MOD-plugin-loader-cpp", "path": "src/plugin_loader.cpp", "summary": "dlopen con RTLD_NOW y dlsym para fx_plugin_register"},
+    {"id": "MOD-config", "path": "cmake/config.h.in", "summary": "Plantilla con FX_VERSION, FX_PROJECT_NAME, FX_HAS_PLUGINS (E04)"},
+    {"id": "MOD-trap-xmacro", "path": "include/fxproc/x_macros.h", "summary": "X(Json, to_json) duplicado intencionalmente (P06)"}
+  ],
+  "dependencies": [
+    {"name": "gcc", "version": "13.x", "scope": "runtime", "manifest": "Dockerfile.test (FROM gcc:13-bookworm)"},
+    {"name": "cmake", "version": "3.25+", "scope": "build", "manifest": "Dockerfile.test (apt-get install cmake)"},
+    {"name": "googletest", "version": "1.14.0", "scope": "test", "manifest": "tests/CMakeLists.txt (FetchContent)"},
+    {"name": "dl", "version": "POSIX", "scope": "runtime", "manifest": "src/plugin_loader.cpp (#include <dlfcn.h>)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "cargar-plugin",
+      "user_description": "Carga un .so via dlopen, resuelve el simbolo extern \"C\" fx_plugin_register y registra los filtros que el plugin expone.",
+      "traces": [
+        {"n": 1, "what": "Usuario corre fxproc load <plugin.so>", "cite": "src/main.cpp:50", "data_in": "argv[2] = path al .so", "data_out": "routing a PluginLoader::load"},
+        {"n": 2, "what": "PluginLoader::load verifica que el archivo existe", "cite": "src/plugin_loader.cpp:32", "data_in": "path", "data_out": "ok o PluginError::NotFound"},
+        {"n": 3, "what": "dlopen con RTLD_NOW | RTLD_LOCAL", "cite": "src/plugin_loader.cpp:39", "data_in": "path", "data_out": "handle* o PluginError"},
+        {"n": 4, "what": "dlsym para el simbolo fx_plugin_register", "cite": "src/plugin_loader.cpp:46", "data_in": "handle*", "data_out": "PluginRegisterFn o PluginError::MissingSymbol"},
+        {"n": 5, "what": "Llamada a fx_plugin_register(Registry&)", "cite": "plugins/transform_json/transform_json.cpp:36", "data_in": "registry", "data_out": "lower + slugify registrados"},
+        {"n": 6, "what": "PluginLoader retorna numero de filtros anadidos", "cite": "src/plugin_loader.cpp:55", "data_in": "registry", "data_out": "size_t count"},
+        {"n": 7, "what": "fxproc imprime 'OK loaded N filters from <path>'", "cite": "src/main.cpp:53", "data_in": "n", "data_out": "stdout"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/plugin_loader.cpp", "line": 32, "kind": "validation", "condition_text": "if (!std::filesystem::exists(path))", "branches": [{"label": "existe -> continua", "target_line": 39}, {"label": "no existe -> PluginError::NotFound", "target_line": 31}]},
+        {"id": "DP-002", "file": "src/plugin_loader.cpp", "line": 39, "kind": "dispatch", "condition_text": "dlopen con RTLD_NOW | RTLD_LOCAL", "branches": [{"label": "exito -> handle != null", "target_line": 42}, {"label": "fallo -> PluginError con dlerror()", "target_line": 39}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_load", "conditions": "dlopen + dlsym OK y plugin registra >=1 filtro", "user_sees": "OK loaded N filters from <path>", "side_effects": ["handle dlopen vivo", "filtros en Registry"], "reversible": true, "final_state": "plugin cargado"},
+        {"id": "R-02", "category": "error_not_found", "conditions": "path no existe", "user_sees": "ERROR: plugin not found: <path> (exit 3)", "side_effects": [], "reversible": true, "final_state": "no cargado"},
+        {"id": "R-03", "category": "error_invalid_format", "conditions": "path existe pero no es .so (ej. archivo de texto)", "user_sees": "ERROR: dlopen failed: <dlerror>", "side_effects": [], "reversible": true, "final_state": "no cargado"},
+        {"id": "R-04", "category": "error_missing_symbol", "conditions": "dlopen OK pero dlsym(fx_plugin_register) retorna null", "user_sees": "ERROR: symbol fx_plugin_register not found", "side_effects": [], "reversible": true, "final_state": "library cargada pero inutil"},
+        {"id": "R-05", "category": "success_rtld_now", "conditions": "RTLD_NOW fuerza resolucion inmediata de todos los simbolos", "user_sees": "OK (si la lib no tiene simbolos faltantes) o ERROR antes de retornar", "side_effects": ["validacion completa en dlopen"], "reversible": true, "final_state": "carga validada"},
+        {"id": "R-06", "category": "error_dlerror", "conditions": "dlopen falla por cualquier razon (permisos, formato, simbolos)", "user_sees": "ERROR: dlopen failed: <mensaje de dlerror()>", "side_effects": [], "reversible": true, "final_state": "no cargado"},
+        {"id": "R-07", "category": "success_close", "conditions": "PluginLoader sale del scope y deleter llama dlclose", "user_sees": "no se imprime nada (deleter silencioso)", "side_effects": ["library descargada", "std::function que apuntaban a la library quedan invalidos (ver P03)"], "reversible": false, "final_state": "library cerrada"}
+      ],
+      "config": [
+        {"key": "dlopen.flags", "kind": "literal", "default": "RTLD_NOW | RTLD_LOCAL", "effect": "RTLD_NOW = resuelve todos los simbolos en dlopen; RTLD_LOCAL = simbolos no son exportados a otras libs"},
+        {"key": "plugin.symbol", "kind": "literal", "default": "fx_plugin_register", "effect": "nombre del simbolo extern \"C\" que la app busca via dlsym"},
+        {"key": "deleter", "kind": "literal", "default": "PluginDeleter::operator() llama dlclose sin chequear retorno (P03)", "effect": "memleak silencioso si la library se cierra antes que los std::function"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "pipeline-de-filtros",
+      "user_description": "Compone una cadena de filtros via CRTP y concepts; ejecuta secuencialmente cada filtro sobre el input. Los filtros son tipos derivados de FilterBase.",
+      "traces": [
+        {"n": 1, "what": "Usuario crea Pipeline<ToUpper, Reverse>(ToUpper{}, Reverse{})", "cite": "tests/test_pipeline.cpp:16", "data_in": "filtros concretos", "data_out": "objeto Pipeline"},
+        {"n": 2, "what": "Pipeline::run itera filters_ via std::apply con fold expression", "cite": "include/fxproc/pipeline.hpp:50", "data_in": "input string", "data_out": "resultado"},
+        {"n": 3, "what": "Cada filtro es llamado en orden: ToUpper, luego Reverse", "cite": "include/fxproc/pipeline.hpp:53", "data_in": "current string", "data_out": "current string transformado"},
+        {"n": 4, "what": "Resultado final devuelto al usuario", "cite": "include/fxproc/pipeline.hpp:55", "data_in": "current string", "data_out": "string final"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "include/fxproc/pipeline.hpp", "line": 20, "kind": "concept", "condition_text": "concept Filter = is_base_of_v<FilterBase, F> && requires(F f, ...) { f.run(in) -> convertible_to<string>; }", "branches": [{"label": "F satisface -> compila", "target_line": 42}, {"label": "F no satisface -> compile error", "target_line": 42}]},
+        {"id": "DP-004", "file": "include/fxproc/pipeline.hpp", "line": 50, "kind": "loop", "condition_text": "std::apply([&](auto&... f) { ((current = f.run(current)), ...); }, filters_)", "branches": [{"label": "todos los filtros OK -> current transformado", "target_line": 55}, {"label": "algun filtro lanza -> excepcion propagada", "target_line": 50}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_empty_pipeline", "conditions": "Pipeline con 0 filtros (no expuesto en API pero via un filtro identity)", "user_sees": "input sin cambios", "side_effects": [], "reversible": true, "final_state": "identity"},
+        {"id": "R-02", "category": "success_single", "conditions": "Pipeline<ToUpper> con input 'abc'", "user_sees": "'ABC'", "side_effects": [], "reversible": true, "final_state": "string en mayusculas"},
+        {"id": "R-03", "category": "success_compose", "conditions": "Pipeline<ToUpper, Reverse> con input 'hello'", "user_sees": "'OLLEH'", "side_effects": [], "reversible": true, "final_state": "mayusculas + invertido"},
+        {"id": "R-04", "category": "success_not_applicable", "conditions": "Filtro que retorna vacio (no implementado en fixtures actuales; trampa conceptual P02)", "user_sees": "input sin cambio si pipeline_error_swallowed esta plantado", "side_effects": ["log omitido"], "reversible": true, "final_state": "filtro saltado"},
+        {"id": "R-05", "category": "success_json_formatter", "conditions": "Pipeline con Json al final", "user_sees": "{input: ...}", "side_effects": ["version inyectada"], "reversible": true, "final_state": "JSON serializado"},
+        {"id": "R-06", "category": "success_concurrent", "conditions": "Executor::submit con pipeline como Task; traps P01 hace detach", "user_sees": "resultado en future; threads zombies (P01)", "side_effects": ["std::thread detached sin join"], "reversible": false, "final_state": "thread zombie"},
+        {"id": "R-07", "category": "error_timeout", "conditions": "Executor::run_with_timeout con timeout < duracion de pipeline", "user_sees": "TimeoutError: task exceeded timeout", "side_effects": ["future.wait_for retorna timeout"], "reversible": false, "final_state": "TimeoutError propagado"}
+      ],
+      "config": [
+        {"key": "pipeline.concept", "kind": "literal", "default": "concept Filter en include/fxproc/pipeline.hpp:20", "effect": "E02 templates/CRTP/concepts"},
+        {"key": "pipeline.crtp", "kind": "literal", "default": "Pipeline<...> : PipelineBase<Pipeline<...>>", "effect": "label_impl() se resuelve estaticamente sin virtual dispatch"},
+        {"key": "job.retry", "kind": "literal", "default": "retry_on StandardError en Executor::run_with_timeout (no implementado en P01)", "effect": "trampa P01: threads detach no hacen join"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "exportar-resultados",
+      "user_description": "Persiste el resultado del pipeline a stdout o a un archivo, con serializadores a string para JSON y CSV.",
+      "traces": [
+        {"n": 1, "what": "Usuario corre export_demo <key> <value> [path]", "cite": "apps/export_demo.cpp:11", "data_in": "argv[1..3]", "data_out": "string JSON"},
+        {"n": 2, "what": "Exporter::to_json_string serializa a JSON", "cite": "src/result.cpp:38", "data_in": "key, value", "data_out": "{key: value}"},
+        {"n": 3, "what": "Si hay path: Exporter::to_file abre ofstream y escribe", "cite": "src/result.cpp:25", "data_in": "path, content", "data_out": "archivo escrito o ExportError"},
+        {"n": 4, "what": "Si no hay path: Exporter::to_stdout imprime a stdout", "cite": "src/result.cpp:18", "data_in": "content", "data_out": "stdout + newline"},
+        {"n": 5, "what": "Mensaje de confirmacion 'OK wrote N bytes to <path>'", "cite": "apps/export_demo.cpp:16", "data_in": "tamanio del contenido", "data_out": "mensaje a stdout"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "apps/export_demo.cpp", "line": 9, "kind": "argparse", "condition_text": "argc >= 4 ?", "branches": [{"label": "argc == 3 -> to_stdout", "target_line": 21}, {"label": "argc >= 4 -> to_file", "target_line": 12}]},
+        {"id": "DP-006", "file": "src/result.cpp", "line": 25, "kind": "io", "condition_text": "ofstream open with ios::binary | ios::trunc", "branches": [{"label": "open OK -> write content", "target_line": 32}, {"label": "open FAIL -> ExportError con errno", "target_line": 26}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_stdout", "conditions": "argc == 3", "user_sees": "{key: value}\\n en stdout", "side_effects": [], "reversible": true, "final_state": "impreso"},
+        {"id": "R-02", "category": "success_json_file", "conditions": "argc >= 4, path escribible", "user_sees": "OK wrote N bytes to <path> en stdout; archivo escrito", "side_effects": ["archivo creado o truncado", "race condition posible (P04)"], "reversible": true, "final_state": "archivo en disco"},
+        {"id": "R-03", "category": "success_csv_file", "conditions": "argc >= 4, Exporter::to_csv_string usado", "user_sees": "OK wrote N bytes to <path>", "side_effects": ["archivo escrito"], "reversible": true, "final_state": "CSV en disco"},
+        {"id": "R-04", "category": "error_permission_denied", "conditions": "path no escribible (ej. /root/readonly)", "user_sees": "ERROR: open failed: <path>: Permission denied", "side_effects": [], "reversible": true, "final_state": "no escrito"},
+        {"id": "R-05", "category": "success_create_file", "conditions": "path no existe pero directorio padre es escribible", "user_sees": "OK wrote N bytes to <path>", "side_effects": ["archivo creado"], "reversible": true, "final_state": "archivo creado"},
+        {"id": "R-06", "category": "error_io", "conditions": "errno en write() (disco lleno, fd invalido)", "user_sees": "ERROR: write failed: <path>: No space left on device", "side_effects": [], "reversible": true, "final_state": "escritura parcial"},
+        {"id": "R-07", "category": "error_race_concurrent", "conditions": "dos export_demo concurrentes al mismo archivo (P04)", "user_sees": "archivo final contiene contenido de uno u otro (no determinista)", "side_effects": ["race condition", "sin lock"], "reversible": false, "final_state": "estado corrupto"}
+      ],
+      "config": [
+        {"key": "export.mode", "kind": "literal", "default": "ofstream con ios::binary | ios::trunc (P04: sin O_EXCL)", "effect": "race condition latente"},
+        {"key": "export.formats", "kind": "literal", "default": "to_json_string y to_csv_string", "effect": "formatos disponibles"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "static_registrar", "where": "include/fxproc/registry.hpp:74-82 (template Registrar) + src/filters.cpp (FX_REGISTER_FILTER para ToUpper, Reverse, Json, Json_dup)", "resolution": "Cada filtro se auto-registra con un static instance del template Registrar. La instanciacion ocurre antes de main() y populate el Registry::instance().filters_. La skill debe seguir los archivos .cpp para encontrar cada FX_REGISTER_FILTER."},
+    {"id": "TRAP-E02", "kind": "templates_crtp_concepts", "where": "include/fxproc/pipeline.hpp:20 (concept Filter) + include/fxproc/pipeline.hpp:37-55 (Pipeline : PipelineBase)", "resolution": "Pipeline usa un concept Filter para restringir tipos en tiempo de compilacion. CRTP provee label_impl() estatico sin virtual dispatch. SFINAE via has_describe detecta metodo describe() si existe."},
+    {"id": "TRAP-E03", "kind": "x_macros", "where": "include/fxproc/x_macros.h:13-18 (FX_FILTERS con X(Json, ...) duplicado)", "resolution": "FX_FILTERS define 4 entradas (3 unicas + 1 duplicado). FX_FILTERS_STMT es la variante con punto y coma para uso en statements. La trampa es que el preprocesador no detecta el duplicado."},
+    {"id": "TRAP-E04", "kind": "cmake_configure_file", "where": "cmake/config.h.in + CMakeLists.txt:18-22 (configure_file(... @ONLY))", "resolution": "El header fxproc/config.h no existe en el codigo fuente; se genera en build/generated/fxproc/config.h a partir de cmake/config.h.in. Las macros FX_VERSION, FX_PROJECT_NAME y FX_HAS_PLUGINS solo existen tras ejecutar CMake."},
+    {"id": "TRAP-E05", "kind": "dlopen_dlsym", "where": "src/plugin_loader.cpp:39-54 (dlopen + dlsym) + plugins/transform_json/transform_json.cpp:36 (extern \"C\" fx_plugin_register)", "resolution": "La app principal carga el .so via dlopen con RTLD_NOW, resuelve el simbolo fx_plugin_register con dlsym, y lo invoca pasando Registry&. El plugin define su propio simbolo extern \"C\"."},
+    {"id": "TRAP-E06", "kind": "static_init_order", "where": "src/filters.cpp:22-35 (InitOrderTrap global) + include/fxproc/filter_base.hpp (jerarquia virtual)", "resolution": "g_init_marker es 1 si InitOrderTrap se ejecuto. La trampa es que un filtro que invoque un metodo virtual dentro de su propio constructor (no permitido) resultaria en dispatch estatico en lugar de polimorfico."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "thread_no_join", "where": "src/executor.cpp:18 (std::thread(...).detach() en lugar de join())", "resolution": "submit() lanza un std::thread que se detach() en vez de join(). El thread queda zombie hasta std::terminate. El test verifica que active_threads() > 0 durante la ejecucion."},
+    {"id": "TRAP-P02", "kind": "stale_record_in_callback", "where": "src/filters.cpp + src/executor.cpp:22 (update sin validacion)", "resolution": "should_skip_filter en src/filters.cpp existe como helper que parece capturar errores. El test verifica que existe y maneja el caso vacio."},
+    {"id": "TRAP-P03", "kind": "plugin_memory_leak", "where": "include/fxproc/plugin_loader.hpp:32-39 (PluginDeleter no loggea retorno de dlclose)", "resolution": "El deleter custom llama dlclose sin chequear el retorno. Si la library se cierra antes que los std::function registrados, las llamadas posteriores invocan memoria liberada (bad_function_call o segfault)."},
+    {"id": "TRAP-P04", "kind": "export_race", "where": "src/result.cpp:25 (ofstream sin O_EXCL ni lock)", "resolution": "Exporter::to_file abre con ios::binary | ios::trunc (no O_EXCL). Dos export_demo concurrentes al mismo archivo pueden corromper el contenido."},
+    {"id": "TRAP-P05", "kind": "cmake_target_no_optional", "where": "CMakeLists.txt:39 (add_subdirectory(plugins/transform_json) incondicional) + plugins/transform_json/CMakeLists.txt (sin gate FX_HAS_PLUGINS)", "resolution": "Aunque -DFX_HAS_PLUGINS=OFF, el target transform_json se construye siempre. La macro solo se usa en config.h, no en el CMakeLists del plugin."},
+    {"id": "TRAP-P06", "kind": "xmacro_collision", "where": "include/fxproc/x_macros.h:16-17 (X(Json, to_json) y X(Json, to_json_dup)) + include/fxproc/registry.hpp:33-40 (register_filter con shadow silencioso)", "resolution": "FX_FILTERS contiene X(Json, to_json) y X(Json, to_json_dup). El segundo shadow al primero silenciosamente en Registry::register_filter (que usa unordered_map::operator[] con sobrescritura)."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_legacy_filter", "where": "src/filters.cpp:75-82 (LegacyFilter class compilada pero no registrada)", "resolution": "LegacyFilter se compila pero su clase no aparece en la lista FX_FILTERS, por lo que no se auto-registra. La skill debe notar la existencia de la clase sin factory correspondiente."},
+    {"id": "TRAP-S02", "kind": "unused_helper", "where": "include/fxproc/util/deprecated_helpers.hpp (3 funciones sin marca de deprecation)", "resolution": "old_slugify, split_comma_old y legacy_counter existen sin la marca de deprecation. El codigo de la app puede seguirlas usando sin warning del compilador."},
+    {"id": "TRAP-S03", "kind": "commented_out_branch", "where": "src/filters.cpp:54-58 (4 lineas comentadas con TODO)", "resolution": "El filtro Json tiene 4 lineas comentadas que parecen codigo activo (TODO: soporte para colores, if (in.find(\"error\")...) ). No se compilan pero pueden confundir a la skill."}
+  ],
+  "surfaces": [
+    {"id": "SRF-route-projects", "kind": "endpoint", "name": "fxproc load <plugin.so>", "handler": "src/main.cpp:48", "file": "src/main.cpp"},
+    {"id": "SRF-route-list", "kind": "endpoint", "name": "fxproc list", "handler": "src/main.cpp:42", "file": "src/main.cpp"},
+    {"id": "SRF-route-run", "kind": "endpoint", "name": "fxproc run <pipeline> <input>", "handler": "src/main.cpp:56", "file": "src/main.cpp"},
+    {"id": "SRF-route-version", "kind": "endpoint", "name": "fxproc version", "handler": "src/main.cpp:36", "file": "src/main.cpp"},
+    {"id": "SRF-callback-static-registrar", "kind": "callback", "name": "FX_REGISTER_FILTER macro (E01)", "handler": "include/fxproc/registry.hpp:89", "file": "include/fxproc/registry.hpp"},
+    {"id": "SRF-callback-xmacros", "kind": "callback", "name": "FX_FILTERS_STMT (E03 + P06)", "handler": "include/fxproc/x_macros.h:25", "file": "include/fxproc/x_macros.h"},
+    {"id": "SRF-callback-pipeline", "kind": "callback", "name": "Pipeline::run fold expression (E02)", "handler": "include/fxproc/pipeline.hpp:50", "file": "include/fxproc/pipeline.hpp"},
+    {"id": "SRF-callback-executor-detach", "kind": "callback", "name": "Executor::submit .detach() (P01)", "handler": "src/executor.cpp:18", "file": "src/executor.cpp"},
+    {"id": "SRF-cmake-configure", "kind": "build", "name": "configure_file en CMakeLists.txt (E04)", "handler": "CMakeLists.txt:19", "file": "CMakeLists.txt"},
+    {"id": "SRF-cmake-plugin-no-gate", "kind": "build", "name": "add_subdirectory(plugins/transform_json) sin gate (P05)", "handler": "CMakeLists.txt:39", "file": "CMakeLists.txt"},
+    {"id": "SRF-extern-c", "kind": "symbol", "name": "extern \"C\" fx_plugin_register (E05)", "handler": "plugins/transform_json/transform_json.cpp:36", "file": "plugins/transform_json/transform_json.cpp"},
+    {"id": "SRF-dlopen-rtld", "kind": "symbol", "name": "dlopen(path, RTLD_NOW | RTLD_LOCAL) (E05)", "handler": "src/plugin_loader.cpp:39", "file": "src/plugin_loader.cpp"},
+    {"id": "SRF-dlclose-deleter", "kind": "symbol", "name": "PluginDeleter::operator() sin check (P03)", "handler": "include/fxproc/plugin_loader.hpp:32", "file": "include/fxproc/plugin_loader.hpp"},
+    {"id": "SRF-static-init-trap", "kind": "init", "name": "InitOrderTrap::InitOrderTrap (E06)", "handler": "src/filters.cpp:30", "file": "src/filters.cpp"},
+    {"id": "SRF-ofstream-no-excl", "kind": "io", "name": "ofstream(path, ios::trunc) sin O_EXCL (P04)", "handler": "src/result.cpp:25", "file": "src/result.cpp"},
+    {"id": "SRF-cmake-config-in", "kind": "build", "name": "cmake/config.h.in (E04 input)", "handler": "cmake/config.h.in:1", "file": "cmake/config.h.in"}
+  ]
+}

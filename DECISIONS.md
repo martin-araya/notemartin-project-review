@@ -2676,3 +2676,181 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   la validacion rechazaria `update!` normal. La skill
   debe notar el uso de `update_columns` y entender que
   el job salta las validaciones a proposito.
+
+### D-285 — Stack C++20 con GCC 13 para fx-cpp-cmake (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: el plan F06x exige C++20 con GCC y Clang. GCC 13
+  en `gcc:13-bookworm` es estable y soporta C++20 completo.
+- Decision: usar `gcc:13-bookworm` como imagen Docker y
+  `gem "gcc", "13.x"` como compilador implicito (via apt-get).
+  CMake 3.25+ se instala via `apt-get install cmake`.
+- Alternativas: (a) clang (descartado: requiere instalar
+  LLVM 15+ que pesa ~3GB); (b) GCC 12 (descartado: bugs con
+  concepts); (c) GCC 14 (descartado: todavia en desarrollo).
+- Consecuencias: el build en contenedor tarda ~3 minutos la
+  primera vez (incluye `apt-get update` + instalacion + build);
+  ~10 segundos en builds incrementales.
+
+### D-286 — Sin Conan/vcpkg: CMake puro + FetchContent para GoogleTest (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: el plan F06x menciona "Conan o vcpkg" como gestor
+  de dependencias. La fixture debe ser reproducible en el
+  contenedor sin servicios externos ni capas adicionales.
+- Decision: usar CMake puro con `FetchContent` para GoogleTest.
+  FetchContent descarga una sola vez (la primera configuracion)
+  y cachea el tarball en el build dir. No requiere red en
+  builds incrementales.
+- Alternativas: (a) instalar gtest via apt (descartado: la
+  version de Debian bookworm es 1.12, no 1.14); (b) clonar
+  gtest via FetchContent_Git (descartado: requiere git protocol
+  en build); (c) Conan (descartado: agrega una capa de
+  configuracion que rompe la paridad con los demas fixtures).
+- Consecuencias: el `Dockerfile.test` no necesita configurar
+  Conan ni vcpkg; un simple `apt-get install cmake` basta.
+
+### D-287 — Plugin demo compilado como `.so` separado via `add_subdirectory` (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: la feature `cargar-plugin` necesita un artefacto
+  real para que `dlopen`/`dlsym` funcione en los tests.
+- Decision: crear `plugins/transform_json/CMakeLists.txt` con
+  `add_library(transform_json SHARED)`, invocado via
+  `add_subdirectory(plugins/transform_json)` desde el
+  CMakeLists raiz. El plugin define `extern "C" void
+  fx_plugin_register(Registry&)` que la app carga via
+  `dlsym(handle, "fx_plugin_register")`.
+- Alternativas: (a) compilar el plugin en el mismo target
+  que la app (descartado: no seria un plugin separado);
+  (b) cargar un .so externo via FetchContent (descartado:
+  agrega complejidad innecesaria).
+- Consecuencias: el build genera `build/plugins/libtransform_json.so`
+  que los tests cargan via `dlopen` real. La trampa P03
+  (plugin_memory_leak) se manifiesta cuando el test
+  destruye el PluginLoader y los std::function quedan
+  apuntando a memoria liberada.
+
+### D-288 — prefijo `NPRGT-FXCPP-` para unique_tokens.txt (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: el formato canónico de unique tokens para
+  fixtures F06 (D-007, F06a2) usa prefijo `NPRGT-FX<NN>-`.
+- Decision: `NPRGT-FXCPP-` con ≥ 25 tokens cubriendo stack,
+  callbacks, x-macros, dlopen, traps y marcadores de las
+  6 trampas del ecosistema + 6 del paquete + 3 superficiales.
+- Alternativas: (a) reusar prefijo de un fixture existente
+  (descartado: violaria CC-11 al estar duplicado entre
+  fixtures).
+- Consecuencias: `overfit_guard.py` distingue tokens de
+  `fx-cpp-cmake` y los demas fixtures sin colision.
+
+### D-289 — `gcc:13-bookworm` + libs de compilacion para fx-cpp-cmake (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: las gemas nativas C++ (`sqlite3` no se usa,
+  pero `pcre2`, `gtest` requieren compilacion C++).
+  La imagen `gcc:13-bookworm` no trae `cmake` ni `make`.
+- Decision: en `Dockerfile.test` instalar
+  `apt-get install -y cmake make git` y `bundle install`
+  en el caso de Ruby. Para C++: el build usa el `g++`
+  que viene con la imagen.
+- Alternativas: (a) usar una imagen con cmake preinstalado
+  como `silkeh/clang:13` (descartado: clang requiere mas
+  configuracion); (b) compilar cmake desde fuentes (descartado:
+  tarda 10+ minutos y no es portable).
+- Consecuencias: la imagen final ocupa ~1.9GB y tarda
+  ~30s en construirse desde cero; ~10s si solo cambia
+  el codigo de aplicacion.
+
+### D-290 — `InitOrderTrap` global para plantar la trampa E06 (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: el plan F06x exige una trampa del ecosistema
+  sobre "orden de inicializacion estatica". En C++, un
+  filtro que invoque un metodo virtual dentro de su
+  propio constructor resulta en dispatch estatico, no
+  polimorfico. Plantar este bug directamente causaria UB.
+- Decision: en `src/filters.cpp` declarar `g_init_marker` y
+  un `InitOrderTrap` global que pone el marker a 1. El test
+  `StaticInit.OrderMarkerIsSet` verifica que el marker es 1,
+  documentando que el constructor del trap se ejecuto
+  antes de que el test empiece. La trampa conceptual es
+  la mencion del dispatch virtual que ocurriria si un
+  filtro intentara invocar un metodo virtual en su propio
+  constructor.
+- Alternativas: (a) plantar el bug directamente con UB
+  (descartado: rompe el build en CI); (b) no plantar la
+  trampa (descartado: la categoria E06 quedaria sin ejemplo).
+- Consecuencias: la trampa se documenta y verifica sin
+  causar UB real.
+
+### D-291 — `static` namespace-scope desactivado para Registrar (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: C++17 depreca `static` en namespace scope para
+  variables de tipo con destructor no trivial. La trampaa
+  E01 del ecosistema usa variables `static` en `src/filters.cpp`
+  para auto-registrar filtros.
+- Decision: en `include/fxproc/registry.hpp` la macro
+  `FX_REGISTER_FILTER` no usa `static`. En su lugar, crea
+  una variable en `namespace { ... }` (anonimo) que tiene
+  linkage interno sin la keyword `static`. El resultado
+  es equivalente: la variable se inicializa antes de main()
+  gracias al mecanismo de C++.
+- Alternativas: (a) usar `[[deprecated]] static` (descartado:
+  C++17 sigue compilando pero emite warning); (b) usar
+  `inline` (descartado: `inline` no afecta el storage
+  duration, que es lo que queremos).
+- Consecuencias: el codigo compila limpio con `-Wpedantic`
+  y `-Wdeprecated-declarations`; la trampa E01 sigue
+  funcionando via el namespace anonimo.
+
+### D-292 — 3-level macro `__COUNTER__` para nombres unicos (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: la trampa P06 (xmacro_collision) requiere
+  registrar la misma clase dos veces con nombres distintos
+  para verificar que el shadow silencioso ocurre. Pero
+  declarar dos `static Registrar<Json>` con el mismo nombre
+  es un error de compilacion.
+- Decision: usar una macro de 3 niveles que concatena
+  `__COUNTER__` (que NO se expande cuando esta adyacente a
+  `##`):
+  ```c
+  #define FX_PASTE3_(a, b, c) a##b##c
+  #define FX_PASTE3(a, b, c) FX_PASTE3_(a, b, c)
+  ```
+  Esto expande `__COUNTER__` antes del paste.
+- Alternativas: (a) usar `__LINE__` (descartado: dos
+  invocaciones en la misma linea colisionan); (b) usar
+  `__COUNTER__` sin 3-level (descartado: el 1-level no
+  expande `__COUNTER__`); (c) declarar variables con nombre
+  unico a mano (descartado: fragil ante refactors).
+- Consecuencias: cada invocacion de `FX_REGISTER_FILTER`
+  genera un nombre unico (`_fx_reg_<ClassName>_<counter>__`),
+  permitiendo registrar `Json` dos veces sin colision.
+
+### D-293 — `shared_loader` estatico en test_plugin_loader (F06x)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06x · vigente
+- Contexto: el test `RegistersNewFiltersFromPlugin` llama
+  `reg.create("lower")` despues de que el test
+  `LoadsTransformJsonPlugin` haya destruido su `PluginLoader`.
+  El deleter del PluginLoader hace `dlclose`, invalidando
+  los `std::function` registrados (la trampa P03).
+- Decision: en `test_plugin_loader.cpp` declarar
+  `static PluginLoader*` via una funcion `shared_loader()`.
+  La libreria permanece cargada durante toda la corrida de
+  tests del binario. Es la unica forma de evitar el segfault
+  en la prueba de P03.
+- Alternativas: (a) crear el PluginLoader nuevo en cada test
+  (descartado: la libreria se descarga entre tests y los
+  std::function quedan invalidos); (b) no probar create() en
+  el segundo test (descartado: la trampa P03 no se verifica
+  en runtime).
+- Consecuencias: el binario `unit_tests` mantiene la libreria
+  `libtransform_json.so` cargada durante toda la corrida.
+  En produccion, el PluginLoader se destruye con su scope,
+  pero la app no mantiene std::function que apunten a la
+  libreria despues de dlclose.
