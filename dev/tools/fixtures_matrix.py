@@ -422,6 +422,16 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 covered["frameworks"].add("dlopen")
         break
 
+    # Detectar C embebido (F06y) via firmware.ld + Unity.
+    has_firmware_ld = any(fixture_dir.rglob("firmware.ld"))
+    has_unity = any("unity.h" in str(f) for f in fixture_dir.rglob("*.h"))
+    if has_firmware_ld and has_unity:
+        covered["languages"].add("c")
+        covered["build_systems"].add("make")
+        covered["build_systems"].add("gnu-ld")
+        covered["frameworks"].add("unity")
+        covered["frameworks"].add("linker-script")
+
     # Detectar FastAPI via app/main.py con constructor FastAPI() (F06q).
     for main_py in fixture_dir.rglob("main.py"):
         if not main_py.is_file():

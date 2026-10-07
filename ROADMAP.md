@@ -1143,10 +1143,10 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 - [x] 9 decisiones nuevas D-285..D-293 (stack C++20 GCC 13.5, CMake 3.25 con `configure_file`, GoogleTest via FetchContent con `gtest_force_shared_crt`, plugin demo compilado como `.so` separado, prefijo `NPRGT-FXCPP-`, `gcc:13-bookworm` + libs de compilación, monkey patch `Array#sum_safe` → no aplica, init order trap, `to_prepare` no usado, `find_sti_class` no aplica a C++).
 - [x] Commit `F06x: fixture fx-cpp-cmake con paquete por feature`.
  
-## F06y — Fixture `fx-c-embedded`
- 
+## F06y — Fixture `fx-c-embedded` ✅
+  
 **Objetivo:** firmware en C para microcontrolador, testeable en host.
-**Stack:** C99, Makefile con flags de compilación cruzada, linker script, HAL.
+**Stack:** C99 con `-std=c99 -pedantic`, GCC 13.x en `gcc:13-bookworm`, Makefile con cross-compile a `arm-none-eabi-gcc` (opcional), linker script `firmware.ld` con secciones `.isr_vector`, `.text`, `.data`, `.bss`, HAL con macros MMIO `volatile`, Unity (fork minimo) + runner Python para tests en host, QEMU opcional.
 **Features:** `lectura-de-sensores`, `protocolo-de-comandos-uart`, `modo-bajo-consumo`.
 **Trampas del ecosistema:**
 1. Tabla de vectores de interrupción: funciones que llama el hardware.
@@ -1155,7 +1155,25 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. Secciones ubicadas por el linker script.
 5. `#ifdef BOARD_X` que cambia el comportamiento por placa.
 6. Registros MMIO accedidos con macros de dirección `volatile`.
-**Toolchain de tests:** Unity/Ceedling en host, en contenedor (QEMU opcional).
+**Toolchain de tests:** Unity (fork minimo) + runner Python en host, en contenedor `gcc:13-bookworm` (QEMU opcional).
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`lectura-de-sensores`, `protocolo-de-comandos-uart`, `modo-bajo-consumo`) con 7 R-NN cada una documentados en el ground truth.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `vector_table` (`isr_vector[16]` con `__attribute__((section(".isr_vector")))` en `src/startup.c`), `weak_symbols` (`Reset_Handler`, `NMI_Handler`, `HardFault_Handler`, `Default_Handler` con `__attribute__((weak))` en `include/fxemb/weak_handlers.h`), `command_dispatch_table` (`cmd_table[]` con `cmd_handler_t` typedef en `include/fxemb/command_dispatch.h` + impl en `src/command_dispatch.c`), `linker_script` (`firmware.ld` con `.isr_vector`, `.text`, `.data` con LMA en FLASH, `.bss` NOLOAD, símbolos exportados), `board_ifdef` (`#ifdef STM32F4_DISCOVERY / #elif NRF52_DK / #elif BOARD_HOST / #else #error` en `include/fxemb/board.h`), `mmio_volatile` (macros `volatile uint32_t*` en `include/fxemb/hal.h`).
+- [x] 6 trampas del paquete plantadas: `race_lectura_sensores` (`g_sensor_head++` no atomico en `src/sensors.c`), `uart_handler_race` (`g_rx_head++` no atomico en `src/uart_protocol.c`), `consumo_stub_irreal` (`fxemb_power_consumption_ua()` retorna 0 siempre), `sleep_lock_olvidado` (`fxemb_power_enter` no toma mutex), `sensor_no_inicializado` (`fxemb_sensors_read` cae en basura sin check de `g_sensor_initialized`), `weak_handler_loop_infinito` (`Default_Handler` queda en `while(1)` sin bkpt).
+- [x] 3 trampas superficiales: `dead_legacy_helper` (`legacy_uart_send_byte` y `legacy_crc16` en `src/legacy_helpers.c` sin consumidores), `unused_macro` (LEGACY_DELAY/NOP/BARRIER en `include/fxemb/deprecated_macros.h` sin marca de deprecation), `commented_out_code` (4 líneas comentadas con `TODO: soporte para DMA` en `src/sensors.c`).
+- [x] `check_ground_truth.py dev/ground-truth/fx-c-embedded/` → 0 referencias rotas (CC-09).
+- [x] CC-11 en verde (sin menciones del ground truth en comentarios). Verificado por `test_tokens_not_in_fixture_source` que recorre toda la fuente del fixture.
+- [x] Suite Unity 46 tests passing en el contenedor `gcc:13-bookworm` con `make test` (runner Python `tests/test_runner.py`).
+- [x] `run_fixture_tests.py --fixture fx-c-embedded --container` → `passed`.
+- [x] `dev/tests/test_fx_c_embedded_ground_truth.py` agregado y verde (57 tests: 11 `TestGroundTruthShape` + 3 `TestUniqueTokensFile` + 3 `TestAllCitesValid` + 18 `TestCStructure` + 6 `TestTrapsEcosystem` + 6 `TestTrapsPackage` + 3 `TestTrapsSuperficial` + 7 `TestManifest`).
+- [x] `MATRIX.md` muestra `fx-c-embedded` cubriendo `c`, `unity`, `linker-script` como frameworks y `make`, `gnu-ld` como build systems.
+- [x] `target_matrix.yml` extendido: `languages: [c]`, `frameworks: [unity, linker-script]`, `build_systems: [make, gnu-ld]`.
+- [x] `fixtures_matrix.py` extendido: detección de `firmware.ld` + `unity.h` → `c` + `unity` + `linker-script` + `make` + `gnu-ld`.
+- [x] `pytest` total **1381 passed** (1324 anteriores + 57 nuevos) sin regresiones en los 24 fixtures previos.
+- [x] `validate_skill.py`, `overfit_guard.py` y `check_ground_truth.py` siguen verdes.
+- [x] 9 decisiones nuevas D-294..D-302 (C99 con `-std=c99 -pedantic`, GCC 13.5 en `gcc:13-bookworm`, Unity como fork minimo en lugar de Ceedling, runner Python `test_runner.py`, host-emulation con `hal_host.c` en lugar de QEMU obligatorio, linker script `firmware.ld` con `.isr_vector` y `AT(origin)`, board selection via `-DBOARD_X`, MMIO volatile con direcciones STM32F4, prefijo `NPRGT-FXCEMB-`).
+- [x] Commit `F06y: fixture fx-c-embedded con paquete por feature`.
  
 ## F06z — Fixture `fx-cpp-qt`
  

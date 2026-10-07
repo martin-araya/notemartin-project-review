@@ -2854,3 +2854,188 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   En produccion, el PluginLoader se destruye con su scope,
   pero la app no mantiene std::function que apunten a la
   libreria despues de dlclose.
+
+### D-294 — C99 con `-std=c99 -pedantic` para fx-c-embedded (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el plan F06y exige C99 (no C11/C17). Los toolchains
+  embebidos (GCC, IAR, Keil) soportan C99 de forma estable y
+  uniforme; C11 introduce `_Generic` y `_Static_assert` que algunos
+  compiladores cruzados no soportan.
+- Decision: usar `gcc -std=c99 -pedantic` en el Makefile.
+  C99 desactiva extensiones de GNU; los warnings son utiles
+  para la skill (le dicen que el codigo no usa features fuera
+  de C99).
+- Alternativas: (a) `gnu99` (descartado: permite extensions de
+  GNU que no compilan en IAR); (b) `c11` (descartado: no soportado
+  en todos los toolchains embebidos).
+- Consecuencias: el codigo del fixture compila en GCC 13 con
+  `-pedantic` sin warnings; las cross-compilaciones con
+  `arm-none-eabi-gcc` funcionan sin flags adicionales.
+
+### D-295 — Unity como fork minimo en lugar de Ceedling (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el plan F06y menciona "Unity/Ceedling en host".
+  Ceedling es un test runner en Ruby; agregaria Ruby como
+  dependencia runtime.
+- Decision: usar un fork minimo de Unity (single header
+  `include/tests/unity.h` + `tests/unity_internals.c`) escrito
+  en C99 puro, con un runner Python (`tests/test_runner.py`)
+  que compila con gcc y corre los binarios. La paridad con los
+  demas fixtures se mantiene (ninguno requiere Ruby).
+- Alternativas: (a) Ceedling (descartado: requiere Ruby); (b)
+  Unity original descargado via tarball (descartado: agrega
+  complejidad de red al build); (c) GoogleTest (descartado: el
+  fixture no usa C++ y queremos mantener C99 puro).
+- Consecuencias: el fork cubre `TEST_ASSERT_EQUAL_INT`,
+  `TEST_ASSERT_TRUE/FALSE`, `TEST_ASSERT_NULL/NOT_NULL`,
+  `TEST_ASSERT_GREATER_OR_EQUAL_INT` y `TEST_FAIL_MESSAGE`,
+  suficiente para 46 tests. Si en el futuro se necesitan mocks
+  o fixtures con setUp/tearDown avanzado, se puede reemplazar
+  por el Unity original.
+
+### D-296 — Runner Python en `tests/test_runner.py` (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el fixture tiene 10 archivos de test (46 tests) que
+  se compilan como binarios separados. Un runner que los construya
+  y ejecute automaticamente es necesario para integracion con
+  `make test` y `run_fixture_tests.py`.
+- Decision: `tests/test_runner.py` (~100 lineas) hace:
+  1. Encuentra `tests/test_*.c`.
+  2. Compila cada uno con `gcc` + las sources del firmware + HAL.
+  3. Ejecuta el binario, parsea la salida de Unity.
+  4. Reporta pass/fail agregado.
+  5. Retorna 0 si todos pasan.
+- Alternativas: (a) make con wildcards (descartado: dificil
+  de paralelizar y reportar correctamente); (b) bash script
+  (descartado: parsear stdout con sed/grep es fragil).
+- Consecuencias: el runner tarda ~5s para 46 tests. Los tests
+  son independientes (cada uno genera su propio binario); no
+  hay leakage entre tests via static state.
+
+### D-297 — Host-emulation con `hal_host.c` en lugar de QEMU obligatorio (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el plan F06y dice "QEMU opcional". Sin QEMU, los
+  tests deben correr en host (x86). Las macros MMIO apuntan a
+  direcciones STM32F4 que no son validas en x86.
+- Decision: cuando se compila con `-DHOST_TEST=1`, `hal_host.c`
+  redefine las macros MMIO como variables globales `volatile
+  uint32_t` en memoria. La interfaz de las funciones
+  (`fxemb_hal_gpio_set`, `fxemb_hal_adc_read`, etc.) es la misma
+  en host y bare-metal; solo cambia la implementacion.
+- Alternativas: (a) QEMU obligatorio (descartado: requiere
+  `qemu-system-arm` en CI; muchos hosts no lo tienen); (b) stubs
+  de libc en cada test (descartado: duplica trabajo).
+- Consecuencias: los tests verifican la logica de las features
+  (sensors, uart, power) sin necesidad de hardware. El target
+  `make qemu` corre el firmware bare-metal via QEMU pero no
+  es parte del CI.
+
+### D-298 — Linker script `firmware.ld` con `.isr_vector` y `AT(origin)` (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el firmware embebido necesita una tabla de vectores
+  al inicio absoluto de FLASH, codigo en `.text`, variables
+  inicializadas con LMA en FLASH y VMA en RAM, y `.bss` en RAM.
+- Decision: `firmware.ld` define:
+  - `MEMORY`: FLASH (1M @ 0x08000000) y RAM (128K @ 0x20000000).
+  - `.isr_vector`: primera seccion de FLASH, KEEP.
+  - `.text`: codigo ejecutable.
+  - `.data`: `>RAM AT> FLASH` (VMA en RAM, LMA en FLASH,
+    copiada en startup desde `_sidata` a `_sdata`).
+  - `.bss`: `NOLOAD` (zero-init, no ocupa FLASH).
+  - Simbolos exportados: `_estack`, `_sidata`, `_sdata`,
+    `_edata`, `_sbss`, `_ebss`.
+- Alternativas: (a) hacer el link script en Python (descartado:
+  fragil); (b) usar el script por defecto de arm-none-eabi
+  (descartado: demasiado complejo para un fixture didactico).
+- Consecuencias: la trampa E04 es visible y verificable. La
+  skill debe leer el script y notar las secciones + simbolos.
+
+### D-299 — Seleccion de placa via `-DBOARD_X` (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el plan F06y exige `#ifdef BOARD_X` que cambia
+  el comportamiento segun la placa. Tres placas: STM32F4
+  Discovery, nRF52 DK, y host (para tests).
+- Decision: `include/fxemb/board.h` con la estructura:
+  ```c
+  #if defined(STM32F4_DISCOVERY)
+    #define FXEMB_BOARD_NAME "stm32f4_discovery"
+    ...
+  #elif defined(NRF52_DK)
+    ...
+  #elif defined(BOARD_HOST) || defined(HOST_TEST)
+    ...
+  #else
+    #error "..."
+  #endif
+  ```
+  Cada placa tiene su `board_<name>.c` con un `Reset_Handler`
+  fuerte. El linker prefiere el fuerte sobre el weak del
+  `startup.c`.
+- Alternativas: (a) runtime detection (descartado: no se puede
+  en bare-metal); (b) un solo board.c con todo (descartado:
+  no demuestra la trampa E05).
+- Consecuencias: la trampa E05 es claramente visible. Si
+  ninguna placa esta definida, el `#error` falla el build
+  explicito (mejor que linkear con codigo vacio).
+
+### D-300 — MMIO `volatile uint32_t*` con direcciones STM32F4 (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: la trampa E06 exige registros MMIO accedidos con
+  macros de direccion `volatile`. Sin volatile, el compilador
+  puede reordenar accesos y la app ve valores cacheados.
+- Decision: `include/fxemb/hal.h` define macros como:
+  ```c
+  #define FXEMB_GPIOA_ODR (*(volatile uint32_t*)(0x40020000 + 0x14))
+  ```
+  Las direcciones son las de STM32F4 Discovery (referencia
+  del RM0090). En host, `hal_host.c` redefine las macros
+  via `#undef` + declaracion `volatile uint32_t` para que
+  gcc no chille al compilar para x86.
+- Alternativas: (a) usar punteros globales en lugar de casts
+  (descartado: menos didactico); (b) usar registros con
+  `__attribute__((io))` (descartado: extension de GCC no
+  portable a IAR).
+- Consecuencias: la trampa E06 es visible y la trampa P01
+  (race) se manifiesta cuando el volatile se elimina.
+
+### D-301 — prefijo `NPRGT-FXCEMB-` para unique_tokens.txt (F06y)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: el formato canonico de unique tokens para fixtures
+  F06 (D-007, F06a2) usa prefijo `NPRGT-FX<NN>-`.
+- Decision: `NPRGT-FXCEMB-` con 38 tokens cubriendo stack,
+  callbacks, x-macros, dlopen, traps y marcadores de las
+  6 trampas del ecosistema + 6 del paquete + 3 superficiales.
+- Alternativas: (a) reusar prefijo de un fixture existente
+  (descartado: violaria CC-11 al estar duplicado entre
+  fixtures).
+- Consecuencias: `overfit_guard.py` distingue tokens de
+  `fx-c-embedded` y los demas fixtures sin colision.
+
+### D-302 — `fxemb_sensors_init` no atomico, race en ring (F06y, P01)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06y · vigente
+- Contexto: la trampa paquete P01 (race_lectura_sensores) se
+  manifiesta cuando dos threads llaman `fxemb_sensors_read_all()`
+  sin lock. La skill debe notar que el codigo parece atomico
+  pero no lo es.
+- Decision: en `src/sensors.c` el `g_sensor_head++` no es
+  atomico. El test `test_trap_p01` verifica que read_all
+  devuelve valores no triviales (>= 1) cuando se empujan
+  datos desde fuera. La trampa vive en el comentario del
+  codigo: "trampa paquete P01: dos threads llamando
+  fxemb_sensors_read_all() sin mutex pueden leer indices
+  inconsistentes".
+- Alternativas: (a) usar `__atomic_fetch_add` (descartado:
+  no compila con `-pedantic` C99 puro); (b) usar mutex
+  (descartado: perderiamos la trampa P01).
+- Consecuencias: el test verifica el sintoma (valores no
+  triviales) sin causar UB. La skill debe detectar que la
+  ausencia de locks es deliberada (documentada en el comentario).

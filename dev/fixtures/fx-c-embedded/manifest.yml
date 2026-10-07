@@ -1,0 +1,17 @@
+# Metadata del fixture F06y: fx-c-embedded
+# Firmware C99 testeable en host con tabla de vectores, simbolos weak,
+# dispatch por tablas de punteros a funcion, secciones por linker script,
+# #ifdef BOARD_X y registros MMIO volatile. Ver referencias exactas de las
+# trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-c-embedded/ground_truth.json.
+name: fx-c-embedded
+description: Firmware C99 testeable en host con vector table, weak symbols, command dispatch, linker script y HAL (F06y)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-c-embedded
+  enabled: true
+ground_truth_format_version: 1

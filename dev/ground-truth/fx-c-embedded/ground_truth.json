@@ -1,0 +1,177 @@
+{
+  "fixture": "fx-c-embedded",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-reset-handler", "artifact": "Reset_Handler (vector 1)", "file": "src/startup.c"},
+    {"id": "EP-vector-table", "artifact": "isr_vector[16] (seccion .isr_vector)", "file": "src/startup.c"},
+    {"id": "EP-linker-script", "artifact": "firmware.ld (MEMORY + SECTIONS)", "file": "firmware.ld"},
+    {"id": "EP-main", "artifact": "main (entry point en host, llama fxemb_startup_for_host)", "file": "src/main.c"},
+    {"id": "EP-board-host", "artifact": "board_host.c (Reset_Handler fuerte que sobreescribe weak)", "file": "src/board/board_host.c"},
+    {"id": "EP-board-stm32f4", "artifact": "board_stm32f4.c (cross-compile)", "file": "src/board/board_stm32f4.c"},
+    {"id": "EP-board-nrf52", "artifact": "board_nrf52.c (cross-compile)", "file": "src/board/board_nrf52.c"},
+    {"id": "EP-hal-stm32f4", "artifact": "hal_stm32f4.c (MMIO real)", "file": "src/hal/hal_stm32f4.c"},
+    {"id": "EP-hal-host", "artifact": "hal_host.c (stub para tests)", "file": "src/hal/hal_host.c"}
+  ],
+  "modules": [
+    {"id": "MOD-version", "path": "include/fxemb/version.h", "summary": "Macros FXEMB_VERSION_{MAJOR,MINOR,PATCH,STRING}"},
+    {"id": "MOD-vector-table", "path": "include/fxemb/vector_table.h", "summary": "typedef vector_t y isr_vector[16] (E01)"},
+    {"id": "MOD-weak-handlers", "path": "include/fxemb/weak_handlers.h", "summary": "Reset_Handler, NMI_Handler, HardFault_Handler, Default_Handler con __attribute__((weak)) (E02)"},
+    {"id": "MOD-command-dispatch", "path": "include/fxemb/command_dispatch.h + src/command_dispatch.c", "summary": "Tabla cmd_table[] de punteros a funcion con dispatch O(n) (E03)"},
+    {"id": "MOD-hal", "path": "include/fxemb/hal.h + src/hal/*", "summary": "Macros MMIO volatile + implementaciones para STM32F4/nRF52/host (E06)"},
+    {"id": "MOD-board", "path": "include/fxemb/board.h + src/board/*", "summary": "Seleccion de placa via -DSTM32F4_DISCOVERY / -DNRF52_DK / -DBOARD_HOST (E05)"},
+    {"id": "MOD-sensors", "path": "include/fxemb/sensors.h + src/sensors.c", "summary": "Feature 1: lectura de 3 sensores con ring buffer"},
+    {"id": "MOD-uart", "path": "include/fxemb/uart_protocol.h + src/uart_protocol.c", "summary": "Feature 2: parser de lineas AT-like sobre ring buffer"},
+    {"id": "MOD-power", "path": "include/fxemb/power_modes.h + src/power_modes.c", "summary": "Feature 3: maquina de estados RUN/IDLE/SLEEP/DEEPSLEEP"},
+    {"id": "MOD-deprecated", "path": "include/fxemb/deprecated_macros.h", "summary": "3 macros obsoletas sin marca de deprecation (S02)"},
+    {"id": "MOD-legacy", "path": "src/legacy_helpers.c", "summary": "Funciones legacy_uart_send_byte y legacy_crc16 sin consumidores (S01)"},
+    {"id": "MOD-startup", "path": "src/startup.c", "summary": "Tabla de vectores en .isr_vector + handlers debiles"},
+    {"id": "MOD-main", "path": "src/main.c", "summary": "Entry point en host; scheduler que invoca las 3 features"},
+    {"id": "MOD-linker", "path": "firmware.ld", "summary": "Linker script con MEMORY, .isr_vector, .text, .data (LMA/VMA distintas), .bss (E04)"}
+  ],
+  "dependencies": [
+    {"name": "gcc", "version": "13.x", "scope": "build+runtime", "manifest": "Dockerfile.test (FROM gcc:13-bookworm)"},
+    {"name": "make", "version": "GNU Make 4.x", "scope": "build", "manifest": "Dockerfile.test (apt-get install make)"},
+    {"name": "python3", "version": "3.11", "scope": "test", "manifest": "Dockerfile.test (python3)"},
+    {"name": "gnu-ld", "version": "ld 2.40", "scope": "build", "manifest": "gcc:13-bookworm"},
+    {"name": "unity", "version": "minimal (include/tests/unity.h)", "scope": "test", "manifest": "tests/unity_internals.c (fork minimo)"},
+    {"name": "arm-none-eabi-gcc", "version": "opcional (no requerido en CI)", "scope": "cross-compile", "manifest": "Makefile target cross-arm"},
+    {"name": "qemu-system-arm", "version": "opcional", "scope": "runtime", "manifest": "Makefile target qemu"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "lectura-de-sensores",
+      "user_description": "Lectura periodica de 3 sensores (temperatura, presion, acelerometro) con ring buffer de 8 muestras por canal.",
+      "traces": [
+        {"n": 1, "what": "main llama fxemb_sensors_init() en el startup", "cite": "src/main.c:36", "data_in": "ninguno", "data_out": "ring buffers zeroeados"},
+        {"n": 2, "what": "tick() llama fxemb_sensors_read_all() cada 10ms", "cite": "src/main.c:23", "data_in": "ninguno", "data_out": "uint32_t[3] values"},
+        {"n": 3, "what": "fxemb_sensors_read_all itera canales y llama fxemb_sensors_read", "cite": "src/sensors.c:48", "data_in": "channel idx", "data_out": "valor leido"},
+        {"n": 4, "what": "fxemb_sensors_read consulta ring[g_sensor_head[channel]-1]", "cite": "src/sensors.c:39", "data_in": "channel", "data_out": "uint32_t value"},
+        {"n": 5, "what": "HAL empuja valores via fxemb_sensors_push desde la ISR/lectura analogica", "cite": "src/sensors.c:63", "data_in": "channel, value", "data_out": "ring actualizado"},
+        {"n": 6, "what": "tick() procesa el comando UART si hay linea completa", "cite": "src/main.c:25", "data_in": "line buffer", "data_out": "comando dispatched"},
+        {"n": 7, "what": "tick() evalua si entra a IDLE segun consumo", "cite": "src/main.c:31", "data_in": "consumption_ua()", "data_out": "nuevo power mode"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/sensors.c", "line": 28, "kind": "validation", "condition_text": "channel >= FXEMB_SENSOR_COUNT", "branches": [{"label": "OK -> read", "target_line": 33}, {"label": "invalido -> -EINVAL", "target_line": 29}]},
+        {"id": "DP-002", "file": "src/sensors.c", "line": 33, "kind": "state", "condition_text": "g_sensor_initialized", "branches": [{"label": "true -> read value", "target_line": 36}, {"label": "false -> trampa P05: devuelve basura", "target_line": 37}]},
+        {"id": "DP-003", "file": "src/sensors.c", "line": 40, "kind": "state", "condition_text": "head == 0", "branches": [{"label": "ring vacio -> -EAGAIN", "target_line": 41}, {"label": "ring con datos -> read", "target_line": 43}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_read_valid", "conditions": "ring tiene al menos una muestra", "user_sees": "valor leido correctamente", "side_effects": [], "reversible": true, "final_state": "ring consumida"},
+        {"id": "R-02", "category": "error_eagain", "conditions": "ring vacio (head == 0)", "user_sees": "EAGAIN (-11)", "side_effects": [], "reversible": true, "final_state": "sin cambio"},
+        {"id": "R-03", "category": "error_einval", "conditions": "channel >= 3 o channel = 0xFF", "user_sees": "EINVAL (-22)", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "error_enodev", "conditions": "fxemb_sensors_init() no fue llamado", "user_sees": "ENODEV (-19) en read_all; read individual cae en P05", "side_effects": [], "reversible": true, "final_state": "read_all falla; trampa P05: read devuelve basura"},
+        {"id": "R-05", "category": "success_concurrent", "conditions": "dos threads llaman fxemb_sensors_read_all() sin lock (P01)", "user_sees": "valores posibles inconsistentes", "side_effects": ["race condition"], "reversible": false, "final_state": "estado posiblemente corrupto"},
+        {"id": "R-06", "category": "success_cached_value", "conditions": "sensor en SLEEP, lectura devuelve ultimo valor cacheado", "user_sees": "ultimo valor conocido", "side_effects": [], "reversible": true, "final_state": "lectura en cache"},
+        {"id": "R-07", "category": "success_ring_overflow", "conditions": "mas de 8 pushes antes de leer", "user_sees": "el push mas viejo se descarta", "side_effects": ["ring overwrite"], "reversible": true, "final_state": "head vuelve a 0 (mod 8)"}
+      ],
+      "config": [
+        {"key": "sensor.count", "kind": "literal", "default": "FXEMB_SENSOR_COUNT = 3", "effect": "temperatura, presion, acelerometro"},
+        {"key": "sensor.ring_size", "kind": "literal", "default": "FXEMB_SENSOR_RING_SIZE = 8", "effect": "capacidad del ring por canal"},
+        {"key": "callback", "kind": "literal", "default": "sin lock; race condition latente (P01)", "effect": "la skill debe notar que g_sensor_head++ no es atomico"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "protocolo-de-comandos-uart",
+      "user_description": "Parser de lineas AT-like sobre UART con framing CR/LF, checksum opcional y estado de respuesta.",
+      "traces": [
+        {"n": 1, "what": "main llama fxemb_uart_init() en startup", "cite": "src/main.c:37", "data_in": "ninguno", "data_out": "ring de recepcion zeroeado"},
+        {"n": 2, "what": "ISR o test llama fxemb_uart_rx_byte con bytes del UART", "cite": "src/uart_protocol.c:31", "data_in": "uint8_t byte", "data_out": "ring actualizado"},
+        {"n": 3, "what": "ring lleno -> byte descartado (trampa P02 race)", "cite": "src/uart_protocol.c:33", "data_in": "ring full", "data_out": "byte ignorado"},
+        {"n": 4, "what": "tick() llama fxemb_uart_read_line", "cite": "src/main.c:25", "data_in": "buffer size", "data_out": "line hasta CR/LF"},
+        {"n": 5, "what": "dispatch_cmd busca el handler por nombre en cmd_table", "cite": "src/command_dispatch.c:46", "data_in": "name, argc, argv", "data_out": "int rc"},
+        {"n": 6, "what": "handler concreto ejecuta logica (READ, WRITE, RESET, STATUS)", "cite": "src/command_dispatch.c:13", "data_in": "argv", "data_out": "rc"},
+        {"n": 7, "what": "main escribe +OK o +ERR segun rc", "cite": "src/main.c:27", "data_in": "rc", "data_out": "respuesta UART"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "src/uart_protocol.c", "line": 31, "kind": "validation", "condition_text": "next == g_rx_tail (ring full)", "branches": [{"label": "ring OK -> append", "target_line": 35}, {"label": "ring full -> discard byte", "target_line": 32}]},
+        {"id": "DP-005", "file": "src/uart_protocol.c", "line": 65, "kind": "framing", "condition_text": "i != g_rx_head && buf[i] == CR || LF", "branches": [{"label": "encontrado CR/LF -> fin de linea", "target_line": 76}, {"label": "no encontrado -> retorna 0 (sin linea)", "target_line": 73}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_at_query", "conditions": "AT+READ?<CR><LF>", "user_sees": "+OK value<CR><LF>", "side_effects": ["ring consume bytes hasta CR/LF"], "reversible": true, "final_state": "line entregada"},
+        {"id": "R-02", "category": "error_no_terminator", "conditions": "AT+READ? sin CR/LF (R-02)", "user_sees": "buffer overflow despues de 64 bytes (P02)", "side_effects": ["bytes descartados en el ring"], "reversible": true, "final_state": "ring corrupto"},
+        {"id": "R-03", "category": "error_unknown_command", "conditions": "AT+FOOBAR<CR><LF>", "user_sees": "+ERR -EINVAL<CR><LF>", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-04", "category": "success_response_written", "conditions": "rc == 0", "user_sees": "+OK<CR><LF>", "side_effects": ["ring TX no implementado en host"], "reversible": true, "final_state": "ok"},
+        {"id": "R-05", "category": "error_handler_failure", "conditions": "rc != 0 (handler retorna error)", "user_sees": "+ERR -<errno><CR><LF>", "side_effects": [], "reversible": true, "final_state": "error"},
+        {"id": "R-06", "category": "success_reset", "conditions": "AT+RESET<CR><LF>", "user_sees": "soft reset (placeholder)", "side_effects": ["ninguno en host"], "reversible": true, "final_state": "no-op en host"},
+        {"id": "R-07", "category": "success_empty_line", "conditions": "ring vacio", "user_sees": "n = 0 (sin linea)", "side_effects": [], "reversible": true, "final_state": "no entregado"}
+      ],
+      "config": [
+        {"key": "uart.buf_size", "kind": "literal", "default": "FXEMB_UART_BUF_SIZE = 64", "effect": "tamano del ring de recepcion"},
+        {"key": "uart.token_size", "kind": "literal", "default": "FXEMB_UART_TOKEN_SIZE = 32", "effect": "tamano maximo de linea parseada"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "modo-bajo-consumo",
+      "user_description": "Maquina de estados de modos de energia RUN/IDLE/SLEEP/DEEPSLEEP con wake-up sources.",
+      "traces": [
+        {"n": 1, "what": "main llama fxemb_power_init() en startup", "cite": "src/main.c:38", "data_in": "ninguno", "data_out": "g_current_mode = RUN"},
+        {"n": 2, "what": "tick() evalua fxemb_power_consumption_ua()", "cite": "src/main.c:31", "data_in": "ninguno", "data_out": "int ua"},
+        {"n": 3, "what": "tick() llama fxemb_power_enter(IDLE, GPIO) si ua < 1000", "cite": "src/main.c:32", "data_in": "ua", "data_out": "0 = ok"},
+        {"n": 4, "what": "fxemb_power_enter valida perifericos activos para SLEEP", "cite": "src/power_modes.c:24", "data_in": "g_active_peripherals", "data_out": "0 o -EBUSY"},
+        {"n": 5, "what": "fxemb_power_enter valida wakeup source para DEEPSLEEP", "cite": "src/power_modes.c:20", "data_in": "mode, wakeup", "data_out": "0 o -EINVAL"},
+        {"n": 6, "what": "IRQ llama fxemb_power_set_wakeup_pending", "cite": "src/power_modes.c:54", "data_in": "source", "data_out": "g_wakeup_pending = 1"},
+        {"n": 7, "what": "scheduler verifica fxemb_power_wakeup_pending", "cite": "src/main.c:35", "data_in": "pending", "data_out": "1 o 0"}
+      ],
+      "decision_points": [
+        {"id": "DP-006", "file": "src/power_modes.c", "line": 19, "kind": "validation", "condition_text": "if (!g_power_initialized) return -ENODEV", "branches": [{"label": "inicializado -> continua", "target_line": 22}, {"label": "no inicializado -> -ENODEV", "target_line": 19}]},
+        {"id": "DP-007", "file": "src/power_modes.c", "line": 20, "kind": "validation", "condition_text": "mode == DEEPSLEEP && wakeup == NONE", "branches": [{"label": "OK -> continua", "target_line": 22}, {"label": "deep sleep sin wakeup -> -EINVAL", "target_line": 21}]},
+        {"id": "DP-008", "file": "src/power_modes.c", "line": 24, "kind": "validation", "condition_text": "mode == SLEEP && g_active_peripherals & 0x01", "branches": [{"label": "sin perifericos activos -> SLEEP", "target_line": 27}, {"label": "periferico activo -> -EBUSY", "target_line": 25}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_enter_idle", "conditions": "scheduler detecta consumption_ua() < 1000", "user_sees": "g_current_mode = IDLE", "side_effects": ["nivel de clock reducido"], "reversible": true, "final_state": "IDLE"},
+        {"id": "R-02", "category": "success_wakeup_gpio", "conditions": "IDLE + wakeup source = GPIO + IRQ externa", "user_sees": "g_current_mode = RUN", "side_effects": ["g_wakeup_pending = 1"], "reversible": true, "final_state": "RUN"},
+        {"id": "R-03", "category": "success_wakeup_rtc", "conditions": "SLEEP + wakeup source = RTC + alarm", "user_sees": "g_current_mode = IDLE", "side_effects": [], "reversible": true, "final_state": "IDLE"},
+        {"id": "R-04", "category": "error_ebusy", "conditions": "SLEEP con periferico activo (g_active_peripherals & 0x01)", "user_sees": "-EBUSY (-16)", "side_effects": [], "reversible": true, "final_state": "no cambio"},
+        {"id": "R-05", "category": "error_einval", "conditions": "DEEPSLEEP con wakeup source = NONE", "user_sees": "-EINVAL (-22)", "side_effects": [], "reversible": true, "final_state": "no cambio"},
+        {"id": "R-06", "category": "success_stub_zero", "conditions": "cualquier llamada a fxemb_power_consumption_ua()", "user_sees": "0 uA (stub P03)", "side_effects": ["valor no realista"], "reversible": true, "final_state": "stub"},
+        {"id": "R-07", "category": "success_watchdog_reset", "conditions": "watchdog timeout durante SLEEP", "user_sees": "RSTC -> reset completo", "side_effects": ["reset"], "reversible": false, "final_state": "boot"}
+      ],
+      "config": [
+        {"key": "power.modes", "kind": "literal", "default": "RUN=0, IDLE=1, SLEEP=2, DEEPSLEEP=3", "effect": "orden de la enumeracion"},
+        {"key": "power.wakeup", "kind": "literal", "default": "NONE=0, GPIO=1, RTC=2, WATCHDOG=3", "effect": "fuente de wake-up"},
+        {"key": "power.consumption", "kind": "literal", "default": "fxemb_power_consumption_ua() retorna 0 (stub P03)", "effect": "el scheduler cree que el consumo es 0 y entra a IDLE"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "vector_table", "where": "src/startup.c (isr_vector[] con __attribute__((section(\".isr_vector\")))) + include/fxemb/vector_table.h (typedef vector_t)", "resolution": "La tabla de vectores reside en .isr_vector (primera seccion de FLASH, KEEP). El primer slot es el initial SP (0x20020000, top de RAM tipico). Los siguientes 15 slots son punteros a handlers (Reset, NMI, HardFault, MemManage, BusFault, UsageFault, 4 reservados, SVCall, Debug Monitor, 1 reservado, PendSV, SysTick). La skill debe notar que la seccion .isr_vector esta en firmware.ld y se carga al inicio absoluto de FLASH."},
+    {"id": "TRAP-E02", "kind": "weak_symbols", "where": "include/fxemb/weak_handlers.h (Reset_Handler, NMI_Handler, HardFault_Handler, Default_Handler con __attribute__((weak))) + src/startup.c (definiciones debiles por defecto)", "resolution": "Los handlers por defecto son __attribute__((weak)). El usuario puede sobreescribirlos en src/board/board_<name>.c con definiciones fuertes. En el linker, el simbolo fuerte gana."},
+    {"id": "TRAP-E03", "kind": "command_dispatch_table", "where": "src/command_dispatch.c (cmd_table[] con cmd_handler_t) + include/fxemb/command_dispatch.h (typedef int (*cmd_handler_t)(int, char**))", "resolution": "La tabla cmd_table[] indexa por nombre. El dispatch_cmd() itera linealmente (O(n)) y compara con strcmp. La trampa es que parece una lookup O(1) por nombre pero es O(n) lineal."},
+    {"id": "TRAP-E04", "kind": "linker_script", "where": "firmware.ld (MEMORY + SECTIONS)", "resolution": "El script define FLASH (1M @ 0x08000000) y RAM (128K @ 0x20000000). .isr_vector al inicio absoluto. .text ejecutable. .data con LMA en FLASH y VMA en RAM (copiada en startup). .bss NOLOAD (zero-init). Simbolos exportados: _estack, _sidata, _sdata, _edata, _sbss, _ebss. La skill debe notar las secciones, los simbolos exportados y la directiva AT> para LMA/VMA distintas."},
+    {"id": "TRAP-E05", "kind": "board_ifdef", "where": "include/fxemb/board.h (#ifdef STM32F4_DISCOVERY / #elif NRF52_DK / #elif BOARD_HOST || HOST_TEST / #else #error)", "resolution": "El usuario compila con -DSTM32F4_DISCOVERY=1, -DNRF52_DK=1, o -DBOARD_HOST=1. Si no se define ninguna placa, el #error falla el build explicito. Cada placa tiene su board_<name>.c con Reset_Handler fuerte."},
+    {"id": "TRAP-E06", "kind": "mmio_volatile", "where": "include/fxemb/hal.h (FXEMB_GPIOA_ODR, FXEMB_GPIOA_IDR, FXEMB_RCC_AHB1ENR con volatile uint32_t*)", "resolution": "Las macros MMIO apuntan a direcciones fijas (0x40020014 para GPIOA_ODR, etc.). El cast volatile uint32_t* garantiza que el compilador no reordena accesos. La trampa paquete P01 (race_lectura_sensores) se manifiesta cuando un volatile se elimina o se omite."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "race_lectura_sensores", "where": "src/sensors.c (g_sensor_head++ no atomico; dos threads sin lock)", "resolution": "El ring buffer usa indices no atomicos. Sin mutex, dos threads pueden leer indices inconsistentes. La trampa es que read_all() parece atomico pero no lo es."},
+    {"id": "TRAP-P02", "kind": "uart_handler_race", "where": "src/uart_protocol.c (g_rx_head++ no atomico en rx_byte)", "resolution": "La ISR actualiza g_rx_head mientras el main loop lee. Sin volatile o memory barrier, la lectura puede ser parcial. El ring lleno descarta el byte entrante."},
+    {"id": "TRAP-P03", "kind": "consumo_stub_irreal", "where": "src/power_modes.c (fxemb_power_consumption_ua() retorna 0 siempre)", "resolution": "El stub no mide corriente real. El scheduler cree que el consumo es 0 y entra a IDLE prematuramente. En produccion esto causaria transiciones incorrectas de modo de energia."},
+    {"id": "TRAP-P04", "kind": "sleep_lock_olvidado", "where": "src/power_modes.c (fxemb_power_enter no toma mutex antes de cambiar g_current_mode)", "resolution": "Una IRQ puede entrar a un estado inconsistente entre la validacion y la asignacion. La trampa es que el codigo parece thread-safe (lee g_active_peripherals primero) pero no lo es."},
+    {"id": "TRAP-P05", "kind": "sensor_no_inicializado", "where": "src/sensors.c (fxemb_sensors_read sin check de g_sensor_initialized; fxemb_sensors_read_all si retorna -ENODEV)", "resolution": "La lectura individual cae en basura del ring; la lectura por canal all retorna -ENODEV. La inconsistencia es la trampa."},
+    {"id": "TRAP-P06", "kind": "weak_handler_loop_infinito", "where": "src/startup.c (Default_Handler = while(1) sin bkpt ni LED)", "resolution": "El handler por defecto queda en bucle infinito silencioso. En un sistema real, el firmware se colgaria sin diagnostico. La trampa es que no hay bkpt para que el debugger pare ni LED parpadeante."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_legacy_helper", "where": "src/legacy_helpers.c (legacy_uart_send_byte, legacy_crc16)", "resolution": "Las funciones legacy existen pero no se llaman desde el codigo de la app. Compilan y enlazan pero no tienen consumidores en el call graph."},
+    {"id": "TRAP-S02", "kind": "unused_macro", "where": "include/fxemb/deprecated_macros.h (LEGACY_DELAY, LEGACY_NOP, LEGACY_BARRIER sin marca de deprecation)", "resolution": "Las macros estan obsoletas pero no llevan la marca estandar de deprecation de C. La trampa es que el codigo de la app puede seguirlas usando sin warning del compilador."},
+    {"id": "TRAP-S03", "kind": "commented_out_code", "where": "src/sensors.c (4 lineas comentadas con TODO: soporte para DMA en fxemb_sensors_get_count_via_dma)", "resolution": "Las lineas comentadas parecen codigo activo pero no se compilan. La skill debe notar que el codigo no esta vivo."}
+  ],
+  "surfaces": [
+    {"id": "SRF-reset-handler", "kind": "handler", "name": "Reset_Handler (vector 1)", "handler": "src/startup.c:54", "file": "src/startup.c"},
+    {"id": "SRF-vector-table", "kind": "data", "name": "isr_vector[16] (E01)", "handler": "src/startup.c:24", "file": "src/startup.c"},
+    {"id": "SRF-linker-sect-isr", "kind": "section", "name": ".isr_vector (E04)", "handler": "firmware.ld:32", "file": "firmware.ld"},
+    {"id": "SRF-linker-sym-estack", "kind": "symbol", "name": "_estack (top de RAM)", "handler": "firmware.ld:21", "file": "firmware.ld"},
+    {"id": "SRF-board-ifdef", "kind": "ifdef", "name": "BOARD_HOST / STM32F4_DISCOVERY / NRF52_DK (E05)", "handler": "include/fxemb/board.h:13", "file": "include/fxemb/board.h"},
+    {"id": "SRF-mmio-odr", "kind": "mmio", "name": "FXEMB_GPIOA_ODR (E06)", "handler": "include/fxemb/hal.h:30", "file": "include/fxemb/hal.h"},
+    {"id": "SRF-mmio-rcc", "kind": "mmio", "name": "FXEMB_RCC_AHB1ENR (E06)", "handler": "include/fxemb/hal.h:35", "file": "include/fxemb/hal.h"},
+    {"id": "SRF-cmd-table", "kind": "table", "name": "cmd_table[4] (E03)", "handler": "src/command_dispatch.c:30", "file": "src/command_dispatch.c"},
+    {"id": "SRF-weak-default", "kind": "weak", "name": "Default_Handler (E02 + P06)", "handler": "src/startup.c:62", "file": "src/startup.c"},
+    {"id": "SRF-board-host", "kind": "board", "name": "board_host.c Reset_Handler (E02 override)", "handler": "src/board/board_host.c:11", "file": "src/board/board_host.c"},
+    {"id": "SRF-power-state", "kind": "state", "name": "g_current_mode + g_active_peripherals (P04)", "handler": "src/power_modes.c:18", "file": "src/power_modes.c"},
+    {"id": "SRF-sensor-ring", "kind": "ring", "name": "g_sensor_ring[3][8] (P01)", "handler": "src/sensors.c:11", "file": "src/sensors.c"},
+    {"id": "SRF-uart-ring", "kind": "ring", "name": "g_rx_buf[64] (P02)", "handler": "src/uart_protocol.c:14", "file": "src/uart_protocol.c"},
+    {"id": "SRF-deprecated-macros", "kind": "macro", "name": "LEGACY_DELAY/NOP/BARRIER (S02)", "handler": "include/fxemb/deprecated_macros.h:17", "file": "include/fxemb/deprecated_macros.h"},
+    {"id": "SRF-legacy-helpers", "kind": "function", "name": "legacy_uart_send_byte + legacy_crc16 (S01)", "handler": "src/legacy_helpers.c:7", "file": "src/legacy_helpers.c"}
+  ]
+}

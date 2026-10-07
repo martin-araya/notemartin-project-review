@@ -1,0 +1,28 @@
+# Imagen para ejecutar los tests del fixture F06y (C99/embedded).
+FROM gcc:13-bookworm
+
+# gcc + make + python3 para el runner. binutils para objdump.
+# arm-none-eabi-gcc queda como opcional; el target cross-arm corre
+# solo si esta disponible.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    binutils \
+    python3 \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+COPY Makefile Makefile
+COPY firmware.ld firmware.ld
+COPY include include
+COPY src src
+COPY tests tests
+COPY tools tools
+COPY unique_tokens.txt unique_tokens.txt
+COPY docs docs
+
+# Compilamos en build para que la primera corrida del test sea mas rapida.
+RUN mkdir -p build && make build
+
+CMD ["make", "test"]

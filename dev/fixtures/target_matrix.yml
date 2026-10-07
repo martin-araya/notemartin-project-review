@@ -28,6 +28,7 @@ axes:
     - elixir
     - php
     - cpp
+    - c
 
   # Frameworks y plataformas (al menos un fixture debe usar cada uno)
   frameworks:
@@ -88,6 +89,8 @@ axes:
     - ctest
     - gtest
     - dlopen
+    - unity
+    - linker-script
 
   # Sistemas de build (al menos un fixture debe usar cada uno)
   build_systems:
@@ -105,6 +108,7 @@ axes:
     - composer
     - bundler
     - cmake
+    - gnu-ld
 
   # Tipos de archivo y formatos
   file_kinds:
