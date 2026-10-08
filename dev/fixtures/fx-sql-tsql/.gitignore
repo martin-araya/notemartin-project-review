@@ -1,0 +1,5 @@
+.sqlserver_data/
+*.bak
+.env
+Generated/*.generated*
+db/install.sql.bak

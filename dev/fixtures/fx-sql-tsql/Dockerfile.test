@@ -1,0 +1,32 @@
+# Dockerfile.test del fixture F06aj (fx-sql-tsql).
+# SQL Server 2022 + sqlcmd (mssql-tools18) + unixodbc.
+FROM mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+
+ENV ACCEPT_EULA=Y
+ENV MSSQL_SA_PASSWORD=SqlServer2022!
+ENV MSSQL_PID=Developer
+ENV PATH="/opt/mssql-tools18/bin:${PATH}"
+
+USER root
+
+# Instalar herramientas cliente y dependencias de runtime.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        curl gnupg2 apt-transport-https ca-certificates \
+        unixodbc-dev unixodbc-bin \
+        make bash git jq \
+    && curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg \
+    && curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/prod.list | tee /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y mssql-tools18 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+COPY . /fixture/
+
+RUN chmod +x entrypoint.sh tools/*.sh
+
+# Entrypoint personalizado: sqlservar + esperar + instalar + tests.
+CMD ["bash", "entrypoint.sh"]

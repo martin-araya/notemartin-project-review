@@ -1,0 +1,16 @@
+# Metadata del fixture F06aj: fx-sql-tsql
+# SQL Server 2022 con T-SQL: stored procedures con sp_executesql,
+# MERGE con OUTPUT, triggers AFTER e INSTEAD OF, CTE recursivas,
+# tablas temporales globales, scripts de SQL Agent. Ver
+# dev/ground-truth/fx-sql-tsql/ground_truth.json para referencias exactas.
+name: fx-sql-tsql
+description: SQL Server 2022 (mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04) + T-SQL + sp_executesql + MERGE OUTPUT + recursive CTE + temp tables + SQL Agent (F06aj)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-sql-tsql
+  enabled: true
+ground_truth_format_version: 1

@@ -1,0 +1,275 @@
+{
+  "fixture": "fx-sql-tsql",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-migration-V001", "artifact": "V001__init_schema.sql (5 tablas base)", "file": "db/migration/V001__init_schema.sql:1"},
+    {"id": "EP-migration-V002", "artifact": "V002__init_triggers.sql (AFTER + INSTEAD OF)", "file": "db/migration/V002__init_triggers.sql:1"},
+    {"id": "EP-migration-V003", "artifact": "V003__recursive_cte_bom.sql (usp_explode_bom)", "file": "db/migration/V003__recursive_cte_bom.sql:1"},
+    {"id": "EP-migration-V004", "artifact": "V004__dynamic_sql_search.sql (sp_executesql parametrizado + raw concat)", "file": "db/migration/V004__dynamic_sql_search.sql:1"},
+    {"id": "EP-migration-V005", "artifact": "V005__merge_conciliacion.sql (MERGE OUTPUT $action)", "file": "db/migration/V005__merge_conciliacion.sql:1"},
+    {"id": "EP-migration-V006", "artifact": "V006__global_temp_inventory.sql (##global_stock_temp)", "file": "db/migration/V006__global_temp_inventory.sql:1"},
+    {"id": "EP-migration-V007", "artifact": "V007__sql_agent_jobs.sql (3 jobs SQL Agent)", "file": "db/migration/V007__sql_agent_jobs.sql:1"},
+    {"id": "EP-migration-V008", "artifact": "V008__legacy_sprocs.sql (usp_legacy_export + usp_legacy_purge)", "file": "db/migration/V008__legacy_sprocs.sql:1"},
+    {"id": "EP-migration-R-totals", "artifact": "R__recalc_stock_totals.sql (repetible P4 trap)", "file": "db/migration/R__recalc_stock_totals.sql:1"},
+    {"id": "EP-migration-R-cache", "artifact": "R__rebuild_report_cache.sql (repetible P5 trap)", "file": "db/migration/R__rebuild_report_cache.sql:1"},
+    {"id": "EP-view-stock", "artifact": "dbo.vw_stock_current (vista de stock activos)", "file": "db/sql/views.sql:5"},
+    {"id": "EP-view-reconcile-dashboard", "artifact": "dbo.vw_reconcile_dashboard (vista de conciliacion completada)", "file": "db/sql/views.sql:14"},
+    {"id": "EP-view-report-top", "artifact": "dbo.vw_report_top_items (vista de reportes)", "file": "db/sql/views.sql:25"},
+    {"id": "EP-synonyms", "artifact": "5 sinonimos CREATE SYNONYM (E2 + P2 trap)", "file": "db/sql/synonyms.sql:5"},
+    {"id": "EP-functions", "artifact": "fn_stock_available + fn_reconcile_status + fn_report_total_sales", "file": "db/sql/functions.sql:1"},
+    {"id": "EP-trigger-after-insert", "artifact": "trg_stock_movements_after_insert (AFTER INSERT trigger)", "file": "db/migration/V002__init_triggers.sql:5"},
+    {"id": "EP-trigger-instead-of", "artifact": "trg_stock_instead_of_update (INSTEAD OF UPDATE trigger)", "file": "db/migration/V002__init_triggers.sql:20"},
+    {"id": "EP-stored-proc-explode-bom", "artifact": "dbo.usp_explode_bom (CTE recursiva)", "file": "db/migration/V003__recursive_cte_bom.sql:4"},
+    {"id": "EP-stored-proc-search-dynamic", "artifact": "dbo.usp_stock_search_dynamic (sp_executesql parametrizado)", "file": "db/migration/V004__dynamic_sql_search.sql:4"},
+    {"id": "EP-stored-proc-search-raw", "artifact": "dbo.usp_stock_search_raw (P1 trap: concat string)", "file": "db/migration/V004__dynamic_sql_search.sql:18"},
+    {"id": "EP-stored-proc-reconcile-run", "artifact": "dbo.usp_reconcile_run (MERGE OUTPUT)", "file": "db/migration/V005__merge_conciliacion.sql:4"},
+    {"id": "EP-stored-proc-reconcile-partial", "artifact": "dbo.usp_reconcile_partial (P2 trap)", "file": "db/migration/V005__merge_conciliacion.sql:30"},
+    {"id": "EP-stored-proc-temp-load", "artifact": "dbo.usp_temp_load (crea ##global_stock_temp)", "file": "db/migration/V006__global_temp_inventory.sql:4"},
+    {"id": "EP-stored-proc-temp-consume", "artifact": "dbo.usp_temp_consume (consume ##global)", "file": "db/migration/V006__global_temp_inventory.sql:20"},
+    {"id": "EP-stored-proc-legacy-export", "artifact": "dbo.usp_legacy_export (S1 dead)", "file": "db/migration/V008__legacy_sprocs.sql:4"},
+    {"id": "EP-stored-proc-legacy-purge", "artifact": "dbo.usp_legacy_purge (S2 referencias tabla inexistente)", "file": "db/migration/V008__legacy_sprocs.sql:14"},
+    {"id": "EP-stored-proc-recalc-totals", "artifact": "dbo.usp_recalc_totals (helper para JOB_HOURLY)", "file": "db/migration/V008__legacy_sprocs.sql:26"},
+    {"id": "EP-stored-proc-rebuild-cache", "artifact": "dbo.usp_rebuild_cache (helper para JOB_DAILY)", "file": "db/migration/V008__legacy_sprocs.sql:36"},
+    {"id": "EP-job-hourly", "artifact": "msdb.dbo.JOB_HOURLY_RECALC_TOTALS", "file": "db/migration/V007__sql_agent_jobs.sql:13"},
+    {"id": "EP-job-daily", "artifact": "msdb.dbo.JOB_DAILY_REBUILD_REPORT_CACHE", "file": "db/migration/V007__sql_agent_jobs.sql:36"},
+    {"id": "EP-job-legacy-purge", "artifact": "msdb.dbo.JOB_LEGACY_PURGE (P6 enabled=0)", "file": "db/migration/V007__sql_agent_jobs.sql:59"},
+    {"id": "EP-test-runner", "artifact": "dbo.fx_assert_equal + fx_test_begin/end (T-SQL runner)", "file": "db/test/test_runner.sql:1"},
+    {"id": "EP-test-stock", "artifact": "01_stock_test.sql (7 tests)", "file": "db/test/01_stock_test.sql:1"},
+    {"id": "EP-test-reconcile", "artifact": "02_reconcile_test.sql (7 tests)", "file": "db/test/02_reconcile_test.sql:1"},
+    {"id": "EP-test-reports", "artifact": "03_reports_test.sql (7 tests)", "file": "db/test/03_reports_test.sql:1"},
+    {"id": "EP-test-triggers", "artifact": "04_triggers_test.sql (7 tests)", "file": "db/test/04_triggers_test.sql:1"},
+    {"id": "EP-test-sql-agent", "artifact": "05_sql_agent_test.sql (7 tests)", "file": "db/test/05_sql_agent_test.sql:1"},
+    {"id": "EP-test-trap-ecosystem", "artifact": "06_trap_ecosystem_test.sql (6 tests E1..E6)", "file": "db/test/06_trap_ecosystem_test.sql:1"},
+    {"id": "EP-test-trap-package", "artifact": "07_trap_package_test.sql (6 tests P1..P6)", "file": "db/test/07_trap_package_test.sql:1"},
+    {"id": "EP-test-deprecated", "artifact": "08_deprecated_test.sql (S3 trivial)", "file": "db/test/08_deprecated_test.sql:1"},
+    {"id": "EP-legacy-artifact", "artifact": "legacy_artifact.sql (S2 trigger sobre tabla inexistente)", "file": "db/sql/legacy_artifact.sql:1"},
+    {"id": "EP-seed-stock", "artifact": "seed_stock.sql (5 items)", "file": "db/seed/seed_stock.sql:1"},
+    {"id": "EP-seed-movements", "artifact": "seed_movements.sql (12 movimientos)", "file": "db/seed/seed_movements.sql:1"},
+    {"id": "EP-seed-bom", "artifact": "seed_bom.sql (jerarquia con ciclo)", "file": "db/seed/seed_bom.sql:1"},
+    {"id": "EP-install", "artifact": "db/install.sql (orquestador maestro)", "file": "db/install.sql:1"},
+    {"id": "EP-entrypoint", "artifact": "entrypoint.sh (sqlservr + wait + install + tests)", "file": "entrypoint.sh:1"}
+  ],
+  "modules": [
+    {"id": "MOD-schema-stock-items", "path": "db/migration/V001__init_schema.sql", "summary": "Tabla stock_items con SKU PK + quantity_on_hand + is_deleted"},
+    {"id": "MOD-schema-stock-movements", "path": "db/migration/V001__init_schema.sql", "summary": "Tabla stock_movements con FK a stock_items + movement_type CHECK"},
+    {"id": "MOD-schema-reconcile-runs", "path": "db/migration/V001__init_schema.sql", "summary": "Tabla reconcile_runs IDENTITY + status CHECK"},
+    {"id": "MOD-schema-reconcile-lines", "path": "db/migration/V001__init_schema.sql", "summary": "Tabla reconcile_lines con PK compuesta + columna delta PERSISTED"},
+    {"id": "MOD-schema-report-cache", "path": "db/migration/V001__init_schema.sql", "summary": "Tabla report_cache con payload NVARCHAR(MAX) JSON"},
+    {"id": "MOD-trigger-after-insert", "path": "db/migration/V002__init_triggers.sql", "summary": "trg_stock_movements_after_insert (AFTER INSERT)"},
+    {"id": "MOD-trigger-instead-of", "path": "db/migration/V002__init_triggers.sql", "summary": "trg_stock_instead_of_update (INSTEAD OF UPDATE sobre vista)"},
+    {"id": "MOD-sp-explode-bom", "path": "db/migration/V003__recursive_cte_bom.sql", "summary": "usp_explode_bom (CTE recursiva con UNION ALL)"},
+    {"id": "MOD-sp-search-dynamic", "path": "db/migration/V004__dynamic_sql_search.sql", "summary": "usp_stock_search_dynamic (sp_executesql parametrizado)"},
+    {"id": "MOD-sp-search-raw", "path": "db/migration/V004__dynamic_sql_search.sql", "summary": "usp_stock_search_raw (P1 trap concat string)"},
+    {"id": "MOD-sp-reconcile-run", "path": "db/migration/V005__merge_conciliacion.sql", "summary": "usp_reconcile_run (MERGE OUTPUT $action)"},
+    {"id": "MOD-sp-reconcile-partial", "path": "db/migration/V005__merge_conciliacion.sql", "summary": "usp_reconcile_partial (P2 trap sin WHEN NOT MATCHED BY SOURCE)"},
+    {"id": "MOD-sp-temp-load", "path": "db/migration/V006__global_temp_inventory.sql", "summary": "usp_temp_load (crea ##global_stock_temp)"},
+    {"id": "MOD-sp-temp-consume", "path": "db/migration/V006__global_temp_inventory.sql", "summary": "usp_temp_consume (consume ##global; P5 trap no limpia)"},
+    {"id": "MOD-sp-legacy-export", "path": "db/migration/V008__legacy_sprocs.sql", "summary": "usp_legacy_export (S1 dead)"},
+    {"id": "MOD-sp-legacy-purge", "path": "db/migration/V008__legacy_sprocs.sql", "summary": "usp_legacy_purge (S2 referencias tabla inexistente)"},
+    {"id": "MOD-sp-recalc-totals", "path": "db/migration/V008__legacy_sprocs.sql", "summary": "usp_recalc_totals (helper para JOB_HOURLY)"},
+    {"id": "MOD-sp-rebuild-cache", "path": "db/migration/V008__legacy_sprocs.sql", "summary": "usp_rebuild_cache (helper para JOB_DAILY)"},
+    {"id": "MOD-r-recalc-totals", "path": "db/migration/R__recalc_stock_totals.sql", "summary": "R__recalc_stock_totals (P4 trap DELETE+INSERT)"},
+    {"id": "MOD-r-rebuild-cache", "path": "db/migration/R__rebuild_report_cache.sql", "summary": "R__rebuild_report_cache (P5 trap leak temp)"},
+    {"id": "MOD-view-stock", "path": "db/sql/views.sql", "summary": "vw_stock_current (vista de stock activos)"},
+    {"id": "MOD-view-reconcile-dashboard", "path": "db/sql/views.sql", "summary": "vw_reconcile_dashboard (vista de conciliacion completada)"},
+    {"id": "MOD-view-report-top", "path": "db/sql/views.sql", "summary": "vw_report_top_items (TOP 10 por total_moved)"},
+    {"id": "MOD-synonyms", "path": "db/sql/synonyms.sql", "summary": "5 sinonimos (E2 + P2 trap syn_legacy_table)"},
+    {"id": "MOD-functions", "path": "db/sql/functions.sql", "summary": "fn_stock_available + fn_reconcile_status + fn_report_total_sales"},
+    {"id": "MOD-legacy-artifact", "path": "db/sql/legacy_artifact.sql", "summary": "trg_old_audit sobre tabla inexistente (S2)"},
+    {"id": "MOD-seed-stock", "path": "db/seed/seed_stock.sql", "summary": "5 items stock con SKU-A001..A005"},
+    {"id": "MOD-seed-movements", "path": "db/seed/seed_movements.sql", "summary": "12 movimientos (1 soft-deleted)"},
+    {"id": "MOD-seed-bom", "path": "db/seed/seed_bom.sql", "summary": "jerarquia con ciclo A->B->C->A (P4)"},
+    {"id": "MOD-test-runner", "path": "db/test/test_runner.sql", "summary": "fx_assert_equal + fx_test_begin/end + fx_test_results"},
+    {"id": "MOD-test-stock", "path": "db/test/01_stock_test.sql", "summary": "7 tests de la feature stock"},
+    {"id": "MOD-test-reconcile", "path": "db/test/02_reconcile_test.sql", "summary": "7 tests de la feature reconcile"},
+    {"id": "MOD-test-reports", "path": "db/test/03_reports_test.sql", "summary": "7 tests de la feature dashboard"},
+    {"id": "MOD-test-triggers", "path": "db/test/04_triggers_test.sql", "summary": "7 tests de triggers AFTER + INSTEAD OF"},
+    {"id": "MOD-test-sql-agent", "path": "db/test/05_sql_agent_test.sql", "summary": "7 tests de SQL Agent (3 jobs)"},
+    {"id": "MOD-test-trap-ecosystem", "path": "db/test/06_trap_ecosystem_test.sql", "summary": "6 tests de trampas ecosistema (E1..E6)"},
+    {"id": "MOD-test-trap-package", "path": "db/test/07_trap_package_test.sql", "summary": "6 tests de trampas paquete (P1..P6)"},
+    {"id": "MOD-test-deprecated", "path": "db/test/08_deprecated_test.sql", "summary": "1 test trivial (S3 deprecated)"},
+    {"id": "MOD-tools-wait", "path": "tools/wait_for_sql.sh", "summary": "wait_for_sql.sh (poll hasta 60s)"},
+    {"id": "MOD-tools-apply", "path": "tools/apply_migrations.sh", "summary": "apply_migrations.sh (CREATE DATABASE + db/install.sql)"},
+    {"id": "MOD-tools-run", "path": "tools/run_tests.sh", "summary": "run_tests.sh (8 archivos de test con sqlcmd)"},
+    {"id": "MOD-tools-reset", "path": "tools/reset_db.sh", "summary": "reset_db.sh (DROP DATABASE fxsqlts)"},
+    {"id": "MOD-config-odbc", "path": "config/msodbcsql.ini", "summary": "ODBC config TrustServerCertificate=yes"},
+    {"id": "MOD-entrypoint", "path": "entrypoint.sh", "summary": "entrypoint.sh arranca sqlservr + wait + install + tests"}
+  ],
+  "dependencies": [
+    {"name": "sql-server-2022", "version": "2022-CU14-ubuntu-22.04", "scope": "build+runtime", "manifest": "Dockerfile.test (FROM mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04)"},
+    {"name": "mssql-tools18", "version": "18.x", "scope": "build+runtime", "manifest": "Dockerfile.test (apt-get install mssql-tools18)"},
+    {"name": "unixodbc", "version": "system", "scope": "runtime", "manifest": "Dockerfile.test (apt-get install unixodbc-dev unixodbc-bin)"},
+    {"name": "tsql", "version": "2022", "scope": "runtime", "manifest": "db/migration/V001__init_schema.sql + db/sql/functions.sql (T-SQL DDL)"},
+    {"name": "sqlcmd", "version": "mssql-tools18", "scope": "build", "manifest": "tools/run_tests.sh + tools/apply_migrations.sh"},
+    {"name": "sql-agent", "version": "msdb.dbo", "scope": "runtime", "manifest": "db/migration/V007__sql_agent_jobs.sql (sp_add_job + sp_add_schedule)"},
+    {"name": "docker", "version": ">= 20.10", "scope": "build+runtime", "manifest": "Dockerfile.test + Makefile docker-test target"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "stock",
+      "user_description": "CRUD de stock con trigger AFTER INSERT que audita movimientos, trigger INSTEAD OF UPDATE sobre vista, y busqueda dinamica parametrizada vs raw (P1).",
+      "traces": [
+        {"n": 1, "what": "User inserta movimiento en stock_movements", "cite": "db/migration/V001__init_schema.sql:16", "data_in": "sku, movement_type, quantity", "data_out": "movement_id IDENTITY"},
+        {"n": 2, "what": "Trigger AFTER INSERT dispara e inserta en stock_audit", "cite": "db/migration/V002__init_triggers.sql:8", "data_in": "inserted.*", "data_out": "audit row"},
+        {"n": 3, "what": "User consulta fn_stock_available(sku)", "cite": "db/sql/functions.sql:5", "data_in": "sku", "data_out": "quantity_on_hand"},
+        {"n": 4, "what": "User actualiza vw_stock_current (vista)", "cite": "db/sql/views.sql:5", "data_in": "sku, description, quantity_on_hand", "data_out": "UPDATE in dbo.stock_items via INSTEAD OF trigger"},
+        {"n": 5, "what": "Trigger INSTEAD OF propaga solo description (P3 trap)", "cite": "db/migration/V002__init_triggers.sql:25", "data_in": "inserted.*", "data_out": "UPDATE si SET si.description = i.description (quantity_on_hand sin tocar)"},
+        {"n": 6, "what": "User ejecuta usp_stock_search_dynamic con patron", "cite": "db/migration/V004__dynamic_sql_search.sql:10", "data_in": "pattern, min_qty", "data_out": "rows parametrizados via sp_executesql"},
+        {"n": 7, "what": "Trampa P1: usp_stock_search_raw concatena string", "cite": "db/migration/V004__dynamic_sql_search.sql:21", "data_in": "raw_filter NVARCHAR(MAX)", "data_out": "SQL string concatenado, SQLi"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "db/migration/V002__init_triggers.sql", "line": 8, "kind": "after_insert_trigger", "condition_text": "INSERT en stock_movements dispara trigger AFTER", "branches": [{"label": "ok -> INSERT en stock_audit", "target_line": 11}, {"label": "fail -> trigger no existe (drop manual)", "target_line": 8}]},
+        {"id": "DP-002", "file": "db/migration/V004__dynamic_sql_search.sql", "line": 21, "kind": "dynamic_sql_concat", "condition_text": "EXEC sp_executesql con SQL concatenado en usp_stock_search_raw", "branches": [{"label": "param_ok: sp_executesql con @params (usp_stock_search_dynamic)", "target_line": 11}, {"label": "sql_injection: string concat (usp_stock_search_raw)", "target_line": 25}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "INSERT valido en stock_movements", "user_sees": "movement_id + row en stock_audit via trigger", "side_effects": ["INSERT en stock_movements", "INSERT en stock_audit via trigger"], "reversible": true, "final_state": "movimiento registrado y auditado"},
+        {"id": "R-02", "category": "validation_input", "conditions": "INSERT con movement_type invalido", "user_sees": "CHECK constraint violation", "side_effects": [], "reversible": true, "final_state": "INSERT fallido"},
+        {"id": "R-03", "category": "error_constraint", "conditions": "INSERT con sku inexistente", "user_sees": "FK violation (REFERENCE stock_items)", "side_effects": [], "reversible": true, "final_state": "INSERT fallido"},
+        {"id": "R-04", "category": "noop_silent", "conditions": "UPDATE directo sobre vw_stock_current sin INSTEAD OF", "user_sees": "View is not updatable via direct UPDATE", "side_effects": [], "reversible": true, "final_state": "UPDATE fallido silenciosamente"},
+        {"id": "R-05", "category": "success_partial", "conditions": "UPDATE sobre vw_stock_current via INSTEAD OF trigger", "user_sees": "Solo description propaga; quantity_on_hand no cambia (P3)", "side_effects": ["UPDATE dbo.stock_items SET description (sin quantity_on_hand)"], "reversible": true, "final_state": "description actualizado, quantity_on_hand intacto"},
+        {"id": "R-06", "category": "success_full", "conditions": "usp_stock_search_dynamic con patron valido", "user_sees": "rows via sp_executesql parametrizado", "side_effects": [], "reversible": true, "final_state": "resultado via parametros"},
+        {"id": "R-07", "category": "error_external_service", "conditions": "usp_stock_search_raw con raw_filter = '1=1; DROP TABLE stock_items;--'", "user_sees": "SQLi ejecutado: DROP TABLE stock_items (silently)", "side_effects": ["posible DROP TABLE no autorizado"], "reversible": false, "final_state": "vulnerabilidad explotada"}
+      ],
+      "config": [
+        {"key": "MSSQL_SA_PASSWORD", "kind": "env", "default": "SqlServer2022!", "effect": "SA password para docker"},
+        {"key": "ACCEPT_EULA", "kind": "env", "default": "Y", "effect": "EULA aceptada para Microsoft SQL Server"},
+        {"key": "MSSQL_PID", "kind": "env", "default": "Developer", "effect": "Edition: Developer (incluye SQL Agent)"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "reconcile",
+      "user_description": "Ejecuta conciliacion entre stock_on_hand y actual usando MERGE con OUTPUT $action; usp_reconcile_partial como alternativa incompleta (P2).",
+      "traces": [
+        {"n": 1, "what": "User crea run en reconcile_runs", "cite": "db/migration/V001__init_schema.sql:24", "data_in": "ninguno (DEFAULT)", "data_out": "run_id IDENTITY"},
+        {"n": 2, "what": "User ejecuta usp_reconcile_run(@run_id)", "cite": "db/migration/V005__merge_conciliacion.sql:7", "data_in": "run_id INT", "data_out": "MERGE ejecuta"},
+        {"n": 3, "what": "MERGE inserta/actualiza reconcile_lines y emite OUTPUT $action", "cite": "db/migration/V005__merge_conciliacion.sql:21", "data_in": "rows source", "data_out": "rows en reconcile_lines + reconcile_audit"},
+        {"n": 4, "what": "User consulta vw_reconcile_dashboard", "cite": "db/sql/views.sql:14", "data_in": "ninguno", "data_out": "rows con delta esperado vs actual"},
+        {"n": 5, "what": "User marca run como COMPLETED", "cite": "db/test/02_reconcile_test.sql:18", "data_in": "run_id", "data_out": "status = N'COMPLETED'"},
+        {"n": 6, "what": "Trampa P2: usp_reconcile_partial sin WHEN NOT MATCHED BY SOURCE", "cite": "db/migration/V005__merge_conciliacion.sql:32", "data_in": "run_id", "data_out": "SKUs eliminados de stock_items quedan en reconcile_lines (huerfanos)"},
+        {"n": 7, "what": "User consulta fn_reconcile_status(@run_id)", "cite": "db/sql/functions.sql:18", "data_in": "run_id", "data_out": "status NVARCHAR(16)"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "db/migration/V005__merge_conciliacion.sql", "line": 12, "kind": "merge_with_output", "condition_text": "MERGE ... WHEN MATCHED OR NOT MATCHED BY TARGET con OUTPUT $action", "branches": [{"label": "ok_match: UPDATE", "target_line": 16}, {"label": "ok_not_match: INSERT", "target_line": 18}, {"label": "source_disappeared: queda sin WHEN NOT MATCHED BY SOURCE (E2 limite)", "target_line": 21}]},
+        {"id": "DP-004", "file": "db/migration/V005__merge_conciliacion.sql", "line": 32, "kind": "partial_merge_no_source", "condition_text": "usp_reconcile_partial sin WHEN NOT MATCHED BY SOURCE", "branches": [{"label": "ok -> INSERT de nuevos SKUs", "target_line": 35}, {"label": "huerfano: SKUs borrados quedan en target sin cleanup", "target_line": 35}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "usp_reconcile_run con source rows", "user_sees": "reconcile_lines pobladas + reconcile_audit con $action", "side_effects": ["INSERT/UPDATE en reconcile_lines", "INSERT en reconcile_audit via OUTPUT"], "reversible": true, "final_state": "conciliacion ejecutada"},
+        {"id": "R-02", "category": "noop_silent", "conditions": "Source vacio (sin stock_items activos)", "user_sees": "MERGE no inserta nada (sin warning)", "side_effects": [], "reversible": true, "final_state": "reconcile_lines vacio"},
+        {"id": "R-03", "category": "success_partial", "conditions": "Falla de OUTPUT INTO (drop de reconcile_audit)", "user_sees": "MERGE falla con 'Invalid object name reconcile_audit'", "side_effects": ["MERGE aborta", "ninguna fila insertada en target"], "reversible": true, "final_state": "MERGE rolled back"},
+        {"id": "R-04", "category": "error_constraint", "conditions": "@run_id inexistente", "user_sees": "FK violation al INSERT (REFERENCES reconcile_runs)", "side_effects": [], "reversible": true, "final_state": "INSERT fallido"},
+        {"id": "R-05", "category": "success_partial", "conditions": "usp_reconcile_partial con SKUs que se borran despues", "user_sees": "SKUs huerfanos en reconcile_lines (P2 trap)", "side_effects": ["rows huerfanas sin cleanup"], "reversible": false, "final_state": "datos inconsistentes"},
+        {"id": "R-06", "category": "success_full", "conditions": "UPDATE run a status=COMPLETED", "user_sees": "fn_reconcile_status retorna COMPLETED", "side_effects": ["UPDATE reconcile_runs"], "reversible": true, "final_state": "run marcado"},
+        {"id": "R-07", "category": "validation_input", "conditions": "fn_reconcile_status con run_id NULL", "user_sees": "retorna N'UNKNOWN' (ISNULL fallback)", "side_effects": [], "reversible": true, "final_state": "resultado defensivo"}
+      ],
+      "config": [
+        {"key": "usp_reconcile_run.@run_id", "kind": "param", "default": "NULL", "effect": "ID de reconcile_runs a conciliar"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "dashboard",
+      "user_description": "Reportes con cache (report_cache) + vistas materializadas logicamente (vw_report_top_items) + JSON serializado.",
+      "traces": [
+        {"n": 1, "what": "User ejecuta usp_rebuild_cache", "cite": "db/migration/V008__legacy_sprocs.sql:38", "data_in": "ninguno", "data_out": "DELETE + INSERT en report_cache"},
+        {"n": 2, "what": "report_cache.payload contiene SKU + total via FOR JSON PATH", "cite": "db/migration/V008__legacy_sprocs.sql:42", "data_in": "stock_movements rows", "data_out": "JSON string"},
+        {"n": 3, "what": "User consulta vw_report_top_items", "cite": "db/sql/views.sql:25", "data_in": "ninguno", "data_out": "TOP 10 rows ordenados DESC"},
+        {"n": 4, "what": "User consulta fn_report_total_sales()", "cite": "db/sql/functions.sql:30", "data_in": "ninguno", "data_out": "SUM(quantity) WHERE movement_type = ISSUE"},
+        {"n": 5, "what": "User consulta vw_reconcile_dashboard", "cite": "db/sql/views.sql:14", "data_in": "ninguno", "data_out": "rows de runs COMPLETED"},
+        {"n": 6, "what": "R__rebuild_report_cache repetible regenera cache", "cite": "db/migration/R__rebuild_report_cache.sql:14", "data_in": "ninguno", "data_out": "DELETE + INSERT"},
+        {"n": 7, "what": "Trampa P5: R__rebuild_report_cache deja ##global_stock_temp sin limpiar", "cite": "db/migration/R__rebuild_report_cache.sql:6", "data_in": "estado del tempdb", "data_out": "leak entre sesiones"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "db/migration/V008__legacy_sprocs.sql", "line": 42, "kind": "json_path_aggregation", "condition_text": "FOR JSON PATH serializa rows de movimientos en JSON", "branches": [{"label": "ok -> JSON string en report_cache.payload", "target_line": 42}, {"label": "fail -> empty JSON array", "target_line": 42}]},
+        {"id": "DP-006", "file": "db/migration/R__rebuild_report_cache.sql", "line": 6, "kind": "global_temp_leak", "condition_text": "R__ repetible NO limpia ##global_stock_temp", "branches": [{"label": "ok -> temp persiste (P5 trap)", "target_line": 6}, {"label": "cleanup -> DROP TABLE no presente", "target_line": 10}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "usp_rebuild_cache ejecutado", "user_sees": "report_cache con report_id='top-items'", "side_effects": ["DELETE + INSERT en report_cache"], "reversible": true, "final_state": "cache regenerado"},
+        {"id": "R-02", "category": "success_partial", "conditions": "report_cache.payload no contiene SKU", "user_sees": "empty JSON array", "side_effects": [], "reversible": true, "final_state": "cache vacio"},
+        {"id": "R-03", "category": "success_full", "conditions": "vw_report_top_items con movimientos", "user_sees": "TOP 10 rows ordenados DESC", "side_effects": [], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-04", "category": "success_full", "conditions": "fn_report_total_sales", "user_sees": "SUM(quantity) WHERE ISSUE", "side_effects": [], "reversible": true, "final_state": "total agregado"},
+        {"id": "R-05", "category": "noop_silent", "conditions": "report_cache.expires_at NULL", "user_sees": "cache valido sin limite", "side_effects": [], "reversible": true, "final_state": "sin expiracion"},
+        {"id": "R-06", "category": "success_full", "conditions": "R__ repetible ejecuta 2 veces", "user_sees": "DELETE + INSERT idempotente (mismos rows)", "side_effects": [], "reversible": true, "final_state": "cache estable"},
+        {"id": "R-07", "category": "error_external_service", "conditions": "P5: ##global_stock_temp leaked desde sesion anterior", "user_sees": "usp_temp_consume consume datos stale", "side_effects": ["datos incorrectos entre sesiones"], "reversible": false, "final_state": "leak temporal"}
+      ],
+      "config": [
+        {"key": "usp_rebuild_cache", "kind": "proc", "default": "DELETE + INSERT", "effect": "regenera cache"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-table-stock-items", "kind": "table", "name": "stock_items", "handler": "CRUD via INSERT/UPDATE/DELETE", "file": "db/migration/V001__init_schema.sql:5", "pair": null},
+    {"id": "SRF-table-stock-movements", "kind": "table", "name": "stock_movements", "handler": "trigger AFTER INSERT -> stock_audit", "file": "db/migration/V001__init_schema.sql:14", "pair": "SRF-trigger-after-insert"},
+    {"id": "SRF-table-reconcile-runs", "kind": "table", "name": "reconcile_runs", "handler": "INSERT con DEFAULT, UPDATE a status", "file": "db/migration/V001__init_schema.sql:24", "pair": null},
+    {"id": "SRF-table-reconcile-lines", "kind": "table", "name": "reconcile_lines", "handler": "MERGE OUTPUT $action in usp_reconcile_run", "file": "db/migration/V001__init_schema.sql:33", "pair": "SRF-proc-reconcile-run"},
+    {"id": "SRF-table-report-cache", "kind": "table", "name": "report_cache", "handler": "DELETE + INSERT in usp_rebuild_cache", "file": "db/migration/V001__init_schema.sql:43", "pair": null},
+    {"id": "SRF-trigger-after-insert", "kind": "trigger", "name": "trg_stock_movements_after_insert", "handler": "AFTER INSERT on stock_movements -> stock_audit", "file": "db/migration/V002__init_triggers.sql:5", "pair": "SRF-table-stock-movements"},
+    {"id": "SRF-trigger-instead-of", "kind": "trigger", "name": "trg_stock_instead_of_update", "handler": "INSTEAD OF UPDATE on vw_stock_current -> stock_items", "file": "db/migration/V002__init_triggers.sql:20", "pair": "SRF-view-stock-current"},
+    {"id": "SRF-view-stock-current", "kind": "view", "name": "vw_stock_current", "handler": "SELECT from stock_items WHERE is_deleted = 0", "file": "db/sql/views.sql:5", "pair": null},
+    {"id": "SRF-view-reconcile-dashboard", "kind": "view", "name": "vw_reconcile_dashboard", "handler": "SELECT joins reconcile_lines + reconcile_runs WHERE status = COMPLETED", "file": "db/sql/views.sql:14", "pair": null},
+    {"id": "SRF-view-report-top", "kind": "view", "name": "vw_report_top_items", "handler": "TOP 10 GROUP BY sku", "file": "db/sql/views.sql:25", "pair": null},
+    {"id": "SRF-proc-explode-bom", "kind": "stored-procedure", "name": "usp_explode_bom", "handler": "CTE recursiva en bom_links", "file": "db/migration/V003__recursive_cte_bom.sql:4", "pair": null},
+    {"id": "SRF-proc-search-dynamic", "kind": "stored-procedure", "name": "usp_stock_search_dynamic", "handler": "sp_executesql parametrizado", "file": "db/migration/V004__dynamic_sql_search.sql:4", "pair": null},
+    {"id": "SRF-proc-search-raw", "kind": "stored-procedure", "name": "usp_stock_search_raw", "handler": "P1 trap string concat", "file": "db/migration/V004__dynamic_sql_search.sql:18", "pair": null},
+    {"id": "SRF-proc-reconcile-run", "kind": "stored-procedure", "name": "usp_reconcile_run", "handler": "MERGE OUTPUT $action", "file": "db/migration/V005__merge_conciliacion.sql:4", "pair": "SRF-table-reconcile-lines"},
+    {"id": "SRF-proc-reconcile-partial", "kind": "stored-procedure", "name": "usp_reconcile_partial", "handler": "P2 trap MERGE sin NOT MATCHED BY SOURCE", "file": "db/migration/V005__merge_conciliacion.sql:30", "pair": null},
+    {"id": "SRF-proc-temp-load", "kind": "stored-procedure", "name": "usp_temp_load", "handler": "crea ##global_stock_temp", "file": "db/migration/V006__global_temp_inventory.sql:4", "pair": "SRF-proc-temp-consume"},
+    {"id": "SRF-proc-temp-consume", "kind": "stored-procedure", "name": "usp_temp_consume", "handler": "consume ##global_stock_temp (P5 leak)", "file": "db/migration/V006__global_temp_inventory.sql:20", "pair": "SRF-proc-temp-load"},
+    {"id": "SRF-proc-recalc-totals", "kind": "stored-procedure", "name": "usp_recalc_totals", "handler": "DELETE + INSERT en stock_totals", "file": "db/migration/V008__legacy_sprocs.sql:26", "pair": "SRF-job-hourly"},
+    {"id": "SRF-proc-rebuild-cache", "kind": "stored-procedure", "name": "usp_rebuild_cache", "handler": "DELETE + INSERT en report_cache con FOR JSON PATH", "file": "db/migration/V008__legacy_sprocs.sql:36", "pair": "SRF-job-daily"},
+    {"id": "SRF-job-hourly", "kind": "sql-agent-job", "name": "JOB_HOURLY_RECALC_TOTALS", "handler": "msdb.dbo.sp_add_job + SCHED_HOURLY (cada 1h)", "file": "db/migration/V007__sql_agent_jobs.sql:13", "pair": "SRF-proc-recalc-totals"},
+    {"id": "SRF-job-daily", "kind": "sql-agent-job", "name": "JOB_DAILY_REBUILD_REPORT_CACHE", "handler": "msdb.dbo.sp_add_job + SCHED_DAILY (02:00)", "file": "db/migration/V007__sql_agent_jobs.sql:36", "pair": "SRF-proc-rebuild-cache"},
+    {"id": "SRF-job-legacy-purge", "kind": "sql-agent-job", "name": "JOB_LEGACY_PURGE", "handler": "msdb.dbo.sp_add_job enabled=0 (P6 trap)", "file": "db/migration/V007__sql_agent_jobs.sql:59", "pair": null}
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "sp_executesql_dynamic", "where": "db/migration/V004__dynamic_sql_search.sql:21", "description": "usp_stock_search_raw concatena @raw_filter antes de EXEC sp_executesql — vulnerabilidad SQLi potencial", "resolution": "La skill debe notar que usp_stock_search_dynamic (line 11) SI usa sp_executesql con @params, mientras usp_stock_search_raw concatena el filtro en el string SQL antes de EXEC. Distinguir ambos caminos."},
+    {"id": "TRAP-E02", "kind": "merge_with_output", "where": "db/migration/V005__merge_conciliacion.sql:21", "description": "usp_reconcile_run usa MERGE ... OUTPUT $action + INTO reconcile_audit; usp_reconcile_partial no incluye WHEN NOT MATCHED BY SOURCE", "resolution": "El MERGE + OUTPUT $action es el camino A E2. La rama parcial sin NOT MATCHED BY SOURCE es P2 trap."},
+    {"id": "TRAP-E03", "kind": "after_and_instead_of_triggers", "where": "db/migration/V002__init_triggers.sql:5", "description": "trg_stock_movements_after_insert (AFTER INSERT) + trg_stock_instead_of_update (INSTEAD OF UPDATE sobre vista). El trigger INSTEAD OF es el unico UPDATE posible sobre la vista.", "resolution": "Detectar ambos triggers en sys.triggers y notar que UPDATE directo sobre vw_stock_current falla con 'View is not updatable'."},
+    {"id": "TRAP-E04", "kind": "recursive_cte_union_all", "where": "db/migration/V003__recursive_cte_bom.sql:9", "description": "usp_explode_bom usa CTE recursiva con UNION ALL (con anchor SELECT + recursive SELECT). Sin OPTION (MAXRECURSION N) suficiente.", "resolution": "Detectar bloque WITH ... UNION ALL en OBJECT_DEFINITION. La trampa P4 es el ciclo A->B->C->A en seed_bom.sql."},
+    {"id": "TRAP-E05", "kind": "global_temp_table", "where": "db/migration/V006__global_temp_inventory.sql:5", "description": "usp_temp_load crea ##global_stock_temp (tabla temporal global visible desde otras sesiones)", "resolution": "Detectar '##' en OBJECT_DEFINITION. La trampa P5 es que usp_temp_consume no limpia la tabla al final."},
+    {"id": "TRAP-E06", "kind": "sql_agent_jobs", "where": "db/migration/V007__sql_agent_jobs.sql:13", "description": "3 jobs SQL Agent: JOB_HOURLY_RECALC_TOTALS, JOB_DAILY_REBUILD_REPORT_CACHE, JOB_LEGACY_PURGE (este ultimo P6 trap)", "resolution": "Detectar 3 jobs en msdb.dbo.sysjobs. La trampa P6 es JOB_LEGACY_PURGE con enabled = 0 (nunca corre)."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "dynamic_sql_concat", "where": "db/migration/V004__dynamic_sql_search.sql:21", "description": "usp_stock_search_raw concatena @raw_filter en string SQL antes de EXEC sp_executesql", "resolution": "Buscar '+ @raw_filter' en OBJECT_DEFINITION. Indicar SQLi potencial."},
+    {"id": "TRAP-P02", "kind": "merge_missing_not_matched_by_source", "where": "db/migration/V005__merge_conciliacion.sql:32", "description": "usp_reconcile_partial no incluye WHEN NOT MATCHED BY SOURCE -> SKUs borrados quedan en reconcile_lines como huerfanos", "resolution": "Verificar OBJECT_DEFINITION NO contiene 'NOT MATCHED BY SOURCE' y SI contiene 'MERGE'."},
+    {"id": "TRAP-P03", "kind": "instead_of_omits_column", "where": "db/migration/V002__init_triggers.sql:25", "description": "trg_stock_instead_of_update propaga solo description; quantity_on_hand queda sin tocar", "resolution": "Verificar que OBJECT_DEFINITION contiene 'UPDATE' pero NO contiene 'quantity_on_hand'."},
+    {"id": "TRAP-P04", "kind": "recursive_cte_cycle", "where": "db/seed/seed_bom.sql:5", "description": "bom_links contiene ciclo A->B->C->A; usp_explode_bom sin OPTION (MAXRECURSION N) causaria recursion infinita", "resolution": "Detectar 'UNION ALL' en OBJECT_DEFINITION + verificar ciclo en bom_links (parent=SKU-A003, child=SKU-A001)."},
+    {"id": "TRAP-P05", "kind": "global_temp_leak", "where": "db/migration/V006__global_temp_inventory.sql:20", "description": "usp_temp_consume NO limpia ##global_stock_temp al finalizar", "resolution": "Verificar OBJECT_DEFINITION contiene '##global_stock_temp' y NO contiene 'DROP TABLE'."},
+    {"id": "TRAP-P06", "kind": "sql_agent_job_disabled", "where": "db/migration/V007__sql_agent_jobs.sql:59", "description": "JOB_LEGACY_PURGE se crea con @enabled = 0 (nunca corre)", "resolution": "SELECT enabled FROM msdb.dbo.sysjobs WHERE name = 'JOB_LEGACY_PURGE' debe retornar 0."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_procedure", "where": "db/migration/V008__legacy_sprocs.sql:4", "description": "usp_legacy_export declarado pero nunca invocado desde ninguna otra rutina", "resolution": "Buscar usp_legacy_export en OBJECT_DEFINITION de todos los sprocs; verificar que no aparece."},
+    {"id": "TRAP-S02", "kind": "missing_table_reference", "where": "db/migration/V008__legacy_sprocs.sql:14", "description": "usp_legacy_purge referencia dbo.legacy_archive que nunca se crea; trg_old_audit en legacy_artifact.sql referencia dbo.does_not_exist", "resolution": "Verificar archivo legacy_artifact.sql existe + trg_old_audit referenciado en TRY/CATCH (instalacion silenciosamente falla)."},
+    {"id": "TRAP-S03", "kind": "trivial_test", "where": "db/test/08_deprecated_test.sql:7", "description": "08_deprecated_test.sql con IF 1=0 SELECT 'noop' ELSE SELECT 1; trivialmente pasa", "resolution": "Verificar que el archivo existe y contiene la rama IF 1=0."}
+  ],
+  "call_graph": [
+    {"from": "EP-stored-proc-reconcile-run", "to": "MOD-schema-reconcile-lines", "kind": "MERGE", "via": "MERGE dbo.reconcile_lines AS target USING ..."},
+    {"from": "EP-stored-proc-reconcile-run", "to": "EP-stored-proc-reconcile-audit", "kind": "OUTPUT_INTO", "via": "OUTPUT $action INTO dbo.reconcile_audit"},
+    {"from": "EP-stored-proc-temp-load", "to": "EP-stored-proc-temp-consume", "kind": "shared_resource", "via": "##global_stock_temp"},
+    {"from": "EP-job-hourly", "to": "EP-stored-proc-recalc-totals", "kind": "TSQL_STEP", "via": "EXEC fxsqlts.dbo.usp_recalc_totals"},
+    {"from": "EP-job-daily", "to": "EP-stored-proc-rebuild-cache", "kind": "TSQL_STEP", "via": "EXEC fxsqlts.dbo.usp_rebuild_cache"},
+    {"from": "EP-job-legacy-purge", "to": "EP-stored-proc-legacy-purge", "kind": "TSQL_STEP_DISABLED", "via": "EXEC fxsqlts.dbo.usp_legacy_purge (P6: enabled=0)"},
+    {"from": "EP-trigger-after-insert", "to": "MOD-schema-stock-table-audit", "kind": "INSERT_TRIGGER", "via": "AFTER INSERT on stock_movements -> stock_audit"},
+    {"from": "EP-trigger-instead-of", "to": "MOD-schema-stock-items", "kind": "INSTEAD_OF_TRIGGER", "via": "INSTEAD OF UPDATE on vw_stock_current -> dbo.stock_items (P3: omite quantity_on_hand)"},
+    {"from": "EP-stored-proc-explode-bom", "to": "MOD-schema-bom-links", "kind": "RECURSIVE_CTE", "via": "WITH bom_tree AS (SELECT ... FROM dbo.bom_links) UNION ALL ..."},
+    {"from": "EP-stored-proc-rebuild-cache", "to": "MOD-schema-report-cache", "kind": "DELETE_INSERT", "via": "DELETE FROM dbo.report_cache; INSERT INTO dbo.report_cache SELECT ... FOR JSON PATH"}
+  ],
+  "config": [
+    {"key": "MSSQL_SA_PASSWORD", "kind": "env", "default": "SqlServer2022!", "effect": "SA password para la instancia SQL Server"},
+    {"key": "ACCEPT_EULA", "kind": "env", "default": "Y", "effect": "Aceptacion de EULA de Microsoft"},
+    {"key": "MSSQL_PID", "kind": "env", "default": "Developer", "effect": "Edition: Developer (incluye SQL Agent)"},
+    {"key": "PATH", "kind": "env", "default": "/opt/mssql-tools18/bin:...", "effect": "Incluye sqlcmd"},
+    {"key": "TrustServerCertificate", "kind": "ODBC", "default": "yes", "effect": "Acepta certificado autofirmado de SQL Server"}
+  ],
+  "tests": [
+    {"file": "db/test/01_stock_test.sql", "feature": "FEAT-001 stock", "tests": 7, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07"]},
+    {"file": "db/test/02_reconcile_test.sql", "feature": "FEAT-002 reconcile", "tests": 7, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07"]},
+    {"file": "db/test/03_reports_test.sql", "feature": "FEAT-003 dashboard", "tests": 7, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07"]},
+    {"file": "db/test/04_triggers_test.sql", "feature": "FEAT-001 stock (triggers)", "tests": 7, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07"]},
+    {"file": "db/test/05_sql_agent_test.sql", "feature": "FEAT-001 stock (sql agent)", "tests": 7, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06", "R-07"]},
+    {"file": "db/test/06_trap_ecosystem_test.sql", "feature": "all (ecosystem traps)", "tests": 6, "covers": ["TRAP-E01", "TRAP-E02", "TRAP-E03", "TRAP-E04", "TRAP-E05", "TRAP-E06"]},
+    {"file": "db/test/07_trap_package_test.sql", "feature": "all (package traps)", "tests": 6, "covers": ["TRAP-P01", "TRAP-P02", "TRAP-P03", "TRAP-P04", "TRAP-P05", "TRAP-P06"]},
+    {"file": "db/test/08_deprecated_test.sql", "feature": "all (deprecated)", "tests": 1, "covers": ["TRAP-S03"]}
+  ]
+}
