@@ -1,0 +1,1147 @@
+{
+  "fixture": "fx-sql-oracle-plsql",
+  "version": "1.0.0",
+  "entry_points": [
+    {
+      "id": "EP-changelog-master",
+      "artifact": "Liquibase changelog-master.xml",
+      "file": "db/changelog/changelog-master.xml:6"
+    },
+    {
+      "id": "EP-v1-init-schema",
+      "artifact": "V1__init_schema.sql (accounts + account_history + audit_log + interest_history + monthly_close)",
+      "file": "db/changelog/001-init-schema.sql:1"
+    },
+    {
+      "id": "EP-v2-accounts-package",
+      "artifact": "V2 (pkg_accounts spec + body)",
+      "file": "db/changelog/002-accounts-package.sql:1"
+    },
+    {
+      "id": "EP-v3-interest-package",
+      "artifact": "V3 (pkg_interest spec + body with EXECUTE IMMEDIATE)",
+      "file": "db/changelog/003-interest-package.sql:1"
+    },
+    {
+      "id": "EP-v4-autonomous-trigger",
+      "artifact": "V4 (trigger BEFORE INSERT/UPDATE con PRAGMA AUTONOMOUS_TRANSACTION)",
+      "file": "db/changelog/004-autonomous-trigger.sql:1"
+    },
+    {
+      "id": "EP-v5-instead-of-trigger",
+      "artifact": "V5 (vista + trigger INSTEAD OF UPDATE)",
+      "file": "db/changelog/005-instead-of-trigger.sql:1"
+    },
+    {
+      "id": "EP-v6-scheduler-jobs",
+      "artifact": "V6 (DBMS_SCHEDULER.CREATE_JOB x2)",
+      "file": "db/changelog/006-scheduler-jobs.sql:1"
+    },
+    {
+      "id": "EP-v7-db-link",
+      "artifact": "V7 (CREATE DATABASE LINK remote_orafi)",
+      "file": "db/changelog/007-db-link.sql:1"
+    },
+    {
+      "id": "EP-pkg-accounts-spec",
+      "artifact": "pkg_accounts_spec.sql (interface)",
+      "file": "db/packages/pkg_accounts_spec.sql:1"
+    },
+    {
+      "id": "EP-pkg-accounts-body",
+      "artifact": "pkg_accounts_body.sql (impl + private procs)",
+      "file": "db/packages/pkg_accounts_body.sql:1"
+    },
+    {
+      "id": "EP-pkg-interest-spec",
+      "artifact": "pkg_interest_spec.sql",
+      "file": "db/packages/pkg_interest_spec.sql:1"
+    },
+    {
+      "id": "EP-pkg-interest-body",
+      "artifact": "pkg_interest_body.sql (EXECUTE IMMEDIATE)",
+      "file": "db/packages/pkg_interest_body.sql:1"
+    },
+    {
+      "id": "EP-pkg-monthly-close-spec",
+      "artifact": "pkg_monthly_close_spec.sql",
+      "file": "db/packages/pkg_monthly_close_spec.sql:1"
+    },
+    {
+      "id": "EP-pkg-monthly-close-body",
+      "artifact": "pkg_monthly_close_body.sql",
+      "file": "db/packages/pkg_monthly_close_body.sql:1"
+    },
+    {
+      "id": "EP-changelog-monthly-package",
+      "artifact": "Nota: pkg_monthly_close se carga via Liquibase (no hay V8 migration dedicada)",
+      "file": "db/packages/pkg_monthly_close_spec.sql:1"
+    },
+    {
+      "id": "EP-pkg-legacy-spec",
+      "artifact": "pkg_legacy_spec.sql (S1 dead)",
+      "file": "db/packages/pkg_legacy_spec.sql:1"
+    },
+    {
+      "id": "EP-synonyms",
+      "artifact": "synonyms.sql (CREATE PUBLIC SYNONYM x5 + P2)",
+      "file": "db/sql/synonyms.sql:1"
+    },
+    {
+      "id": "EP-views",
+      "artifact": "views.sql (v_accounts_summary)",
+      "file": "db/sql/views.sql:1"
+    },
+    {
+      "id": "EP-legacy-synonym",
+      "artifact": "legacy_synonym.sql (S2 dead)",
+      "file": "db/sql/legacy_synonym.sql:1"
+    },
+    {
+      "id": "EP-test-accounts",
+      "artifact": "01-accounts-test.sql (utPLSQL E1+P1)",
+      "file": "db/test/01-accounts-test.sql:1"
+    },
+    {
+      "id": "EP-test-interest",
+      "artifact": "02-interest-test.sql (utPLSQL E3+P3)",
+      "file": "db/test/02-interest-test.sql:1"
+    },
+    {
+      "id": "EP-test-monthly-close",
+      "artifact": "03-monthly-close-test.sql (utPLSQL E6+P6)",
+      "file": "db/test/03-monthly-close-test.sql:1"
+    },
+    {
+      "id": "EP-test-triggers",
+      "artifact": "04-triggers-test.sql (utPLSQL E4+E5)",
+      "file": "db/test/04-triggers-test.sql:1"
+    },
+    {
+      "id": "EP-test-scheduler",
+      "artifact": "05-scheduler-test.sql (utPLSQL E6)",
+      "file": "db/test/05-scheduler-test.sql:1"
+    },
+    {
+      "id": "EP-test-trap-ecosystem",
+      "artifact": "06-trap-ecosystem-test.sql (E1..E6)",
+      "file": "db/test/06-trap-ecosystem-test.sql:1"
+    },
+    {
+      "id": "EP-test-deprecated",
+      "artifact": "07-deprecated-test.sql (S3)",
+      "file": "db/test/07-deprecated-test.sql:1"
+    }
+  ],
+  "modules": [
+    {
+      "id": "MOD-pkg-accounts",
+      "path": "db/packages/pkg_accounts_spec.sql + pkg_accounts_body.sql",
+      "summary": "pkg_accounts spec (3 procs publicas) + body (4 procs con p_internal_validate privada)"
+    },
+    {
+      "id": "MOD-pkg-interest",
+      "path": "db/packages/pkg_interest_spec.sql + pkg_interest_body.sql",
+      "summary": "pkg_interest con EXECUTE IMMEDIATE (E3 + P3 SQLi)"
+    },
+    {
+      "id": "MOD-pkg-monthly-close",
+      "path": "db/packages/pkg_monthly_close_spec.sql + pkg_monthly_close_body.sql",
+      "summary": "pkg_monthly_close"
+    },
+    {
+      "id": "MOD-pkg-legacy",
+      "path": "db/packages/pkg_legacy_spec.sql",
+      "summary": "Trampa S1: pkg_legacy declarado pero no usado"
+    },
+    {
+      "id": "MOD-v1-schema",
+      "path": "db/changelog/001-init-schema.sql",
+      "summary": "5 tablas + constraints"
+    },
+    {
+      "id": "MOD-v2-accounts",
+      "path": "db/changelog/002-accounts-package.sql",
+      "summary": "pkg_accounts con PRAGMA AUTONOMOUS (P1)"
+    },
+    {
+      "id": "MOD-v3-interest",
+      "path": "db/changelog/003-interest-package.sql",
+      "summary": "pkg_interest con EXECUTE IMMEDIATE (E3)"
+    },
+    {
+      "id": "MOD-v4-autonomous",
+      "path": "db/changelog/004-autonomous-trigger.sql",
+      "summary": "Trigger BEFORE INSERT/UPDATE con PRAGMA AUTONOMOUS_TRANSACTION (E4 + P4)"
+    },
+    {
+      "id": "MOD-v5-instead-of",
+      "path": "db/changelog/005-instead-of-trigger.sql",
+      "summary": "Vista + trigger INSTEAD OF UPDATE (E5 + P5)"
+    },
+    {
+      "id": "MOD-v6-scheduler",
+      "path": "db/changelog/006-scheduler-jobs.sql",
+      "summary": "DBMS_SCHEDULER.CREATE_JOB x2 (E6 + P6 deshabilitado)"
+    },
+    {
+      "id": "MOD-v7-db-link",
+      "path": "db/changelog/007-db-link.sql",
+      "summary": "CREATE DATABASE LINK remote_orafi"
+    },
+    {
+      "id": "MOD-synonyms",
+      "path": "db/sql/synonyms.sql",
+      "summary": "5 sinonimos publicos (E2) + legacy_table trampa P2"
+    },
+    {
+      "id": "MOD-views",
+      "path": "db/sql/views.sql",
+      "summary": "v_accounts_summary con trigger INSTEAD OF"
+    },
+    {
+      "id": "MOD-legacy-synonym",
+      "path": "db/sql/legacy_synonym.sql",
+      "summary": "Trampa S2: sinonimo legacy a tabla inexistente"
+    },
+    {
+      "id": "MOD-seed-data",
+      "path": "db/seed/seed-data.sql",
+      "summary": "3 cuentas + history + interest"
+    },
+    {
+      "id": "MOD-seed-accounts",
+      "path": "db/seed/seed-accounts.sql",
+      "summary": "Cuentas adicionales para tests"
+    },
+    {
+      "id": "MOD-tests",
+      "path": "db/test/",
+      "summary": "7 archivos utPLSQL con 25+ tests"
+    },
+    {
+      "id": "MOD-config",
+      "path": "config/",
+      "summary": "liquibase.properties + tnsnames.ora"
+    },
+    {
+      "id": "MOD-tools",
+      "path": "tools/",
+      "summary": "run_utplsql.sh + apply_liquibase.sh + reset_db.sh"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "oracle-database-free",
+      "version": "23c-alpine-slim",
+      "scope": "build+runtime",
+      "manifest": "Dockerfile.test (FROM gvenzl/oracle-free:23.5-alpine-slim)"
+    },
+    {
+      "name": "liquibase",
+      "version": "4.27.0",
+      "scope": "build",
+      "manifest": "Dockerfile.test (curl download + extract)"
+    },
+    {
+      "name": "openjdk-21",
+      "version": "system",
+      "scope": "build",
+      "manifest": "Dockerfile.test (apk add openjdk21-jdk)"
+    },
+    {
+      "name": "pl-sql",
+      "version": "bundled with oracle 23c",
+      "scope": "build+runtime",
+      "manifest": "db/packages/"
+    },
+    {
+      "name": "utplsql",
+      "version": "3.x (v3.1.7+)",
+      "scope": "test",
+      "manifest": "db/test/"
+    },
+    {
+      "name": "sqlcl",
+      "version": "bundled with Oracle 23c",
+      "scope": "test",
+      "manifest": "tools/run_utplsql.sh (sqlcl CLI)"
+    },
+    {
+      "name": "DBMS_SCHEDULER",
+      "version": "bundled with oracle",
+      "scope": "runtime",
+      "manifest": "db/changelog/006-scheduler-jobs.sql"
+    },
+    {
+      "name": "DBMS_ASSERT",
+      "version": "bundled with oracle",
+      "scope": "runtime",
+      "manifest": "db/changelog/003-interest-package.sql (SIMPLE_SQL_NAME)"
+    }
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "apertura-de-cuenta",
+      "user_description": "Creacion de cuentas con audit log autonomous y validaciones privadas.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "User llama accounts_api.open_account('123', 'Alice', 1000)",
+          "cite": "db/packages/pkg_accounts_body.sql:1",
+          "data_in": "orderId, customer, initial",
+          "data_out": "INSERT"
+        },
+        {
+          "n": 2,
+          "what": "p_internal_validate verifica longitud del ID (E1 privado)",
+          "cite": "db/packages/pkg_accounts_body.sql:8",
+          "data_in": "orderId",
+          "data_out": "BOOLEAN"
+        },
+        {
+          "n": 3,
+          "what": "INSERT en accounts (operacion principal)",
+          "cite": "db/packages/pkg_accounts_body.sql:30",
+          "data_in": "row",
+          "data_out": "table write"
+        },
+        {
+          "n": 4,
+          "what": "INSERT en audit_log via PRAGMA AUTONOMOUS_TRANSACTION (P1 trap)",
+          "cite": "db/packages/pkg_accounts_body.sql:35",
+          "data_in": "row",
+          "data_out": "table audit autonomous"
+        },
+        {
+          "n": 5,
+          "what": "COMMIT autonomous (independiente del principal)",
+          "cite": "db/packages/pkg_accounts_body.sql:40",
+          "data_in": "-",
+          "data_out": "commit autonomous"
+        },
+        {
+          "n": 6,
+          "what": "Trigger autonomous BEFORE INSERT/UPDATE escribe en audit_log (E4 + P4 sin WHEN OTHERS)",
+          "cite": "db/changelog/004-autonomous-trigger.sql:8",
+          "data_in": "INSERT/UPDATE",
+          "data_out": "audit row + COMMIT autonomous"
+        },
+        {
+          "n": 7,
+          "what": "User accede via sinonimo publico accounts",
+          "cite": "db/sql/synonyms.sql:11",
+          "data_in": "SELECT * FROM accounts",
+          "data_out": "ORAFI.accounts via PUBLIC SYNONYM"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-001",
+          "file": "db/packages/pkg_accounts_body.sql",
+          "line": 29,
+          "kind": "validate_orderid",
+          "condition_text": "IF NOT p_internal_validate(p_account_id) THEN RAISE_APPLICATION_ERROR(-20001)",
+          "branches": [
+            {
+              "label": "valid -> INSERT",
+              "target_line": 35
+            },
+            {
+              "label": "invalid -> exception",
+              "target_line": 30
+            }
+          ]
+        },
+        {
+          "id": "DP-002",
+          "file": "db/packages/pkg_accounts_body.sql",
+          "line": 32,
+          "kind": "validate_balance",
+          "condition_text": "IF p_initial_balance < 0 THEN RAISE_APPLICATION_ERROR(-20002)",
+          "branches": [
+            {
+              "label": "valid -> INSERT",
+              "target_line": 35
+            },
+            {
+              "label": "invalid -> exception",
+              "target_line": 33
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "success_full",
+          "conditions": "open_account('123', 'Alice', 1000) con ID >= 3 chars",
+          "user_sees": "Cuenta creada en accounts + audit en audit_log",
+          "side_effects": [
+            "INSERT accounts",
+            "INSERT audit_log"
+          ],
+          "reversible": false,
+          "final_state": "row creada"
+        },
+        {
+          "id": "R-02",
+          "category": "validation_input",
+          "conditions": "open_account('xx', ...) con ID < 3 chars",
+          "user_sees": "ORA-20001 Invalid account_id",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "no row creada"
+        },
+        {
+          "id": "R-03",
+          "category": "validation_input",
+          "conditions": "open_account(..., ..., -100) con balance negativo",
+          "user_sees": "ORA-20002 Invalid initial balance",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "no row creada"
+        },
+        {
+          "id": "R-04",
+          "category": "permission_denied",
+          "conditions": "User sin GRANT EXECUTE on accounts_api",
+          "user_sees": "ORA-01031 insufficient privileges",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "exception"
+        },
+        {
+          "id": "R-05",
+          "category": "noop_silent",
+          "conditions": "trigger autonomous falla despues del INSERT en accounts (P1 trap)",
+          "user_sees": "Cuenta creada pero audit log parcial",
+          "side_effects": [
+            "INSERT accounts ok",
+            "INSERT audit_log falla silenciosamente"
+          ],
+          "reversible": false,
+          "final_state": "audit incompleto"
+        },
+        {
+          "id": "R-06",
+          "category": "error_internal_service",
+          "conditions": "SELECT * FROM legacy_table (sinonimo P2 a tabla inexistente)",
+          "user_sees": "ORA-00942 table or view does not exist",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "SELECT falla"
+        },
+        {
+          "id": "R-07",
+          "category": "success_deep_link",
+          "conditions": "fxora://accounts/{id} desde fuera",
+          "user_sees": "accounts_api.get_account(id) via sinonimo publico",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "row retornada"
+        }
+      ],
+      "config": [
+        {
+          "key": "balance",
+          "kind": "CHECK constraint",
+          "default": ">= 0",
+          "effect": "restriccion CHECK"
+        },
+        {
+          "key": "status",
+          "kind": "CHECK constraint",
+          "default": "OPEN|CLOSED|SUSPENDED",
+          "effect": "enum status"
+        },
+        {
+          "key": "PRAGMA",
+          "kind": "AUTONOMOUS_TRANSACTION",
+          "default": "enabled",
+          "effect": "compila en body de pkg_accounts (P1 trap)"
+        }
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "cálculo-de-intereses",
+      "user_description": "Calculo de interes con EXECUTE IMMEDIATE sobre tablas parametrizadas.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "User llama interest_api.calculate('acct-001', 30)",
+          "cite": "db/packages/pkg_interest_body.sql:5",
+          "data_in": "accountId, days",
+          "data_out": "NUMBER"
+        },
+        {
+          "n": 2,
+          "what": "Valida days > 0",
+          "desc": "RAISE_APPLICATION_ERROR(-20003) si <= 0",
+          "cite": "db/packages/pkg_interest_body.sql:8",
+          "data_in": "days",
+          "data_out": "raise o continue"
+        },
+        {
+          "n": 3,
+          "what": "SELECT balance FROM accounts",
+          "cite": "db/packages/pkg_interest_body.sql:11",
+          "data_in": "accountId",
+          "data_out": "balance"
+        },
+        {
+          "n": 4,
+          "what": "INSERT en interest_history",
+          "cite": "db/packages/pkg_interest_body.sql:14",
+          "data_in": "row",
+          "data_out": "interest_history write"
+        },
+        {
+          "n": 5,
+          "what": "User llama interest_api.calculate_for_table('interest_history', 1)",
+          "cite": "db/packages/pkg_interest_body.sql:23",
+          "data_in": "table, id",
+          "data_out": "EXPLAIN"
+        },
+        {
+          "n": 6,
+          "what": "EXECUTE IMMEDIATE concatena DBMS_ASSERT.SIMPLE_SQL_NAME (E3)",
+          "cite": "db/packages/pkg_interest_body.sql:27",
+          "data_in": "dynamic SQL",
+          "data_out": "SUM(amount)"
+        },
+        {
+          "n": 7,
+          "what": "DBMS_Scheduler job MONTHLY lee monthly_close (E6 scheduler)",
+          "cite": "db/changelog/006-scheduler-jobs.sql:1",
+          "data_in": "trigger",
+          "data_out": "monthly close job"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-003",
+          "file": "db/packages/pkg_interest_body.sql",
+          "line": 14,
+          "kind": "validate_days",
+          "condition_text": "IF p_days <= 0 THEN RAISE_APPLICATION_ERROR(-20003)",
+          "branches": [
+            {
+              "label": "valid -> SELECT + INSERT",
+              "target_line": 17
+            },
+            {
+              "label": "invalid -> exception",
+              "target_line": 14
+            }
+          ]
+        },
+        {
+          "id": "DP-004",
+          "file": "db/packages/pkg_interest_body.sql",
+          "line": 27,
+          "kind": "execute_immediate_dynamic",
+          "condition_text": "EXECUTE IMMEDIATE 'SELECT SUM(amount) FROM ' || p_table || ...",
+          "branches": [
+            {
+              "label": "table exists -> SUM",
+              "target_line": 27
+            },
+            {
+              "label": "table missing -> ORA-00904 captured",
+              "target_line": 30
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "success_full",
+          "conditions": "calculate('acct-001', 30) con days > 0",
+          "user_sees": "Interes calculado + row en interest_history",
+          "side_effects": [
+            "INSERT interest_history"
+          ],
+          "reversible": true,
+          "final_state": "interes devuelto"
+        },
+        {
+          "id": "R-02",
+          "category": "validation_input",
+          "conditions": "calculate('acct-001', 0) con days <= 0",
+          "user_sees": "ORA-20003 Days must be positive",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "no insert"
+        },
+        {
+          "id": "R-03",
+          "category": "resource_not_found",
+          "conditions": "calculate('no_existe', 30) con cuenta inexistente",
+          "user_sees": "ORA-01403 no data found",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "no data found"
+        },
+        {
+          "id": "R-04",
+          "category": "error_external_service",
+          "conditions": "calculate_for_table('legacy_orders', 1) (P3 SQLi trampa)",
+          "user_sees": "EXCEPTION ORA-00904 captured, retorna 0",
+          "side_effects": [
+            "DBMS_ASSERT valida identifier"
+          ],
+          "reversible": true,
+          "final_state": "valor 0"
+        },
+        {
+          "id": "R-05",
+          "category": "success_partial",
+          "conditions": "calculate con balance = 0",
+          "user_sees": "interest = 0.00",
+          "side_effects": [
+            "INSERT interest_history con amount=0"
+          ],
+          "reversible": true,
+          "final_state": "row creada con amount=0"
+        },
+        {
+          "id": "R-06",
+          "category": "noop_disabled",
+          "conditions": "JOB_MONTHLY_CLOSE_AUTOMATION no corre (P6 disabled)",
+          "user_sees": "Sin ejecucion automatica",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "job deshabilitado"
+        },
+        {
+          "id": "R-07",
+          "category": "success_deep_link",
+          "conditions": "fxora://interest/{accountId} desde fuera",
+          "user_sees": "interest_api.calculate(accountId) via sinonimo",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "interest calculado"
+        }
+      ],
+      "config": [
+        {
+          "key": "rate",
+          "kind": "constant",
+          "default": "0.0025 (7.5% APR / 30 dias)",
+          "effect": "tasa anual"
+        },
+        {
+          "key": "DBMS_ASSERT",
+          "kind": "function",
+          "default": "validate identifier",
+          "effect": "P3 mitigation parcial"
+        }
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "cierre-de-mes",
+      "user_description": "Cierre mensual de cuentas con scheduler y vista INSTEAD OF.",
+      "traces": [
+        {
+          "n": 1,
+          "what": "User llama monthly_close_api.close_month('2025-01')",
+          "cite": "db/packages/pkg_monthly_close_body.sql:14",
+          "data_in": "period",
+          "data_out": "INSERT monthly_close"
+        },
+        {
+          "n": 2,
+          "what": "Validates period format YYYY-MM con REGEXP_LIKE",
+          "cite": "db/packages/pkg_monthly_close_body.sql:16",
+          "data_in": "period",
+          "data_out": "RAISE_ORA-0223 o continue"
+        },
+        {
+          "n": 3,
+          "what": "Check is_month_closed para evitar doble cierre",
+          "cite": "db/packages/pkg_monthly_close_body.sql:20",
+          "data_in": "period",
+          "data_out": "RAISE-20004 o continue"
+        },
+        {
+          "n": 4,
+          "what": "DBMS_SCHEDULER job corre el 1mo (P6 trap si enabled=false)",
+          "cite": "db/changelog/006-scheduler-jobs.sql:1",
+          "data_in": "cron",
+          "data_out": "JOB_MONTHLY disabled"
+        },
+        {
+          "n": 5,
+          "what": "UPDATE sobre v_accounts_summary dispara trigger INSTEAD OF (E5)",
+          "cite": "db/changelog/005-instead-of-trigger.sql:1",
+          "data_in": "UPDATE",
+          "data_out": "trigger handler"
+        },
+        {
+          "n": 6,
+          "what": "Trigger INSTEAD OF omite updated_at (P5 trampa)",
+          "cite": "db/changelog/005-instead-of-trigger.sql:12",
+          "data_in": "new row",
+          "data_out": "UPDATE accounts sin updated_at"
+        },
+        {
+          "n": 7,
+          "what": "DB link remote_orafi falla silencioso (E6 trap si no existe base)",
+          "cite": "db/changelog/007-db-link.sql:1",
+          "data_in": "remote_orafi",
+          "data_out": "exception caught"
+        }
+      ],
+      "decision_points": [
+        {
+          "id": "DP-005",
+          "file": "db/packages/pkg_monthly_close_body.sql",
+          "line": 14,
+          "kind": "validate_period",
+          "condition_text": "IF NOT REGEXP_LIKE(p_period, ...) THEN RAISE_APPLICATION_ERROR(-20004)",
+          "branches": [
+            {
+              "label": "valid -> continue",
+              "target_line": 14
+            },
+            {
+              "label": "invalid -> exception",
+              "target_line": 14
+            }
+          ]
+        },
+        {
+          "id": "DP-006",
+          "file": "db/packages/pkg_monthly_close_body.sql",
+          "line": 18,
+          "kind": "is_closed",
+          "condition_text": "IF is_month_closed(p_period) THEN RAISE_APPLICATION_ERROR(-20005)",
+          "branches": [
+            {
+              "label": "not closed -> INSERT",
+              "target_line": 20
+            },
+            {
+              "label": "already closed -> exception",
+              "target_line": 18
+            }
+          ]
+        }
+      ],
+      "outcomes": [
+        {
+          "id": "R-01",
+          "category": "success_full",
+          "conditions": "close_month('2025-01') con period valido y no cerrado",
+          "user_sees": "Mes cerrado en monthly_close",
+          "side_effects": [
+            "INSERT monthly_close"
+          ],
+          "reversible": false,
+          "final_state": "row creada"
+        },
+        {
+          "id": "R-02",
+          "category": "noop_already_closed",
+          "conditions": "close_month('2025-01') dos veces",
+          "user_sees": "ORA-20005 Period already closed",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "exception"
+        },
+        {
+          "id": "R-03",
+          "category": "validation_input",
+          "conditions": "close_month('bad-format')",
+          "user_sees": "ORA-20004 Invalid period format YYYY-MM",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "exception"
+        },
+        {
+          "id": "R-04",
+          "category": "error_external_service",
+          "conditions": "DB link remote_orafi no responde (E6 trampa)",
+          "user_sees": "ORA-04068 container state discarded (catch silent)",
+          "side_effects": [
+            "exception caught en bloque BEGIN/EXCEPTION"
+          ],
+          "reversible": true,
+          "final_state": "continua sin error"
+        },
+        {
+          "id": "R-05",
+          "category": "noop_indirect",
+          "conditions": "UPDATE sobre v_accounts_summary (E5 INSTEAD OF)",
+          "user_sees": "UPDATE ejecutado por el trigger en vez de directo",
+          "side_effects": [
+            "trigger INSTEAD OF handler corre"
+          ],
+          "reversible": true,
+          "final_state": "fila actualizada"
+        },
+        {
+          "id": "R-06",
+          "category": "noop_disabled",
+          "conditions": "JOB_MONTHLY_CLOSE_AUTOMATION disabled (P6)",
+          "user_sees": "Sin ejecucion automatica; cron no corre",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "job no se ejecuta"
+        },
+        {
+          "id": "R-07",
+          "category": "success_deep_link",
+          "conditions": "fxora://close/{YYYY-MM} desde fuera",
+          "user_sees": "monthly_close_api.close_month(period) via sinonimo",
+          "side_effects": [],
+          "reversible": true,
+          "final_state": "month cerrado"
+        }
+      ],
+      "config": [
+        {
+          "key": "period",
+          "kind": "REGEXP constraint",
+          "default": "YYYY-MM",
+          "effect": "formato"
+        },
+        {
+          "key": "JOB_MONTHLY.enabled",
+          "kind": "DBMS_SCHEDULER",
+          "default": "FALSE (P6)",
+          "effect": "job no corre"
+        },
+        {
+          "key": "JOB_HOURLY.enabled",
+          "kind": "DBMS_SCHEDULER",
+          "default": "TRUE",
+          "effect": "refresh hourly (for testing)"
+        }
+      ]
+    }
+  ],
+  "surfaces": [
+    {
+      "id": "SRF-table-accounts",
+      "kind": "table",
+      "name": "accounts",
+      "handler": "INSERT/UPDATE/DELETE via pkg_accounts",
+      "file": "db/changelog/001-init-schema.sql:1"
+    },
+    {
+      "id": "SRF-table-account-history",
+      "kind": "table",
+      "name": "account_history",
+      "handler": "INSERT",
+      "file": "db/changelog/001-init-schema.sql:10"
+    },
+    {
+      "id": "SRF-table-audit-log",
+      "kind": "table",
+      "name": "audit_log",
+      "handler": "INSERT via trigger autonomous + open_account",
+      "file": "db/changelog/001-init-schema.sql:17"
+    },
+    {
+      "id": "SRF-table-interest-history",
+      "kind": "table",
+      "name": "interest_history",
+      "handler": "INSERT via interest_api.calculate",
+      "file": "db/changelog/001-init-schema.sql:25"
+    },
+    {
+      "id": "SRF-table-monthly-close",
+      "kind": "table",
+      "name": "monthly_close",
+      "handler": "INSERT via monthly_close_api.close_month",
+      "file": "db/changelog/001-init-schema.sql:33"
+    },
+    {
+      "id": "SRF-package-accounts",
+      "kind": "package",
+      "name": "accounts_api",
+      "handler": "open_account + close_account + get_balance (E1 + P1)",
+      "file": "db/changelog/002-accounts-package.sql:1"
+    },
+    {
+      "id": "SRF-package-interest",
+      "kind": "package",
+      "name": "interest_api",
+      "handler": "calculate + calculate_for_table (E3 + P3 SQLi)",
+      "file": "db/changelog/003-interest-package.sql:1"
+    },
+    {
+      "id": "SRF-package-monthly-close",
+      "kind": "package",
+      "name": "monthly_close_api",
+      "handler": "close_month + is_month_closed + get_next_period",
+      "file": "db/packages/pkg_monthly_close_body.sql:1"
+    },
+    {
+      "id": "SRF-package-legacy",
+      "kind": "package",
+      "name": "pkg_legacy",
+      "handler": "old_format_date + old_format_currency (S1 dead)",
+      "file": "db/packages/pkg_legacy_spec.sql:1"
+    },
+    {
+      "id": "SRF-trigger-autonomous",
+      "kind": "trigger",
+      "name": "trg_accounts_audit_autonomous",
+      "handler": "BEFORE INSERT/UPDATE ON accounts (E4 + P1)",
+      "file": "db/changelog/004-autonomous-trigger.sql:8"
+    },
+    {
+      "id": "SRF-trigger-instead-of",
+      "kind": "trigger",
+      "name": "trg_instead_of_update",
+      "handler": "INSTEAD OF UPDATE ON v_accounts_summary (E5 + P5)",
+      "file": "db/changelog/005-instead-of-trigger.sql:8"
+    },
+    {
+      "id": "SRF-view-accounts-summary",
+      "kind": "view",
+      "name": "v_accounts_summary",
+      "handler": "SELECT WHERE triggers INSTEAD OF",
+      "file": "db/sql/views.sql:1"
+    },
+    {
+      "id": "SRF-synonym-accounts",
+      "kind": "synonym",
+      "name": "accounts (PUBLIC SYNONYM)",
+      "handler": "CREATE PUBLIC SYNONYM accounts FOR ORAFI.accounts (E2)",
+      "file": "db/sql/synonyms.sql:11"
+    },
+    {
+      "id": "SRF-synonym-legacy-table",
+      "kind": "synonym",
+      "name": "legacy_table (PUBLIC SYNONYM trampa P2)",
+      "handler": "apunta a tabla inexistente",
+      "file": "db/sql/synonyms.sql:21"
+    },
+    {
+      "id": "SRF-synonym-legacy-orders",
+      "kind": "synonym",
+      "name": "legacy_orders (PUBLIC SYNONYM trampa S2)",
+      "handler": "apunta a legacy_orders_missing",
+      "file": "db/sql/legacy_synonym.sql:1"
+    },
+    {
+      "id": "SRF-scheduler-monthly",
+      "kind": "scheduler-job",
+      "name": "JOB_MONTHLY_CLOSE_AUTOMATION",
+      "handler": "DBMS_SCHEDULER.CREATE_JOB disabled (E6 + P6)",
+      "file": "db/changelog/006-scheduler-jobs.sql:1"
+    },
+    {
+      "id": "SRF-scheduler-hourly",
+      "kind": "scheduler-job",
+      "name": "JOB_HOURLY_REFRESH",
+      "handler": "DBMS_SCHEDULER.CREATE_JOB enabled",
+      "file": "db/changelog/006-scheduler-jobs.sql:14"
+    },
+    {
+      "id": "SRF-db-link-remote",
+      "kind": "db-link",
+      "name": "remote_orafi (DATABASE LINK)",
+      "handler": "CREATE DATABASE LINK (silent fail indetectado E6)",
+      "file": "db/changelog/007-db-link.sql:1"
+    }
+  ],
+  "traps": [
+    {
+      "id": "TRAP-E1",
+      "kind": "ecosystem",
+      "name": "spec_vs_body_private_proc",
+      "file": "db/packages/pkg_accounts_body.sql:8",
+      "line": 8,
+      "description": "p_internal_validate declarado SOLO en el body (no en el spec).",
+      "resolution": "Comparar ALL_PROCEDURES con el spec para detectar procedures privados."
+    },
+    {
+      "id": "TRAP-E2",
+      "kind": "ecosystem",
+      "name": "public_synonyms",
+      "file": "db/sql/synonyms.sql:1",
+      "line": 1,
+      "description": "5 sinonimos publicos que redirigen a objetos ORAFI.",
+      "resolution": "Verificar ALL_SYNONYMS WHERE owner = 'PUBLIC' para entender las redirecciones."
+    },
+    {
+      "id": "TRAP-E3",
+      "kind": "ecosystem",
+      "name": "execute_immediate_dynamic",
+      "file": "db/packages/pkg_interest_body.sql:23",
+      "line": 23,
+      "description": "EXECUTE IMMEDIATE con tabla como parametro (DBMS_ASSERT.SIMPLE_SQL_NAME).",
+      "resolution": "Seguir el string SQL construido; verificar que haya whitelist en produccion."
+    },
+    {
+      "id": "TRAP-E4",
+      "kind": "ecosystem",
+      "name": "autonomous_transaction_trigger",
+      "file": "db/changelog/004-autonomous-trigger.sql:8",
+      "line": 8,
+      "description": "PRAGMA AUTONOMOUS_TRANSACTION en trigger BEFORE INSERT/UPDATE.",
+      "resolution": "Verificar source del trigger para detectar PRAGMA; entender que rompe el modelo transaccional."
+    },
+    {
+      "id": "TRAP-E5",
+      "kind": "ecosystem",
+      "name": "instead_of_trigger",
+      "file": "db/changelog/005-instead-of-trigger.sql:8",
+      "line": 8,
+      "description": "Trigger INSTEAD OF UPDATE sobre vista v_accounts_summary.",
+      "resolution": "Buscar triggers INSTEAD OF para entender que vistas son modificables."
+    },
+    {
+      "id": "TRAP-E6",
+      "kind": "ecosystem",
+      "name": "scheduler_and_db_links",
+      "file": "db/changelog/006-scheduler-jobs.sql:1",
+      "line": 1,
+      "description": "DBMS_SCHEDULER.CREATE_JOB + CREATE DATABASE LINK remote_orafi.",
+      "resolution": "Verificar user_scheduler_jobs + all_db_links para entender jobs recurrentes y conexiones remotas."
+    }
+  ],
+  "package_traps": [
+    {
+      "id": "TRAP-P1",
+      "kind": "package",
+      "name": "autonomous_tx_no_others",
+      "file": "db/packages/pkg_accounts_body.sql:18",
+      "line": 18,
+      "description": "open_account usa PRAGMA AUTONOMOUS_TRANSACTION y NO maneja WHEN OTHERS.",
+      "resolution": "Anadir EXCEPTION WHEN OTHERS THEN ROLLBACK o logear el error."
+    },
+    {
+      "id": "TRAP-P2",
+      "kind": "package",
+      "name": "synonym_invalid_table",
+      "file": "db/sql/synonyms.sql:21",
+      "line": 21,
+      "description": "PUBLIC SYNONYM legacy_table FOR ORAFI.legacy_does_not_exist.",
+      "resolution": "Eliminar sinonimos a tablas inexistentes o usar DROP SYNONYM IF EXISTS."
+    },
+    {
+      "id": "TRAP-P3",
+      "kind": "package",
+      "name": "dynamic_sql_unsafe",
+      "file": "db/packages/pkg_interest_body.sql:27",
+      "line": 27,
+      "description": "EXECUTE IMMEDIATE con p_table como parametro sin sanitizar; SQLi.",
+      "resolution": "Anadir whitelist: IF p_table NOT IN ('interest_history', 'accounts') THEN RAISE EXCEPTION."
+    },
+    {
+      "id": "TRAP-P4",
+      "kind": "package",
+      "name": "trigger_no_others_handler",
+      "file": "db/changelog/004-autonomous-trigger.sql:14",
+      "line": 14,
+      "description": "Trigger sin WHEN OTHERS handler; excepcion aborta transaccion principal.",
+      "resolution": "Anadir EXCEPTION WHEN OTHERS THEN NULL antes del END."
+    },
+    {
+      "id": "TRAP-P5",
+      "kind": "package",
+      "name": "instead_of_missing_column",
+      "file": "db/changelog/005-instead-of-trigger.sql:12",
+      "line": 12,
+      "description": "INSTEAD OF UPDATE omite columna opened_at (no la actualiza).",
+      "resolution": "Incluir opened_at en el UPDATE del trigger."
+    },
+    {
+      "id": "TRAP-P6",
+      "kind": "package",
+      "name": "scheduler_job_disabled",
+      "file": "db/changelog/006-scheduler-jobs.sql:6",
+      "line": 6,
+      "description": "JOB_MONTHLY_CLOSE_AUTOMATION enabled => FALSE, sin remediation.",
+      "resolution": "Cambiar enabled => TRUE o agregar un job enabled explicito."
+    }
+  ],
+  "superficial_traps": [
+    {
+      "id": "TRAP-S1",
+      "kind": "superficial",
+      "name": "legacy_package_unused",
+      "file": "db/packages/pkg_legacy_spec.sql:1",
+      "line": 1,
+      "description": "pkg_legacy declarado pero no usado por ninguna feature.",
+      "resolution": "Eliminar pkg_legacy o documentar como deprecated."
+    },
+    {
+      "id": "TRAP-S2",
+      "kind": "superficial",
+      "name": "legacy_synonym_unused",
+      "file": "db/sql/legacy_synonym.sql:1",
+      "line": 1,
+      "description": "PUBLIC SYNONYM legacy_orders FOR ORAFI.legacy_orders_missing.",
+      "resolution": "Eliminar sinonimo o crear la tabla legacy_orders."
+    },
+    {
+      "id": "TRAP-S3",
+      "kind": "superficial",
+      "name": "deprecated_test_placeholder",
+      "file": "db/test/07-deprecated-test.sql:1",
+      "line": 1,
+      "description": "Test trivial que siempre pasa sin verificar nada.",
+      "resolution": "Eliminar o reemplazar con un test real."
+    }
+  ],
+  "graph": {
+    "calls": [
+      {
+        "from": "User",
+        "to": "accounts_api.open_account",
+        "file": "db/packages/pkg_accounts_body.sql:18"
+      },
+      {
+        "from": "accounts_api.open_account",
+        "to": "INSERT INTO accounts + audit_log (PRAGMA AUTONOMOUS)",
+        "file": "db/packages/pkg_accounts_body.sql:30"
+      },
+      {
+        "from": "TRG_ACCOUNTS_AUDIT_AUTONOMOUS",
+        "to": "INSERT INTO audit_log (E4 + P1)",
+        "file": "db/changelog/004-autonomous-trigger.sql:14"
+      },
+      {
+        "from": "interest_api.calculate",
+        "to": "SELECT balance FROM accounts",
+        "file": "db/packages/pkg_interest_body.sql:11"
+      },
+      {
+        "from": "interest_api.calculate_for_table",
+        "to": "EXECUTE IMMEDIATE dynamic SQL (E3 + P3 SQLi)",
+        "file": "db/packages/pkg_interest_body.sql:27"
+      },
+      {
+        "from": "monthly_close_api.close_month",
+        "to": "INSERT INTO monthly_close",
+        "file": "db/packages/pkg_monthly_close_body.sql:22"
+      },
+      {
+        "from": "TRG_INSTEAD_OF_UPDATE",
+        "to": "UPDATE accounts (E5 + P5 omite opened_at)",
+        "file": "db/changelog/005-instead-of-trigger.sql:12"
+      },
+      {
+        "from": "JOB_MONTHLY_CLOSE_AUTOMATION",
+        "to": "DBMS_SCHEDULER.CREATE_JOB disabled (P6)",
+        "file": "db/changelog/006-scheduler-jobs.sql:1"
+      },
+      {
+        "from": "remote_orafi",
+        "to": "CREATE DATABASE LINK silent fail (E6)",
+        "file": "db/changelog/007-db-link.sql:1"
+      }
+    ]
+  }
+}

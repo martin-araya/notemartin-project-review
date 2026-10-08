@@ -1,0 +1,8 @@
+REMOTE_TNS =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = remote-host.example.com)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = FREEPDB1)
+    )
+  )

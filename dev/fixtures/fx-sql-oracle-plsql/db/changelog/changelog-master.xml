@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- changelog-master.xml
+     Liquibase changelog master que incluye todos los cambios.
+     E1: spec vs body + paquetes PL/SQL
+     E2: sinonimos publicos
+     E3: EXECUTE IMMEDIATE dinamico
+     E4: PRAGMA AUTONOMOUS_TRANSACTION
+     E5: INSTEAD OF triggers
+     E6: DBMS_SCHEDULER + DB links
+-->
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <include file="001-init-schema.sql" relativeToChangelogFile="true"/>
+    <include file="002-accounts-package.sql" relativeToChangelogFile="true"/>
+    <include file="003-interest-package.sql" relativeToChangelogFile="true"/>
+    <include file="004-autonomous-trigger.sql" relativeToChangelogFile="true"/>
+    <include file="005-instead-of-trigger.sql" relativeToChangelogFile="true"/>
+    <include file="006-scheduler-jobs.sql" relativeToChangelogFile="true"/>
+    <include file="007-db-link.sql" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>

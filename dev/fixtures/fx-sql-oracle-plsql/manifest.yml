@@ -1,0 +1,15 @@
+# Metadata del fixture F06ai: fx-sql-oracle-plsql
+# Esquema Oracle con PL/SQL packages, sinonimos publicos, DB links,
+# DBMS_SCHEDULER jobs, triggers AUTONOMOUS_TRANSACTION e INSTEAD OF.
+# Ver referencias en dev/ground-truth/fx-sql-oracle-plsql/ground_truth.json.
+name: fx-sql-oracle-plsql
+description: Oracle Database Free 23c + Liquibase 4 + PL/SQL packages + utPLSQL 3 (F06ai)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-sql-oracle-plsql
+  enabled: true
+ground_truth_format_version: 1

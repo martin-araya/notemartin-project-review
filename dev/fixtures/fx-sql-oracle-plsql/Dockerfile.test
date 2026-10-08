@@ -1,0 +1,31 @@
+# Dockerfile.test del fixture F06ai (fx-sql-oracle-plsql).
+# Oracle Database Free 23c + Liquibase + utPLSQL via SQLcl.
+FROM gvenzl/oracle-free:23.5-alpine-slim
+
+ENV ORACLE_SID=FREE
+ENV ORACLE_PWD=oracle
+ENV ORACLE_USER=ORAFI
+ENV LIQUIBASE_HOME=/opt/liquibase
+
+# Instalar bash + JDK 21 + curl + git
+USER root
+RUN apk add --no-cache bash openjdk21-jdk curl git make \
+    && echo "export JAVA_HOME=/usr/lib/jvm/java-21-openjdk" >> /etc/profile.d/java.sh
+
+# Descargar e instalar Liquibase 4.27
+RUN mkdir -p ${LIQUIBASE_HOME} && cd /tmp \
+    && curl -L -o liquibase.tar.gz https://github.com/liquibase/liquibase/releases/download/v4.27.0/liquibase-4.27.0.tar.gz \
+    && tar -xzf liquibase.tar.gz -C ${LIQUIBASE_HOME} --strip-components=1 \
+    && rm liquibase.tar.gz \
+    && echo "export PATH=${LIQUIBASE_HOME}:\$PATH" >> /etc/profile.d/liquibase.sh
+
+ENV PATH=${LIQUIBASE_HOME}:$PATH
+
+USER oracle
+
+WORKDIR /fixture
+
+COPY --chown=oracle:oracle . /fixture/
+
+# Inicia Oracle, espera a que este listo, aplica migraciones y tests
+CMD ["make", "test"]

@@ -1,0 +1,5 @@
+.oracle_data/
+*.log
+.env
+Generated/*.generated*
+liquibase.properties.bak
