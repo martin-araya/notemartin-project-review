@@ -1,0 +1,189 @@
+{
+  "fixture": "fx-swift-server",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-spm", "artifact": "Package.swift (swift package)", "file": "Package.swift:1"},
+    {"id": "EP-app-main", "artifact": "@main struct App", "file": "Sources/FxSwiftServer/App.swift:18"},
+    {"id": "EP-configure", "artifact": "func configure(_ app: Application)", "file": "Sources/FxSwiftServer/Configure.swift:8"},
+    {"id": "EP-macro-plugin", "artifact": "FxSwiftMacros CompilerPlugin", "file": "Sources/FxSwiftMacros/FxSwiftMacros.swift:7"},
+    {"id": "EP-route-macro", "artifact": "@attached(peer) macro FxRoute", "file": "Sources/FxSwiftMacros/RouteMacro.swift:8"},
+    {"id": "EP-import-macro", "artifact": "@freestanding(declaration) macro ImportModuleDecl", "file": "Sources/FxSwiftMacros/ImportModuleDeclMacro.swift:7"},
+    {"id": "EP-build-plugin", "artifact": "AuditCodesPlugin build tool", "file": "Plugins/AuditCodesPlugin/Plugins/AuditCodesPlugin.swift:9"},
+    {"id": "EP-notes-routes", "artifact": "@FxRoute struct NotesRoutes: RouteCollection", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:9"},
+    {"id": "EP-audit-routes", "artifact": "@FxRoute struct AuditRoutes: RouteCollection", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:9"},
+    {"id": "EP-cli-main", "artifact": "@main struct FxsImport", "file": "Sources/FxSwiftCLI/main.swift:8"},
+    {"id": "EP-import-notes-cmd", "artifact": "ImportNotes AsyncParsableCommand", "file": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:11"},
+    {"id": "EP-audit-dump-cmd", "artifact": "AuditDump AsyncParsableCommand", "file": "Sources/FxSwiftCLI/Subcommands/AuditDump.swift:7"}
+  ],
+  "modules": [
+    {"id": "MOD-fxswiftserver", "path": "Sources/FxSwiftServer/App.swift", "summary": "Umbrella namespace FxSwiftServer con @main Vapor app"},
+    {"id": "MOD-models", "path": "Sources/FxSwiftServer/Models", "summary": "Note + AuditEntry con @Field/@Parent/@Timestamp (E4)"},
+    {"id": "MOD-routes", "path": "Sources/FxSwiftServer/Routes", "summary": "NotesRoutes + AuditRoutes con @FxRoute (E1, E3, P6)"},
+    {"id": "MOD-services", "path": "Sources/FxSwiftServer/Services", "summary": "NotesService (actor), AuditRecorder (actor P3), UrlSessionProvider (E6), LegacyHelper (S1)"},
+    {"id": "MOD-dtos", "path": "Sources/FxSwiftServer/DTOs", "summary": "NoteDTO Sendable struct (E5), LegacyNoteDTO @unchecked Sendable class (P2), ErrorDTO"},
+    {"id": "MOD-errors", "path": "Sources/FxSwiftServer/Errors", "summary": "ApiError enum con AbortError"},
+    {"id": "MOD-macros", "path": "Sources/FxSwiftServer/Macros", "summary": "Re-export de macros + protocolo RegisterableRoute"},
+    {"id": "MOD-migrations", "path": "Sources/FxSwiftServer/Migrations", "summary": "CreateNote (P5) + CreateAuditEntry"},
+    {"id": "MOD-macro-impl", "path": "Sources/FxSwiftMacros", "summary": "RouteMacro (attached peer) + ImportModuleDeclMacro (freestanding declaration)"},
+    {"id": "MOD-cli", "path": "Sources/FxSwiftCLI", "summary": "fxsimport executable con ImportNotes + AuditDump subcommands"},
+    {"id": "MOD-cli-format", "path": "Sources/FxSwiftCLI/Format", "summary": "CsvImporter actor"},
+    {"id": "MOD-plugin-pkg", "path": "Plugins/AuditCodesPlugin/Package.swift", "summary": "Sub-package SPM con producto .plugin"},
+    {"id": "MOD-plugin-impl", "path": "Plugins/AuditCodesPlugin/Plugins/AuditCodesPlugin.swift", "summary": "AuditCodesPlugin BuildToolPlugin (E2, P4)"},
+    {"id": "MOD-generated", "path": "Generated/AuditCodes.generated.swift", "summary": "Placeholder de archivo generado por el plugin en tiempo de build"}
+  ],
+  "dependencies": [
+    {"name": "swift", "version": "6.0+", "scope": "build+runtime", "manifest": "Package.swift (swift-tools-version: 6.0)"},
+    {"name": "vapor", "version": "4.92+", "scope": "build+runtime", "manifest": "Package.swift (vapor.git from 4.92.0)"},
+    {"name": "fluent", "version": "bundled with vapor", "scope": "build+runtime", "manifest": "Package.swift (Fluent product)"},
+    {"name": "fluent-sqlite-driver", "version": "bundled with vapor", "scope": "build+runtime", "manifest": "Package.swift (FluentSQLiteDriver product)"},
+    {"name": "swift-argument-parser", "version": "1.3+", "scope": "build+runtime", "manifest": "Package.swift (swift-argument-parser.git from 1.3.0)"},
+    {"name": "swift-syntax", "version": "510+", "scope": "build+runtime", "manifest": "Package.swift (swift-syntax.git from 510.0.0)"},
+    {"name": "FoundationNetworking", "version": "bundled (Linux only)", "scope": "runtime (canImport)", "manifest": "Sources/FxSwiftServer/Services/UrlSessionProvider.swift (#if canImport)"},
+    {"name": "swiftpm", "version": "6.0+", "scope": "build", "manifest": "Package.swift"},
+    {"name": "SQLite", "version": "system", "scope": "runtime (Fluent)", "manifest": "Configure.swift (app.databases.use(.sqlite))"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "api-de-notas",
+      "user_description": "API REST Vapor para CRUD de notas con RouteCollection, modelos Fluent y macros @FxRoute.",
+      "traces": [
+        {"n": 1, "what": "App arranca con @main", "cite": "Sources/FxSwiftServer/App.swift:18", "data_in": "process start", "data_out": "Application inicializado"},
+        {"n": 2, "what": "configure() registra NotesRoutes y migraciones", "cite": "Sources/FxSwiftServer/Configure.swift:21", "data_in": "Application", "data_out": "routes + migrations listas"},
+        {"n": 3, "what": "macro @FxRoute genera registerRoute() y path", "cite": "Sources/FxSwiftMacros/RouteMacro.swift:14", "data_in": "@FxRoute", "data_out": "registerRoute expansion en .build"},
+        {"n": 4, "what": "POST /notes: valida body, llama NotesService.create", "cite": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:20", "data_in": "NoteDTO", "data_out": "Note persistido"},
+        {"n": 5, "what": "NotesService (actor) ejecuta save en Fluent", "cite": "Sources/FxSwiftServer/Services/NotesService.swift:15", "data_in": "Note", "data_out": "Note guardado en SQLite"},
+        {"n": 6, "what": "GET /notes/:id devuelve NoteDTO o ApiError.notFound", "cite": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:38", "data_in": "UUID", "data_out": "NoteDTO o 404"},
+        {"n": 7, "what": "URLSession con timeout 0.001 simula 504", "cite": "Sources/FxSwiftServer/Services/UrlSessionProvider.swift:14", "data_in": "URLSession", "data_out": "504 timeout"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift", "line": 21, "kind": "validation", "condition_text": "try dto.validate()", "branches": [{"label": "title vacio -> ApiError.titleRequired", "target_line": 22}, {"label": "body > 1024 -> ApiError.bodyTooLong", "target_line": 23}, {"label": "ok -> continue", "target_line": 24}]},
+        {"id": "DP-002", "file": "Sources/FxSwiftServer/Services/NotesService.swift", "line": 19, "kind": "find_or_throw", "condition_text": "guard let note = ... else { throw ApiError.notFound(id) }", "branches": [{"label": "found -> return note", "target_line": 21}, {"label": "not found -> throw ApiError.notFound", "target_line": 20}]},
+        {"id": "DP-003", "file": "Sources/FxSwiftServer/Services/UrlSessionProvider.swift", "line": 14, "kind": "canImport", "condition_text": "#if canImport(FoundationNetworking)", "branches": [{"label": "Linux -> URLSessionConfiguration.default", "target_line": 15}, {"label": "macOS -> URLSession.shared", "target_line": 21}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "POST /notes con body valido", "user_sees": "201 Created con JSON {id, title, body, authorId}", "side_effects": ["Note persistido en SQLite"], "reversible": true, "final_state": "notes contiene la nueva fila"},
+        {"id": "R-02", "category": "validation_input", "conditions": "POST /notes con title vacio o body > 1024", "user_sees": "400 Bad Request con mensaje 'title is required' o 'body too long'", "side_effects": [], "reversible": true, "final_state": "notes sin cambios"},
+        {"id": "R-03", "category": "error_conflict", "conditions": "POST /notes con title duplicado (unique index P5)", "user_sees": "409 Conflict", "side_effects": ["UNIQUE constraint failed en SQLite"], "reversible": true, "final_state": "notes sin cambios"},
+        {"id": "R-04", "category": "resource_not_found", "conditions": "GET /notes/:id con id inexistente", "user_sees": "404 Not Found con mensaje 'no encontrado: <uuid>'", "side_effects": [], "reversible": true, "final_state": "sin cambios"},
+        {"id": "R-05", "category": "error_internal_db", "conditions": "app.databases usa URL SQLite inalcanzable", "user_sees": "500 Internal Server Error", "side_effects": ["log en app.logger"], "reversible": false, "final_state": "falla de DB"},
+        {"id": "R-06", "category": "success_indirect_macro", "conditions": "inspeccion de .build/<target>/<NotesRoutes>.build.swift", "user_sees": "Codigo generado por @FxRoute visible: extension NotesRoutes { func registerRoute(...) }", "side_effects": [], "reversible": true, "final_state": "macro expansion persiste en .build"},
+        {"id": "R-07", "category": "timeout_external", "conditions": "URLSession.timeoutIntervalForRequest = 0.001", "user_sees": "504 Gateway Timeout", "side_effects": ["backoff reintento una vez"], "reversible": true, "final_state": "request fallido"}
+      ],
+      "config": [
+        {"key": "app.database", "kind": "Environment", "default": ":memory: (DEBUG) o audit.db (release)", "effect": "configura app.databases.use(.sqlite)"},
+        {"key": "notes.title.required", "kind": "constant", "default": "non-empty string", "effect": "NoteDTO.validate() rechaza title vacio"},
+        {"key": "notes.body.max", "kind": "constant", "default": "1024 chars", "effect": "NoteDTO.validate() rechaza body > 1024"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "cli-de-importacion",
+      "user_description": "CLI swift-argument-parser para importar notas desde CSV con exit codes por categoria de error.",
+      "traces": [
+        {"n": 1, "what": "fxsimport notes-import arranca con @main", "cite": "Sources/FxSwiftCLI/main.swift:8", "data_in": "argv", "data_out": "FxsImport root command"},
+        {"n": 2, "what": "AsyncParsableCommand dispatch a ImportNotes.run", "cite": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:38", "data_in": "argv", "data_out": "run() async"},
+        {"n": 3, "what": "verifica que input existe (FileManager.fileExists)", "cite": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:25", "data_in": "path", "data_out": "exit 64 si no"},
+        {"n": 4, "what": "verifica formato == csv", "cite": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:30", "data_in": "format", "data_out": "exit 65 si no"},
+        {"n": 5, "what": "lee CSV y cuenta filas validas/invalidas", "cite": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:35", "data_in": "csvData", "data_out": "imported + skipped"},
+        {"n": 6, "what": "si imported == 0 -> server inalcanzable (exit 70)", "cite": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:43", "data_in": "0", "data_out": "exit 70"},
+        {"n": 7, "what": "stdout: 'Importadas N notas (M invalidas omitidas)'", "cite": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:48", "data_in": "counts", "data_out": "stdout + exit 0"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift", "line": 25, "kind": "file_check", "condition_text": "if !fm.fileExists(atPath: input)", "branches": [{"label": "existe -> continue", "target_line": 30}, {"label": "no existe -> exit 64", "target_line": 26}]},
+        {"id": "DP-005", "file": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift", "line": 30, "kind": "format_check", "condition_text": "guard format == \"csv\"", "branches": [{"label": "csv -> continue", "target_line": 35}, {"label": "otro -> exit 65", "target_line": 31}]},
+        {"id": "DP-006", "file": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift", "line": 43, "kind": "empty_check", "condition_text": "if imported == 0", "branches": [{"label": "0 -> exit 70", "target_line": 44}, {"label": ">0 -> stdout y exit 0", "target_line": 48}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "fxsimport notes-import --input notas.csv --format csv con archivo valido y rows no vacias", "user_sees": "stdout: 'Importadas N notas (M invalidas omitidas)', exit code 0", "side_effects": [], "reversible": true, "final_state": "comando completado"},
+        {"id": "R-02", "category": "resource_not_found", "conditions": "--input no-existe.csv", "user_sees": "stderr: 'Error: archivo no encontrado: ...', exit code 64", "side_effects": [], "reversible": true, "final_state": "comando abortado"},
+        {"id": "R-03", "category": "validation_input", "conditions": "--input notas.json --format csv", "user_sees": "stderr: 'Error: formato no coincide con el archivo ...', exit code 65", "side_effects": [], "reversible": true, "final_state": "comando abortado"},
+        {"id": "R-04", "category": "error_external_service", "conditions": "--server http://127.0.0.1:1/notes sin server corriendo", "user_sees": "stderr: 'Error: server inalcanzable: ...', exit code 70", "side_effects": [], "reversible": true, "final_state": "comando abortado"},
+        {"id": "R-05", "category": "success_partial", "conditions": "CSV con 3 filas validas + 2 invalidas", "user_sees": "stdout: 'Importadas 3 notas (2 invalidas omitidas)', exit code 0", "side_effects": [], "reversible": true, "final_state": "comando completado con advertencia"},
+        {"id": "R-06", "category": "cancelled_by_user", "conditions": "SIGINT (Ctrl+C) durante import", "user_sees": "stderr: 'Cancelado por el usuario', exit code 130", "side_effects": [], "reversible": false, "final_state": "comando interrumpido"},
+        {"id": "R-07", "category": "validation_macro", "conditions": "@FxRoute aplicado a struct sin func boot", "user_sees": "compiler error: '@FxRoute requiere func boot(routes:)' + exit code 1", "side_effects": [], "reversible": false, "final_state": "build fallido"}
+      ],
+      "config": [
+        {"key": "input", "kind": "CLI option (required)", "default": "n/a", "effect": "ruta al CSV"},
+        {"key": "format", "kind": "CLI option", "default": "csv", "effect": "formato esperado"},
+        {"key": "server", "kind": "CLI option", "default": "http://127.0.0.1:8080/notes", "effect": "URL destino"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "auditoria",
+      "user_description": "Actor asincrono que persiste entradas de auditoria con errores tragados (P3) y rutas Vapor con catch-all (P6) y plugin que genera codigo (E2, P4).",
+      "traces": [
+        {"n": 1, "what": "POST /audit con body {actor, action, targetId}", "cite": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:21", "data_in": "Body", "data_out": "audit entry creada"},
+        {"n": 2, "what": "AuditRecorder.record() intenta guardar con try? silencioso", "cite": "Sources/FxSwiftServer/Services/AuditRecorder.swift:16", "data_in": "entry", "data_out": "Bool ok=false si falla"},
+        {"n": 3, "what": "entry.save(on:) persiste en SQLite (P3: si falla, swallowed)", "cite": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:30", "data_in": "entry", "data_out": "audit_entries row"},
+        {"n": 4, "what": "GET /audit/codes devuelve AuditCode.allCases (generado por plugin)", "cite": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:34", "data_in": "AuditCode.allCases", "data_out": "{codes: [...]}"},
+        {"n": 5, "what": "GET /audit/foo/bar/baz matchea '*' (P6 catch-all)", "cite": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:14", "data_in": "path", "data_out": "{matched: true}"},
+        {"n": 6, "what": "P1: macro @ImportModuleDecl expande a import en codigo", "cite": "Sources/FxSwiftServer/App.swift:14", "data_in": "@ImportModuleDecl", "data_out": "import FoundationNetworking en .build"},
+        {"n": 7, "what": "app.autoMigrate() ejecuta CreateAuditEntry", "cite": "Sources/FxSwiftServer/Migrations/CreateNote.swift:30", "data_in": "Database", "data_out": "schema audit_entries"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift", "line": 13, "kind": "catch_all_wildcard", "condition_text": "routes.get(\"*\") vs routes.get(\"codes\")", "branches": [{"label": "wildcard matchea cualquier path -> catchAll", "target_line": 14}, {"label": "/audit/codes -> codes handler", "target_line": 17}]},
+        {"id": "DP-008", "file": "Sources/FxSwiftServer/Services/AuditRecorder.swift", "line": 18, "kind": "error_silent", "condition_text": "catch { return false }", "branches": [{"label": "save ok -> return true", "target_line": 17}, {"label": "save fail -> return false (silently)", "target_line": 19}]},
+        {"id": "DP-009", "file": "Sources/FxSwiftServer/Migrations/CreateNote.swift", "line": 17, "kind": "schema_unique", "condition_text": ".unique(on: \"title\")", "branches": [{"label": "primera vez -> crea index UNIQUE", "target_line": 17}, {"label": "re-ejecucion -> UNIQUE constraint failed (P5)", "target_line": 17}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "POST /audit con body valido", "user_sees": "201 Created con JSON entry persistido", "side_effects": ["audit_entries row insertada"], "reversible": true, "final_state": "audit_entries contiene la fila"},
+        {"id": "R-02", "category": "validation_input", "conditions": "POST /audit con actor vacio", "user_sees": "400 Bad Request", "side_effects": [], "reversible": true, "final_state": "sin cambios"},
+        {"id": "R-03", "category": "success_degraded_with_silent_failure", "conditions": "LegacyNoteDTO usado entre tareas concurrentes", "user_sees": "Respuesta 201, pero con warning de data race en runtime (simulado por P2)", "side_effects": ["estado mutable compartido"], "reversible": false, "final_state": "estado inconsistente"},
+        {"id": "R-04", "category": "no_op_plugin_failed", "conditions": "FoundationNetworking no disponible durante build", "user_sees": "GET /audit/codes devuelve {codes: ['noop']} en lugar de {codes: ['unverified','stale','orphaned','archived']}", "side_effects": [], "reversible": true, "final_state": "plugin genero codigo minimo"},
+        {"id": "R-05", "category": "resource_not_found_silent", "conditions": "GET /audit/foo/bar/baz (matchea wildcard antes)", "user_sees": "200 OK con {matched: true} (deberia ser 404)", "side_effects": [], "reversible": true, "final_state": "404 silenciado por P6"},
+        {"id": "R-06", "category": "error_internal_db_idempotent_fail", "conditions": "app.autoMigrate() ejecutado dos veces", "user_sees": "Log con error 'UNIQUE constraint failed: notes.title'", "side_effects": ["schema notes no se recrea"], "reversible": false, "final_state": "migracion fallida por P5"},
+        {"id": "R-07", "category": "no_op_record_failed", "conditions": "AuditRecorder.record() devuelve false porque save fallo", "user_sees": "201 Created pero entry NO persistida", "side_effects": ["try? silenciado (P3)"], "reversible": true, "final_state": "estado inconsistente entre memoria y DB"}
+      ],
+      "config": [
+        {"key": "audit.actor.required", "kind": "constant", "default": "non-empty", "effect": "rechaza actor vacio"},
+        {"key": "audit.actions", "kind": "enum", "default": "[create,update,delete,archive,unverified]", "effect": "AuditAction codifica acciones validas"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-http-notes-create", "kind": "http", "name": "POST /notes", "handler": "NotesRoutes.create", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:21"},
+    {"id": "SRF-http-notes-list", "kind": "http", "name": "GET /notes", "handler": "NotesRoutes.list", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:33"},
+    {"id": "SRF-http-notes-get", "kind": "http", "name": "GET /notes/:id", "handler": "NotesRoutes.get", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:39"},
+    {"id": "SRF-http-notes-update", "kind": "http", "name": "PUT /notes/:id", "handler": "NotesRoutes.update", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:48"},
+    {"id": "SRF-http-notes-delete", "kind": "http", "name": "DELETE /notes/:id", "handler": "NotesRoutes.delete", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:60"},
+    {"id": "SRF-http-audit-create", "kind": "http", "name": "POST /audit", "handler": "AuditRoutes.create", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:21"},
+    {"id": "SRF-http-audit-codes", "kind": "http", "name": "GET /audit/codes", "handler": "AuditRoutes.codes", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:34"},
+    {"id": "SRF-http-audit-catchall", "kind": "http", "name": "GET /audit/*", "handler": "AuditRoutes.catchAll", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:14"},
+    {"id": "SRF-cli-import-notes", "kind": "cli", "name": "fxsimport notes-import", "handler": "ImportNotes.run", "file": "Sources/FxSwiftCLI/Subcommands/ImportNotes.swift:38"},
+    {"id": "SRF-cli-audit-dump", "kind": "cli", "name": "fxsimport audit-dump", "handler": "AuditDump.run", "file": "Sources/FxSwiftCLI/Subcommands/AuditDump.swift:18"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "macros_attached_member", "file": "Sources/FxSwiftMacros/RouteMacro.swift:8", "line": 8, "description": "Macro `@FxRoute` (`@attached(peer, names:)`) genera codigo expandido en `.build/` que no aparece en `Sources/`.", "resolution": "Seguir la expansion del macro hasta el codigo generado para entender el wiring real de las rutas."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "build_tool_plugin", "file": "Plugins/AuditCodesPlugin/Plugins/AuditCodesPlugin.swift:9", "line": 9, "description": "Plugin SPM `BuildToolPlugin` genera `Generated/AuditCodes.generated.swift` durante el build.", "resolution": "Seguir `.plugin(name:)` en el `Package.swift` del consumidor y leer el codigo generado."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "route_collection_boot", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:9", "line": 11, "description": "Las rutas Vapor se registran dentro de `RouteCollection.boot(routes:)` y `app.register(collection:)`.", "resolution": "Inspeccionar `boot(routes:)` y `Configure.swift` para encontrar el wiring."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "fluent_models_field_parent_timestamp", "file": "Sources/FxSwiftServer/Models/Note.swift:10", "line": 10, "description": "Modelos Fluent usan `@Field`/`@Parent`/`@Timestamp`; el esquema SQL solo aparece en migraciones.", "resolution": "Cruzar modelos con migraciones (`CreateNote.swift`) para reconstruir el schema."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "actor_sendable_concurrency", "file": "Sources/FxSwiftServer/Services/AuditRecorder.swift:11", "line": 11, "description": "Concurrencia con `actor` y DTOs `Sendable struct`.", "resolution": "Identificar actores y conformidades Sendable para entender el modelo de concurrencia."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "canImport_foundation_networking", "file": "Sources/FxSwiftServer/Services/UrlSessionProvider.swift:14", "line": 14, "description": "`#if canImport(FoundationNetworking)` cambia el comportamiento entre Linux y macOS.", "resolution": "Evaluar la rama condicional segun la plataforma destino."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "import_macro_freestanding", "file": "Sources/FxSwiftServer/App.swift:14", "line": 14, "description": "Macro `@ImportModuleDecl` se expande a un `import` que NO aparece en el AST literal del archivo.", "resolution": "Seguir la expansion del macro para ver el import real."},
+    {"id": "TRAP-P2", "kind": "package", "name": "unchecked_sendable_class", "file": "Sources/FxSwiftServer/DTOs/LegacyNoteDTO.swift:7", "line": 7, "description": "DTO `class @unchecked Sendable` con `var` mutable: anti-patron de concurrencia.", "resolution": "Reemplazar por struct Sendable o eliminar el `@unchecked`."},
+    {"id": "TRAP-P3", "kind": "package", "name": "silent_try_audit", "file": "Sources/FxSwiftServer/Services/AuditRecorder.swift:18", "line": 18, "description": "AuditRecorder traga el error con `return false` en el catch, ocultando fallos de DB.", "resolution": "Hacer `throw` del error o logear explicitamente con logger."},
+    {"id": "TRAP-P4", "kind": "package", "name": "build_plugin_noop_fallback", "file": "Plugins/AuditCodesPlugin/Plugins/AuditCodesPlugin.swift:30", "line": 30, "description": "El plugin genera archivo con solo `// noop` cuando `FoundationNetworking` no esta, fallando silenciosamente.", "resolution": "Hacer que el plugin lance error explicito o que genere codigo util en todas las plataformas."},
+    {"id": "TRAP-P5", "kind": "package", "name": "unique_index_non_idempotent", "file": "Sources/FxSwiftServer/Migrations/CreateNote.swift:17", "line": 17, "description": "Migracion con `.unique(on:)` sin `IF NOT EXISTS` falla en re-ejecucion.", "resolution": "Usar `if !database.doesSchemaExist(...)` o agregar `IF NOT EXISTS` en el SQL."},
+    {"id": "TRAP-P6", "kind": "package", "name": "catch_all_before_specific", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:14", "line": 14, "description": "`routes.get(\"*\")` se registra ANTES de las rutas especificas y oculta 404.", "resolution": "Registrar las rutas especificas antes del wildcard o usar `Route.group` con prefijo."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "legacy_helper_unused", "file": "Sources/FxSwiftServer/Services/LegacyHelper.swift:5", "line": 5, "description": "`LegacyHelper` existe pero no se llama desde ningun modulo del fixture.", "resolution": "Eliminar si no se usa o documentar como API publica legacy."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "unused_import_in_else_branch", "file": "Sources/FxSwiftServer/Services/UrlSessionProvider.swift:21", "line": 21, "description": "La rama `#else` tiene `_ = URLSession.self` que no aporta valor.", "resolution": "Eliminar la linea o documentar el proposito."},
+    {"id": "TRAP-S3", "kind": "superficial", "name": "env_var_unused", "file": "Sources/FxSwiftServer/Configure.swift:24", "line": 24, "description": "Variable `legacyMode` leida de Environment pero nunca usada (`_ = legacyMode`).", "resolution": "Eliminar la lectura de env o usar el valor para activar comportamiento legacy."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "App.main", "to": "configure(app)", "file": "Sources/FxSwiftServer/App.swift:21"},
+      {"from": "configure", "to": "app.register(collection: NotesRoutes)", "file": "Sources/FxSwiftServer/Configure.swift:30"},
+      {"from": "configure", "to": "app.register(collection: AuditRoutes)", "file": "Sources/FxSwiftServer/Configure.swift:31"},
+      {"from": "NotesRoutes.create", "to": "NotesService.create", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:21"},
+      {"from": "NotesRoutes.get", "to": "NotesService.find", "file": "Sources/FxSwiftServer/Routes/NotesRoutes.swift:39"},
+      {"from": "AuditRoutes.create", "to": "AuditRecorder.record", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:28"},
+      {"from": "AuditRoutes.codes", "to": "AuditCode.allCases", "file": "Sources/FxSwiftServer/Routes/AuditRoutes.swift:34"}
+    ]
+  }
+}

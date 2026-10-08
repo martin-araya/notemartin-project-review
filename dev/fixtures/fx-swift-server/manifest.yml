@@ -1,0 +1,15 @@
+# Metadata del fixture F06ab.
+# Paquete Swift multiplataforma con servidor Vapor, CLI y macros.
+# Ver referencias exactas de las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-swift-server/ground_truth.json.
+name: fx-swift-server
+description: Swift 6 server-side con Vapor + Fluent + macros + build tool plugin + swift-argument-parser CLI (F06ab)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-swift-server
+  enabled: true
+ground_truth_format_version: 1

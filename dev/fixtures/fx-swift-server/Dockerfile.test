@@ -1,0 +1,22 @@
+# Dockerfile.test del fixture F06ab (fx-swift-server).
+# Imagen oficial Swift 6.0 sobre Ubuntu 22.04 con make + git.
+# El fixture define su propio Package.swift con productos Vapor + Fluent + macros
+# + plugin, y se ejecuta con `swift test --parallel`.
+FROM swift:6.0.3-jammy
+
+# Herramientas auxiliares
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copia todo el fixture (Package.swift + Sources + Plugins + tests)
+COPY . /app/
+
+# Cachear .build entre invocaciones via volumen -v $(pwd)/.build-cache:/app/.build
+ENV SWIFTPM_CACHE_PATH=/app/.build/cache
+
+CMD ["swift", "test", "--parallel"]
