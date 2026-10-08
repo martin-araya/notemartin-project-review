@@ -1,0 +1,12 @@
+.dvc/cache/
+.dvc/tmp/
+.dvc/plots/
+.dvc/lock
+mlruns/
+mlartifacts/
+models/
+.pytest_cache/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+Generated/

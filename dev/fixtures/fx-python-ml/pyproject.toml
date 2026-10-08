@@ -1,0 +1,10 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "src"]
+addopts = "-ra"
+markers = [
+    "notebook: tests de notebooks",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

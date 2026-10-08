@@ -1,0 +1,18 @@
+# @package _global_
+defaults:
+  - entrenamiento: default
+  - evaluacion: default
+  - inferencia: default
+  - _self_
+
+datos:
+  ruta: /fixture/data/iris.csv
+  target: species
+  test_size: 0.2
+
+semilla: 42
+
+mlflow:
+  tracking_uri: file:///fixture/mlruns
+  experiment: fxpm-experiment
+  model_name: iris_clf

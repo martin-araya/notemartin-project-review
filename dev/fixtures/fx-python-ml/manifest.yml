@@ -1,0 +1,15 @@
+# Metadata del fixture F06al: fx-python-ml
+# Proyecto ML con notebooks (Jupyter), pipeline DVC, configuracion Hydra,
+# tracking MLflow, y servicio HTTP de FastAPI. Ver referencias a las trampas
+# del ecosistema y del paquete en dev/ground-truth/fx-python-ml/ground_truth.json.
+name: fx-python-ml
+description: scikit-learn + Hydra + DVC + MLflow + FastAPI con notebooks Jupyter y nbval (F06al)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-python-ml
+  enabled: true
+ground_truth_format_version: 1

@@ -1,0 +1,31 @@
+# Dockerfile.test del fixture F06al (fx-python-ml).
+# python:3.11-slim + scikit-learn + Hydra + DVC + MLflow + FastAPI + Jupyter.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git make curl unzip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /fixture
+
+COPY requirements.txt /fixture/requirements.txt
+RUN pip install -r /fixture/requirements.txt
+
+COPY . /fixture/
+
+# dvc init (idempotente; verifica si .dvc/ ya existe)
+RUN [ ! -d /fixture/.dvc ] && dvc init -q || true
+
+# jupyter kernel para nbval
+RUN python -m ipykernel install --user --name=python3 --display-name "Python 3" || true
+
+RUN chmod +x entrypoint.sh
+
+ENV PYTHONPATH=/fixture
+
+CMD ["bash", "entrypoint.sh"]

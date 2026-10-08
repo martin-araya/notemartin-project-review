@@ -1,0 +1,3 @@
+# default serve config
+model_name: iris_clf
+stage: production

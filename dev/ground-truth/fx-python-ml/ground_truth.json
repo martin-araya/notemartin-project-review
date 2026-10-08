@@ -1,0 +1,271 @@
+{
+  "fixture": "fx-python-ml",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-data-iris-csv", "artifact": "data/iris.csv (150 rows)", "file": "data/iris.csv:1"},
+    {"id": "EP-conf-config-yaml", "artifact": "conf/config.yaml (Hydra Compose E2)", "file": "conf/config.yaml:1"},
+    {"id": "EP-conf-entrenamiento-default", "artifact": "conf/entrenamiento/default.yaml", "file": "conf/entrenamiento/default.yaml:1"},
+    {"id": "EP-conf-entrenamiento-random-forest", "artifact": "conf/entrenamiento/random_forest.yaml", "file": "conf/entrenamiento/random_forest.yaml:1"},
+    {"id": "EP-conf-entrenamiento-logistic-regression", "artifact": "conf/entrenamiento/logistic_regression.yaml", "file": "conf/entrenamiento/logistic_regression.yaml:1"},
+    {"id": "EP-conf-evaluacion-default", "artifact": "conf/evaluacion/default.yaml", "file": "conf/evaluacion/default.yaml:1"},
+    {"id": "EP-conf-evaluacion-f1", "artifact": "conf/evaluacion/f1.yaml", "file": "conf/evaluacion/f1.yaml:1"},
+    {"id": "EP-conf-inferencia-default", "artifact": "conf/inferencia/default.yaml", "file": "conf/inferencia/default.yaml:1"},
+    {"id": "EP-nb-00-setup", "artifact": "notebooks/00_setup.ipynb (S2 solo imports)", "file": "notebooks/00_setup.ipynb:1"},
+    {"id": "EP-nb-01-exploratorio", "artifact": "notebooks/01_exploratorio.ipynb (E1)", "file": "notebooks/01_exploratorio.ipynb:1"},
+    {"id": "EP-nb-02-features", "artifact": "notebooks/02_features.ipynb (E5 MinMaxScaler)", "file": "notebooks/02_features.ipynb:1"},
+    {"id": "EP-nb-03-entrenamiento", "artifact": "notebooks/03_entrenamiento.ipynb (E4 MLflow)", "file": "notebooks/03_entrenamiento.ipynb:1"},
+    {"id": "EP-nb-04-evaluacion", "artifact": "notebooks/04_evaluacion.ipynb (E1 log)", "file": "notebooks/04_evaluacion.ipynb:1"},
+    {"id": "EP-nb-04-evaluacion-legacy", "artifact": "notebooks/04_evaluacion_legacy.ipynb (P4 trap nombre incorrecto)", "file": "notebooks/04_evaluacion_legacy.ipynb:1"},
+    {"id": "EP-nb-05-inferencia", "artifact": "notebooks/05_inferencia.ipynb (E1 cargar)", "file": "notebooks/05_inferencia.ipynb:1"},
+    {"id": "EP-nb-06-setup-with-delete", "artifact": "notebooks/06_setup_with_delete.ipynb (P1 state out-of-order)", "file": "notebooks/06_setup_with_delete.ipynb:1"},
+    {"id": "EP-src-config", "artifact": "src/config.py (get_param via Hydra Compose)", "file": "src/config.py:1"},
+    {"id": "EP-src-features", "artifact": "src/features.py (E5/P5 StandardScaler)", "file": "src/features.py:1"},
+    {"id": "EP-src-train", "artifact": "src/train.py (E6 random_state=42)", "file": "src/train.py:1"},
+    {"id": "EP-src-evaluate", "artifact": "src/evaluate.py (metricas f1 + accuracy)", "file": "src/evaluate.py:1"},
+    {"id": "EP-src-register", "artifact": "src/register.py (mlflow.sklearn.log_model)", "file": "src/register.py:1"},
+    {"id": "EP-src-legacy-train", "artifact": "src/legacy_train.py (S1 dead + P6 sin random_state)", "file": "src/legacy_train.py:1"},
+    {"id": "EP-src-app-main", "artifact": "src/app/main.py (FastAPI POST /inferencia)", "file": "src/app/main.py:1"},
+    {"id": "EP-dvc-yaml", "artifact": "dvc.yaml (E3 stages train/evaluate/register)", "file": "dvc.yaml:1"},
+    {"id": "EP-params-yaml", "artifact": "params.yaml (parametros versionados)", "file": "params.yaml:1"},
+    {"id": "EP-test-train", "artifact": "tests/test_train.py (5 tests)", "file": "tests/test_train.py:1"},
+    {"id": "EP-test-evaluate", "artifact": "tests/test_evaluate.py (5 tests)", "file": "tests/test_evaluate.py:1"},
+    {"id": "EP-test-inference", "artifact": "tests/test_inference.py (5 tests FastAPI)", "file": "tests/test_inference.py:1"},
+    {"id": "EP-test-hydra-config", "artifact": "tests/test_hydra_config.py (10 tests)", "file": "tests/test_hydra_config.py:1"},
+    {"id": "EP-test-dvc-pipeline", "artifact": "tests/test_dvc_pipeline.py (10 tests)", "file": "tests/test_dvc_pipeline.py:1"},
+    {"id": "EP-test-mlflow-registry", "artifact": "tests/test_mlflow_registry.py (5 tests)", "file": "tests/test_mlflow_registry.py:1"},
+    {"id": "EP-test-reproducibility", "artifact": "tests/test_reproducibility.py (4 tests P6)", "file": "tests/test_reproducibility.py:1"},
+    {"id": "EP-test-features-divergence", "artifact": "tests/test_features_divergence.py (3 tests P5)", "file": "tests/test_features_divergence.py:1"},
+    {"id": "EP-test-traps-ecosystem", "artifact": "tests/test_traps_ecosystem.py (7 tests)", "file": "tests/test_traps_ecosystem.py:1"},
+    {"id": "EP-test-traps-package", "artifact": "tests/test_traps_package.py (6 tests)", "file": "tests/test_traps_package.py:1"},
+    {"id": "EP-test-traps-superficial", "artifact": "tests/test_traps_superficial.py (3 tests)", "file": "tests/test_traps_superficial.py:1"},
+    {"id": "EP-test-deprecated", "artifact": "tests/test_deprecated.py (S3 pytest.skip)", "file": "tests/test_deprecated.py:1"},
+    {"id": "EP-entrypoint-sh", "artifact": "entrypoint.sh", "file": "entrypoint.sh:1"}
+  ],
+  "modules": [
+    {"id": "MOD-data-iris", "path": "data/iris.csv", "summary": "150 rows sklearn iris"},
+    {"id": "MOD-conf-global", "path": "conf/config.yaml", "summary": "Hydra Compose @package _global_ + defaults"},
+    {"id": "MOD-conf-entrenamiento", "path": "conf/entrenamiento/", "summary": "default + random_forest + logistic_regression"},
+    {"id": "MOD-conf-evaluacion", "path": "conf/evaluacion/", "summary": "default + f1"},
+    {"id": "MOD-conf-inferencia", "path": "conf/inferencia/default.yaml", "summary": "model_name: iris_clf + stage: production"},
+    {"id": "MOD-nb-setup", "path": "notebooks/00_setup.ipynb", "summary": "S2 solo imports + load iris"},
+    {"id": "MOD-nb-exploratorio", "path": "notebooks/01_exploratorio.ipynb", "summary": "E1 pandas describe + matplotlib"},
+    {"id": "MOD-nb-features", "path": "notebooks/02_features.ipynb", "summary": "E5 MinMaxScaler"},
+    {"id": "MOD-nb-entrenamiento", "path": "notebooks/03_entrenamiento.ipynb", "summary": "E4 train + MLflow tracking"},
+    {"id": "MOD-nb-evaluacion", "path": "notebooks/04_evaluacion.ipynb", "summary": "E1 evaluate + log metrics"},
+    {"id": "MOD-nb-evaluacion-legacy", "path": "notebooks/04_evaluacion_legacy.ipynb", "summary": "P4 trap nombre incorrecto"},
+    {"id": "MOD-nb-inferencia", "path": "notebooks/05_inferencia.ipynb", "summary": "E1 cargar + predict"},
+    {"id": "MOD-nb-setup-with-delete", "path": "notebooks/06_setup_with_delete.ipynb", "summary": "P1 state out-of-order"},
+    {"id": "MOD-src-config", "path": "src/config.py", "summary": "get_param via Hydra Compose"},
+    {"id": "MOD-src-features", "path": "src/features.py", "summary": "engineer_features_v1 con StandardScaler (E5)"},
+    {"id": "MOD-src-train", "path": "src/train.py", "summary": "train_model(algorithm, X, y, random_state=42) (E6)"},
+    {"id": "MOD-src-evaluate", "path": "src/evaluate.py", "summary": "evaluate_model con metricas f1 + accuracy"},
+    {"id": "MOD-src-register", "path": "src/register.py", "summary": "track_with_mlflow con log_model + log_metric"},
+    {"id": "MOD-src-legacy-train", "path": "src/legacy_train.py", "summary": "S1+P6 dead function sin random_state"},
+    {"id": "MOD-src-app", "path": "src/app/main.py", "summary": "FastAPI POST /inferencia carga models:/iris_clf"},
+    {"id": "MOD-dvc", "path": "dvc.yaml", "summary": "3 stages: train + evaluate + register (E3)"},
+    {"id": "MOD-params", "path": "params.yaml", "summary": "algoritmo + n_estimators + max_depth + semilla"},
+    {"id": "MOD-tests-conftest", "path": "tests/conftest.py", "summary": "fixtures: setup_mlflow + fastapi_client + iris_data"},
+    {"id": "MOD-tests-train", "path": "tests/test_train.py", "summary": "5 tests train_model"},
+    {"id": "MOD-tests-evaluate", "path": "tests/test_evaluate.py", "summary": "5 tests evaluate_model"},
+    {"id": "MOD-tests-inference", "path": "tests/test_inference.py", "summary": "5 tests FastAPI TestClient"},
+    {"id": "MOD-tests-hydra-config", "path": "tests/test_hydra_config.py", "summary": "10 tests Hydra Compose configs"},
+    {"id": "MOD-tests-dvc-pipeline", "path": "tests/test_dvc_pipeline.py", "summary": "10 tests dvc.yaml + params.yaml"},
+    {"id": "MOD-tests-mlflow-registry", "path": "tests/test_mlflow_registry.py", "summary": "5 tests MLflow file store + tracking"},
+    {"id": "MOD-tests-reproducibility", "path": "tests/test_reproducibility.py", "summary": "4 tests P6 random_state"},
+    {"id": "MOD-tests-features-divergence", "path": "tests/test_features_divergence.py", "summary": "3 tests P5 StandardScaler vs MinMaxScaler"},
+    {"id": "MOD-tests-traps-ecosystem", "path": "tests/test_traps_ecosystem.py", "summary": "7 tests E1..E6"},
+    {"id": "MOD-tests-traps-package", "path": "tests/test_traps_package.py", "summary": "6 tests P1..P6"},
+    {"id": "MOD-tests-traps-superficial", "path": "tests/test_traps_superficial.py", "summary": "3 tests S1..S3"},
+    {"id": "MOD-tests-deprecated", "path": "tests/test_deprecated.py", "summary": "1 test S3 pytest.skip"},
+    {"id": "MOD-entrypoint", "path": "entrypoint.sh", "summary": "notebooks + tests + dvc repro + ground truth tests"}
+  ],
+  "dependencies": [
+    {"name": "scikit-learn", "version": "1.5.x", "scope": "build+runtime", "manifest": "requirements.txt"},
+    {"name": "hydra-core", "version": "1.3.x", "scope": "build+runtime", "manifest": "requirements.txt + conf/"},
+    {"name": "dvc", "version": "3.5.x", "scope": "build+runtime", "manifest": "requirements.txt + dvc.yaml"},
+    {"name": "mlflow", "version": "2.18.x", "scope": "build+runtime", "manifest": "requirements.txt + FileStore backend"},
+    {"name": "fastapi", "version": "0.115.x", "scope": "build+runtime", "manifest": "requirements.txt + src/app/main.py"},
+    {"name": "uvicorn", "version": "0.30.x", "scope": "runtime", "manifest": "requirements.txt"},
+    {"name": "pydantic", "version": "2.9.x", "scope": "build+runtime", "manifest": "requirements.txt + PredictRequest"},
+    {"name": "pandas", "version": "2.2.x", "scope": "build+runtime", "manifest": "requirements.txt + data/iris.csv"},
+    {"name": "numpy", "version": "1.26.x", "scope": "build+runtime", "manifest": "requirements.txt + sklearn"},
+    {"name": "joblib", "version": "1.4.x", "scope": "build+runtime", "manifest": "requirements.txt + dvc.yaml"},
+    {"name": "jupyter", "version": "1.0.x", "scope": "build+runtime", "manifest": "requirements.txt + notebooks/"},
+    {"name": "nbval", "version": "0.10.x", "scope": "test", "manifest": "requirements.txt + pyproject.toml"},
+    {"name": "pytest", "version": "8.2.x", "scope": "test", "manifest": "requirements.txt + pytest.ini"},
+    {"name": "ipykernel", "version": "6.29.x", "scope": "runtime", "manifest": "requirements.txt + Dockerfile.test"},
+    {"name": "httpx", "version": "0.27.x", "scope": "test", "manifest": "requirements.txt + TestClient"},
+    {"name": "python", "version": "3.11", "scope": "build+runtime", "manifest": "Dockerfile.test (FROM python:3.11-slim)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "entrenamiento",
+      "user_description": "Pipeline de entrenamiento con Hydra config + MLflow tracking + reproducibilidad. Sinonimo neutro CC-11 para 'entrenamiento'.",
+      "traces": [
+        {"n": 1, "what": "User carga conf/config.yaml con Hydra Compose", "cite": "conf/config.yaml:1", "data_in": "defaults [entrenamiento:default, evaluacion:default, inferencia:default]", "data_out": "cfg con datos + semilla + mlflow"},
+        {"n": 2, "what": "Hydra resuelve conf/entrenamiento/default.yaml", "cite": "conf/entrenamiento/default.yaml:1", "data_in": "algoritmo: random_forest", "data_out": "ConfigDict"},
+        {"n": 3, "what": "Hydra resuelve conf/entrenamiento/random_forest.yaml", "cite": "conf/entrenamiento/random_forest.yaml:1", "data_in": "n_estimators:100, random_state:42", "data_out": "ConfigDict"},
+        {"n": 4, "what": "src/train.py::train_model invocado desde notebook", "cite": "src/train.py:24", "data_in": "X, y, random_state=42", "data_out": "RandomForestClassifier entrenado"},
+        {"n": 5, "what": "src/register.py::track_with_mlflow log_model con registered_model_name", "cite": "src/register.py:7", "data_in": "model, model_name='iris_clf'", "data_out": "model registrado en FileStore"},
+        {"n": 6, "what": "DVC stage 'train' ejecuta el cmd con deps/outs", "cite": "dvc.yaml:1", "data_in": "data/iris.csv + src/train.py", "data_out": "models/model.pkl"},
+        {"n": 7, "what": "P4 trap: notebook 04_evaluacion_legacy registra con nombre 'iris_classifier_legacy'", "cite": "notebooks/04_evaluacion_legacy.ipynb:1", "data_in": "model", "data_out": "model registrado con nombre incorrecto"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/train.py", "line": 18, "kind": "algorithm_branch", "condition_text": "algoritmo in {'random_forest', 'logistic_regression'}", "branches": [{"label": "ok_rf", "target_line": 24}, {"label": "ok_lr", "target_line": 25}, {"label": "fail_unknown_algorithm", "target_line": 21}]},
+        {"id": "DP-002", "file": "conf/config.yaml", "line": 2, "kind": "hydra_compose", "condition_text": "defaults: [entrenamiento:default, evaluacion:default, inferencia:default] + _self_", "branches": [{"label": "ok_compose", "target_line": 2}, {"label": "p2_override_invalid", "target_line": 2}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "train_model con algoritmo valido + random_state=42", "user_sees": "model entrenado con score >= 0.9", "side_effects": ["INSERT en mlruns/tables", "INSERT en mlruns/models"], "reversible": true, "final_state": "model registrado"},
+        {"id": "R-02", "category": "validation_input", "conditions": "algoritmo invalido ('unknown_algo')", "user_sees": "ValueError: algoritmo desconocido", "side_effects": [], "reversible": true, "final_state": "error"},
+        {"id": "R-03", "category": "success_partial", "conditions": "mlflow.sklearn.log_model sin registered_model_name", "user_sees": "model logged pero no registrado", "side_effects": ["solo artifacts"], "reversible": true, "final_state": "log sin registro"},
+        {"id": "R-04", "category": "error_external_service", "conditions": "MLFLOW_TRACKING_URI invalido", "user_sees": "MlflowException: invalid tracking URI", "side_effects": [], "reversible": true, "final_state": "tracking fail"},
+        {"id": "R-05", "category": "noop_silent", "conditions": "dvc stage 'train' sin cambios en data/iris.csv", "user_sees": "'Stage is up to date' (no-op)", "side_effects": [], "reversible": true, "final_state": "cache hit"},
+        {"id": "R-06", "category": "success_full", "conditions": "dvc stage 'train' con cambios en data/iris.csv", "user_sees": "'Stage is running' + model.pkl regenerado", "side_effects": ["UPDATE models/model.pkl"], "reversible": true, "final_state": "model actualizado"},
+        {"id": "R-07", "category": "noop_silent", "conditions": "P4 trap: notebook 04_evaluacion_legacy registra con 'iris_classifier_legacy'", "user_sees": "legacy model registered (no usado por FastAPI)", "side_effects": ["model con nombre equivocado"], "reversible": false, "final_state": "model legacy inutil"}
+      ],
+      "config": [
+        {"key": "MLFLOW_TRACKING_URI", "kind": "env", "default": "file:///fixture/mlruns", "effect": "MLflow FileStore"},
+        {"key": "MLFLOW_EXPERIMENT_NAME", "kind": "param", "default": "fxpm-experiment", "effect": "MLflow experiment"},
+        {"key": "model_name", "kind": "param", "default": "iris_clf", "effect": "nombre del modelo registrado"},
+        {"key": "random_state", "kind": "param", "default": 42, "effect": "reproducibilidad"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "evaluacion",
+      "user_description": "Evaluacion con metricas f1 + accuracy, log en MLflow, divergencia entre notebook y src (E5/P5). Sinonimo neutro CC-11 para 'evaluacion'.",
+      "traces": [
+        {"n": 1, "what": "User carga conf/evaluacion/default.yaml", "cite": "conf/evaluacion/default.yaml:1", "data_in": "metrica: f1", "data_out": "ConfigDict"},
+        {"n": 2, "what": "User resuelve conf/evaluacion/f1.yaml con average=weighted", "cite": "conf/evaluacion/f1.yaml:1", "data_in": "average: weighted", "data_out": "ConfigDict"},
+        {"n": 3, "what": "src/features.py::engineer_features_v1 aplica StandardScaler", "cite": "src/features.py:9", "data_in": "df", "data_out": "df_scaled"},
+        {"n": 4, "what": "notebooks/02_features.ipynb aplica MinMaxScaler (E5 divergencia)", "cite": "notebooks/02_features.ipynb:1", "data_in": "df", "data_out": "df_minmax"},
+        {"n": 5, "what": "src/evaluate.py::evaluate_model calcula f1 con average=weighted", "cite": "src/evaluate.py:21", "data_in": "model, X, y", "data_out": "{'f1': 0.97, 'n_samples': 150}"},
+        {"n": 6, "what": "DVC stage 'evaluate' escribe metrics/eval.json", "cite": "dvc.yaml:14", "data_in": "models/model.pkl + data/iris.csv", "data_out": "metrics/eval.json"},
+        {"n": 7, "what": "P5 divergencia: feature engineering divergente produce metricas inconsistentes", "cite": "tests/test_features_divergence.py:36", "data_in": "StandardScaler vs MinMaxScaler", "data_out": "metrics diferentes"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/evaluate.py", "line": 14, "kind": "metrica_branch", "condition_text": "metrica in {'f1', 'accuracy'}", "branches": [{"label": "ok_f1", "target_line": 21}, {"label": "ok_accuracy", "target_line": 22}, {"label": "fail_unknown_metrica", "target_line": 17}]},
+        {"id": "DP-004", "file": "src/features.py", "line": 9, "kind": "scaler_divergence", "condition_text": "StandardScaler (src) vs MinMaxScaler (notebook)", "branches": [{"label": "ok_standard", "target_line": 9}, {"label": "ok_minmax_notebook", "target_line": 0}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "evaluate_model con metrica=f1 + average=weighted", "user_sees": "{'f1': 0.97, 'n_samples': 150}", "side_effects": ["INSERT en metrics/eval.json"], "reversible": true, "final_state": "metrics logged"},
+        {"id": "R-02", "category": "validation_input", "conditions": "metrica invalida ('unknown_metric')", "user_sees": "ValueError: metrica desconocida", "side_effects": [], "reversible": true, "final_state": "error"},
+        {"id": "R-03", "category": "success_partial", "conditions": "P5 divergencia: notebook vs src", "user_sees": "metricas diferentes entre notebook y src", "side_effects": ["inconsistencia entre artefactos"], "reversible": false, "final_state": "metricas inconsistentes"},
+        {"id": "R-04", "category": "error_constraint", "conditions": "X vacio (sin datos)", "user_sees": "model.predict([]) retorna []", "side_effects": [], "reversible": true, "final_state": "pred vacio"},
+        {"id": "R-05", "category": "success_full", "conditions": "evaluate_model con metrica=accuracy", "user_sees": "{'accuracy': 0.97, 'n_samples': 150}", "side_effects": [], "reversible": true, "final_state": "metrics OK"},
+        {"id": "R-06", "category": "noop_silent", "conditions": "metrics ya escritos, sin cambios en data", "user_sees": "'metrics/eval.json is up to date' (no-op)", "side_effects": [], "reversible": true, "final_state": "cache hit"},
+        {"id": "R-07", "category": "success_full", "conditions": "log_metrics en MLflow", "user_sees": "metricas disponibles en MLflow UI", "side_effects": ["INSERT en mlruns/metrics"], "reversible": true, "final_state": "tracking completo"}
+      ],
+      "config": [
+        {"key": "metrica", "kind": "param", "default": "f1", "effect": "metrica de evaluacion"},
+        {"key": "average", "kind": "param", "default": "weighted", "effect": "tipo de promedio f1"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "inferencia",
+      "user_description": "Servicio de inferencia FastAPI que carga el modelo desde MLflow registry y predice sobre features del iris. Sinonimo neutro CC-11 para 'inferencia'.",
+      "traces": [
+        {"n": 1, "what": "User hace POST /inferencia con features {5.1, 3.5, 1.4, 0.2}", "cite": "src/app/main.py:46", "data_in": "PredictRequest JSON", "data_out": "PredictResponse"},
+        {"n": 2, "what": "FastAPI valida PredictRequest con pydantic", "cite": "src/app/main.py:24", "data_in": "JSON body", "data_out": "PredictRequest validado o 422"},
+        {"n": 3, "what": "_get_model carga model desde MLflow por nombre 'iris_clf'", "cite": "src/app/main.py:32", "data_in": "model_name + stage", "data_out": "model loaded o 404"},
+        {"n": 4, "what": "P4 trap: si model_name='iris_classifier_legacy' el load falla con 404", "cite": "src/app/main.py:36", "data_in": "model_uri", "data_out": "HTTPException 404"},
+        {"n": 5, "what": "model.predict(df) retorna species", "cite": "src/app/main.py:43", "data_in": "DataFrame con 1 row", "data_out": "pred: 'setosa'/'versicolor'/'virginica'"},
+        {"n": 6, "what": "FastAPI serializa respuesta JSON", "cite": "src/app/main.py:43", "data_in": "PredictResponse", "data_out": "Response JSON 200"},
+        {"n": 7, "what": "TestClient de FastAPI valida el endpoint sin servidor uvicorn", "cite": "tests/conftest.py:25", "data_in": "TestClient", "data_out": "tests pytest OK"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "src/app/main.py", "line": 32, "kind": "model_load_branch", "condition_text": "mlflow.pyfunc.load_model(models:/{name}@{stage})", "branches": [{"label": "ok_found", "target_line": 36}, {"label": "fail_404_p4_trap", "target_line": 38}]},
+        {"id": "DP-006", "file": "src/app/main.py", "line": 25, "kind": "request_validation", "condition_text": "PredictRequest pydantic", "branches": [{"label": "ok_valid", "target_line": 46}, {"label": "fail_422_invalid", "target_line": 25}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "model registrado + features validas", "user_sees": "{'species': 'setosa', 'model_name': 'iris_clf', 'model_version': 1}", "side_effects": ["INSERT en mlruns/predictions"], "reversible": true, "final_state": "pred OK"},
+        {"id": "R-02", "category": "error_external_service", "conditions": "model_name no registrado (P4 trap 'iris_classifier_legacy')", "user_sees": "HTTPException 404: model models:/iris_classifier_legacy@production not found", "side_effects": [], "reversible": true, "final_state": "404"},
+        {"id": "R-03", "category": "validation_input", "conditions": "features invalidas (sepal_length='not_a_number')", "user_sees": "422 Unprocessable Entity (pydantic)", "side_effects": [], "reversible": true, "final_state": "422"},
+        {"id": "R-04", "category": "error_constraint", "conditions": "MLFLOW_TRACKING_URI no seteado", "user_sees": "MlflowException: default tracking uri failed", "side_effects": [], "reversible": true, "final_state": "500"},
+        {"id": "R-05", "category": "noop_silent", "conditions": "model registrado pero stage='None'", "user_sees": "model loaded con stage None", "side_effects": [], "reversible": true, "final_state": "stage None"},
+        {"id": "R-06", "category": "success_full", "conditions": "GET / (root endpoint)", "user_sees": "{'status': 'ok', 'service': 'fxpm-inference'}", "side_effects": [], "reversible": true, "final_state": "OK"},
+        {"id": "R-07", "category": "error_external_service", "conditions": "model registry vacio (sin modelos registrados)", "user_sees": "HTTPException 404 en _get_model", "side_effects": [], "reversible": true, "final_state": "404 registry empty"}
+      ],
+      "config": [
+        {"key": "model_name", "kind": "param", "default": "iris_clf", "effect": "model a cargar"},
+        {"key": "stage", "kind": "param", "default": "production", "effect": "stage de MLflow"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-fastapi-root", "kind": "http", "name": "GET /", "handler": "root()", "file": "src/app/main.py:42", "pair": null},
+    {"id": "SRF-fastapi-inferencia", "kind": "http", "name": "POST /inferencia", "handler": "predict() carga models:/iris_clf@production", "file": "src/app/main.py:46", "pair": "SRF-mlflow-registry"},
+    {"id": "SRF-mlflow-registry", "kind": "mlflow", "name": "models:/iris_clf@production", "handler": "mlflow.pyfunc.load_model + mlflow.sklearn.log_model", "file": "src/register.py:7", "pair": "SRF-fastapi-inferencia"},
+    {"id": "SRF-dvc-train", "kind": "dvc-stage", "name": "train", "handler": "python train_model + joblib.dump", "file": "dvc.yaml:1", "pair": null},
+    {"id": "SRF-dvc-evaluate", "kind": "dvc-stage", "name": "evaluate", "handler": "python evaluate_model + json.dump", "file": "dvc.yaml:14", "pair": null},
+    {"id": "SRF-dvc-register", "kind": "dvc-stage", "name": "register", "handler": "mlflow.sklearn.log_model registered_model_name=iris_clf", "file": "dvc.yaml:21", "pair": "SRF-mlflow-registry"},
+    {"id": "SRF-hydra-composition", "kind": "config", "name": "Hydra Compose", "handler": "@package _global_ + defaults", "file": "conf/config.yaml:1", "pair": null},
+    {"id": "SRF-train-model", "kind": "function", "name": "train_model", "handler": "RandomForestClassifier o LogisticRegression con random_state=42 (E6)", "file": "src/train.py:24", "pair": null},
+    {"id": "SRF-evaluate-model", "kind": "function", "name": "evaluate_model", "handler": "f1_score o accuracy_score", "file": "src/evaluate.py:21", "pair": null},
+    {"id": "SRF-engineer-features", "kind": "function", "name": "engineer_features_v1", "handler": "StandardScaler (E5/P5)", "file": "src/features.py:9", "pair": null},
+    {"id": "SRF-legacy-train", "kind": "function", "name": "legacy_train", "handler": "DecisionTreeClassifier sin random_state (S1+P6)", "file": "src/legacy_train.py:8", "pair": null},
+    {"id": "SRF-nb-features-v1", "kind": "notebook", "name": "02_features.ipynb", "handler": "MinMaxScaler (E5)", "file": "notebooks/02_features.ipynb:1", "pair": "SRF-engineer-features"},
+    {"id": "SRF-nb-evaluacion-legacy", "kind": "notebook", "name": "04_evaluacion_legacy.ipynb", "handler": "registered_model_name='iris_classifier_legacy' (P4 trap)", "file": "notebooks/04_evaluacion_legacy.ipynb:1", "pair": null},
+    {"id": "SRF-iris-csv", "kind": "data", "name": "data/iris.csv", "handler": "150 rows sklearn iris dataset", "file": "data/iris.csv:1", "pair": null},
+    {"id": "SRF-params-yaml", "kind": "config", "name": "params.yaml", "handler": "versioned parameters (semilla, n_estimators)", "file": "params.yaml:1", "pair": null},
+    {"id": "SRF-config-yaml", "kind": "config", "name": "conf/config.yaml", "handler": "Hydra @package _global_ (E2)", "file": "conf/config.yaml:1", "pair": null}
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "notebook_state_out_of_order", "where": "notebooks/01_exploratorio.ipynb:1", "description": "Estado oculto en notebooks: si una celda se ejecuta fuera de orden (e.g. del df antes de leerlo), el state queda inconsistente. nbval los ejecuta en orden.", "resolution": "La skill debe leer los notebooks y verificar el orden numerico de los archivos (00..06) y que cada celda asume el state de la anterior."},
+    {"id": "TRAP-E02", "kind": "hydra_compose", "where": "conf/config.yaml:1", "description": "Composicion de configuraciones Hydra con overrides via @package _global_ + defaults: [entrenamiento:default, evaluacion:default, inferencia:default].", "resolution": "La skill debe parsear conf/config.yaml y leer el bloque defaults; cada override apunta a un archivo existente."},
+    {"id": "TRAP-E03", "kind": "dvc_yaml_stages", "where": "dvc.yaml:1", "description": "Etapas definidas en dvc.yaml con deps/outs/metrics. 3 stages: train, evaluate, register.", "resolution": "La skill debe parsear dvc.yaml y leer el bloque stages; cada stage tiene cmd + deps + outs (o metrics)."},
+    {"id": "TRAP-E04", "kind": "mlflow_registered_model_name", "where": "notebooks/03_entrenamiento.ipynb:1", "description": "Modelos registrados por nombre en MLflow via mlflow.sklearn.log_model(..., registered_model_name='iris_clf').", "resolution": "La skill debe buscar el argumento registered_model_name= en el codigo y verificar que el nombre aparece tambien en src/app/main.py (carga) y conf/inferencia/default.yaml (config)."},
+    {"id": "TRAP-E05", "kind": "feature_engineering_duplicated", "where": "src/features.py:9", "description": "Feature engineering duplicado entre src/features.py (StandardScaler) y notebooks/02_features.ipynb (MinMaxScaler). Las metricas difieren.", "resolution": "La skill debe leer ambos archivos y comparar los scalers. La unica fuente de verdad deberia ser src/."},
+    {"id": "TRAP-E06", "kind": "random_state_reproducible", "where": "src/train.py:24", "description": "Semillas y aleatoriedad: train_model acepta random_state con default 42. legacy_train (P6) no lo acepta.", "resolution": "La skill debe verificar que todas las funciones que inicializan modelos aceptan random_state; si alguna no lo hace, documentar como P6 trap."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "delete_state_in_notebook", "where": "notebooks/06_setup_with_delete.ipynb:1", "description": "Notebook con `del df` que rompe el state si se ejecuta fuera de orden. nbval detecta el NameError.", "resolution": "La skill debe buscar `del ` en notebooks y documentar como trampa P1 de state out-of-order."},
+    {"id": "TRAP-P02", "kind": "hydra_override_invalid", "where": "conf/config.yaml:2", "description": "Hydra override que apunta a un config inexistente (e.g. entrenamientos:no_existe). Lanza MissingConfigException.", "resolution": "La skill debe parsear el bloque defaults y verificar que cada override apunta a un archivo existente."},
+    {"id": "TRAP-P03", "kind": "dvc_stage_outs_missing", "where": "dvc.yaml:21", "description": "DVC stage 'register' declara outs: mlruns/.placeholder pero el cmd de MLflow puede no crearlo exactamente en ese path.", "resolution": "La skill debe verificar que cada stage produce los outs declarados; si no, ejecutar dvc repro -f para forzar."},
+    {"id": "TRAP-P04", "kind": "mlflow_registered_wrong_name", "where": "notebooks/04_evaluacion_legacy.ipynb:1", "description": "Notebook legacy registra con nombre 'iris_classifier_legacy' (no 'iris_clf'). FastAPI no lo encuentra.", "resolution": "La skill debe buscar todos los registered_model_name= y verificar que el nombre correcto aparece en FastAPI."},
+    {"id": "TRAP-P05", "kind": "feature_engineering_divergence", "where": "src/features.py:9", "description": "Divergencia StandardScaler (src) vs MinMaxScaler (notebook) produce metricas inconsistentes. La unica fuente de verdad deberia ser src/.", "resolution": "La skill debe leer ambos y reportar las diferencias; flaggear como P5 trap."},
+    {"id": "TRAP-P06", "kind": "no_random_state", "where": "src/legacy_train.py:8", "description": "legacy_train() no acepta random_state (P6 adyacente a S1). Produce modelos no reproducibles.", "resolution": "La skill debe verificar que todas las funciones de entrenamiento aceptan random_state; si alguna no lo hace, flaggear como P6."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_function", "where": "src/legacy_train.py:8", "description": "legacy_train declarado pero nunca invocado (verificado por grep en otros modulos).", "resolution": "La skill debe recorrer todos los archivos .py y verificar que el nombre de la funcion dead NO aparece (excepto el archivo de definicion)."},
+    {"id": "TRAP-S02", "kind": "minimal_setup_notebook", "where": "notebooks/00_setup.ipynb:1", "description": "Notebook 00_setup contiene solo imports + load iris. No deberia tener feature engineering o training.", "resolution": "La skill debe verificar que el notebook mas basico (prefijo 00) NO contiene logica de ML."},
+    {"id": "TRAP-S03", "kind": "trivial_test", "where": "tests/test_deprecated.py:1", "description": "test_deprecated.py con pytest.skip(reason='placeholder for S3 demo'). Test siempre se salta.", "resolution": "La skill debe buscar pytest.skip en tests/ y documentar que no aporta cobertura real."}
+  ],
+  "call_graph": [
+    {"from": "EP-nb-03-entrenamiento", "to": "EP-src-train", "kind": "IMPORT", "via": "from src.train import train_model, track_with_mlflow"},
+    {"from": "EP-src-train", "to": "EP-src-register", "kind": "DELEGATE", "via": "track_with_mlflow(model, X, model_name='iris_clf')"},
+    {"from": "EP-src-register", "to": "EP-mlflow-registry", "kind": "MLFLOW_LOG", "via": "mlflow.sklearn.log_model(model, 'model', registered_model_name='iris_clf')"},
+    {"from": "EP-src-app-main", "to": "EP-mlflow-registry", "kind": "MLFLOW_LOAD", "via": "mlflow.pyfunc.load_model(models:/{name}@{stage})"},
+    {"from": "EP-dvc-yaml-train", "to": "EP-src-train", "kind": "EXEC", "via": "dvc repro stage=train"},
+    {"from": "EP-dvc-yaml-evaluate", "to": "EP-src-evaluate", "kind": "EXEC", "via": "dvc repro stage=evaluate"},
+    {"from": "EP-dvc-yaml-register", "to": "EP-src-register", "kind": "EXEC", "via": "dvc repro stage=register"},
+    {"from": "EP-conf-config-yaml", "to": "EP-conf-entrenamiento-default", "kind": "HYDRA_INCLUDE", "via": "defaults: [entrenamiento:default, ...]"},
+    {"from": "EP-conf-entrenamiento-default", "to": "EP-conf-entrenamiento-random-forest", "kind": "HYDRA_OVERRIDE", "via": "+entrenamiento=random_forest"},
+    {"from": "EP-nb-02-features", "to": "EP-data-iris-csv", "kind": "READ", "via": "pd.read_csv('/fixture/data/iris.csv')"},
+    {"from": "EP-nb-04-evaluacion-legacy", "to": "EP-mlflow-registry", "kind": "MLFLOW_LOG_WRONG", "via": "registered_model_name='iris_classifier_legacy' (P4)"}
+  ],
+  "config": [
+    {"key": "MLFLOW_TRACKING_URI", "kind": "env", "default": "file:///fixture/mlruns", "effect": "MLflow file store"},
+    {"key": "datos.ruta", "kind": "param", "default": "/fixture/data/iris.csv", "effect": "path al dataset"},
+    {"key": "semilla", "kind": "param", "default": 42, "effect": "random_state para reproducibilidad"},
+    {"key": "mlflow.model_name", "kind": "param", "default": "iris_clf", "effect": "nombre del modelo registrado"},
+    {"key": "inferencia.stage", "kind": "param", "default": "production", "effect": "stage de MLflow a cargar"},
+    {"key": "PYTHONPATH", "kind": "env", "default": "/fixture", "effect": "path para imports de src/"}
+  ],
+  "tests": [
+    {"file": "tests/test_train.py", "feature": "FEAT-001 entrenamiento", "tests": 5, "covers": ["R-01", "R-02", "R-04"]},
+    {"file": "tests/test_evaluate.py", "feature": "FEAT-002 evaluacion", "tests": 5, "covers": ["R-01", "R-02", "R-04", "R-05"]},
+    {"file": "tests/test_inference.py", "feature": "FEAT-003 inferencia", "tests": 5, "covers": ["R-01", "R-02", "R-03", "R-06"]},
+    {"file": "tests/test_hydra_config.py", "feature": "FEAT-001 entrenamiento (E2)", "tests": 10, "covers": ["R-01"]},
+    {"file": "tests/test_dvc_pipeline.py", "feature": "FEAT-001 entrenamiento (E3)", "tests": 10, "covers": ["R-05", "R-06"]},
+    {"file": "tests/test_mlflow_registry.py", "feature": "FEAT-001 entrenamiento (E4)", "tests": 5, "covers": ["R-01", "R-04"]},
+    {"file": "tests/test_reproducibility.py", "feature": "FEAT-001 entrenamiento (E6+P6)", "tests": 4, "covers": ["R-01"]},
+    {"file": "tests/test_features_divergence.py", "feature": "FEAT-002 evaluacion (P5)", "tests": 3, "covers": ["R-03"]},
+    {"file": "tests/test_traps_ecosystem.py", "feature": "all (ecosystem traps)", "tests": 7, "covers": ["TRAP-E01", "TRAP-E02", "TRAP-E03", "TRAP-E04", "TRAP-E05", "TRAP-E06"]},
+    {"file": "tests/test_traps_package.py", "feature": "all (package traps)", "tests": 6, "covers": ["TRAP-P01", "TRAP-P02", "TRAP-P03", "TRAP-P04", "TRAP-P05", "TRAP-P06"]},
+    {"file": "tests/test_traps_superficial.py", "feature": "all (superficial traps)", "tests": 3, "covers": ["TRAP-S01", "TRAP-S02", "TRAP-S03"]},
+    {"file": "tests/test_deprecated.py", "feature": "all (deprecated)", "tests": 1, "covers": ["TRAP-S03"]}
+  ]
+}

@@ -1,0 +1,31 @@
+stages:
+  train:
+    cmd: python -c "import pandas as pd, joblib; from src.train import train_model; df=pd.read_csv('/fixture/data/iris.csv'); X=df.drop(columns=['species']); y=df['species']; m=train_model('random_forest', X, y, random_state=42, n_estimators=100); joblib.dump(m, '/fixture/models/model.pkl')"
+    deps:
+      - data/iris.csv
+      - src/train.py
+    params:
+      - semilla
+    outs:
+      - models/model.pkl
+
+  evaluate:
+    cmd: python -c "import pandas as pd, json, joblib; from src.evaluate import evaluate_model; df=pd.read_csv('/fixture/data/iris.csv'); X=df.drop(columns=['species']); y=df['species']; m=joblib.load('/fixture/models/model.pkl'); metrics=evaluate_model(m, X, y, metrica='f1', average='weighted'); json.dump(metrics, open('/fixture/metrics/eval.json','w'))"
+    deps:
+      - models/model.pkl
+      - data/iris.csv
+      - src/evaluate.py
+    params:
+      - semilla
+    metrics:
+      - metrics/eval.json:
+          cache: false
+
+  register:
+    cmd: python -c "import mlflow, mlflow.sklearn, joblib; mlflow.set_tracking_uri('file:///fixture/mlruns'); mlflow.set_experiment('fxpm-experiment'); m=joblib.load('/fixture/models/model.pkl'); mlflow.sklearn.log_model(m, 'model', registered_model_name='iris_clf')"
+    deps:
+      - models/model.pkl
+      - metrics/eval.json
+      - src/register.py
+    outs:
+      - mlruns/.placeholder
