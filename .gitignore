@@ -17,3 +17,6 @@ build/
 Thumbs.db
 # Vite/Vitest cache
 .vite/
+
+# Build artifact (C++ header stray file)
+fxproc/
