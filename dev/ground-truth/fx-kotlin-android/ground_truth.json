@@ -1,0 +1,234 @@
+{
+  "fixture": "fx-kotlin-android",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-app", "artifact": "FxAndroidApp @HiltAndroidApp", "file": "app/src/main/java/com/example/fxandroid/FxAndroidApp.kt:5"},
+    {"id": "EP-legacy-activity", "artifact": "LegacyProductActivity (manifest)", "file": "app/src/main/AndroidManifest.xml:18"},
+    {"id": "EP-sync-receiver", "artifact": "SyncTriggerReceiver (manifest)", "file": "app/src/main/AndroidManifest.xml:23"},
+    {"id": "EP-sync-service", "artifact": "SyncService (manifest)", "file": "app/src/main/AndroidManifest.xml:36"},
+    {"id": "EP-sync-worker", "artifact": "SyncWorker @HiltWorker", "file": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt:10"},
+    {"id": "EP-scan-screen", "artifact": "ScanScreen Compose", "file": "app/src/main/java/com/example/fxandroid/ui/scan/ScanScreen.kt:21"},
+    {"id": "EP-history-screen", "artifact": "HistoryScreen Compose", "file": "app/src/main/java/com/example/fxandroid/ui/history/HistoryScreen.kt:13"},
+    {"id": "EP-premium-screen", "artifact": "PremiumGateScreen Compose", "file": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt:19"},
+    {"id": "EP-deeplink-scan", "artifact": "fxandroid://scan/{ean}", "file": "app/src/main/res/navigation/nav_graph.xml:9"},
+    {"id": "EP-deeplink-history", "artifact": "fxandroid://history/{filter}", "file": "app/src/main/res/navigation/nav_graph.xml:16"},
+    {"id": "EP-deeplink-premium", "artifact": "fxandroid://premium", "file": "app/src/main/res/navigation/nav_graph.xml:23"},
+    {"id": "EP-premium-paid", "artifact": "PremiumEnabled (paid flavor only)", "file": "app/src/paid/java/com/example/fxandroid/featurepremium/PremiumEnabled.kt:5"},
+    {"id": "EP-premium-free", "artifact": "PremiumDisabled (free flavor only)", "file": "app/src/free/java/com/example/fxandroid/featurepremium/PremiumDisabled.kt:5"}
+  ],
+  "modules": [
+    {"id": "MOD-app", "path": "app/src/main/java/com/example/fxandroid/FxAndroidApp.kt", "summary": "@HiltAndroidApp Application"},
+    {"id": "MOD-di", "path": "app/src/main/java/com/example/fxandroid/di", "summary": "AppModule (P2 repo sin Singleton) + DatabaseModule (P4 sin migraciones)"},
+    {"id": "MOD-data-local", "path": "app/src/main/java/com/example/fxandroid/data/local", "summary": "FxDatabase + ProductDao + HistoryDao + ScanDao (E3, P1)"},
+    {"id": "MOD-data-remote", "path": "app/src/main/java/com/example/fxandroid/data/remote", "summary": "ProductRemoteSource stub"},
+    {"id": "MOD-data-repo", "path": "app/src/main/java/com/example/fxandroid/data/repository", "summary": "ProductRepository + HistoryRepository interfaces + Impl"},
+    {"id": "MOD-domain", "path": "app/src/main/java/com/example/fxandroid/domain/model", "summary": "Product + HistoryEntry"},
+    {"id": "MOD-ui-theme", "path": "app/src/main/java/com/example/fxandroid/ui/theme", "summary": "Theme + Color + Type"},
+    {"id": "MOD-ui-scan", "path": "app/src/main/java/com/example/fxandroid/ui/scan", "summary": "ScanScreen + ScanViewModel (P6 silent catch)"},
+    {"id": "MOD-ui-history", "path": "app/src/main/java/com/example/fxandroid/ui/history", "summary": "HistoryScreen + HistoryViewModel"},
+    {"id": "MOD-ui-legacy", "path": "app/src/main/java/com/example/fxandroid/ui/legacy", "summary": "LegacyProductActivity (P5 execSQL) + LegacyProductFragment (S3) + LegacyBindingAdapter"},
+    {"id": "MOD-ui-premium", "path": "app/src/main/java/com/example/fxandroid/ui/premium", "summary": "PremiumGateScreen + PremiumState sealed class"},
+    {"id": "MOD-work", "path": "app/src/main/java/com/example/fxandroid/work", "summary": "SyncWorker (Hilt) + SyncScheduler (P3 expedited) + SyncService"},
+    {"id": "MOD-receiver", "path": "app/src/main/java/com/example/fxandroid/receiver", "summary": "SyncTriggerReceiver (manifest)"},
+    {"id": "MOD-nav", "path": "app/src/main/java/com/example/fxandroid/navigation", "summary": "Routes + FxNavGraph Compose"},
+    {"id": "MOD-util", "path": "app/src/main/java/com/example/fxandroid/util", "summary": "LegacyDateFormatter (S1) + EnvConfig (S2)"},
+    {"id": "MOD-featurepaid-free", "path": "app/src/free/java/com/example/fxandroid/featurepremium/PremiumDisabled.kt", "summary": "free flavor solo (E4)"},
+    {"id": "MOD-featurepaid-paid", "path": "app/src/paid/java/com/example/fxandroid/featurepremium/PremiumEnabled.kt", "summary": "paid flavor solo (E4)"}
+  ],
+  "dependencies": [
+    {"name": "android-gradle-plugin", "version": "8.7.2", "scope": "build", "manifest": "build.gradle.kts (com.android.application)"},
+    {"name": "kotlin", "version": "2.0.21", "scope": "build+runtime", "manifest": "build.gradle.kts (kotlin.android + kotlin.compose)"},
+    {"name": "ksp", "version": "2.0.21-1.0.27", "scope": "build", "manifest": "build.gradle.kts (com.google.devtools.ksp)"},
+    {"name": "hilt", "version": "2.51.1", "scope": "build+runtime", "manifest": "app/build.gradle.kts (hilt.android + hilt.compiler)"},
+    {"name": "hilt-work", "version": "1.2.0", "scope": "build+runtime", "manifest": "app/build.gradle.kts (hilt-work + hilt-androidx-compiler)"},
+    {"name": "hilt-navigation-compose", "version": "1.2.0", "scope": "build+runtime", "manifest": "app/build.gradle.kts"},
+    {"name": "room", "version": "2.6.1", "scope": "build+runtime", "manifest": "app/build.gradle.kts (room-runtime + room-ktx + room-compiler)"},
+    {"name": "compose-bom", "version": "2024.10.00", "scope": "build+runtime", "manifest": "app/build.gradle.kts (compose-bom)"},
+    {"name": "navigation-compose", "version": "2.8.4", "scope": "build+runtime", "manifest": "app/build.gradle.kts"},
+    {"name": "workmanager", "version": "2.10.0", "scope": "build+runtime", "manifest": "app/build.gradle.kts (work-runtime-ktx)"},
+    {"name": "lifecycle", "version": "2.8.7", "scope": "build+runtime", "manifest": "app/build.gradle.kts"},
+    {"name": "appcompat", "version": "1.7.0", "scope": "build+runtime", "manifest": "app/build.gradle.kts (para vista legacy)"},
+    {"name": "material", "version": "1.12.0", "scope": "build+runtime", "manifest": "app/build.gradle.kts"},
+    {"name": "kotlinx-coroutines", "version": "1.9.0", "scope": "build+runtime", "manifest": "app/build.gradle.kts"},
+    {"name": "robolectric", "version": "4.13", "scope": "test", "manifest": "app/build.gradle.kts (testImplementation)"},
+    {"name": "junit5", "version": "5.11.3", "scope": "test", "manifest": "app/build.gradle.kts (testImplementation)"},
+    {"name": "truth", "version": "1.4.4", "scope": "test", "manifest": "app/build.gradle.kts (testImplementation)"},
+    {"name": "compileSdk", "version": "35", "scope": "build", "manifest": "app/build.gradle.kts"},
+    {"name": "minSdk", "version": "24", "scope": "build", "manifest": "app/build.gradle.kts"},
+    {"name": "targetSdk", "version": "35", "scope": "build", "manifest": "app/build.gradle.kts"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "escaneo-de-productos",
+      "user_description": "Escaneo de productos via EAN 13 con codigo de barras, Compose UI, validacion en ViewModel y persistencia Room.",
+      "traces": [
+        {"n": 1, "what": "Usuario abre la app, ve ScanScreen", "cite": "app/src/main/java/com/example/fxandroid/ui/scan/ScanScreen.kt:21", "data_in": "view rendered", "data_out": "Compose tree"},
+        {"n": 2, "what": "Usuario teclea EAN y pulsa Escanear", "cite": "app/src/main/java/com/example/fxandroid/ui/scan/ScanScreen.kt:33", "data_in": "ean: String", "data_out": "viewModel.onScanClick(ean)"},
+        {"n": 3, "what": "ViewModel valida formato (13 digitos)", "cite": "app/src/main/java/com/example/fxandroid/ui/scan/ScanViewModel.kt:30", "data_in": "ean", "data_out": "null o error"},
+        {"n": 4, "what": "ProductRepository.scan busca en remote + inserta en Room", "cite": "app/src/main/java/com/example/fxandroid/data/repository/ProductRepository.kt:21", "data_in": "ean", "data_out": "ProductEntity"},
+        {"n": 5, "what": "ProductDao.insert con OnConflictStrategy.IGNORE", "cite": "app/src/main/java/com/example/fxandroid/data/local/dao/ProductDao.kt:19", "data_in": "ProductEntity", "data_out": "Long rowId"},
+        {"n": 6, "what": "ViewModel emite ScanState.Success(product)", "cite": "app/src/main/java/com/example/fxandroid/ui/scan/ScanViewModel.kt:40", "data_in": "Product", "data_out": "ScanState.Success"},
+        {"n": 7, "what": "deep link fxandroid://scan/{ean} abre ScanScreen con EAN precargado", "cite": "app/src/main/java/com/example/fxandroid/navigation/FxNavGraph.kt:18", "data_in": "uri", "data_out": "prefilledEan"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "app/src/main/java/com/example/fxandroid/ui/scan/ScanViewModel.kt", "line": 30, "kind": "validation", "condition_text": "ean.length != 13 || !ean.all { it.isDigit() }", "branches": [{"label": "13 digits -> null (ok)", "target_line": 32}, {"label": "wrong length -> EAN debe ser 13 digitos", "target_line": 31}, {"label": "non-digit -> EAN solo digitos", "target_line": 32}]},
+        {"id": "DP-002", "file": "app/src/main/java/com/example/fxandroid/data/repository/ProductRepository.kt", "line": 22, "kind": "exists_or_remote", "condition_text": "val existing = productDao.findByEan(ean)", "branches": [{"label": "exists -> return existing", "target_line": 23}, {"label": "remote.fetchByEan null -> return null", "target_line": 25}, {"label": "remote non-null -> new ProductEntity", "target_line": 26}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "EAN 13 digitos valido + remote disponible", "user_sees": "Texto 'Producto guardado: <name>' + EAN queda en products table", "side_effects": ["Insert en products"], "reversible": true, "final_state": "ScanState.Success"},
+        {"id": "R-02", "category": "validation_input", "conditions": "EAN con letras o longitud != 13", "user_sees": "Texto 'Error: EAN debe ser 13 digitos' o 'EAN solo digitos'", "side_effects": [], "reversible": true, "final_state": "ScanState.Error"},
+        {"id": "R-03", "category": "permission_denied", "conditions": "CAMERA permission revoked", "user_sees": "Boton 'Conceder permiso' (UX simplification)", "side_effects": [], "reversible": true, "final_state": "scan bloqueado hasta aceptar"},
+        {"id": "R-04", "category": "error_conflict", "conditions": "EAN ya existe en products (unique index)", "user_sees": "Devuelve la entry existente (no error visible al usuario)", "side_effects": ["no insert nuevo"], "reversible": true, "final_state": "ScanState.Success con entry previa"},
+        {"id": "R-05", "category": "error_external_service", "conditions": "Remote fetchByEan devuelve null (no empieza con 84)", "user_sees": "Texto 'Error: Producto no encontrado'", "side_effects": [], "reversible": true, "final_state": "ScanState.Error"},
+        {"id": "R-06", "category": "success_offline", "conditions": "Sin red + EAN ya estaba en products", "user_sees": "Texto 'Producto guardado' desde cache local", "side_effects": [], "reversible": true, "final_state": "ScanState.Success"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "Uri fxandroid://scan/{ean} recibido", "user_sees": "ScanScreen con EAN precargado + mismo flujo R-01..R-06", "side_effects": ["prefilledEan"], "reversible": true, "final_state": "nav abre scan con args"}
+      ],
+      "config": [
+        {"key": "android.compileSdk", "kind": "Gradle", "default": "35", "effect": "compile against Android 15 API"},
+        {"key": "android.minSdk", "kind": "Gradle", "default": "24", "effect": "Android 7.0+"},
+        {"key": "ean.length", "kind": "constant", "default": "13", "effect": "EAN-13 standard"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "historial",
+      "user_description": "Lista paginada de entradas de historial con filtro por actor, persistida en Room.",
+      "traces": [
+        {"n": 1, "what": "Usuario navega a HistoryScreen", "cite": "app/src/main/java/com/example/fxandroid/ui/history/HistoryScreen.kt:13", "data_in": "nav", "data_out": "Compose tree"},
+        {"n": 2, "what": "LaunchedEffect llama viewModel.load()", "cite": "app/src/main/java/com/example/fxandroid/ui/history/HistoryScreen.kt:21", "data_in": "view appeared", "data_out": "Flow<List<HistoryEntity>>"},
+        {"n": 3, "what": "HistoryRepository.page(limit, offset)", "cite": "app/src/main/java/com/example/fxandroid/data/repository/HistoryRepository.kt:25", "data_in": "limit, offset", "data_out": "Flow<List<HistoryEntity>>"},
+        {"n": 4, "what": "HistoryDao.page con @Query LIMIT/OFFSET", "cite": "app/src/main/java/com/example/fxandroid/data/local/dao/HistoryDao.kt:13", "data_in": "limit, offset", "data_out": "List<HistoryEntity>"},
+        {"n": 5, "what": "ViewModel mapea a HistoryEntry y emite", "cite": "app/src/main/java/com/example/fxandroid/ui/history/HistoryViewModel.kt:27", "data_in": "List<HistoryEntity>", "data_out": "List<HistoryEntry>"},
+        {"n": 6, "what": "Composable renderiza LazyColumn o placeholder", "cite": "app/src/main/java/com/example/fxandroid/ui/history/HistoryScreen.kt:31", "data_in": "entries", "data_out": "List<Text(...))"},
+        {"n": 7, "what": "deep link fxandroid://history/{filter} activa search", "cite": "app/src/main/java/com/example/fxandroid/navigation/FxNavGraph.kt:29", "data_in": "filter", "data_out": "viewModel.search(filter)"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "app/src/main/java/com/example/fxandroid/ui/history/HistoryViewModel.kt", "line": 23, "kind": "try_catch", "condition_text": "try { repo.page(...).collect { ... } } catch (e: Exception) { _error.value = ... }", "branches": [{"label": "ok -> _entries actualizadas", "target_line": 25}, {"label": "exception -> _error = 'Error de base de datos'", "target_line": 28}]},
+        {"id": "DP-004", "file": "app/src/main/java/com/example/fxandroid/ui/history/HistoryScreen.kt", "line": 20, "kind": "filter_or_load", "condition_text": "LaunchedEffect(initialFilter)", "branches": [{"label": "filter != null -> search(filter)", "target_line": 21}, {"label": "filter == null -> load()", "target_line": 22}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "history table no vacia + initialFilter null", "user_sees": "LazyColumn con hasta 50 entradas", "side_effects": [], "reversible": true, "final_state": "entries pobladas"},
+        {"id": "R-02", "category": "no_op_empty", "conditions": "history table vacia", "user_sees": "Texto 'Aun no hay escaneos'", "side_effects": [], "reversible": true, "final_state": "placeholder visible"},
+        {"id": "R-03", "category": "error_internal_db", "conditions": "query falla (tabla no existe u otro)", "user_sees": "Texto rojo 'Error de base de datos: <msg>'", "side_effects": [], "reversible": true, "final_state": "error visible"},
+        {"id": "R-04", "category": "success_paginated", "conditions": "usuario hace scroll al fondo de la lista", "user_sees": "LazyColumn carga siguiente pagina (50 mas)", "side_effects": ["pagina adicional"], "reversible": true, "final_state": "entries.extend(...)"},
+        {"id": "R-05", "category": "success_partial", "conditions": "filter valido + HistoryDao.findByActor devuelve resultados", "user_sees": "Lista filtrada por actor", "side_effects": [], "reversible": true, "final_state": "entries = filter"},
+        {"id": "R-06", "category": "timeout_external", "conditions": "Query > 2s", "user_sees": "Sin manejo explicito: el Flow sigue colgado (trampa paquete P6 silent catch no se aplica aqui)", "side_effects": [], "reversible": true, "final_state": "UI no actualiza"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxandroid://history/{filter} desde notificacion", "user_sees": "HistoryScreen con filtro precargado = search(filter)", "side_effects": [], "reversible": true, "final_state": "entries = filter"}
+      ],
+      "config": [
+        {"key": "page.limit", "kind": "constant", "default": "50", "effect": "tamanio de pagina"},
+        {"key": "page.offset", "kind": "constant", "default": "0", "effect": "paginacion"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "sincronizacion-en-segundo-plano",
+      "user_description": "SyncWorker que persiste una entrada en history cada vez que se encola, con WorkManager constraints y expedited.",
+      "traces": [
+        {"n": 1, "what": "SyncScheduler.scheduleOnce() encola OneTimeWorkRequest", "cite": "app/src/main/java/com/example/fxandroid/work/SyncScheduler.kt:20", "data_in": "ctx", "data_out": "WorkRequest"},
+        {"n": 2, "what": "WorkManager.enqueueUniqueWork('sync', REPLACE, request)", "cite": "app/src/main/java/com/example/fxandroid/work/SyncScheduler.kt:28", "data_in": "WorkRequest", "data_out": "Operation"},
+        {"n": 3, "what": "Worker activa SyncWorker.doWork()", "cite": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt:20", "data_in": "Context + WorkerParameters", "data_out": "Result"},
+        {"n": 4, "what": "historyRepository.upsert(HistoryEntity)", "cite": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt:23", "data_in": "HistoryEntity", "data_out": "Long rowId"},
+        {"n": 5, "what": "Si ok -> Result.success(); si falla -> Result.retry()", "cite": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt:30", "data_in": "Result", "data_out": "Worker terminado"},
+        {"n": 6, "what": "SyncTriggerReceiver tambien puede encolar sync", "cite": "app/src/main/java/com/example/fxandroid/receiver/SyncTriggerReceiver.kt:8", "data_in": "Intent", "data_out": "SyncWorker enqueued"},
+        {"n": 7, "what": "deep link fxandroid://sync/foo navega a scan (sync no es destino)", "cite": "app/src/main/res/navigation/nav_graph.xml:1", "data_in": "uri", "data_out": "404 Compose"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "app/src/main/java/com/example/fxandroid/work/SyncScheduler.kt", "line": 21, "kind": "expedited", "condition_text": "setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)", "branches": [{"label": "expedited + sin POST_NOTIFICATIONS -> falla", "target_line": 21}, {"label": "sin POST_NOTIFICATIONS -> fallback non-expedited", "target_line": 21}]},
+        {"id": "DP-006", "file": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt", "line": 30, "kind": "try_catch", "condition_text": "try { upsert } catch { retry() }", "branches": [{"label": "ok -> Result.success()", "target_line": 30}, {"label": "exception -> Result.retry()", "target_line": 32}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "doWork ok + DB escribible", "user_sees": "Log 'sync ok' (no visible al usuario), entry insertada", "side_effects": ["history row insertada"], "reversible": true, "final_state": "Result.success"},
+        {"id": "R-02", "category": "error_external_service", "conditions": "sin red (ConnectivityManager sin CONNECTED)", "user_sees": "Worker espera hasta que constraint se cumpla (15min backoff)", "side_effects": [], "reversible": true, "final_state": "Result.retry()"},
+        {"id": "R-03", "category": "error_external_service", "conditions": "DB lanza Exception", "user_sees": "Result.retry() con backoff exponencial (sin UI visible)", "side_effects": [], "reversible": true, "final_state": "worker reintentando"},
+        {"id": "R-04", "category": "noop_silent", "conditions": "Android 13+ sin POST_NOTIFICATIONS permission", "user_sees": "Worker falla silenciosamente (P3)", "side_effects": [], "reversible": false, "final_state": "sync nunca corre"},
+        {"id": "R-05", "category": "error_conflict", "conditions": "Worker se encola 2 veces seguidas (ExistingWorkPolicy.REPLACE)", "user_sees": "Solo 1 instance corre, la otra se descarta", "side_effects": [], "reversible": true, "final_state": "unique work enforced"},
+        {"id": "R-06", "category": "no_op_replaced", "conditions": "Usuario abre y cierra app rapidamente", "user_sees": "unique work 'sync' reemplaza la anterior", "side_effects": [], "reversible": true, "final_state": "trabajo anterior cancelado"},
+        {"id": "R-07", "category": "resource_not_found", "conditions": "deep link fxandroid://sync/foo", "user_sees": "404 en Compose navigation (sync no es destino)", "side_effects": [], "reversible": true, "final_state": "nav no encuentra destino"}
+      ],
+      "config": [
+        {"key": "worker.uniqueName", "kind": "constant", "default": "sync", "effect": "WorkManager unique work name"},
+        {"key": "worker.policy", "kind": "constant", "default": "REPLACE", "effect": "ExistingWorkPolicy"},
+        {"key": "worker.networkType", "kind": "constant", "default": "CONNECTED", "effect": "solo corre con red"}
+      ]
+    },
+    {
+      "id": "FEAT-004",
+      "name": "funcion-premium",
+      "user_description": "Funcionalidades premium que solo existen en el flavor `paid`; el flavor `free` solo tiene `PremiumDisabled`.",
+      "traces": [
+        {"n": 1, "what": "Usuario navega PremiumGateScreen", "cite": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt:19", "data_in": "nav", "data_out": "Compose tree"},
+        {"n": 2, "what": "resolvePremiumState() lee BuildConfig.PREMIUM_ENABLED", "cite": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt:14", "data_in": "BuildConfig", "data_out": "PremiumState"},
+        {"n": 3, "what": "Flavor paid: PremiumEnabled.advancedExport() disponible", "cite": "app/src/paid/java/com/example/fxandroid/featurepremium/PremiumEnabled.kt:8", "data_in": "call", "data_out": "String result"},
+        {"n": 4, "what": "Flavor free: PremiumDisabled.cta() muestra CTA", "cite": "app/src/free/java/com/example/fxandroid/featurepremium/PremiumDisabled.kt:8", "data_in": "call", "data_out": "String 'Comprar Pro'"},
+        {"n": 5, "what": "PremiumEnabled se inyecta via Hilt", "cite": "app/src/paid/java/com/example/fxandroid/featurepremium/PremiumEnabled.kt:6", "data_in": "@Inject", "data_out": "binding"},
+        {"n": 6, "what": "PremiumGateScreen renderiza segun PremiumState", "cite": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt:21", "data_in": "state", "data_out": "Composable"},
+        {"n": 7, "what": "deep link fxandroid://premium navega a PremiumGateScreen", "cite": "app/src/main/res/navigation/nav_graph.xml:22", "data_in": "uri", "data_out": "premium screen"}
+      ],
+      "decision_points": [
+        {"id": "DP-007", "file": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt", "line": 14, "kind": "config_flag", "condition_text": "BuildConfig.PREMIUM_ENABLED", "branches": [{"label": "true (paid) -> PremiumState.Enabled", "target_line": 15}, {"label": "false (free) -> PremiumState.Disabled", "target_line": 16}]},
+        {"id": "DP-008", "file": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt", "line": 22, "kind": "when_state", "condition_text": "when (state) { Enabled -> ..., Disabled -> ... }", "branches": [{"label": "Enabled -> Text + Button 'Usar exportador'", "target_line": 23}, {"label": "Disabled -> Text + Button 'Comprar Pro'", "target_line": 27}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "flavor paid + tap 'Usar exportador'", "user_sees": "PremiumEnabled.advancedExport() = 'advanced export result'", "side_effects": [], "reversible": true, "final_state": "premium usado"},
+        {"id": "R-02", "category": "no_op_disabled", "conditions": "flavor free + tap 'Comprar Pro'", "user_sees": "Texto 'Premium no disponible' + CTA 'Comprar Pro'", "side_effects": [], "reversible": true, "final_state": "premium bloqueado"},
+        {"id": "R-03", "category": "error_di", "conditions": "Inject PremiumEnabled en free flavor", "user_sees": "App crashea con Hilt MissingBinding al iniciar", "side_effects": [], "reversible": false, "final_state": "crash"},
+        {"id": "R-04", "category": "resource_not_found", "conditions": "nav_graph no incluye 'premium' en free flavor", "user_sees": "Deep link devuelve 404 nav", "side_effects": [], "reversible": true, "final_state": "nav no encuentra destino"},
+        {"id": "R-05", "category": "no_op_skipped", "conditions": "SyncWorker en free flavor con PRE sync premium", "user_sees": "Log 'premium disabled, skip'", "side_effects": [], "reversible": true, "final_state": "sync no hace premium"},
+        {"id": "R-06", "category": "validation_input", "conditions": "BuildConfig.PREMIUM_ENABLED = false (free) + tap en premium", "user_sees": "UI bloquea opcion", "side_effects": [], "reversible": true, "final_state": "premium bloqueado en runtime"},
+        {"id": "R-07", "category": "no_op_discarded", "conditions": "push notification con categoria premium en free flavor", "user_sees": "Notificacion descartada silenciosamente", "side_effects": [], "reversible": true, "final_state": "push no procesado"}
+      ],
+      "config": [
+        {"key": "flavor.tier", "kind": "Gradle dimension", "default": "free|paid", "effect": "define source sets free/paid"},
+        {"key": "BuildConfig.PREMIUM_ENABLED", "kind": "buildConfigField", "default": "false (free) / true (paid)", "effect": "runtime flag para premium"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-activity-legacy", "kind": "activity", "name": "LegacyProductActivity", "handler": "LegacyProductActivity.onCreate", "file": "app/src/main/java/com/example/fxandroid/ui/legacy/LegacyProductActivity.kt:14"},
+    {"id": "SRF-onclick-save", "kind": "layout-handler", "name": "onSaveClick", "handler": "LegacyProductActivity.onSaveClick", "file": "app/src/main/java/com/example/fxandroid/ui/legacy/LegacyProductActivity.kt:31"},
+    {"id": "SRF-compose-scan", "kind": "composable", "name": "ScanScreen", "handler": "ScanScreen()", "file": "app/src/main/java/com/example/fxandroid/ui/scan/ScanScreen.kt:21"},
+    {"id": "SRF-compose-history", "kind": "composable", "name": "HistoryScreen", "handler": "HistoryScreen()", "file": "app/src/main/java/com/example/fxandroid/ui/history/HistoryScreen.kt:13"},
+    {"id": "SRF-compose-premium", "kind": "composable", "name": "PremiumGateScreen", "handler": "PremiumGateScreen()", "file": "app/src/main/java/com/example/fxandroid/ui/premium/PremiumGateScreen.kt:19"},
+    {"id": "SRF-deeplink-scan", "kind": "deep-link", "name": "fxandroid://scan/{ean}", "handler": "FxNavGraph composable scan/{ean}", "file": "app/src/main/res/navigation/nav_graph.xml:9"},
+    {"id": "SRF-deeplink-history", "kind": "deep-link", "name": "fxandroid://history/{filter}", "handler": "FxNavGraph composable history/{filter}", "file": "app/src/main/res/navigation/nav_graph.xml:16"},
+    {"id": "SRF-deeplink-premium", "kind": "deep-link", "name": "fxandroid://premium", "handler": "FxNavGraph composable premium", "file": "app/src/main/res/navigation/nav_graph.xml:23"},
+    {"id": "SRF-receiver-sync", "kind": "broadcast-receiver", "name": "SyncTriggerReceiver", "handler": "SyncTriggerReceiver.onReceive", "file": "app/src/main/java/com/example/fxandroid/receiver/SyncTriggerReceiver.kt:7"},
+    {"id": "SRF-worker-sync", "kind": "worker", "name": "SyncWorker", "handler": "SyncWorker.doWork", "file": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt:20"},
+    {"id": "SRF-service-sync", "kind": "service", "name": "SyncService (manifest)", "handler": "SyncService.onBind", "file": "app/src/main/java/com/example/fxandroid/work/SyncService.kt:8"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "android_manifest_components", "file": "app/src/main/AndroidManifest.xml:18", "line": 18, "description": "AndroidManifest.xml declara Activity, BroadcastReceiver y Service que NO se llaman desde el codigo Kotlin.", "resolution": "Seguir AndroidManifest.xml para encontrar entry points no rastreables desde el codigo."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "hilt_generated_code", "file": "app/src/main/java/com/example/fxandroid/FxAndroidApp.kt:5", "line": 5, "description": "@HiltAndroidApp + @AndroidEntryPoint + @HiltViewModel generan codigo expandido en `app/build/generated/hilt/`.", "resolution": "Seguir @Inject y @Module + KSP processor output."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "room_dao_query", "file": "app/src/main/java/com/example/fxandroid/data/local/dao/HistoryDao.kt:13", "line": 13, "description": "DAOs de Room usan @Query con SQL embebido como string; el SQL no aparece como tipo Kotlin.", "resolution": "Leer el @Query como literal string y entender que el codigo generado hace la query."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "gradle_flavors", "file": "app/build.gradle.kts:33", "line": 33, "description": "productFlavors free/paid con source sets distintos; `PremiumEnabled` solo en paid y `PremiumDisabled` solo en free.", "resolution": "Listar source sets free/paid y leer archivos en ambos."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "android_onclick_resource", "file": "app/src/main/res/layout/activity_legacy_product.xml:18", "line": 18, "description": "Layout XML con android:onClick='onSaveClick' apunta a un metodo del Activity por nombre.", "resolution": "Resolver string onClick a un metodo del Activity legacy."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "workmanager_and_broadcastreceiver_and_deeplinks", "file": "app/src/main/AndroidManifest.xml:23", "line": 23, "description": "WorkManager + BroadcastReceiver + deep links: los entry points viven en manifest + nav_graph.xml, no en codigo Kotlin.", "resolution": "Seguir manifest + nav_graph.xml + SyncWorker para entender el wiring."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "dao_query_injection_risk", "file": "app/src/main/java/com/example/fxandroid/data/local/dao/HistoryDao.kt:17", "line": 17, "description": "DAO con patron inseguro de SQLi si el caller concatena strings antes de llamar @Query (trampa conceptual).", "resolution": "Validar que todos los @Query usen parametros :param, no concatenacion."},
+    {"id": "TRAP-P2", "kind": "package", "name": "repo_not_singleton", "file": "app/src/main/java/com/example/fxandroid/di/AppModule.kt:21", "line": 21, "description": "ProductRepositoryImpl NO esta anotado @Singleton; se recrea cada inyeccion, perdiendo estado.", "resolution": "Anotar provideProductRepository con @Singleton."},
+    {"id": "TRAP-P3", "kind": "package", "name": "sync_worker_expedited_silent", "file": "app/src/main/java/com/example/fxandroid/work/SyncScheduler.kt:21", "line": 21, "description": "SyncScheduler setExpedited sin verificar POST_NOTIFICATIONS en API 33+; el worker falla silenciosamente.", "resolution": "Anadir checkSelfPermission(POST_NOTIFICATIONS) antes de expedited."},
+    {"id": "TRAP-P4", "kind": "package", "name": "room_no_migrations", "file": "app/src/main/java/com/example/fxandroid/di/DatabaseModule.kt:18", "line": 18, "description": "Room.databaseBuilder sin .addMigrations(MIGRATION_1_2); al subir version la app crashea.", "resolution": "Agregar addMigrations(MIGRATION_1_2) o fallbackToDestructiveMigration."},
+    {"id": "TRAP-P5", "kind": "package", "name": "legacy_activity_bypass_repository", "file": "app/src/main/java/com/example/fxandroid/ui/legacy/LegacyProductActivity.kt:31", "line": 31, "description": "LegacyProductActivity.onSaveClick escribe con db.execSQL directo, bypassing repository y Hilt.", "resolution": "Usar ProductRepository.insert(product) en lugar de execSQL."},
+    {"id": "TRAP-P6", "kind": "package", "name": "scan_viewmodel_silent_catch", "file": "app/src/main/java/com/example/fxandroid/ui/scan/ScanViewModel.kt:42", "line": 42, "description": "ScanViewModel tiene try-catch silencioso que no logea ni rethrow la excepcion.", "resolution": "Logear el error o emitir ScanState.Error(e.message)."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "legacy_date_formatter_unused", "file": "app/src/main/java/com/example/fxandroid/util/LegacyDateFormatter.kt:5", "line": 5, "description": "LegacyDateFormatter existe pero no se importa ni se llama desde runtime code.", "resolution": "Eliminar si no se usa o documentar como API legacy."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "env_config_debug_unused", "file": "app/src/main/java/com/example/fxandroid/util/EnvConfig.kt:7", "line": 7, "description": "EnvConfig lee BuildConfig.DEBUG pero nunca lo usa (variable debug sin consumo).", "resolution": "Eliminar o usar el valor para activar comportamiento debug."},
+    {"id": "TRAP-S3", "kind": "superficial", "name": "legacy_fragment_returns_null", "file": "app/src/main/java/com/example/fxandroid/ui/legacy/LegacyProductFragment.kt:7", "line": 7, "description": "LegacyProductFragment.onCreateView devuelve null: fragment muerto.", "resolution": "Eliminar o implementar onCreateView."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "FxAndroidApp.onCreate", "to": "Hilt initialization", "file": "app/src/main/java/com/example/fxandroid/FxAndroidApp.kt:7"},
+      {"from": "ScanScreen.onScanClick", "to": "ScanViewModel.onScanClick", "file": "app/src/main/java/com/example/fxandroid/ui/scan/ScanScreen.kt:33"},
+      {"from": "ScanViewModel.onScanClick", "to": "ProductRepository.scan", "file": "app/src/main/java/com/example/fxandroid/ui/scan/ScanViewModel.kt:36"},
+      {"from": "ProductRepository.scan", "to": "ProductRemoteSource.fetchByEan", "file": "app/src/main/java/com/example/fxandroid/data/repository/ProductRepository.kt:24"},
+      {"from": "ProductRepository.scan", "to": "ProductDao.findByEan", "file": "app/src/main/java/com/example/fxandroid/data/repository/ProductRepository.kt:23"},
+      {"from": "SyncWorker.doWork", "to": "HistoryRepository.upsert", "file": "app/src/main/java/com/example/fxandroid/work/SyncWorker.kt:23"},
+      {"from": "SyncTriggerReceiver.onReceive", "to": "SyncScheduler.scheduleOnce", "file": "app/src/main/java/com/example/fxandroid/receiver/SyncTriggerReceiver.kt:8"},
+      {"from": "FxNavGraph composable", "to": "ScanScreen / HistoryScreen / PremiumGateScreen", "file": "app/src/main/java/com/example/fxandroid/navigation/FxNavGraph.kt:18"}
+    ]
+  }
+}

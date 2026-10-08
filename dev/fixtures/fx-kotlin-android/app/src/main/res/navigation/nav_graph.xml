@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/scanFragment">
+
+    <fragment
+        android:id="@+id/scanFragment"
+        android:name="com.example.fxandroid.ui.scan.ScanScreenKt">
+        <deepLink
+            android:id="@+id/scanDeepLink"
+            app:uri="fxandroid://scan/{ean}" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.example.fxandroid.ui.history.HistoryScreenKt">
+        <deepLink
+            android:id="@+id/historyDeepLink"
+            app:uri="fxandroid://history/{filter}" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/premiumFragment"
+        android:name="com.example.fxandroid.ui.premium.PremiumGateScreenKt">
+        <deepLink
+            android:id="@+id/premiumDeepLink"
+            app:uri="fxandroid://premium" />
+    </fragment>
+</navigation>

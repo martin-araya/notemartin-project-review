@@ -1,0 +1,16 @@
+# Metadata del fixture F06ac: fx-kotlin-android
+# App Android Kotlin con Compose + Views XML heredadas + Hilt + Room
+# + WorkManager + flavors free/paid. Ver referencias a las trampas del
+# ecosistema y del paquete en
+# dev/ground-truth/fx-kotlin-android/ground_truth.json.
+name: fx-kotlin-android
+description: App Android Kotlin 2.0 + Compose + Views + Hilt + Room + WorkManager + flavors free/paid (F06ac)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-kotlin-android
+  enabled: true
+ground_truth_format_version: 1

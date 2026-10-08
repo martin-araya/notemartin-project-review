@@ -1,0 +1,40 @@
+# Dockerfile.test del fixture F06ac (fx-kotlin-android).
+# Imagen Android SDK 35 + JDK 21 + Gradle wrapper. Para que los tests JVM
+# + Robolectric corran sin emulador.
+FROM eclipse/openjdk:21-jdk-jammy
+
+# Variables de Android SDK
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+ENV PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+# Herramientas del sistema + Android cmdline-tools + platform-tools + build-tools 35
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    make \
+    git \
+    wget \
+    unzip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p $ANDROID_HOME/cmdline-tools \
+    && cd $ANDROID_HOME/cmdline-tools \
+    && wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip \
+    && unzip -q cmdline.zip \
+    && mv cmdline-tools latest \
+    && rm cmdline.zip \
+    && yes | sdkmanager --licenses >/dev/null 2>&1 || true \
+    && sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.1" >/dev/null 2>&1 \
+    && sdkmanager "emulator" "system-images;android-34;google_apis;x86_64" >/dev/null 2>&1 || true
+
+WORKDIR /app
+
+# Copia todo el fixture (wrapper, gradle, app)
+COPY . /app/
+
+# Cachear gradle y android SDK entre invocaciones via volumenes
+ENV GRADLE_USER_HOME=/app/.gradle
+
+# Precompila el script gradlew (no hace falta build completo, solo cache)
+RUN chmod +x ./gradlew
+
+CMD ["make", "test"]

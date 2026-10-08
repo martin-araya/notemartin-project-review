@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Trampa E5: android:onClick resuelto por string a método del Activity -->
+    <TextView
+        android:id="@+id/legacy_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/scan_title" />
+
+    <EditText
+        android:id="@+id/legacy_ean"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/ean_hint"
+        android:inputType="number" />
+
+    <Button
+        android:id="@+id/legacy_save_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/save"
+        android:onClick="onSaveClick" />
+</LinearLayout>
