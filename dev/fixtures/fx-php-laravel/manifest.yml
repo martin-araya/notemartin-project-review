@@ -1,0 +1,17 @@
+# Metadata del fixture F06u: fx-php-laravel
+# Aplicacion Laravel 10 con Eloquent, Facades, Service Providers, Events,
+# Observers, Jobs, Middleware groups, route model binding y tareas programadas.
+# Ver referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-php-laravel/ground_truth.json.
+name: fx-php-laravel
+description: Aplicacion Laravel 10 con Eloquent, Facades, colas, events, observers y schedule (F06u)
+requires:
+  - linux
+  - macos
+  - windows
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-php-laravel
+  enabled: true
+ground_truth_format_version: 1

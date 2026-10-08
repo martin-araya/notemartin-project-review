@@ -1,0 +1,203 @@
+{
+  "fixture": "fx-php-laravel",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-artisan", "artifact": "artisan", "file": "artisan"},
+    {"id": "EP-bootstrap-app", "artifact": "bootstrap/app.php", "file": "bootstrap/app.php"},
+    {"id": "EP-config-app-providers", "artifact": "config/app.php (providers array)", "file": "config/app.php"},
+    {"id": "EP-routes-web", "artifact": "routes/web.php", "file": "routes/web.php"},
+    {"id": "EP-routes-api", "artifact": "routes/api.php", "file": "routes/api.php"},
+    {"id": "EP-routes-console", "artifact": "routes/console.php", "file": "routes/console.php"},
+    {"id": "EP-composer", "artifact": "composer.json", "file": "composer.json"}
+  ],
+  "modules": [
+    {"id": "MOD-bootstrap-app", "path": "bootstrap/app.php", "summary": "Bootstrap que crea la aplicacion Laravel 10 y registra Http/Console/Exception Kernels"},
+    {"id": "MOD-config-app-providers", "path": "config/app.php", "summary": "Lista de service providers en el array 'providers' (Laravel 10) incluyendo LegacyServiceProvider (S01)"},
+    {"id": "MOD-config-app", "path": "config/app.php", "summary": "Aliases con 'Pricing' => PricingFacade::class (E01)"},
+    {"id": "MOD-config-database", "path": "config/database.php", "summary": "Drivers sqlite + mysql declarados (mysql no se usa en tests)"},
+    {"id": "MOD-config-queue", "path": "config/queue.php", "summary": "Drivers sync/database/redis declarados (P04)"},
+    {"id": "MOD-model-property", "path": "app/Models/Property.php", "summary": "Eloquent con getPriceEurosAttribute, scopeAvailable, visits() y observer boot (E02)"},
+    {"id": "MOD-model-visit", "path": "app/Models/Visit.php", "summary": "Eloquent con belongsTo Property y cast scheduled_at"},
+    {"id": "MOD-model-contract", "path": "app/Models/Contract.php", "summary": "Eloquent con getMonthlyRentEurosAttribute y belongsTo Property (E02)"},
+    {"id": "MOD-facade-pricing", "path": "app/Facades/PricingFacade.php", "summary": "Facade con getFacadeAccessor() => 'pricing.service' (E01)"},
+    {"id": "MOD-pricing-service", "path": "app/Pricing/PricingService.php", "summary": "PricingService::calculate($cents) usado via facade"},
+    {"id": "MOD-repo-visit", "path": "app/Repositories/VisitRepository.php", "summary": "Interface VisitRepository"},
+    {"id": "MOD-repo-eloquent-visit", "path": "app/Repositories/EloquentVisitRepository.php", "summary": "EloquentVisitRepository que implementa VisitRepository (E02)"},
+    {"id": "MOD-provider-app", "path": "app/Providers/AppServiceProvider.php", "summary": "Provider base vacio"},
+    {"id": "MOD-provider-auth", "path": "app/Providers/AuthServiceProvider.php", "summary": "Provider de autenticacion con $policies vacio"},
+    {"id": "MOD-provider-route", "path": "app/Providers/RouteServiceProvider.php", "summary": "RouteServiceProvider con API y WEB groups"},
+    {"id": "MOD-provider-event", "path": "app/Providers/EventServiceProvider.php", "summary": "Provider con $listen[VisitScheduled] => [SendVisitConfirmation] (E04)"},
+    {"id": "MOD-provider-inmueble", "path": "app/Providers/InmuebleServiceProvider.php", "summary": "Bindings VisitRepository + singleton 'pricing.service' + bind 'legacy.helper' (E02, P02, S02)"},
+    {"id": "MOD-provider-legacy", "path": "app/Providers/LegacyServiceProvider.php", "summary": "Provider dead con comentario 'legacy only' (S01)"},
+    {"id": "MOD-event-visit-scheduled", "path": "app/Events/VisitScheduled.php", "summary": "Evento con property y visitorEmail"},
+    {"id": "MOD-listener-send-confirmation", "path": "app/Listeners/SendVisitConfirmation.php", "summary": "Listener que encola SendVisitReminder (E04)"},
+    {"id": "MOD-observer-property", "path": "app/Observers/PropertyObserver.php", "summary": "Observer con created/updated logueando (E04)"},
+    {"id": "MOD-job-send-reminder", "path": "app/Jobs/SendVisitReminder.php", "summary": "Job con tries=3, backoff=10 (P01)"},
+    {"id": "MOD-job-generate-pdf", "path": "app/Jobs/GenerateContractPdf.php", "summary": "Job con catch que traga errores (P02)"},
+    {"id": "MOD-controller-base", "path": "app/Http/Controllers/Controller.php", "summary": "Controller base con AuthorizesRequests y ValidatesRequests"},
+    {"id": "MOD-controller-property", "path": "app/Http/Controllers/PropertyController.php", "summary": "CRUD con route model binding y N+1 (P05)"},
+    {"id": "MOD-controller-visit", "path": "app/Http/Controllers/VisitController.php", "summary": "Controller que dispara evento y encola job (E01, E04, P01)"},
+    {"id": "MOD-controller-contract", "path": "app/Http/Controllers/ContractController.php", "summary": "Controller que encola job con catch (P02)"},
+    {"id": "MOD-middleware-tenant", "path": "app/Http/Middleware/EnsureTenant.php", "summary": "Middleware registrado en grupo web en Http/Kernel.php (E05, P06)"},
+    {"id": "MOD-command-expire", "path": "app/Console/Commands/ExpireContracts.php", "summary": "Comando artisan 'contracts:expire'"},
+    {"id": "MOD-routes-web", "path": "routes/web.php", "summary": "Routes con /properties/{property} (route model binding) y /legacy dead (S03)"},
+    {"id": "MOD-routes-api", "path": "routes/api.php", "summary": "Routes con apiResource visits/contracts"},
+    {"id": "MOD-routes-console", "path": "routes/console.php", "summary": "Console routes adicionales (Laravel 10)"},
+    {"id": "MOD-console-kernel", "path": "app/Console/Kernel.php", "summary": "App\\Console\\Kernel con schedule() que carga ExpireContracts (E06)"},
+    {"id": "MOD-migration-properties", "path": "database/migrations/2024_01_01_000001_create_properties_table.php", "summary": "Schema de properties"},
+    {"id": "MOD-migration-visits", "path": "database/migrations/2024_01_01_000002_create_visits_table.php", "summary": "Schema de visits con FK a properties"},
+    {"id": "MOD-migration-contracts", "path": "database/migrations/2024_01_01_000003_create_contracts_table.php", "summary": "Schema de contracts con FK a properties"},
+    {"id": "MOD-migration-jobs", "path": "database/migrations/2024_01_01_000004_create_jobs_table.php", "summary": "Tabla jobs para driver database"},
+    {"id": "MOD-view-property", "path": "resources/views/properties/show.blade.php", "summary": "Vista Blade que usa el accessor price_euros"}
+  ],
+  "dependencies": [
+    {"name": "laravel/framework", "version": "10.43.*", "scope": "runtime", "manifest": "composer.json"},
+    {"name": "guzzlehttp/guzzle", "version": "^7.5", "scope": "runtime", "manifest": "composer.json"},
+    {"name": "phpunit/phpunit", "version": "^10.0", "scope": "test", "manifest": "composer.json"},
+    {"name": "mockery/mockery", "version": "^1.5", "scope": "test", "manifest": "composer.json"},
+    {"name": "php", "version": "^8.2", "scope": "runtime", "manifest": "composer.json"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "inmuebles",
+      "user_description": "El usuario crea, lista, ve, actualiza y elimina inmuebles via API REST en /api/properties. El modelo Eloquent tiene accessor price_euros, scope available, relacion visits() y un observer que loguea al crear/actualizar (E02). El listado tiene N+1 silencioso (P05).",
+      "traces": [
+        {"n": 1, "what": "User POST /api/properties con JSON {address, price_cents, owner_email}", "cite": "routes/api.php:5", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "apiResource despacha a PropertyController::store", "cite": "app/Http/Controllers/PropertyController.php:35", "data_in": "Request", "data_out": "validated data"},
+        {"n": 3, "what": "Property::query()->create($data) ejecuta INSERT y dispara observer created", "cite": "app/Models/Property.php:21", "data_in": "Property", "data_out": "INSERT + observer log"},
+        {"n": 4, "what": "PropertyObserver::created registra Log::info", "cite": "app/Observers/PropertyObserver.php:11", "data_in": "Property", "data_out": "log"},
+        {"n": 5, "what": "Endpoint responde 201 Created con el Property", "cite": "app/Http/Controllers/PropertyController.php:43", "data_in": "Property", "data_out": "201 Created"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "app/Http/Controllers/PropertyController.php", "line": 35, "kind": "validation", "condition_text": "Request valida address, price_cents, owner_email", "branches": [{"label": "validation ok -> 201", "target_line": 42}, {"label": "validation error -> 422", "target_line": 42}]},
+        {"id": "DP-002", "file": "app/Http/Controllers/PropertyController.php", "line": 49, "kind": "route_binding", "condition_text": "GET /properties/{property} con {id} existente", "branches": [{"label": "encontrado -> 200 OK", "target_line": 60}, {"label": "no encontrado -> 404", "target_line": 60}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con campos validos", "user_sees": "201 Created con {data: {id, address, price_cents, ...}}", "side_effects": ["INSERT en properties", "PropertyObserver::created loguea"], "reversible": true, "final_state": "Property creado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /api/properties con N properties", "user_sees": "200 OK con {data: [Property, ...]}", "side_effects": ["N+1 query por visits_count (P05)"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-03", "category": "success_show", "conditions": "GET /api/properties/{id} con id existente", "user_sees": "200 OK con el Property serializado (incluyendo price_euros via accessor E02)", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /api/properties/{id} con campos", "user_sees": "200 OK con el Property actualizado", "side_effects": ["UPDATE en properties", "PropertyObserver::updated loguea"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /api/properties/{id} con id existente", "user_sees": "204 No Content", "side_effects": ["DELETE en properties + cascade visits/contracts"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_404", "conditions": "GET /api/properties/{id} con id inexistente", "user_sees": "404 Not Found (route model binding falla)", "side_effects": [], "reversible": true, "final_state": "not_found"},
+        {"id": "R-07", "category": "error_422", "conditions": "POST con address vacio o price_cents negativo", "user_sees": "422 Unprocessable Entity con errors de validacion", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-08", "category": "error_n_plus_one", "conditions": "GET /api/properties con N > 1 properties con visitas (trampa P05)", "user_sees": "200 OK correcto, pero se ejecutan N+1 queries en visits_count", "side_effects": ["N queries a visits por cada property"], "reversible": true, "final_state": "performance_penalty"}
+      ],
+      "config": [
+        {"key": "eloquent.accessor", "kind": "literal", "default": "getPriceEurosAttribute en Property", "effect": "Calcula price_cents / 100 en cada acceso (E02)"},
+        {"key": "eloquent.observer", "kind": "literal", "default": "PropertyObserver en Property::boot", "effect": "Loguea en created/updated (E02)"},
+        {"key": "eloquent.scope", "kind": "literal", "default": "scopeAvailable en Property", "effect": "Filtra status='available' (E02)"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "visitas",
+      "user_description": "El usuario crea y lista visitas via API REST en /api/visits. El controller dispara un evento VisitScheduled (E04) que activa el listener SendVisitConfirmation, y encola un job SendVisitReminder con tries=3 (P01). Tambien usa la facade Pricing::calculate() (E01).",
+      "traces": [
+        {"n": 1, "what": "User POST /api/visits con JSON {property_id, scheduled_at, visitor_email}", "cite": "routes/api.php:4", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "apiResource despacha a VisitController::store", "cite": "app/Http/Controllers/VisitController.php:31", "data_in": "Request", "data_out": "validated data"},
+        {"n": 3, "what": "Visit::query()->create(...) ejecuta INSERT", "cite": "app/Http/Controllers/VisitController.php:38", "data_in": "Visit", "data_out": "INSERT en visits"},
+        {"n": 4, "what": "Pricing::calculate($property->price_cents) via facade E01", "cite": "app/Http/Controllers/VisitController.php:43", "data_in": "price_cents", "data_out": "float con tax"},
+        {"n": 5, "what": "event(new VisitScheduled(...)) activa listener auto-discovered (E04)", "cite": "app/Http/Controllers/VisitController.php:46", "data_in": "VisitScheduled event", "data_out": "listener handle"},
+        {"n": 6, "what": "SendVisitConfirmation::handle encola SendVisitReminder::dispatch (P01: tries=3, backoff=10)", "cite": "app/Listeners/SendVisitConfirmation.php:14", "data_in": "event", "data_out": "job dispatched"},
+        {"n": 7, "what": "Endpoint responde 202 Accepted con el Visit y price_with_tax", "cite": "app/Http/Controllers/VisitController.php:50", "data_in": "Visit", "data_out": "202 Accepted"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "app/Http/Controllers/VisitController.php", "line": 31, "kind": "validation", "condition_text": "Request valida property_id (exists), scheduled_at, visitor_email", "branches": [{"label": "validation ok -> 202", "target_line": 50}, {"label": "validation error -> 422", "target_line": 50}]},
+        {"id": "DP-004", "file": "app/Jobs/SendVisitReminder.php", "line": 33, "kind": "retry", "condition_text": "if attempts >= tries", "branches": [{"label": "attempts < tries -> retry con backoff 10s", "target_line": 35}, {"label": "attempts >= tries -> fail()", "target_line": 35}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con property_id existente y campos validos", "user_sees": "202 Accepted con {data: {Visit}, price_with_tax: 121.0}", "side_effects": ["INSERT en visits", "event dispatched", "listener handle", "job encolado"], "reversible": true, "final_state": "Visit creado + job encolado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /api/visits", "user_sees": "200 OK con [Visit, ...]", "side_effects": ["SELECT en visits"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-03", "category": "success_show", "conditions": "GET /api/visits/{id} con id existente", "user_sees": "200 OK con el Visit", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /api/visits/{id} con status", "user_sees": "200 OK con el Visit actualizado", "side_effects": ["UPDATE en visits"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "error_422", "conditions": "POST con property_id inexistente o campos invalidos", "user_sees": "422 Unprocessable Entity con errors de validacion", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-06", "category": "success_job_retry", "conditions": "Job SendVisitReminder falla en su handle() (P01: tries=3, backoff=10)", "user_sees": "El job se reencola 2 veces mas (backoff 10s) antes de fail()", "side_effects": ["3 ejecuciones maximas antes de fail", "Log::warning en el ultimo intento"], "reversible": false, "final_state": "job_failed"},
+        {"id": "R-07", "category": "error_facade_resolution", "conditions": "Si Pricing facade no resuelve (e.g. typo en el alias)", "user_sees": "RuntimeException 'Service [pricing.service] not found' o 500", "side_effects": [], "reversible": true, "final_state": "error"}
+      ],
+      "config": [
+        {"key": "facade.pricing", "kind": "literal", "default": "'Pricing' => PricingFacade::class en config/app.php", "effect": "Resuelve a 'pricing.service' (E01)"},
+        {"key": "event.listen", "kind": "literal", "default": "VisitScheduled => [SendVisitConfirmation]", "effect": "Auto-discovery (E04)"},
+        {"key": "job.tries", "kind": "literal", "default": "3 con backoff 10s en SendVisitReminder", "effect": "Reintenta 3 veces antes de fallar (P01)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "contratos",
+      "user_description": "El usuario crea y lista contratos via API REST en /api/contracts. El controller encola un job GenerateContractPdf que tiene un catch que se traga todos los errores (P02). El modelo Contract tiene accessor monthly_rent_euros (E02).",
+      "traces": [
+        {"n": 1, "what": "User POST /api/contracts con JSON {property_id, signed_at, monthly_rent_cents, duration_months}", "cite": "routes/api.php:5", "data_in": "HTTP POST JSON", "data_out": "Routing"},
+        {"n": 2, "what": "apiResource despacha a ContractController::store", "cite": "app/Http/Controllers/ContractController.php:23", "data_in": "Request", "data_out": "validated data"},
+        {"n": 3, "what": "Contract::query()->create(...) ejecuta INSERT", "cite": "app/Http/Controllers/ContractController.php:32", "data_in": "Contract", "data_out": "INSERT en contracts"},
+        {"n": 4, "what": "GenerateContractPdf::dispatch($contract->id) encola el job", "cite": "app/Http/Controllers/ContractController.php:37", "data_in": "contract id", "data_out": "job dispatched"},
+        {"n": 5, "what": "Job handle() entra en try, lanza RuntimeException, catch traga el error y Log::error (P02)", "cite": "app/Jobs/GenerateContractPdf.php:24", "data_in": "contract id", "data_out": "log"},
+        {"n": 6, "what": "Endpoint responde 202 Accepted con el Contract (sin verificar si el PDF se genero)", "cite": "app/Http/Controllers/ContractController.php:39", "data_in": "Contract", "data_out": "202 Accepted"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "app/Http/Controllers/ContractController.php", "line": 23, "kind": "validation", "condition_text": "Request valida property_id, signed_at, monthly_rent_cents, duration_months", "branches": [{"label": "validation ok -> 202", "target_line": 39}, {"label": "validation error -> 422", "target_line": 39}]},
+        {"id": "DP-006", "file": "app/Jobs/GenerateContractPdf.php", "line": 22, "kind": "exception", "condition_text": "PDF generation throws RuntimeException", "branches": [{"label": "exception -> catch -> Log::error -> success", "target_line": 28}, {"label": "no exception -> success", "target_line": 30}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_create", "conditions": "POST con property_id existente y campos validos", "user_sees": "202 Accepted con {data: {Contract, monthly_rent_euros via accessor E02}}", "side_effects": ["INSERT en contracts", "job encolado"], "reversible": true, "final_state": "Contract creado + job encolado"},
+        {"id": "R-02", "category": "success_list", "conditions": "GET /api/contracts", "user_sees": "200 OK con [Contract, ...]", "side_effects": ["SELECT en contracts"], "reversible": true, "final_state": "lista renderizada"},
+        {"id": "R-03", "category": "success_show", "conditions": "GET /api/contracts/{id} con id existente", "user_sees": "200 OK con el Contract serializado (incluyendo monthly_rent_euros)", "side_effects": ["SELECT por id"], "reversible": true, "final_state": "detalle renderizado"},
+        {"id": "R-04", "category": "success_update", "conditions": "PATCH /api/contracts/{id} con monthly_rent_cents o duration_months", "user_sees": "200 OK con el Contract actualizado", "side_effects": ["UPDATE en contracts"], "reversible": true, "final_state": "actualizado"},
+        {"id": "R-05", "category": "success_delete", "conditions": "DELETE /api/contracts/{id} con id existente", "user_sees": "204 No Content", "side_effects": ["DELETE en contracts"], "reversible": true, "final_state": "eliminado"},
+        {"id": "R-06", "category": "error_422", "conditions": "POST con monthly_rent_cents < 0 o duration_months < 1", "user_sees": "422 Unprocessable Entity", "side_effects": [], "reversible": true, "final_state": "rejected"},
+        {"id": "R-07", "category": "success_job_silently_fails", "conditions": "Job GenerateContractPdf ejecuta handle() y la generacion falla (P02: catch traga el error)", "user_sees": "El job se marca como exitoso aunque el PDF no se haya generado", "side_effects": ["Log::error registrado", "no se notifica al controller"], "reversible": false, "final_state": "pdf_no_generated"}
+      ],
+      "config": [
+        {"key": "eloquent.accessor", "kind": "literal", "default": "getMonthlyRentEurosAttribute en Contract", "effect": "Convierte cents a euros (E02)"},
+        {"key": "job.catch", "kind": "literal", "default": "catch (\\Throwable) sin rethrow en GenerateContractPdf", "effect": "Errores se tragan y Log::error (P02)"},
+        {"key": "queue.driver", "kind": "literal", "default": "phpunit.xml fuerza 'database' (P04)", "effect": "Job se encola en tabla jobs"}
+      ]
+    }
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "facades", "where": "app/Facades/PricingFacade.php: getFacadeAccessor() + config/app.php: aliases['Pricing'] + app/Http/Controllers/VisitController.php: Pricing::calculate(...)", "resolution": "Las llamadas estaticas a Pricing::calculate() se resuelven por el contenedor apuntando a la clave 'pricing.service'. La skill debe buscar el alias en config/app.php, la facade en app/Facades/ y el binding en InmuebleServiceProvider."},
+    {"id": "TRAP-E02", "kind": "eloquent_magic", "where": "app/Models/Property.php: getPriceEurosAttribute, scopeAvailable, visits(), static::observe + app/Models/Contract.php: getMonthlyRentEurosAttribute", "resolution": "Eloquent genera metodos magicos (accessors, scopes, relaciones) a partir de convenciones de nombres. La skill debe notar los nombres 'getXxxAttribute', 'scopeXxx' y 'xxx()' para descubrir la API implicita."},
+    {"id": "TRAP-E03", "kind": "service_providers_bindings", "where": "app/Providers/InmuebleServiceProvider.php: bind(VisitRepository::class, EloquentVisitRepository::class) + singleton('pricing.service', ...) + config/app.php: providers array", "resolution": "Los service providers registran dependencias en el contenedor. La skill debe listar todos los providers en config/app.php y ver que se registra en cada uno."},
+    {"id": "TRAP-E04", "kind": "events_observers_listeners", "where": "app/Providers/EventServiceProvider.php: protected $listen + app/Listeners/SendVisitConfirmation.php + app/Observers/PropertyObserver.php", "resolution": "Laravel auto-descubre listeners del array $listen. Los observers se registran en boot() del modelo. La skill debe seguir el flujo: event() -> EventServiceProvider -> listener -> job dispatched."},
+    {"id": "TRAP-E05", "kind": "middleware_groups_route_model_binding", "where": "app/Http/Kernel.php: middlewareGroups['web'] con EnsureTenant::class + routes/web.php: /properties/{property}", "resolution": "Las rutas con {param} se resuelven via route model binding. El middleware se aplica por grupo. La skill debe notar los middleware groups en Http/Kernel.php y los placeholders de parametros en routes."},
+    {"id": "TRAP-E06", "kind": "console_schedule", "where": "app/Console/Kernel.php: schedule() con command(ExpireContracts::class)->dailyAt('00:00') + app/Console/Commands/ExpireContracts.php", "resolution": "Las tareas programadas se declaran en el metodo schedule() de App\\Console\\Kernel (Laravel 10). La skill debe leer Console/Kernel.php para descubrir comandos y schedules."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "job_silent_retry", "where": "app/Jobs/SendVisitReminder.php: public int $tries = 3 + public int $backoff = 10 + handle() con fail()", "resolution": "El job se reintenta hasta 3 veces con backoff de 10s. El controller responde 202 sin esperar al job, por lo que el usuario nunca ve si fallo o no."},
+    {"id": "TRAP-P02", "kind": "job_empty_catch", "where": "app/Jobs/GenerateContractPdf.php: catch (\\Throwable $e) { Log::error(...); } sin rethrow", "resolution": "El catch se traga todos los errores y registra Log::error. El job se marca como exitoso aunque el PDF no se haya generado, y el contrato queda sin PDF."},
+    {"id": "TRAP-P03", "kind": "facade_alias_typo", "where": "config/app.php: 'Pricing' => App\\Facades\\PricingFacade::class", "resolution": "Trampa latente: un typo en el namespace del alias rompe la facade. La skill debe verificar que el namespace del alias matchea la clase real."},
+    {"id": "TRAP-P04", "kind": "queue_driver_mismatch", "where": "phpunit.xml: QUEUE_CONNECTION=database + config/queue.php: drivers 'database' y 'redis'", "resolution": "phpunit.xml fuerza el driver a 'database' (SQLite en memoria). En produccion el driver seria 'redis'. La skill debe notar que la configuracion efectiva de tests difiere de la default."},
+    {"id": "TRAP-P05", "kind": "eloquent_n_plus_one", "where": "app/Http/Controllers/PropertyController.php: index() carga N properties y luego llama $property->visits()->count() en el map", "resolution": "N+1 silencioso: cada property dispara una query adicional para contar visitas. La trampa: el codigo compila y funciona, pero genera N+1 queries a la DB."},
+    {"id": "TRAP-P06", "kind": "unused_middleware", "where": "app/Http/Kernel.php: middlewareGroups['web'] con EnsureTenant::class + app/Http/Middleware/EnsureTenant.php", "resolution": "El middleware esta registrado en el grupo 'web' pero su implementacion no hace nada (solo pasa al siguiente middleware). La skill debe notar que la declaracion existe pero el handler es vacio."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_provider", "where": "app/Providers/LegacyServiceProvider.php (registrado en config/app.php providers array con comentario 'legacy only')", "resolution": "Provider dead. Registrado pero no aporta bindings ni listeners. La skill debe listarlo y notar la falta de consumidores."},
+    {"id": "TRAP-S02", "kind": "dead_helper_reference", "where": "app/Providers/InmuebleServiceProvider.php: bind('legacy.helper', fn => new \\App\\Pricing\\LegacyHelper())", "resolution": "Referencia a una clase (App\\Pricing\\LegacyHelper) que no existe en el codigo. El binding solo se rompe en runtime cuando algo lo solicita."},
+    {"id": "TRAP-S03", "kind": "dead_route", "where": "routes/web.php: Route::get('/legacy', 'App\\Http\\Controllers\\LegacyController@index')", "resolution": "Ruta dead que apunta a un controller inexistente. No se ejecuta porque ninguna ruta la invoca en tests, pero aparece en el listado de rutas."}
+  ],
+  "surfaces": [
+    {"id": "SRF-api-properties-create", "kind": "endpoint", "name": "POST /api/properties", "handler": "app/Http/Controllers/PropertyController.php:35", "file": "app/Http/Controllers/PropertyController.php"},
+    {"id": "SRF-api-properties-list", "kind": "endpoint", "name": "GET /api/properties", "handler": "app/Http/Controllers/PropertyController.php:13", "file": "app/Http/Controllers/PropertyController.php"},
+    {"id": "SRF-api-properties-show", "kind": "endpoint", "name": "GET /api/properties/{property}", "handler": "app/Http/Controllers/PropertyController.php:49", "file": "app/Http/Controllers/PropertyController.php"},
+    {"id": "SRF-api-properties-update", "kind": "endpoint", "name": "PATCH /api/properties/{property}", "handler": "app/Http/Controllers/PropertyController.php:61", "file": "app/Http/Controllers/PropertyController.php"},
+    {"id": "SRF-api-properties-delete", "kind": "endpoint", "name": "DELETE /api/properties/{property}", "handler": "app/Http/Controllers/PropertyController.php:70", "file": "app/Http/Controllers/PropertyController.php"},
+    {"id": "SRF-api-visits-create", "kind": "endpoint", "name": "POST /api/visits", "handler": "app/Http/Controllers/VisitController.php:31", "file": "app/Http/Controllers/VisitController.php"},
+    {"id": "SRF-api-contracts-create", "kind": "endpoint", "name": "POST /api/contracts", "handler": "app/Http/Controllers/ContractController.php:23", "file": "app/Http/Controllers/ContractController.php"},
+    {"id": "SRF-web-properties-show", "kind": "endpoint", "name": "GET /properties/{property} (web)", "handler": "routes/web.php:18", "file": "routes/web.php"},
+    {"id": "SRF-facade-pricing", "kind": "facade", "name": "Pricing (E01)", "handler": "app/Facades/PricingFacade.php:14", "file": "app/Facades/PricingFacade.php"},
+    {"id": "SRF-service-pricing", "kind": "service", "name": "pricing.service (singleton)", "handler": "app/Providers/InmuebleServiceProvider.php:17", "file": "app/Providers/InmuebleServiceProvider.php"},
+    {"id": "SRF-event-visit-scheduled", "kind": "event", "name": "VisitScheduled (E04)", "handler": "app/Events/VisitScheduled.php:12", "file": "app/Events/VisitScheduled.php"},
+    {"id": "SRF-listener-send-confirmation", "kind": "listener", "name": "SendVisitConfirmation (E04)", "handler": "app/Listeners/SendVisitConfirmation.php:13", "file": "app/Listeners/SendVisitConfirmation.php"},
+    {"id": "SRF-observer-property", "kind": "observer", "name": "PropertyObserver (E04)", "handler": "app/Observers/PropertyObserver.php:9", "file": "app/Observers/PropertyObserver.php"},
+    {"id": "SRF-job-send-reminder", "kind": "job", "name": "SendVisitReminder (P01)", "handler": "app/Jobs/SendVisitReminder.php:18", "file": "app/Jobs/SendVisitReminder.php"},
+    {"id": "SRF-job-generate-pdf", "kind": "job", "name": "GenerateContractPdf (P02)", "handler": "app/Jobs/GenerateContractPdf.php:15", "file": "app/Jobs/GenerateContractPdf.php"},
+    {"id": "SRF-middleware-tenant", "kind": "middleware", "name": "EnsureTenant (E05)", "handler": "app/Http/Middleware/EnsureTenant.php:13", "file": "app/Http/Middleware/EnsureTenant.php"},
+    {"id": "SRF-http-kernel", "kind": "kernel", "name": "App\\Http\\Kernel (E05: middleware groups)", "handler": "app/Http/Kernel.php:13", "file": "app/Http/Kernel.php"},
+    {"id": "SRF-console-kernel", "kind": "kernel", "name": "App\\Console\\Kernel (E06: schedule)", "handler": "app/Console/Kernel.php:13", "file": "app/Console/Kernel.php"},
+    {"id": "SRF-command-expire-contracts", "kind": "command", "name": "contracts:expire (E06)", "handler": "app/Console/Commands/ExpireContracts.php:11", "file": "app/Console/Commands/ExpireContracts.php"},
+    {"id": "SRF-schedule-expire-contracts", "kind": "schedule", "name": "Schedule::command(ExpireContracts)->dailyAt('00:00') (E06)", "handler": "app/Console/Kernel.php:15", "file": "app/Console/Kernel.php"},
+    {"id": "SRF-dead-legacy-provider", "kind": "provider", "name": "LegacyServiceProvider (S01)", "handler": "app/Providers/LegacyServiceProvider.php:9", "file": "app/Providers/LegacyServiceProvider.php"},
+    {"id": "SRF-dead-legacy-route", "kind": "endpoint", "name": "GET /legacy (S03, dead)", "handler": "routes/web.php:23", "file": "routes/web.php"},
+    {"id": "SRF-migration-properties", "kind": "schema", "name": "2024_01_01_000001_create_properties_table", "handler": "database/migrations/2024_01_01_000001_create_properties_table.php:10", "file": "database/migrations/2024_01_01_000001_create_properties_table.php"},
+    {"id": "SRF-migration-jobs", "kind": "schema", "name": "2024_01_01_000004_create_jobs_table (queue driver database)", "handler": "database/migrations/2024_01_01_000004_create_jobs_table.php:10", "file": "database/migrations/2024_01_01_000004_create_jobs_table.php"}
+  ]
+}

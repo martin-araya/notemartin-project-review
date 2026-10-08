@@ -1,0 +1,63 @@
+<?php
+
+return [
+    'name' => env('APP_NAME', 'FxLaravel'),
+    'env' => env('APP_ENV', 'production'),
+    'debug' => (bool) env('APP_DEBUG', false),
+    'url' => env('APP_URL', 'http://localhost'),
+    'asset_url' => env('ASSET_URL'),
+    'timezone' => 'UTC',
+    'locale' => 'en',
+    'fallback_locale' => 'en',
+    'faker_locale' => 'en_US',
+    'key' => env('APP_KEY'),
+    'cipher' => 'AES-256-CBC',
+    'maintenance' => [
+        'driver' => 'file',
+    ],
+    'providers' => [
+        // Laravel framework service providers (Laravel 10 standard).
+        Illuminate\Auth\AuthServiceProvider::class,
+        Illuminate\Broadcasting\BroadcastServiceProvider::class,
+        Illuminate\Bus\BusServiceProvider::class,
+        Illuminate\Cache\CacheServiceProvider::class,
+        Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
+        Illuminate\Cookie\CookieServiceProvider::class,
+        Illuminate\Database\DatabaseServiceProvider::class,
+        Illuminate\Database\MigrationServiceProvider::class,
+        Illuminate\Encryption\EncryptionServiceProvider::class,
+        Illuminate\Filesystem\FilesystemServiceProvider::class,
+        Illuminate\Foundation\Providers\FoundationServiceProvider::class,
+        Illuminate\Hashing\HashServiceProvider::class,
+        Illuminate\Mail\MailServiceProvider::class,
+        Illuminate\Notifications\NotificationServiceProvider::class,
+        Illuminate\Pagination\PaginationServiceProvider::class,
+        Illuminate\Pipeline\PipelineServiceProvider::class,
+        Illuminate\Queue\QueueServiceProvider::class,
+        Illuminate\Redis\RedisServiceProvider::class,
+        Illuminate\Session\SessionServiceProvider::class,
+        Illuminate\Translation\TranslationServiceProvider::class,
+        Illuminate\Validation\ValidationServiceProvider::class,
+        Illuminate\View\ViewServiceProvider::class,
+
+        // Application service providers.
+        App\Providers\AppServiceProvider::class,
+        App\Providers\AuthServiceProvider::class,
+        App\Providers\RouteServiceProvider::class,
+        App\Providers\EventServiceProvider::class,
+        App\Providers\InmuebleServiceProvider::class,
+        App\Providers\LegacyServiceProvider::class,
+    ],
+    'aliases' => [
+        'App' => Illuminate\Support\Facades\App::class,
+        'Config' => Illuminate\Support\Facades\Config::class,
+        'DB' => Illuminate\Support\Facades\DB::class,
+        'Event' => Illuminate\Support\Facades\Event::class,
+        'Log' => Illuminate\Support\Facades\Log::class,
+        'Queue' => Illuminate\Support\Facades\Queue::class,
+        'Route' => Illuminate\Support\Facades\Route::class,
+        'Schema' => Illuminate\Support\Facades\Schema::class,
+        // Trampa E01: alias estatico de la facade Pricing.
+        'Pricing' => App\Facades\PricingFacade::class,
+    ],
+];
