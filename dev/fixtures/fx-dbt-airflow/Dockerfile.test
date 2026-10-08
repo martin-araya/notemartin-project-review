@@ -1,0 +1,33 @@
+# Dockerfile.test del fixture F06ak (fx-dbt-airflow).
+# python:3.11-slim + dbt-core + dbt-duckdb + apache-airflow + git + make.
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    AIRFLOW_HOME=/fixture/.airflow \
+    DBT_PROFILES_DIR=/fixture
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git make curl unzip ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar dependencias
+COPY requirements.txt /fixture/requirements.txt
+RUN pip install --no-cache-dir -r /fixture/requirements.txt
+
+WORKDIR /fixture
+
+COPY . /fixture/
+
+# dbt deps (dbt_packages/) - idempotente
+RUN dbt deps --project-dir /fixture/dbt || true
+
+# Airflow no necesita init DB porque NO levantamos scheduler
+ENV AIRFLOW__CORE__LOAD_EXAMPLES=false
+ENV AIRFLOW__CORE__DAG_FILE_PROCESSOR_TIMEOUT=120
+ENV AIRFLOW__CORE__MIN_SERIALIZED_DAG_UPDATE_INTERVAL=1
+
+RUN chmod +x entrypoint.sh tools/*.sh
+
+CMD ["bash", "entrypoint.sh"]

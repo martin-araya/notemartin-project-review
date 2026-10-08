@@ -1,0 +1,30 @@
+name: 'fxdbt'
+version: '0.1.0'
+config-version: 2
+
+profile: 'fxdbt'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# E4: materializacion por carpeta (trampa del ecosistema)
+models:
+  fxdbt:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table
+      marts_incremental:
+        +materialized: incremental
+        +unique_key: "fecha_sku"
+        +on_schema_change: "append_new_columns"

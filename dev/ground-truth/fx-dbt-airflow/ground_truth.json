@@ -1,0 +1,269 @@
+{
+  "fixture": "fx-dbt-airflow",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-dbt-project-yml", "artifact": "dbt/dbt_project.yml (materialization por carpeta E4)", "file": "dbt/dbt_project.yml:1"},
+    {"id": "EP-dbt-packages", "name": "dbt/packages.yml (dbt_utils)", "handler": "dbt deps", "file": "dbt/packages.yml:1", "pair": null},
+    {"id": "EP-dbt-sources", "artifact": "dbt/models/staging/_sources.yml (source raw.ventas_raw + raw.clientes_raw)", "file": "dbt/models/staging/_sources.yml:1"},
+    {"id": "EP-dbt-stg-ventas", "artifact": "stg_ventas (modelo staging E1)", "file": "dbt/models/staging/stg_ventas.sql:1"},
+    {"id": "EP-dbt-stg-clientes", "artifact": "stg_clientes (modelo staging E1)", "file": "dbt/models/staging/stg_clientes.sql:1"},
+    {"id": "EP-dbt-int-ventas-clientes", "artifact": "int_ventas_clientes (intermediate join)", "file": "dbt/models/intermediate/int_ventas_clientes.sql:1"},
+    {"id": "EP-dbt-ventas-diarias", "artifact": "ventas_diarias (table)", "file": "dbt/models/marts/marts_ventas/ventas_diarias.sql:1"},
+    {"id": "EP-dbt-ventas-mensuales", "artifact": "ventas_mensuales (view)", "file": "dbt/models/marts/marts_ventas/ventas_mensuales.sql:1"},
+    {"id": "EP-dbt-clientes-top", "artifact": "clientes_top (table)", "file": "dbt/models/marts/marts_clientes/clientes_top.sql:1"},
+    {"id": "EP-dbt-metricas-diarias", "artifact": "metricas_diarias (table + macro Jinja E2)", "file": "dbt/models/marts/marts_metricas/metricas_diarias.sql:1"},
+    {"id": "EP-dbt-ventas-diarias-incremental", "artifact": "ventas_diarias_incremental (incremental E3 correcto)", "file": "dbt/models/marts/marts_incremental/ventas_diarias_incremental.sql:1"},
+    {"id": "EP-dbt-ventas-diarias-incremental-buggy", "artifact": "ventas_diarias_incremental_buggy (P2 trap where 1=1)", "file": "dbt/models/marts/marts_incremental/ventas_diarias_incremental_buggy.sql:1"},
+    {"id": "EP-dbt-macro-centros-normalizados", "artifact": "centros_normalizados (macro Jinja E2)", "file": "dbt/macros/centros_normalizados.sql:1"},
+    {"id": "EP-dbt-macro-centros-concat", "artifact": "centros_concat (macro concat P1 SQLi)", "file": "dbt/macros/centros_concat.sql:1"},
+    {"id": "EP-dbt-macro-legacy-helper", "artifact": "legacy_helper (S1 dead macro)", "file": "dbt/macros/legacy_helper.sql:1"},
+    {"id": "EP-dbt-seed-clientes", "artifact": "seed_clientes.csv (5 clientes)", "file": "dbt/seeds/seed_clientes.csv:1"},
+    {"id": "EP-dbt-seed-catalogo", "artifact": "seed_catalogo.csv (10 productos)", "file": "dbt/seeds/seed_catalogo.csv:1"},
+    {"id": "EP-dbt-seed-cliente-venta", "artifact": "seed_cliente_venta.csv (13 enlaces)", "file": "dbt/seeds/seed_cliente_venta.csv:1"},
+    {"id": "EP-dbt-ventas-raw", "artifact": "ventas_raw.csv (12 ventas origen del source)", "file": "dbt/seeds/ventas_raw.csv:1"},
+    {"id": "EP-dbt-test-assert-ventas-positivas", "artifact": "assert_ventas_positivas (singular test)", "file": "dbt/tests/singular/assert_ventas_positivas.sql:1"},
+    {"id": "EP-dbt-test-assert-clientes-activos", "artifact": "assert_clientes_activos (singular test)", "file": "dbt/tests/singular/assert_clientes_activos.sql:1"},
+    {"id": "EP-dbt-test-freshness-24h", "artifact": "freshness_24h (custom generic test)", "file": "dbt/tests/generic/freshness_24h.sql:1"},
+    {"id": "EP-dbt-snapshot-ventas", "artifact": "snap_ventas (snapshot timestamp)", "file": "dbt/snapshots/snap_ventas.sql:1"},
+    {"id": "EP-airflow-etl-dag", "artifact": "etl_dag.py (DAG estatico extract/transform/load)", "file": "airflow/dags/etl_dag.py:1"},
+    {"id": "EP-airflow-dag-factory", "artifact": "dag_factory.py (E5 build_dag_from_yaml)", "file": "airflow/dags/dag_factory.py:1"},
+    {"id": "EP-airflow-etl-config-yaml", "artifact": "etl_config.yaml (spec del DAG generado E5)", "file": "airflow/dags/etl_config.yaml:1"},
+    {"id": "EP-airflow-generated-etl-dag", "artifact": "generated_etl_dag.py (wrapper E5)", "file": "airflow/dags/generated_etl_dag.py:1"},
+    {"id": "EP-airflow-transform-xcom-implicit", "artifact": "transform_xcom_implicit.py (P6 trap)", "file": "airflow/dags/transform_xcom_implicit.py:1"},
+    {"id": "EP-airflow-legacy-purge-dag", "artifact": "legacy_purge_dag.py (S2 trap)", "file": "airflow/legacy_purge_dag.py:1"},
+    {"id": "EP-profiles-yml", "artifact": "profiles.yml (DuckDB dev + test)", "file": "profiles.yml:1"},
+    {"id": "EP-requirements-txt", "artifact": "requirements.txt (dbt-core + dbt-duckdb + apache-airflow)", "file": "requirements.txt:1"},
+    {"id": "EP-airflowignore", "artifact": ".airflowignore (excluye generated_etl_dag)", "file": ".airflowignore:1"},
+    {"id": "EP-test-etl-dag", "artifact": "test_etl_dag.py (6 tests DAG estatico)", "file": "airflow/tests/test_etl_dag.py:1"},
+    {"id": "EP-test-dag-factory", "artifact": "test_dag_factory.py (5 tests generacion YAML)", "file": "airflow/tests/test_dag_factory.py:1"},
+    {"id": "EP-test-xcom-explicit", "artifact": "test_xcom_explicit.py (3 tests xcom_push correcto E6)", "file": "airflow/tests/test_xcom_explicit.py:1"},
+    {"id": "EP-test-xcom-implicit", "artifact": "test_xcom_implicit.py (5 tests P6 trap)", "file": "airflow/tests/test_xcom_implicit.py:1"},
+    {"id": "EP-test-traps-ecosystem", "artifact": "test_traps_ecosystem.py (6 tests E1..E6)", "file": "airflow/tests/test_traps_ecosystem.py:1"},
+    {"id": "EP-test-traps-package", "artifact": "test_traps_package.py (6 tests P1..P6)", "file": "airflow/tests/test_traps_package.py:1"},
+    {"id": "EP-test-deprecated", "artifact": "test_deprecated.py (1 test S3)", "file": "airflow/tests/test_deprecated.py:1"},
+    {"id": "EP-entrypoint-sh", "artifact": "entrypoint.sh (dbt + airflow + pytest)", "file": "entrypoint.sh:1"},
+    {"id": "EP-tool-run-dbt", "artifact": "tools/run_dbt.sh", "file": "tools/run_dbt.sh:1"},
+    {"id": "EP-tool-run-airflow-tests", "artifact": "tools/run_airflow_tests.sh", "file": "tools/run_airflow_tests.sh:1"},
+    {"id": "EP-tool-reset-workspace", "artifact": "tools/reset_workspace.sh", "file": "tools/reset_workspace.sh:1"},
+    {"id": "EP-tool-wait-for-duckdb", "artifact": "tools/wait_for_duckdb.sh", "file": "tools/wait_for_duckdb.sh:1"}
+  ],
+  "modules": [
+    {"id": "MOD-dbt-project", "path": "dbt/dbt_project.yml", "summary": "Configuracion dbt con materialization por carpeta (E4)"},
+    {"id": "MOD-dbt-packages", "path": "dbt/packages.yml", "summary": "dbt_utils 1.x"},
+    {"id": "MOD-dbt-sources", "path": "dbt/models/staging/_sources.yml", "summary": "Sources raw.ventas_raw + raw.clientes_raw (E1)"},
+    {"id": "MOD-dbt-stg-ventas", "path": "dbt/models/staging/stg_ventas.sql", "summary": "stg_ventas con {{ source('raw','ventas_raw') }} (E1)"},
+    {"id": "MOD-dbt-stg-clientes", "path": "dbt/models/staging/stg_clientes.sql", "summary": "stg_clientes con {{ source('raw','clientes_raw') }} (E1)"},
+    {"id": "MOD-dbt-int-ventas-clientes", "path": "dbt/models/intermediate/int_ventas_clientes.sql", "summary": "int_ventas_clientes joinea ventas + clientes"},
+    {"id": "MOD-dbt-marts-ventas", "path": "dbt/models/marts/marts_ventas/", "summary": "ventas_diarias (table) + ventas_mensuales (view)"},
+    {"id": "MOD-dbt-marts-clientes", "path": "dbt/models/marts/marts_clientes/clientes_top.sql", "summary": "clientes_top (table)"},
+    {"id": "MOD-dbt-marts-metricas", "path": "dbt/models/marts/marts_metricas/metricas_diarias.sql", "summary": "metricas_diarias (table + macro Jinja E2)"},
+    {"id": "MOD-dbt-marts-incremental", "path": "dbt/models/marts/marts_incremental/", "summary": "ventas_diarias_incremental (E3 OK) + ventas_diarias_incremental_buggy (P2 trap)"},
+    {"id": "MOD-dbt-macros", "path": "dbt/macros/", "summary": "centros_normalizados (E2) + centros_concat (P1) + legacy_helper (S1)"},
+    {"id": "MOD-dbt-seeds", "path": "dbt/seeds/", "summary": "5 clientes + 10 productos + 13 enlaces + 12 ventas raw"},
+    {"id": "MOD-dbt-tests", "path": "dbt/tests/", "summary": "2 singular + 1 custom generic"},
+    {"id": "MOD-dbt-snapshots", "path": "dbt/snapshots/snap_ventas.sql", "summary": "snapshot timestamp de ventas"},
+    {"id": "MOD-airflow-etl-dag", "path": "airflow/dags/etl_dag.py", "summary": "DAG estatico extract/transform/load con xcom_push explicito (E6)"},
+    {"id": "MOD-airflow-dag-factory", "path": "airflow/dags/dag_factory.py", "summary": "build_dag_from_yaml() (E5)"},
+    {"id": "MOD-airflow-etl-config", "path": "airflow/dags/etl_config.yaml", "summary": "Spec del DAG generado (E5)"},
+    {"id": "MOD-airflow-generated-etl-dag", "path": "airflow/dags/generated_etl_dag.py", "summary": "Wrapper que invoca dag_factory (E5)"},
+    {"id": "MOD-airflow-transform-xcom-implicit", "path": "airflow/dags/transform_xcom_implicit.py", "summary": "DAG trampa P6 (return dict no serializable)"},
+    {"id": "MOD-airflow-legacy-purge-dag", "path": "airflow/legacy_purge_dag.py", "summary": "DAG S2 con start_date=2019 + catchup=False"},
+    {"id": "MOD-airflow-tests-etl", "path": "airflow/tests/test_etl_dag.py", "summary": "6 tests del DAG estatico"},
+    {"id": "MOD-airflow-tests-factory", "path": "airflow/tests/test_dag_factory.py", "summary": "5 tests de dag_factory"},
+    {"id": "MOD-airflow-tests-xcom-explicit", "path": "airflow/tests/test_xcom_explicit.py", "summary": "3 tests xcom_push/xcom_pull"},
+    {"id": "MOD-airflow-tests-xcom-implicit", "path": "airflow/tests/test_xcom_implicit.py", "summary": "5 tests P6 trap"},
+    {"id": "MOD-airflow-tests-ecosystem", "path": "airflow/tests/test_traps_ecosystem.py", "summary": "6 tests E1..E6"},
+    {"id": "MOD-airflow-tests-package", "path": "airflow/tests/test_traps_package.py", "summary": "6 tests P1..P6"},
+    {"id": "MOD-airflow-tests-deprecated", "path": "airflow/tests/test_deprecated.py", "summary": "1 test S3"},
+    {"id": "MOD-profiles", "path": "profiles.yml", "summary": "DuckDB dev + test"},
+    {"id": "MOD-requirements", "path": "requirements.txt", "summary": "dbt-core 1.8 + dbt-duckdb 1.8 + apache-airflow 2.9 + pytest 8.2"},
+    {"id": "MOD-airflowignore", "path": ".airflowignore", "summary": "Excluye generated_etl_dag.py del scheduler"},
+    {"id": "MOD-tools-run-dbt", "path": "tools/run_dbt.sh", "summary": "dbt deps + seed + build"},
+    {"id": "MOD-tools-run-airflow-tests", "path": "tools/run_airflow_tests.sh", "summary": "airflow dags parse + pytest airflow/tests/"},
+    {"id": "MOD-tools-reset-workspace", "path": "tools/reset_workspace.sh", "summary": "rm dev.duckdb dbt_packages target logs"},
+    {"id": "MOD-tools-wait-for-duckdb", "path": "tools/wait_for_duckdb.sh", "summary": "Smoke test del archivo .duckdb"},
+    {"id": "MOD-entrypoint", "path": "entrypoint.sh", "summary": "dbt seed + build + airflow dags parse + pytest"}
+  ],
+  "dependencies": [
+    {"name": "dbt-core", "version": "1.8.x", "scope": "build+runtime", "manifest": "requirements.txt (dbt-core==1.8.*) + Dockerfile.test"},
+    {"name": "dbt-duckdb", "version": "1.8.x", "scope": "build+runtime", "manifest": "requirements.txt + Dockerfile.test"},
+    {"name": "apache-airflow", "version": "2.9.x", "scope": "build+runtime", "manifest": "requirements.txt + Dockerfile.test"},
+    {"name": "duckdb", "version": "embedded", "scope": "runtime", "manifest": "profiles.yml + dbt-duckdb adapter"},
+    {"name": "pytest", "version": "8.2.x", "scope": "test", "manifest": "requirements.txt + Dockerfile.test"},
+    {"name": "pyyaml", "version": "bundled with airflow", "scope": "runtime", "manifest": "airflow/dags/dag_factory.py (yaml.safe_load)"},
+    {"name": "python", "version": "3.11", "scope": "build+runtime", "manifest": "Dockerfile.test (FROM python:3.11-slim)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "ventas",
+      "user_description": "Ingesta de ventas via DAG de Airflow (extract CSV -> transform DuckDB -> load via dbt). Sinonimo neutro CC-11 para 'ingesta-de-ventas'.",
+      "traces": [
+        {"n": 1, "what": "User triggers etl_dag at @daily schedule", "cite": "airflow/dags/etl_dag.py:11", "data_in": "schedule_interval", "data_out": "DAG run"},
+        {"n": 2, "what": "extract task reads CSV via duckdb.read_csv_auto", "cite": "airflow/dags/etl_dag.py:23", "data_in": "ventas_raw.csv", "data_out": "main.ventas_raw table"},
+        {"n": 3, "what": "extract task pushes table_name via xcom_push (E6 correcto)", "cite": "airflow/dags/etl_dag.py:30", "data_in": "table_name string", "data_out": "xcom key='table_name'"},
+        {"n": 4, "what": "transform task pulls table_name via xcom_pull (E6)", "cite": "airflow/dags/etl_dag.py:36", "data_in": "xcom key='table_name'", "data_out": "rows_extracted count"},
+        {"n": 5, "what": "load task executes dbt build --project-dir /fixture/dbt", "cite": "airflow/dags/etl_dag.py:53", "data_in": "command", "data_out": "dbt build run"},
+        {"n": 6, "what": "dbt build runs stg_ventas (E1 source('raw'))", "cite": "dbt/models/staging/stg_ventas.sql:2", "data_in": "source raw.ventas_raw", "data_out": "stg_ventas rows"},
+        {"n": 7, "what": "dbt build runs ventas_diarias_incremental (E3 is_incremental)", "cite": "dbt/models/marts/marts_incremental/ventas_diarias_incremental.sql:8", "data_in": "occurred_at", "data_out": "incremental rows"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "airflow/dags/etl_dag.py", "line": 30, "kind": "xcom_push_explicit", "condition_text": "extract task llama ctx['ti'].xcom_push(key='table_name', value='main.ventas_raw')", "branches": [{"label": "ok_explicit: xcom_push (E6 correcto)", "target_line": 30}, {"label": "trap_implicit: return value sin xcom_push (P6)", "target_line": null}]},
+        {"id": "DP-002", "file": "dbt/models/marts/marts_incremental/ventas_diarias_incremental.sql", "line": 8, "kind": "is_incremental_branch", "condition_text": "{% if is_incremental() %} filtra nuevos vs full refresh", "branches": [{"label": "ok_filtered: WHERE occurred_at > max (E3 correcto)", "target_line": 9}, {"label": "trap_unfiltered: WHERE 1=1 (P2 re-procesa todo)", "target_line": null}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "etl_dag corre completo con extract -> transform -> load", "user_sees": "dbt build PASSED + ventas_diarias poblada", "side_effects": ["INSERT en main.ventas_raw", "INSERT en stg_ventas", "INSERT en ventas_diarias"], "reversible": true, "final_state": "marts poblados"},
+        {"id": "R-02", "category": "success_partial", "conditions": "extract CSV no encontrado", "user_sees": "duckdb.IOException: ventas_raw.csv missing", "side_effects": ["extract task falla"], "reversible": true, "final_state": "DAG failed"},
+        {"id": "R-03", "category": "validation_input", "conditions": "CSV con cantidad negativa", "user_sees": "dbt test fail: assert_ventas_positivas", "side_effects": ["dbt build termina con error"], "reversible": true, "final_state": "test failed"},
+        {"id": "R-04", "category": "error_external_service", "conditions": "dbt profile dev no reachable", "user_sees": "Could not find profile named 'fxdbt'", "side_effects": ["dbt build falla antes de run"], "reversible": true, "final_state": "dbt no arranca"},
+        {"id": "R-05", "category": "noop_silent", "conditions": "incremental sin nuevos datos", "user_sees": "0 rows inserted (no error)", "side_effects": [], "reversible": true, "final_state": "incremental no-op"},
+        {"id": "R-06", "category": "success_full", "conditions": "incremental con nuevos datos", "user_sees": "rows inserted via incremental strategy", "side_effects": ["INSERT nuevos"], "reversible": true, "final_state": "incremental updated"},
+        {"id": "R-07", "category": "noop_silent", "conditions": "P2 trap: ventas_diarias_incremental_buggy corre incremental", "user_sees": "TODO re-procesado (no filtro)", "side_effects": ["recursos desperdiciados"], "reversible": true, "final_state": "incremental roto"}
+      ],
+      "config": [
+        {"key": "DBT_PROFILES_DIR", "kind": "env", "default": "/fixture", "effect": "profiles dir en /fixture"},
+        {"key": "AIRFLOW_HOME", "kind": "env", "default": "/fixture/.airflow", "effect": "Airflow home"},
+        {"key": "etl_dag.schedule_interval", "kind": "param", "default": "@daily", "effect": "Schedule del DAG"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "clientes",
+      "user_description": "Modelo de clientes joineado con ventas. Sinonimo neutro CC-11 para 'modelo-de-clientes'.",
+      "traces": [
+        {"n": 1, "what": "stg_clientes limpia source('raw','clientes_raw')", "cite": "dbt/models/staging/stg_clientes.sql:2", "data_in": "raw clientes", "data_out": "stg_clientes rows"},
+        {"n": 2, "what": "int_ventas_clientes joinea stg_ventas + stg_clientes", "cite": "dbt/models/intermediate/int_ventas_clientes.sql:14", "data_in": "stg_ventas + stg_clientes", "data_out": "joined rows"},
+        {"n": 3, "what": "clientes_top agrega por cliente_id", "cite": "dbt/models/marts/marts_clientes/clientes_top.sql:8", "data_in": "int_ventas_clientes", "data_out": "clientes_top aggregated"},
+        {"n": 4, "what": "User consulta clientes_top via dbt show", "cite": "dbt/models/marts/marts_clientes/clientes_top.sql:1", "data_in": "ninguno", "data_out": "rows ordenados por total_gastado"},
+        {"n": 5, "what": "dbt test assert_clientes_activos valida region NOT NULL", "cite": "dbt/tests/singular/assert_clientes_activos.sql:1", "data_in": "stg_clientes", "data_out": "pass/fail"},
+        {"n": 6, "what": "User activa cliente_id y via dbt seed --select tag:clientes", "cite": "dbt/seeds/seed_clientes.csv:1", "data_in": "5 clientes", "data_out": "stg_clientes rows"},
+        {"n": 7, "what": "seed_cliente_venta.csv cruza con stg_ventas", "cite": "dbt/seeds/seed_cliente_venta.csv:1", "data_in": "cliente_id + venta_id", "data_out": "13 enlaces"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "dbt/models/intermediate/int_ventas_clientes.sql", "line": 22, "kind": "left_join", "condition_text": "left join ventas + clientes", "branches": [{"label": "ok_match: 1:1 join", "target_line": 22}, {"label": "null_cliente: ventas sin cliente (left null)", "target_line": 22}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "stg_clientes + stg_ventas poblados", "user_sees": "int_ventas_clientes con join", "side_effects": ["INSERT en tabla join"], "reversible": true, "final_state": "join OK"},
+        {"id": "R-02", "category": "noop_silent", "conditions": "int_ventas_clientes sin matches", "user_sees": "0 rows en join", "side_effects": [], "reversible": true, "final_state": "join vacio"},
+        {"id": "R-03", "category": "success_full", "conditions": "clientes_top con clientes activos", "user_sees": "tabla con total_gastado", "side_effects": ["INSERT en clientes_top"], "reversible": true, "final_state": "clientes_top populated"},
+        {"id": "R-04", "category": "validation_input", "conditions": "clientes activos con region NULL", "user_sees": "dbt test assert_clientes_activos FAILED", "side_effects": ["dbt build failed"], "reversible": true, "final_state": "test failed"},
+        {"id": "R-05", "category": "success_full", "conditions": "seed_clientes.csv cargado", "user_sees": "5 clientes en main.seed_clientes", "side_effects": ["INSERT en seed"], "reversible": true, "final_state": "seed populated"},
+        {"id": "R-06", "category": "success_partial", "conditions": "left join con sku = cliente_id", "user_sees": "mayoria de ventas sin cliente (id mismatch)", "side_effects": ["cliente_id null en resultado"], "reversible": true, "final_state": "join parcial"},
+        {"id": "R-07", "category": "error_external_service", "conditions": "stg_clientes sin datos", "user_sees": "ref() returns empty + downstream models fallan", "side_effects": ["modelos downstream vacios"], "reversible": true, "final_state": "downstream empty"}
+      ],
+      "config": [
+        {"key": "dbt_project.yml.models.fxdbt.staging.+materialized", "kind": "config", "default": "view", "effect": "staging como vista"},
+        {"key": "dbt_project.yml.models.fxdbt.intermediate.+materialized", "kind": "config", "default": "view", "effect": "intermediate como vista"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "metricas",
+      "user_description": "Metricas diarias con macro Jinja (E2). Sinonimo neutro CC-11 para 'metricas-diarias'.",
+      "traces": [
+        {"n": 1, "what": "User compila metricas_diarias con dbt run", "cite": "dbt/models/marts/marts_metricas/metricas_diarias.sql:1", "data_in": "ventas_diarias + joined", "data_out": "metricas_diarias table"},
+        {"n": 2, "what": "metricas_diarias invoca filter_centros_normalizado('centro_norte')", "cite": "dbt/models/marts/marts_metricas/metricas_diarias.sql:13", "data_in": "centro_norte", "data_out": "WHERE estado = 'centro_norte'"},
+        {"n": 3, "what": "Macro Jinja centros_normalizados expande WHERE", "cite": "dbt/macros/centros_normalizados.sql:3", "data_in": "estado", "data_out": "WHERE clause"},
+        {"n": 4, "what": "metricas_diarias calcula sku_distintos + total_cantidad + total_monto", "cite": "dbt/models/marts/marts_metricas/metricas_diarias.sql:18", "data_in": "ventas_diarias + joined", "data_out": "metricas_diarias rows"},
+        {"n": 5, "what": "User consulta metricas_diarias via dbt show", "cite": "dbt/models/marts/marts_metricas/metricas_diarias.sql:1", "data_in": "ninguno", "data_out": "rows con metricas"},
+        {"n": 6, "what": "P1 trap: centros_concat concatena string (no se invoca en metricas_diarias pero existe)", "cite": "dbt/macros/centros_concat.sql:3", "data_in": "estado", "data_out": "WHERE clause con SQLi potencial"},
+        {"n": 7, "what": "dbt test assert_ventas_positivas valida cantidades > 0", "cite": "dbt/tests/singular/assert_ventas_positivas.sql:1", "data_in": "stg_ventas", "data_out": "pass/fail"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "dbt/macros/centros_normalizados.sql", "line": 3, "kind": "jinja_macro_parametrizado", "condition_text": "macro filter_centros_normalizado(estado) genera WHERE estado = {{ estado }}", "branches": [{"label": "ok_safe: Jinja parametriza (E2 correcto)", "target_line": 3}, {"label": "trap_concat: string concat ~ con SQLi (P1)", "target_line": null}]},
+        {"id": "DP-005", "file": "dbt/dbt_project.yml", "line": 26, "kind": "materialization_per_folder", "condition_text": "marts/+materialized: table + marts_incremental/+materialized: incremental", "branches": [{"label": "ok_table: marts/ventas como tabla (E4)", "target_line": 26}, {"label": "override_view: ventas_mensuales con config view", "target_line": null}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "metricas_diarias ejecutado con macro parametrizada", "user_sees": "rows con metricas agregadas", "side_effects": ["INSERT en metricas_diarias"], "reversible": true, "final_state": "metrics populated"},
+        {"id": "R-02", "category": "success_partial", "conditions": "macro recibe valor invalido", "user_sees": "JinjaTemplateError: expected string", "side_effects": ["dbt run failed"], "reversible": true, "final_state": "macro failed"},
+        {"id": "R-03", "category": "success_full", "conditions": "filter_centros_normalizado('centro_norte')", "user_sees": "WHERE estado = 'centro_norte' expandido correctamente", "side_effects": [], "reversible": true, "final_state": "macro expandido"},
+        {"id": "R-04", "category": "error_external_service", "conditions": "P1 trap: centros_concat con estado = '1 OR 1=1'", "user_sees": "WHERE estado = 1 OR 1=1 (SQL injection)", "side_effects": ["posible data exfiltration"], "reversible": false, "final_state": "vulnerable"},
+        {"id": "R-05", "category": "success_full", "conditions": "dbt test freshness_24h OK", "user_sees": "modelo actualizado en 24h", "side_effects": [], "reversible": true, "final_state": "freshness OK"},
+        {"id": "R-06", "category": "validation_input", "conditions": "dbt test freshness_24h FAIL", "user_sees": "model stale (>24h sin update)", "side_effects": ["dbt build failed"], "reversible": true, "final_state": "freshness fail"},
+        {"id": "R-07", "category": "noop_silent", "conditions": "metricas_diarias sin datos", "user_sees": "0 rows", "side_effects": [], "reversible": true, "final_state": "metricas vacias"}
+      ],
+      "config": [
+        {"key": "dbt_project.yml.models.fxdbt.marts.+materialized", "kind": "config", "default": "table", "effect": "marts como tabla"},
+        {"key": "filter_centros_normalizado.estado", "kind": "macro_arg", "default": "centro_norte", "effect": "filtro de region"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-dag-etl", "kind": "airflow-dag", "name": "etl_dag", "handler": "PythonOperator + BashOperator + xcom_push/pull", "file": "airflow/dags/etl_dag.py:1", "pair": "SRF-dbt-build-jobs"},
+    {"id": "SRF-dag-generated", "kind": "airflow-dag", "name": "generated_etl_dag", "handler": "dag_factory.build_dag_from_yaml", "file": "airflow/dags/generated_etl_dag.py:1", "pair": "SRF-dag-factory"},
+    {"id": "SRF-dag-legacy-purge", "kind": "airflow-dag", "name": "legacy_purge_dag", "handler": "BashOperator con start_date=2019 + catchup=False (S2)", "file": "airflow/legacy_purge_dag.py:1", "pair": null},
+    {"id": "SRF-dag-xcom-implicit", "kind": "airflow-dag", "name": "transform_xcom_implicit", "handler": "PythonOperator con return dict (P6 trap)", "file": "airflow/dags/transform_xcom_implicit.py:1", "pair": null},
+    {"id": "SRF-dag-factory", "kind": "python-module", "name": "dag_factory", "handler": "build_dag_from_yaml() (E5)", "file": "airflow/dags/dag_factory.py:1", "pair": null},
+    {"id": "SRF-dbt-stg-ventas", "kind": "dbt-model", "name": "stg_ventas", "handler": "{{ source('raw','ventas_raw') }} (E1)", "file": "dbt/models/staging/stg_ventas.sql:1", "pair": "SRF-source-raw"},
+    {"id": "SRF-dbt-stg-clientes", "kind": "dbt-model", "name": "stg_clientes", "handler": "{{ source('raw','clientes_raw') }} (E1)", "file": "dbt/models/staging/stg_clientes.sql:1", "pair": "SRF-source-raw"},
+    {"id": "SRF-dbt-int-ventas-clientes", "kind": "dbt-model", "name": "int_ventas_clientes", "handler": "{{ ref('stg_ventas') }} + {{ ref('stg_clientes') }}", "file": "dbt/models/intermediate/int_ventas_clientes.sql:1", "pair": null},
+    {"id": "SRF-dbt-ventas-diarias", "kind": "dbt-model", "name": "ventas_diarias", "handler": "table (E4 materialization)", "file": "dbt/models/marts/marts_ventas/ventas_diarias.sql:1", "pair": null},
+    {"id": "SRF-dbt-ventas-mensuales", "kind": "dbt-model", "name": "ventas_mensuales", "handler": "view (override)", "file": "dbt/models/marts/marts_ventas/ventas_mensuales.sql:1", "pair": null},
+    {"id": "SRF-dbt-clientes-top", "kind": "dbt-model", "name": "clientes_top", "handler": "table", "file": "dbt/models/marts/marts_clientes/clientes_top.sql:1", "pair": null},
+    {"id": "SRF-dbt-metricas-diarias", "kind": "dbt-model", "name": "metricas_diarias", "handler": "table + macro Jinja (E2)", "file": "dbt/models/marts/marts_metricas/metricas_diarias.sql:1", "pair": null},
+    {"id": "SRF-dbt-ventas-diarias-incremental", "kind": "dbt-model", "name": "ventas_diarias_incremental", "handler": "incremental + is_incremental() (E3 correcto)", "file": "dbt/models/marts/marts_incremental/ventas_diarias_incremental.sql:1", "pair": null},
+    {"id": "SRF-dbt-ventas-diarias-incremental-buggy", "kind": "dbt-model", "name": "ventas_diarias_incremental_buggy", "handler": "incremental + where 1=1 (P2 trap)", "file": "dbt/models/marts/marts_incremental/ventas_diarias_incremental_buggy.sql:1", "pair": null},
+    {"id": "SRF-source-raw", "kind": "dbt-source", "name": "raw", "handler": "source('raw','ventas_raw') + raw.clientes_raw (E1)", "file": "dbt/models/staging/_sources.yml:1", "pair": "SRF-dbt-stg-ventas"},
+    {"id": "SRF-macro-centros-normalizados", "kind": "dbt-macro", "name": "filter_centros_normalizado", "handler": "macro Jinja parametrizado (E2)", "file": "dbt/macros/centros_normalizados.sql:1", "pair": null},
+    {"id": "SRF-macro-centros-concat", "kind": "dbt-macro", "name": "filter_centros_concat", "handler": "macro concat string (P1 SQLi)", "file": "dbt/macros/centros_concat.sql:1", "pair": null},
+    {"id": "SRF-snapshot-ventas", "kind": "dbt-snapshot", "name": "snap_ventas", "handler": "snapshot timestamp", "file": "dbt/snapshots/snap_ventas.sql:1", "pair": null},
+    {"id": "SRF-seed-clientes", "kind": "dbt-seed", "name": "seed_clientes", "handler": "5 clientes (CC-11 safe)", "file": "dbt/seeds/seed_clientes.csv:1", "pair": null}
+  ],
+  "traps": [
+    {"id": "TRAP-E01", "kind": "dbt_ref_source_lineage", "where": "dbt/models/staging/stg_ventas.sql:2", "description": "Linaje definido solo por {{ source('raw','ventas_raw') }} y {{ ref('stg_ventas') }} en intermediate/marts. No hay FK constraints en la base DuckDB.", "resolution": "La skill debe notar que dbt genera un DAG de linaje via manifest.json + catalog.json, no via ALTER TABLE FOREIGN KEY. Para reconstruir el linaje hay que parsear los archivos .sql y resolver ref()/source() recursivamente."},
+    {"id": "TRAP-E02", "kind": "jinja_macros_generate_sql", "where": "dbt/macros/centros_normalizados.sql:1", "description": "Macros Jinja que generan SQL parametrizado (filter_centros_normalizado). El P1 (centros_concat) usa concat string vulnerable.", "resolution": "La skill debe distinguir macros 'definidas' (parametrizadas con {{ estado }}) de macros 'concatenadas' (concat string con ~). El correcto se compila con jinja env, el vulnerable genera string SQL."},
+    {"id": "TRAP-E03", "kind": "is_incremental_branch", "where": "dbt/models/marts/marts_incremental/ventas_diarias_incremental.sql:8", "description": "Rama {% if is_incremental() %} filtra nuevos vs full refresh. Correcto: WHERE occurred_at > max(occurred_at). P2 trap: ventas_diarias_incremental_buggy con where 1=1.", "resolution": "La skill debe buscar bloques {% if is_incremental() %} en OBJECT_DEFINITION del archivo y verificar que el filtro tenga una condicion util (NO '1=1')."},
+    {"id": "TRAP-E04", "kind": "materialization_per_folder", "where": "dbt/dbt_project.yml:24", "description": "Materializacion configurada por carpeta: staging=view, marts=table, marts_incremental=incremental. Ademas hay override en ventas_mensuales (config('materialized='view')).", "resolution": "La skill debe parsear dbt_project.yml y leer el bloque models.*.+materialized. Si una carpeta no tiene override explicito, usa el default del padre."},
+    {"id": "TRAP-E05", "kind": "airflow_dag_factory_yaml", "where": "airflow/dags/dag_factory.py:9", "description": "DAG de Airflow generado dinamicamente desde etl_config.yaml via build_dag_from_yaml(). El wrapper generated_etl_dag.py invoca el factory y esta en .airflowignore.", "resolution": "La skill debe notar que build_dag_from_yaml() itera spec['tasks'] y crea BashOperator o PythonOperator segun operator. El DAG no existe estaticamente en el codigo; se materializa en runtime al importarse."},
+    {"id": "TRAP-E06", "kind": "airflow_xcom_explicit", "where": "airflow/dags/etl_dag.py:30", "description": "XCom pasa datos entre tareas de forma explicita: extract task hace xcom_push(key='table_name', value=...), transform task hace xcom_pull(key='table_name', task_ids='extract'). P6 trap en transform_xcom_implicit.py con return dict no serializable.", "resolution": "La skill debe notar que xcom_push/xcom_pull explicitos son el patron correcto. La trampa P6 es usar `return dict` que falla en serializacion."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P01", "kind": "macro_concat_string_sqli", "where": "dbt/macros/centros_concat.sql:3", "description": "centros_concat macro concatena string con `~` (estado variable interpolada directamente en WHERE). SQLi potencial via --vars '{estado_filtro: \"1 OR 1=1\"}'", "resolution": "La skill debe detectar `~` en OBJECT_DEFINITION del archivo y la ausencia de Jinja escaping ({{ estado }}) en lugar de string concat."},
+    {"id": "TRAP-P02", "kind": "is_incremental_no_where", "where": "dbt/models/marts/marts_incremental/ventas_diarias_incremental_buggy.sql:8", "description": "ventas_diarias_incremental_buggy usa is_incremental() con where 1=1 (sin filtro). Re-procesa toda la tabla en cada incremental run.", "resolution": "La skill debe buscar 'is_incremental()' en el archivo y verificar que la rama tenga una condicion util (NO 'where 1=1')."},
+    {"id": "TRAP-P03", "kind": "dead_macro_helper", "where": "dbt/macros/legacy_helper.sql:1", "description": "legacy_helper macro declarado pero nunca invocado en ningun modelo (S1 adyacente a P3).", "resolution": "La skill debe recorrer todos los archivos .sql/models/ y verificar que el nombre del macro NO aparece."},
+    {"id": "TRAP-P04", "kind": "materialization_inconsistency", "where": "dbt/dbt_project.yml:26", "description": "marts_incremental/+materialized: incremental + on_schema_change: append_new_columns, pero la carpeta padre marts/+materialized: table. Sin override explicito por modelo, potencial inconsistencia.", "resolution": "La skill debe leer dbt_project.yml y validar que cada carpeta tenga un materialization explicito o que herede del padre."},
+    {"id": "TRAP-P05", "kind": "dag_disabled_by_design", "where": "airflow/legacy_purge_dag.py:13", "description": "legacy_purge_dag con start_date=datetime(2019, 1, 1) + catchup=False. Nunca corre: los runs historicos se pierden con catchup=False y los futuros se disparan desde start_date pero ya en el pasado lejano.", "resolution": "La skill debe validar que legacy_purge_dag existe en el codigo y verificar start_date + catchup=False. Documentar que nunca se ejecutara en produccion."},
+    {"id": "TRAP-P06", "kind": "xcom_implicit_return_dict", "where": "airflow/dags/transform_xcom_implicit.py:11", "description": "transform_xcom_implicit DAG usa `return {'rows': 100, 'unserializable': {1, 2, 3}}`. Airflow intenta json.dumps y falla con AirflowException no serializable.", "resolution": "La skill debe buscar 'return {' en el archivo y la ausencia de xcom_push. El DAG es un experimento aislado, no parte de etl_dag. Si se usa en produccion, la tarea siguiente falla."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S01", "kind": "dead_macro", "where": "dbt/macros/legacy_helper.sql:1", "description": "legacy_helper macro declarado pero nunca invocado en ningun modelo", "resolution": "La skill debe buscar 'legacy_helper' en todos los archivos .sql del proyecto y verificar que no aparece."},
+    {"id": "TRAP-S02", "kind": "dag_never_runs", "where": "airflow/legacy_purge_dag.py:13", "description": "legacy_purge_dag con start_date=datetime(2019, 1, 1) + catchup=False. Nunca corre.", "resolution": "La skill debe validar que legacy_purge_dag existe y documentar que la combinacion start_date pasado + catchup=False hace que nunca se ejecute."},
+    {"id": "TRAP-S03", "kind": "trivial_test", "where": "airflow/tests/test_deprecated.py:1", "description": "test_deprecated.py con pytest.skip() - test siempre se salta, no aporta cobertura real", "resolution": "La skill debe buscar pytest.skip en airflow/tests/ y documentar que el test no aporta cobertura real."}
+  ],
+  "call_graph": [
+    {"from": "EP-airflow-etl-dag", "to": "EP-dbt-build-jobs", "kind": "BashOperator", "via": "t1.extract -> t2.transform -> t3.load"},
+    {"from": "EP-airflow-etl-dag", "to": "EP-dbt-stg-ventas", "kind": "XCOM_PUSH", "via": "extract xcom_push key='table_name'"},
+    {"from": "EP-airflow-etl-dag", "to": "EP-dbt-stg-ventas", "kind": "XCOM_PULL", "via": "transform xcom_pull key='table_name'"},
+    {"from": "EP-airflow-dag-factory", "to": "EP-airflow-etl-config-yaml", "kind": "YAML_PARSE", "via": "yaml.safe_load(etl_config.yaml)"},
+    {"from": "EP-airflow-dag-factory", "to": "EP-airflow-generated-etl-dag", "kind": "DAG_BUILD", "via": "build_dag_from_yaml() returns DAG"},
+    {"from": "EP-dbt-stg-ventas", "to": "EP-dbt-sources", "kind": "REF_SOURCE", "via": "{{ source('raw','ventas_raw') }}"},
+    {"from": "EP-dbt-stg-clientes", "to": "EP-dbt-sources", "kind": "REF_SOURCE", "via": "{{ source('raw','clientes_raw') }}"},
+    {"from": "EP-dbt-int-ventas-clientes", "to": "EP-dbt-stg-ventas", "kind": "REF", "via": "{{ ref('stg_ventas') }}"},
+    {"from": "EP-dbt-int-ventas-clientes", "to": "EP-dbt-stg-clientes", "kind": "REF", "via": "{{ ref('stg_clientes') }}"},
+    {"from": "EP-dbt-ventas-diarias", "to": "EP-dbt-int-ventas-clientes", "kind": "REF", "via": "{{ ref('int_ventas_clientes') }}"},
+    {"from": "EP-dbt-clientes-top", "to": "EP-dbt-int-ventas-clientes", "kind": "REF", "via": "{{ ref('int_ventas_clientes') }}"},
+    {"from": "EP-dbt-metricas-diarias", "to": "EP-dbt-ventas-diarias", "kind": "REF", "via": "{{ ref('ventas_diarias') }}"},
+    {"from": "EP-dbt-metricas-diarias", "to": "EP-dbt-macro-centros-normalizados", "kind": "MACRO_INVOKE", "via": "{{ filter_centros_normalizado('centro_norte') }}"},
+    {"from": "EP-dbt-ventas-diarias-incremental", "to": "EP-dbt-int-ventas-clientes", "kind": "REF", "via": "{{ ref('int_ventas_clientes') }}"},
+    {"from": "EP-dbt-snapshot-ventas", "to": "EP-dbt-sources", "kind": "REF_SOURCE", "via": "{{ source('raw','ventas_raw') }}"},
+    {"from": "EP-dbt-seed-clientes", "to": "EP-dbt-stg-clientes", "kind": "SEED_LOAD", "via": "dbt seed"}
+  ],
+  "config": [
+    {"key": "DBT_PROFILES_DIR", "kind": "env", "default": "/fixture", "effect": "profiles dir en /fixture"},
+    {"key": "AIRFLOW_HOME", "kind": "env", "default": "/fixture/.airflow", "effect": "Airflow home dir"},
+    {"key": "AIRFLOW__CORE__LOAD_EXAMPLES", "kind": "env", "default": "false", "effect": "No cargar examples DAGs"},
+    {"key": "dbt_project.yml.models.fxdbt.staging.+materialized", "kind": "config", "default": "view", "effect": "staging como vista"},
+    {"key": "dbt_project.yml.models.fxdbt.marts_incremental.+unique_key", "kind": "config", "default": "fecha_sku", "effect": "unique_key para incremental"},
+    {"key": "etl_dag.schedule_interval", "kind": "param", "default": "@daily", "effect": "Schedule del DAG"},
+    {"key": "etl_dag.catchup", "kind": "param", "default": "False", "effect": "No ejecutar historico"}
+  ],
+  "tests": [
+    {"file": "airflow/tests/test_etl_dag.py", "feature": "FEAT-001 ventas", "tests": 6, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05", "R-06"]},
+    {"file": "airflow/tests/test_dag_factory.py", "feature": "FEAT-001 ventas (E5)", "tests": 5, "covers": ["R-01", "R-02", "R-03", "R-04", "R-05"]},
+    {"file": "airflow/tests/test_xcom_explicit.py", "feature": "FEAT-001 ventas (E6)", "tests": 3, "covers": ["R-01", "R-05", "R-06"]},
+    {"file": "airflow/tests/test_xcom_implicit.py", "feature": "FEAT-001 ventas (P6)", "tests": 5, "covers": ["R-04"]},
+    {"file": "airflow/tests/test_traps_ecosystem.py", "feature": "all (ecosystem traps)", "tests": 6, "covers": ["TRAP-E01", "TRAP-E02", "TRAP-E03", "TRAP-E04", "TRAP-E05", "TRAP-E06"]},
+    {"file": "airflow/tests/test_traps_package.py", "feature": "all (package traps)", "tests": 6, "covers": ["TRAP-P01", "TRAP-P02", "TRAP-P03", "TRAP-P04", "TRAP-P05", "TRAP-P06"]},
+    {"file": "airflow/tests/test_deprecated.py", "feature": "all (deprecated)", "tests": 1, "covers": ["TRAP-S03"]}
+  ]
+}

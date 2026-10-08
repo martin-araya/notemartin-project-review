@@ -1,0 +1,13 @@
+# profiles.yml: target dev (DuckDB) + test (DuckDB en :memory:)
+# Se invoca con --profiles-dir . desde /fixture
+fxdbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: /fixture/dev.duckdb
+      threads: 4
+    test:
+      type: duckdb
+      path: ":memory:"
+      threads: 1

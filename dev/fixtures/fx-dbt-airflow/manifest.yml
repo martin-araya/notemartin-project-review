@@ -1,0 +1,15 @@
+# Metadata del fixture F06ak: fx-dbt-airflow
+# Pipeline analitico con dbt (SQL + Jinja), Airflow (Python) y DuckDB.
+# Ver referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-dbt-airflow/ground_truth.json.
+name: fx-dbt-airflow
+description: dbt 1.8 + dbt-duckdb + apache-airflow 2.9 + DuckDB con DAG factory desde YAML (F06ak)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-dbt-airflow
+  enabled: true
+ground_truth_format_version: 1

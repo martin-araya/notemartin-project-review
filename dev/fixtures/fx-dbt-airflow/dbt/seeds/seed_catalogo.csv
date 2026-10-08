@@ -1,0 +1,11 @@
+sku,descripcion,categoria,precio_base
+SKU-A001,Widget Tipo A,widgets,10.00
+SKU-A002,Widget Tipo B,widgets,20.00
+SKU-A003,Gadget Pro,gadgets,50.00
+SKU-A004,Gadget Lite,gadgets,25.00
+SKU-A005,Accesorio X,accesorios,5.00
+SKU-A006,Accesorio Y,accesorios,8.00
+SKU-A007,Componente XX,componentes,15.00
+SKU-A008,Componente YY,componentes,30.00
+SKU-A009,Servicio O,servicios,100.00
+SKU-A010,Servicio Y,servicios,200.00

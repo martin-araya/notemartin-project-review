@@ -1,0 +1,6 @@
+cliente_id,nombre,region,activo,created_at
+C001,Cliente Uno,centro_norte,1,2024-01-15
+C002,Cliente Dos,centro_sur,1,2024-02-01
+C003,Cliente Tres,centro_norte,0,2024-02-15
+C004,Cliente Cuatro,centro_este,1,2024-03-01
+C005,Cliente Cinco,centro_oeste,1,2024-03-15

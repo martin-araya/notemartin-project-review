@@ -1,0 +1,19 @@
+# etl_config.yaml: spec del DAG generado dinamicamente (E5)
+dag_id: generated_etl_dag
+description: DAG generado desde YAML (E5)
+schedule_interval: "@hourly"
+start_date: "2026-01-01"
+tags:
+  - generated
+  - etl
+  - fxdbt
+tasks:
+  - task_id: extract_csv
+    operator: bash
+    command: "echo 'extract: ventas_raw from CSV'"
+  - task_id: transform_dbt
+    operator: bash
+    command: "dbt run --project-dir /fixture/dbt --profiles-dir /fixture --select tag:staging"
+  - task_id: load_dbt
+    operator: bash
+    command: "dbt run --project-dir /fixture/dbt --profiles-dir /fixture --select tag:marts"

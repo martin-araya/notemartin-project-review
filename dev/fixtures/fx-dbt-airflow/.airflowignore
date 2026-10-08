@@ -1,0 +1,2 @@
+# .airflowignore: archivos que Airflow no debe descubrir como DAGs.
+generated_etl_dag.py

@@ -1,0 +1,9 @@
+.duckdb
+.airflow/
+dbt/dbt_packages/
+dbt/target/
+dbt/logs/
+__pycache__/
+.pytest/
+Generated/
+*.bak

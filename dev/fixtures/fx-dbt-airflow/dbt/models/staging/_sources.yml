@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Capa raw ingestada por el DAG de Airflow"
+    schema: main
+    tables:
+      - name: ventas_raw
+        description: "Ventas en formato raw (CSV ingestado por extract task)"
+        columns:
+          - name: venta_id
+            tests: [unique, not_null]
+          - name: sku
+            tests: [not_null]
+          - name: cantidad
+            tests: [not_null]
+          - name: occurred_at
+            tests: [not_null]
+      - name: clientes_raw
+        description: "Clientes en formato raw"
+        columns:
+          - name: cliente_id
+            tests: [unique, not_null]
