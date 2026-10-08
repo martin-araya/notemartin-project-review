@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "FxRn",
+    "slug": "fxrn",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "fxrn",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "bundleIdentifier": "com.example.fxrn",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSNFCReaderUsageDescription": "Used to read NFC tags for payment"
+      }
+    },
+    "android": {
+      "package": "com.example.fxrn",
+      "permissions": ["android.permission.NFC"]
+    },
+    "plugins": [
+      "./plugins/withNfc",
+      "./plugins/withDeepLinking",
+      "expo-build-properties",
+      "expo-notifications",
+      "expo-splash-screen",
+      "expo-linking"
+    ],
+    "experiments": {
+      "tsconfigPaths": true
+    },
+    "extra": {
+      "routerChannelId": "general"
+    }
+  }
+}

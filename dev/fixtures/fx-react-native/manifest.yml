@@ -1,0 +1,15 @@
+# Metadata del fixture F06ae: fx-react-native
+# App React Native (Expo bare) con TurboModules, Redux, plugins Expo,
+# deep linking, Metro aliases y notificaciones push. Ver referencias
+# exactas de las trampas en dev/ground-truth/fx-react-native/ground_truth.json.
+name: fx-react-native
+description: React Native 0.74 + Expo 51 bare + Redux Toolkit + React Navigation + TurboModules (F06ae)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-react-native
+  enabled: true
+ground_truth_format_version: 1

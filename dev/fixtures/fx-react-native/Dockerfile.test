@@ -1,0 +1,16 @@
+# Dockerfile.test del fixture F06ae (fx-react-native).
+# Imagen oficial Cirrus Labs con React Native 0.74 + Node 20 + Yarn.
+FROM ghcr.io/cirruslabs/react-native:0.74.5
+
+WORKDIR /app
+
+# Cache de Yarn para acelerar builds subsecuentes
+ENV YARN_CACHE_FOLDER=/app/.yarn-cache
+
+# Copia todo el fixture
+COPY . /app/
+
+# Precompila dependencias (cache de Docker layer)
+RUN yarn install --frozen-lockfile --silent 2>&1 | tail -5 || true
+
+CMD ["make", "test"]

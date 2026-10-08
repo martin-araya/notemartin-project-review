@@ -1,0 +1,204 @@
+{
+  "fixture": "fx-react-native",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "registerRootComponent(App)", "file": "index.js:3"},
+    {"id": "EP-app", "artifact": "App default export", "file": "App.tsx:12"},
+    {"id": "EP-root-navigator", "artifact": "RootNavigator", "file": "src/navigation/RootNavigator.tsx:11"},
+    {"id": "EP-linking-config", "artifact": "linkingConfig", "file": "src/navigation/linkingConfig.ts:4"},
+    {"id": "EP-payments-screen", "artifact": "PaymentsScreen", "file": "src/features/payments/presentation/PaymentsScreen.tsx:11"},
+    {"id": "EP-payments-screen-ios", "artifact": "PaymentsScreen.ios (Metro platform file)", "file": "src/features/payments/presentation/PaymentsScreen.ios.tsx:6"},
+    {"id": "EP-payments-screen-android", "artifact": "PaymentsScreen.android (Metro platform file)", "file": "src/features/payments/presentation/PaymentsScreen.android.tsx:7"},
+    {"id": "EP-history-screen", "artifact": "HistoryScreen", "file": "src/features/history/presentation/HistoryScreen.tsx:9"},
+    {"id": "EP-notifications-screen", "artifact": "NotificationsScreen", "file": "src/features/notifications/presentation/NotificationsScreen.tsx:7"},
+    {"id": "EP-payments-controller", "artifact": "PaymentsController class", "file": "src/features/payments/application/PaymentsController.ts:6"},
+    {"id": "EP-notification-handler", "artifact": "registerNotifications function", "file": "src/features/notifications/application/NotificationHandler.ts:13"},
+    {"id": "EP-with-nfc-plugin", "artifact": "withNfc config plugin (E3)", "file": "src/plugins/withNfc.ts:6"},
+    {"id": "EP-with-deep-linking-plugin", "artifact": "withDeepLinking config plugin (E3)", "file": "src/plugins/withDeepLinking.ts:6"},
+    {"id": "EP-android-module", "artifact": "NfcManagerModule @ReactModule(name=\"RtcNfcManager\")", "file": "android_stub/NfcManagerModule.kt:11"},
+    {"id": "EP-ios-module", "artifact": "RtcNfcManager Swift @objc class", "file": "ios_stub/NfcManagerModule.swift:7"}
+  ],
+  "modules": [
+    {"id": "MOD-app", "path": "App.tsx", "summary": "NavigationContainer + Redux Provider + Notification registration"},
+    {"id": "MOD-main", "path": "index.js", "summary": "registerRootComponent"},
+    {"id": "MOD-nav", "path": "src/navigation/", "summary": "RootNavigator + linkingConfig + routes"},
+    {"id": "MOD-store", "path": "src/store/", "summary": "configureStore con payments/history/notifications slices + hooks"},
+    {"id": "MOD-payments-domain", "path": "src/features/payments/domain/", "summary": "NfcPayment types"},
+    {"id": "MOD-payments-data", "path": "src/features/payments/data/NfcManager.ts", "summary": "NativeModules.RtcNfcManager wrapper (E1, P1, P5)"},
+    {"id": "MOD-payments-app", "path": "src/features/payments/application/PaymentsController.ts", "summary": "Redux dispatch + NFC orchestration"},
+    {"id": "MOD-payments-presentation", "path": "src/features/payments/presentation/", "summary": "PaymentsScreen con .ios.tsx y .android.tsx (E2)"},
+    {"id": "MOD-history-domain", "path": "src/features/history/", "summary": "Payment type re-export"},
+    {"id": "MOD-history-app", "path": "src/features/history/presentation/HistoryScreen.tsx", "summary": "FlatList + Redux + filter + sort + pagination"},
+    {"id": "MOD-notifications-app", "path": "src/features/notifications/application/NotificationHandler.ts", "summary": "registerNotifications + setNotificationHandler (E6, P3)"},
+    {"id": "MOD-notifications-presentation", "path": "src/features/notifications/presentation/NotificationsScreen.tsx", "summary": "Token + permission + schedule UI"},
+    {"id": "MOD-plugins", "path": "src/plugins/", "summary": "withNfc + withDeepLinking Expo config plugins (E3)"},
+    {"id": "MOD-util", "path": "src/util/", "summary": "logger (S1) + dateFormat (S2)"},
+    {"id": "MOD-android-stub", "path": "android_stub/", "summary": "NfcManagerModule.kt + NfcManagerPackage.kt + AndroidManifest.xml"},
+    {"id": "MOD-ios-stub", "path": "ios_stub/", "summary": "NfcManagerModule.swift + .mm + Info.plist"}
+  ],
+  "dependencies": [
+    {"name": "react-native", "version": "0.74.5", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "expo", "version": "~51.0.39", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "react", "version": "18.2.0", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "@reduxjs/toolkit", "version": "^2.2.7", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "react-redux", "version": "^9.1.2", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "@react-navigation/native", "version": "^6.1.18", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "@react-navigation/native-stack", "version": "^6.11.0", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "expo-linking", "version": "~6.3.1", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "expo-notifications", "version": "~0.28.19", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "expo-build-properties", "version": "~0.12.5", "scope": "build", "manifest": "app.json (plugins)"},
+    {"name": "expo-splash-screen", "version": "~0.27.7", "scope": "build", "manifest": "app.json (plugins)"},
+    {"name": "babel-preset-expo", "version": "~11.0.0", "scope": "build", "manifest": "babel.config.js"},
+    {"name": "babel-plugin-module-resolver", "version": "^5.0.2", "scope": "build", "manifest": "babel.config.js (E5)"},
+    {"name": "metro", "version": "0.51.2", "scope": "build", "manifest": "metro.config.js"},
+    {"name": "typescript", "version": "~5.4.0", "scope": "build", "manifest": "tsconfig.json"},
+    {"name": "jest", "version": "^29.7.0", "scope": "test", "manifest": "package.json (devDependencies)"},
+    {"name": "jest-expo", "version": "~51.0.4", "scope": "test", "manifest": "package.json (devDependencies)"},
+    {"name": "@testing-library/react-native", "version": "^12.5.0", "scope": "test", "manifest": "package.json (devDependencies)"},
+    {"name": "react-test-renderer", "version": "18.2.0", "scope": "test", "manifest": "package.json (devDependencies)"},
+    {"name": "react-native-gesture-handler", "version": "~2.16.1", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "react-native-screens", "version": "3.31.1", "scope": "build+runtime", "manifest": "package.json"},
+    {"name": "react-native-safe-area-context", "version": "4.10.5", "scope": "build+runtime", "manifest": "package.json"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "pagos-con-nfc",
+      "user_description": "Pago NFC con bridge nativo RtcNfcManager, archivos .ios.tsx/.android.tsx, deep linking y Redux.",
+      "traces": [
+        {"n": 1, "what": "Usuario abre la app, navega a /payments", "cite": "src/navigation/RootNavigator.tsx:24", "data_in": "nav", "data_out": "PaymentsScreen rendered"},
+        {"n": 2, "what": "PaymentsScreen lee redux state y crea PaymentsController", "cite": "src/features/payments/presentation/PaymentsScreen.tsx:14", "data_in": "dispatch", "data_out": "controller"},
+        {"n": 3, "what": "Tap 'Pagar' llama controller.startProcessing", "cite": "src/features/payments/presentation/PaymentsScreen.tsx:21", "data_in": "orderId, amount", "data_out": "controller.startProcessing"},
+        {"n": 4, "what": "PaymentsController llama NfcManager.start() (bridge)", "cite": "src/features/payments/application/PaymentsController.ts:14", "data_in": "orderId", "data_out": "NativeModules.RtcNfcManager.start()"},
+        {"n": 5, "what": "NfcManager.readTag() invoca bridge sin try/catch (P1)", "cite": "src/features/payments/data/NfcManager.ts:30", "data_in": "method", "data_out": "tag from native"},
+        {"n": 6, "what": "dispatch(addPayment) actualiza Redux store", "cite": "src/features/payments/application/PaymentsController.ts:23", "data_in": "Payment", "data_out": "state.items.push"},
+        {"n": 7, "what": "deep link fxrn://pay/{orderId} via linkingConfig abre PaymentsScreen con orderId precargado", "cite": "src/navigation/linkingConfig.ts:13", "data_in": "uri", "data_out": "payments/pay -> pay/:orderId"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/features/payments/application/PaymentsController.ts", "line": 13, "kind": "try_catch", "condition_text": "try { await NfcManager.start(); ... } catch (err) { ... }", "branches": [{"label": "success -> addPayment", "target_line": 23}, {"label": "exception -> setLastError + addPayment(error) + markPendingSync", "target_line": 32}]},
+        {"id": "DP-002", "file": "src/features/payments/data/NfcManager.ts", "line": 23, "kind": "platform_branch", "condition_text": "Platform.OS as 'ios' | 'android'", "branches": [{"label": "ios -> NSNFCReaderUsageDescription required", "target_line": 23}, {"label": "android -> NFC permission required", "target_line": 23}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "NfcManager.start() ok + readTag() retorna tag valido", "user_sees": "Toast 'Pago exitoso' + entry en historial", "side_effects": ["dispatch(addPayment)"], "reversible": true, "final_state": "state.items has new entry"},
+        {"id": "R-02", "category": "validation_input", "conditions": "NfcManager.readTag() retorna null", "user_sees": "Error 'Tag no reconocido'", "side_effects": ["setLastError"], "reversible": true, "final_state": "state.lastError set"},
+        {"id": "R-03", "category": "permission_denied", "conditions": "Android 6+ sin NFC permission", "user_sees": "Pantalla 'Conceder permiso NFC' (solo .android.tsx)", "side_effects": [], "reversible": true, "final_state": "scan bloqueado"},
+        {"id": "R-04", "category": "error_external_service", "conditions": "NativeModules.RtcNfcManager undefined (modulo no linkeado)", "user_sees": "Error 'Modulo nativo no disponible' (P1 throw)", "side_effects": [], "reversible": false, "final_state": "crashea"},
+        {"id": "R-05", "category": "error_internal_service", "conditions": "iOS sin NSNFCReaderUsageDescription en Info.plist", "user_sees": "Crash en runtime (sin UI)", "side_effects": [], "reversible": false, "final_state": "app crashea"},
+        {"id": "R-06", "category": "success_offline", "conditions": "sin red + bridge OK", "user_sees": "Pago exitoso con status 'success' sincronizado despues", "side_effects": ["markPendingSync"], "reversible": true, "final_state": "pending queue"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxrn://pay/{orderId}", "user_sees": "PaymentsScreen con initialOrderId precargado", "side_effects": [], "reversible": true, "final_state": "param orderId"}
+      ],
+      "config": [
+        {"key": "scheme", "kind": "app.json", "default": "fxrn", "effect": "deep linking scheme"},
+        {"key": "NSNFCReaderUsageDescription", "kind": "Info.plist (iOS)", "default": "Used to read NFC tags for payment", "effect": "permiso NFC iOS"},
+        {"key": "android.permission.NFC", "kind": "AndroidManifest.xml", "default": "true", "effect": "permiso NFC Android"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "historial",
+      "user_description": "FlatList paginada con filtro, orden y export CSV de pagos NFC.",
+      "stubs": [
+        {"n": 1, "what": "Usuario navega /history", "cite": "src/navigation/RootNavigator.tsx:25", "data_in": "nav", "data_out": "HistoryScreen"},
+        {"n": 2, "what": "HistoryScreen lee state.history.items", "cite": "src/features/history/presentation/HistoryScreen.tsx:14", "data_in": "ref", "data_out": "Array<Payment>"},
+        {"n": 3, "what": "useMemo filtra por filter text", "cite": "src/features/history/presentation/HistoryScreen.tsx:22", "data_in": "filter", "data_out": "filtered"},
+        {"n": 4, "what": "useMemo ordena por sort key", "cite": "src/features/history/presentation/HistoryScreen.tsx:30", "data_in": "sort", "data_out": "sorted"},
+        {"n": 5, "what": "paged = sorted.slice(0, (page+1)*pageSize)", "cite": "src/features/history/presentation/HistoryScreen.tsx:39", "data_in": "page, pageSize", "data_out": "paged slice"},
+        {"n": 6, "what": "FlatList renderItem por cada Payment", "cite": "src/features/history/presentation/HistoryScreen.tsx:46", "data_in": "paged", "data_out": "View rows"},
+        {"n": 7, "what": "onEndReached dispatch nextPage para paginar", "cite": "src/features/history/presentation/HistoryScreen.tsx:55", "data_in": "end of list", "data_out": "page +1"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/features/history/presentation/HistoryScreen.tsx", "line": 22, "kind": "filter_branch", "condition_text": "!q || p.orderId.includes(q) || p.tagId.includes(q)", "branches": [{"label": "empty filter -> all", "target_line": 23}, {"label": "non-empty -> match orderId OR tagId", "target_line": 24}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "state.items.length > 0", "user_sees": "FlatList con rows por pago", "side_effects": [], "reversible": true, "final_state": "rows renderizadas"},
+        {"id": "R-02", "category": "no_op_empty", "conditions": "state.items empty", "user_sees": "Texto 'Aun no hay pagos'", "side_effects": [], "reversible": true, "final_state": "empty state"},
+        {"id": "R-03", "category": "success_partial", "conditions": "filter matches 2 of 5", "user_sees": "lista filtrada", "side_effects": ["setFilter resets page"], "reversible": true, "final_state": "paged subset"},
+        {"id": "R-04", "category": "success_paginated", "conditions": "scroll al fondo", "user_sees": "FlatList carga siguiente pagina de 50", "side_effects": ["nextPage"], "reversible": true, "final_state": "page+1"},
+        {"id": "R-05", "category": "success_reorder", "conditions": "tap 'Monto'", "user_sees": "lista ordenada por amount desc", "side_effects": ["setSort('amount')"], "reversible": true, "final_state": "state.sort updated"},
+        {"id": "R-06", "category": "success_export", "conditions": "tap 'Exportar' (no implementado en fixture)", "user_sees": "Sin accion visible", "side_effects": [], "reversible": true, "final_state": "no-op"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxrn://history/{filter}", "user_sees": "HistoryScreen con filter precargado", "side_effects": ["setFilter"], "reversible": true, "final_state": "state.filter updated"}
+      ],
+      "config": [
+        {"key": "history.pageSize", "kind": "constant", "default": "50", "effect": "FlatList itemCount limit"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "notificaciones-push",
+      "user_description": "Push notifications con Expo Notifications + background handler silencioso.",
+      "traces": [
+        {"n": 1, "what": "App inicia con ProviderScope (App.tsx) llamando registerNotifications", "cite": "App.tsx:13", "data_in": "init", "data_out": "registerNotifications()"},
+        {"n": 2, "what": "registerNotifications configura canal Android default", "cite": "src/features/notifications/application/NotificationHandler.ts:17", "data_in": "Platform.OS", "data_out": "channel 'default'"},
+        {"n": 3, "what": "getPermissionsAsync + dispatch setPermission", "cite": "src/features/notifications/application/NotificationHandler.ts:21", "data_in": "query", "data_out": "state.notifications.permission"},
+        {"n": 4, "what": "getExpoPushTokenAsync + dispatch setToken", "cite": "src/features/notifications/application/NotificationHandler.ts:24", "data_in": "query", "data_out": "state.notifications.token"},
+        {"n": 5, "what": "setNotificationHandler con handleNotification", "cite": "src/features/notifications/application/NotificationHandler.ts:34", "data_in": "callback", "data_out": "handler en background"},
+        {"n": 6, "what": "handler silencioso retorna config cuando no falla", "cite": "src/features/notifications/application/NotificationHandler.ts:38", "data_in": "notification", "data_out": "PresentationOptions"},
+        {"n": 7, "what": "Push recibido en background con deep link a /notifications", "cite": "src/navigation/linkingConfig.ts:17", "data_in": "push", "data_out": "NotificationsScreen"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "src/features/notifications/application/NotificationHandler.ts", "line": 21, "kind": "try_catch", "condition_text": "try { ... } catch (_) { /* silent P3 */ }", "branches": [{"label": "ok -> setToken + setPermission", "target_line": 24}, {"label": "exception -> silent", "target_line": 28}]},
+        {"id": "DP-005", "file": "src/features/notifications/application/NotificationHandler.ts", "line": 41, "kind": "try_catch_handler", "condition_text": "handleNotification: async () => { try { return options } catch (_) { return empty options } }", "branches": [{"label": "ok -> showAlert + showList", "target_line": 41}, {"label": "exception -> empty options (silent P3)", "target_line": 50}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "App en foreground + push recibido", "user_sees": "NotificationBanner top of screen", "side_effects": ["state.notifications.token updated"], "reversible": true, "final_state": "handler activo"},
+        {"id": "R-02", "category": "success_background", "conditions": "App cerrada + push en background", "user_sees": "Notificacion nativa en system tray + tap abre app", "side_effects": ["setScheduleId"], "reversible": true, "final_state": "tap abre app en /notifications"},
+        {"id": "R-03", "category": "permission_denied", "conditions": "iOS user denies notifications", "user_sees": "UI 'Sin permisos de notificacion'", "side_effects": ["state.notifications.permission='denied'"], "reversible": true, "final_state": "permission not granted"},
+        {"id": "R-04", "category": "timeout_external", "conditions": "getExpoPushTokenAsync fails with timeout", "user_sees": "Sin UI error (catch silencioso P3)", "side_effects": ["state.lastError no set"], "reversible": true, "final_state": "token null"},
+        {"id": "R-05", "category": "noop_silent", "conditions": "handleNotification throws", "user_sees": "Notificacion procesada con config vacia (P3 silent catch)", "side_effects": [], "reversible": true, "final_state": "handler no muestra nada"},
+        {"id": "R-06", "category": "resource_not_found", "conditions": "Push con URL rota /data invalida", "user_sees": "Redirect a fallback (root)", "side_effects": [], "reversible": true, "final_state": "nav redirect a /payments"},
+        {"id": "R-07", "category": "success_scheduled", "conditions": "scheduleNotificationAsync(trigger)", "user_sees": "Push futuro agendado", "side_effects": ["state.notifications.scheduleId"], "reversible": true, "final_state": "scheduleId actualizado"}
+      ],
+      "config": [
+        {"key": "projectId", "kind": "expo-notifications", "default": "fxrn-project", "effect": "Expo push notifications project ID"},
+        {"key": "channel.default", "kind": "Android", "default": "default", "effect": "Notification channel Android"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-screen-payments", "kind": "screen", "name": "PaymentsScreen", "handler": "PaymentsScreen", "file": "src/features/payments/presentation/PaymentsScreen.tsx:11"},
+    {"id": "SRF-screen-payments-ios", "kind": "screen", "name": "PaymentsScreen.ios", "handler": "PaymentsScreen.ios", "file": "src/features/payments/presentation/PaymentsScreen.ios.tsx:6"},
+    {"id": "SRF-screen-payments-android", "kind": "screen", "name": "PaymentsScreen.android", "handler": "PaymentsScreen.android", "file": "src/features/payments/presentation/PaymentsScreen.android.tsx:7"},
+    {"id": "SRF-screen-history", "kind": "screen", "name": "HistoryScreen", "handler": "HistoryScreen", "file": "src/features/history/presentation/HistoryScreen.tsx:9"},
+    {"id": "SRF-screen-notifications", "kind": "screen", "name": "NotificationsScreen", "handler": "NotificationsScreen", "file": "src/features/notifications/presentation/NotificationsScreen.tsx:7"},
+    {"id": "SRF-deeplink-pay", "kind": "deep-link", "name": "fxrn://pay/{orderId}", "handler": "linkingConfig config.screens", "file": "src/navigation/linkingConfig.ts:13"},
+    {"id": "SRF-deeplink-history", "kind": "deep-link", "name": "fxrn://history/{filter}", "handler": "linkingConfig config.screens", "file": "src/navigation/linkingConfig.ts:15"},
+    {"id": "SRF-bridge-nfc", "kind": "native-bridge", "name": "NativeModules.RtcNfcManager", "handler": "NfcManager wrapper", "file": "src/features/payments/data/NfcManager.ts:18"},
+    {"id": "SRF-android-module", "kind": "method-handler", "name": "NfcManagerModule.start/stop/readTag/requestPermissions", "handler": "@ReactModule(name=\"RtcNfcManager\")", "file": "android_stub/NfcManagerModule.kt:11"},
+    {"id": "SRF-ios-module", "kind": "method-handler", "name": "RtcNfcManager.start/stop/readTag/requestPermissions", "handler": "@objc(RtcNfcManager) class", "file": "ios_stub/NfcManagerModule.swift:7"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "bridge_native_module", "file": "src/features/payments/data/NfcManager.ts:18", "line": 18, "description": "NativeModules.RtcNfcManager resuelve un modulo nativo por string. Kotlin usa @ReactModule(name=\"RtcNfcManager\"), Swift usa @objc(RtcNfcManager).", "resolution": "Seguir el string 'RtcNfcManager' desde JS hasta android_stub/NfcManagerModule.kt y ios_stub/NfcManagerModule.swift."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "platform_file_resolution", "file": "src/features/payments/presentation/PaymentsScreen.ios.tsx:6", "line": 6, "description": "Metro selecciona PaymentsScreen.ios.tsx o PaymentsScreen.android.tsx segun plataforma. PaymentsScreen.tsx es el fallback comun.", "resolution": "Verificar metro.config.js + sourceExts + archivos .ios.tsx/.android.tsx."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "expo_config_plugins", "file": "app.json:30", "line": 30, "description": "app.json declara 6 plugins que modifican prebuild: withNfc, withDeepLinking, expo-build-properties, expo-notifications, expo-splash-screen, expo-linking.", "resolution": "Leer app.json.plugins y src/plugins/*.ts para entender las transformaciones."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "deep_linking_config", "file": "src/navigation/linkingConfig.ts:4", "line": 4, "description": "linkingConfig declara 3 prefixes (fxrn://, https://fxrn.app/, Linking.createURL) y config.screens con 5 rutas + 2 deepLinks (/pay/:orderId, /history/:filter).", "resolution": "Seguir Linking.createURL('fxrn://') + Linking.createURL('/') y Linking.createURL."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "metro_aliases", "file": "metro.config.js:11", "line": 11, "description": "metro.config.js declara 7 aliases en extraNodeModules + babel.config.js usa module-resolver con los mismos aliases.", "resolution": "Resolver alias via metro.config.js extraNodeModules + babel.config.js plugin."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "background_notification_handler", "file": "src/features/notifications/application/NotificationHandler.ts:34", "line": 34, "description": "registerNotifications configura setNotificationHandler con handleNotification async en background + getExpoPushTokenAsync.", "resolution": "Leer NotificationHandler.ts para entender el handler en background."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "nfc_read_tag_no_catch", "file": "src/features/payments/data/NfcManager.ts:30", "line": 30, "description": "NfcManager.readTag() no envuelve RtcNfcManager.readTag() en try/catch. Si el bridge crashea, la app crashea.", "resolution": "Envuelver en try/catch."},
+    {"id": "TRAP-P2", "kind": "package", "name": "redux_slice_direct_mutation", "file": "src/store/slices/paymentsSlice.ts:34", "line": 34, "description": "addPayment muta state.items.push(action.payload) directamente. Sin prepare callback ni copia explicita.", "resolution": "Usar immer explicitamente o construir el nuevo array."},
+    {"id": "TRAP-P3", "kind": "package", "name": "notification_silent_catch", "file": "src/features/notifications/application/NotificationHandler.ts:16", "line": 16, "description": "registerNotifications + handleNotification usan catch (_) sin log ni rethrow.", "resolution": "Logear o rethrow despues de incrementar un contador de errores."},
+    {"id": "TRAP-P4", "kind": "package", "name": "linking_config_android_disabled", "file": "src/navigation/linkingConfig.ts:10", "line": 10, "description": "linkingConfig incluye fxrn:// y https://fxrn.app/ pero NO tiene Platform.OS === 'android' que desactiva deep linking en Android.", "resolution": "Anadir branching condicional."},
+    {"id": "TRAP-P5", "kind": "package", "name": "nfc_start_no_permissions", "file": "src/features/payments/data/NfcManager.ts:23", "line": 23, "description": "NfcManager.start() no verifica PermissionsAndroid.request(NFC) antes de invocar el bridge.", "resolution": "Pedir permiso antes de start() en Android 6+."},
+    {"id": "TRAP-P6", "kind": "package", "name": "metro_alias_inconsistent", "file": "metro.config.js:15", "line": 15, "description": "metro.config.js declara '@features': path.resolve(__dirname, 'src/features') (correcto), pero los imports usan paths inconsistentes sin extension .ts/.tsx en algunos archivos.", "resolution": "Estandarizar imports con extension explicita."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "logger_unused", "file": "src/util/logger.ts:3", "line": 3, "description": "Logger.log y Logger.warn declarados pero no se llaman desde runtime code.", "resolution": "Eliminar o usar DebugPrint."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "date_format_unused", "file": "src/util/dateFormat.ts:3", "line": 3, "description": "formatDate y formatDateTime declarados pero no se usan.", "resolution": "Usar en HistoryScreen o eliminar."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "App", "to": "RootNavigator", "file": "App.tsx:17"},
+      {"from": "App", "to": "registerNotifications", "file": "App.tsx:13"},
+      {"from": "RootNavigator", "to": "linkingConfig", "file": "src/navigation/RootNavigator.tsx:18"},
+      {"from": "PaymentsScreen", "to": "PaymentsController", "file": "src/features/payments/presentation/PaymentsScreen.tsx:19"},
+      {"from": "PaymentsController", "to": "NfcManager.start", "file": "src/features/payments/application/PaymentsController.ts:14"},
+      {"from": "PaymentsController", "to": "NfcManager.readTag", "file": "src/features/payments/application/PaymentsController.ts:18"},
+      {"from": "NfcManager", "to": "NativeModules.RtcNfcManager", "file": "src/features/payments/data/NfcManager.ts:18"},
+      {"from": "HistoryScreen", "to": "setFilter/setSort/nextPage", "file": "src/features/history/presentation/HistoryScreen.tsx:25"},
+      {"from": "registerNotifications", "to": "Notifications.setNotificationHandler", "file": "src/features/notifications/application/NotificationHandler.ts:34"},
+      {"from": "registerNotifications", "to": "getExpoPushTokenAsync", "file": "src/features/notifications/application/NotificationHandler.ts:24"},
+      {"from": "linkingConfig", "to": "Linking.createURL", "file": "src/navigation/linkingConfig.ts:7"}
+    ]
+  }
+}
