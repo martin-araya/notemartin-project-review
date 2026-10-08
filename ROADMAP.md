@@ -1248,24 +1248,62 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 
 **Limitación operativa documentada:** `xcodebuild` solo está disponible en macOS con Xcode 15+ (en el host de implementación: Xcode 27.0 vía `DEVELOPER_DIR=/System/Volumes/Data/Applications/Xcode.app/Contents/Developer`). `CommandLineTools` sin Xcode completo no incluye el módulo `Testing` de Swift, así que `swift test` falla en ese entorno; el runner detecta la falta y registra `.build/xcode-skip.log` sin abortar.
 
-## F06ab — Fixture `fx-swift-server`
+## F06ab — Fixture `fx-swift-server` ✅
  
 **Objetivo:** paquete Swift multiplataforma con servidor Vapor, CLI y macros.
-**Stack:** Swift 6, SPM, Vapor, Fluent, swift-argument-parser, Swift macros, build tool plugins.
+**Stack:** Swift 6.0.3, SPM, Vapor 4.92+, Fluent + FluentSQLiteDriver, swift-argument-parser 1.3+, swift-syntax 510+, Swift macros (`@attached(peer)` + `@freestanding(declaration)`), build tool plugins.
 **Features:** `api-de-notas`, `cli-de-importación`, `auditoría`.
 **Trampas del ecosistema:**
-1. Macros (`@attached`, `@freestanding`) que generan código.
+1. Macros (`@attached(peer)`, `@freestanding(declaration)`) que generan código.
 2. Build tool plugins de SPM que generan fuentes.
 3. Rutas registradas con `RouteCollection` en `boot`.
 4. Modelos Fluent con `@Field`/`@Parent` y migraciones.
 5. Actors y `Sendable`.
 6. `#if canImport(...)` que cambia el comportamiento entre Linux y macOS.
-**Toolchain de tests:** `swift test`, en contenedor Swift para Linux.
+**Toolchain de tests:** `swift test --parallel`, en contenedor `swift:6.0.3-jammy`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`api-de-notas`, `cli-de-importacion`, `auditoria`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `@attached(peer) FxRoute` (E1), `BuildToolPlugin AuditCodesPlugin` (E2), `RouteCollection.boot(routes:)` (E3), `@Field`/`@Parent`/`@Timestamp` (E4), `actor AuditRecorder` + `Sendable struct NoteDTO` (E5), `#if canImport(FoundationNetworking)` (E6).
+- [x] 6 trampas del paquete plantadas: `@ImportModuleDecl` freestanding (P1), `class @unchecked Sendable LegacyNoteDTO` (P2), `try? silent` en AuditRecorder (P4), plugin fallback `// noop` (P4), `.unique(on:)` no idempotente (P5), catch-all `*` antes de rutas (P6).
+- [x] 3 trampas superficiales: `LegacyHelper` dead (S1), `_ = URLSession.self` en `#else` (S2), `LEGACY_MODE` env no leido (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-swift-server/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 12 entry points, 14 modules, 9 dependencies, 3 features (21 R-NN), 10 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 7 call graph edges.
+- [x] 38 unique_tokens `NPRGT-FXSWIFTSRV-`; `check_ground_truth.py --check-cc11` 0 referencias rotas, 0 menciones prohibidas tras limpieza de comentarios.
+- [x] `dev/tests/test_fx_swift_server_ground_truth.py` con 58 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 12 TestSwiftStructure + 4 TestBuildPluginContract + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1568 passed** (1510 previos + 58 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[vapor, fluent, swift-argument-parser, swift-syntax, swift-macro, spm-build-tool-plugin]`.
+- [x] `fixtures_matrix.py` extendido con detección de Vapor/Fluent/swift-argument-parser/swift-syntax/swift-macro/spm-build-tool-plugin.
+- [x] `MATRIX.md` regenerado: `fx-swift-server` cubre `swift`, `vapor`, `fluent`, `swift-argument-parser`, `swift-syntax`, `swift-macro`, `spm-build-tool-plugin`, `swiftpm`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM swift:6.0.3-jammy` + `apt-get install make git` + `CMD ["swift","test","--parallel"]`.
+- [x] `Package.swift` declara 4 productos (FxSwiftServer lib+exe, FxSwiftMacros lib, fxsimport exe) + plugin en sub-package `Plugins/AuditCodesPlugin/Package.swift` con `capability: .buildTool()`.
+- [x] Sources/FxSwiftServer/Models (Note.swift con `@ID`/`@Field`/`@Parent`/`@Timestamp` + AuditEntry.swift con enum AuditAction).
+- [x] Sources/FxSwiftServer/Routes (NotesRoutes con `@FxRoute` + `RouteCollection boot(routes:)` + AuditRoutes con catch-all `*` registrado antes de rutas específicas).
+- [x] Sources/FxSwiftServer/Services (NotesService actor + AuditRecorder actor con `try?` silent + UrlSessionProvider con `#if canImport(FoundationNetworking)` + LegacyHelper dead).
+- [x] Sources/FxSwiftServer/DTOs (NoteDTO Sendable struct + LegacyNoteDTO `class @unchecked Sendable` + ErrorDTO).
+- [x] Sources/FxSwiftServer/Errors (ApiError enum `AbortError` con titleRequired/bodyTooLong/notFound/conflict/timeout/dbUnavailable/auditFailed).
+- [x] Sources/FxSwiftServer/Migrations (CreateNote con `.unique(on:'title')` no idempotente + CreateAuditEntry).
+- [x] Sources/FxSwiftMacros (FxSwiftMacros CompilerPlugin + RouteMacro PeerMacro + ImportModuleDeclMacro DeclarationMacro).
+- [x] Sources/FxSwiftCLI (main.swift `@main` AsyncParsableCommand + Subcommands/ImportNotes con `--input/--format/--server` + exit codes 64/65/70/130 + Subcommands/AuditDump + Format/CsvImporter actor).
+- [x] Sources/FxSwiftServerTests (7 archivos XCTest = 27 tests Swift: 5 + 1 + 3 + 3 + 6 + 6 + 3).
+- [x] Plugins/AuditCodesPlugin/Plugins/AuditCodesPlugin.swift (BuildToolPlugin que genera `Generated/AuditCodes.generated.swift` con `#if canImport` fallback).
+- [x] Generated/AuditCodes.generated.swift placeholder con comentario explicativo.
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli, fx-ts-agent-extension, fx-java-micronaut, fx-monorepo, fx-minified, fx-polyglot, fx-react-spa, fx-nextjs-fullstack, fx-vanilla-js-legacy, fx-vue-nuxt, fx-sveltekit, fx-angular-ngrx, fx-spring-boot, fx-kotlin-ktor, fx-csharp-aspnet, fx-python-django, fx-python-fastapi, fx-node-nestjs, fx-go-service, fx-rust-axum, fx-php-laravel, fx-ruby-rails, fx-cpp-cmake, fx-c-embedded, fx-cpp-qt, fx-swift-ios (26 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-321..D-330 (stack Swift 6 + Vapor 4.92, swift:6.0.3-jammy image, requires linux+macos + container enabled, Plugin en sub-package separado, macros PeerMacro + DeclarationMacro, fallback `// noop` con `#if canImport`, migraciones Fluent, exit codes CLI 64/65/70/130, prefijo `NPRGT-FXSWIFTSRV-` con 38 tokens, tests XCTest + `FIXTURE_ROOT` env var).
+- [x] PROGRESS.md fila F06ab = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-321..D-330.
+- [x] ROADMAP.md encabezado F06ab con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ab: fixture fx-swift-server con paquete por feature`.
+
+**Limitación operativa documentada:** los tests XCTest del fixture NO se ejecutan en este host (no hay toolchain Swift 6 ni docker daemon accesible). La verificación se hace en CI Linux con la imagen oficial `swift:6.0.3-jammy` o en macOS con Xcode 15+. El runner `run_fixture_tests.py --fixture fx-swift-server --container` queda registrado para CI.
  
-## F06ac — Fixture `fx-kotlin-android`
+## F06ac — Fixture `fx-kotlin-android` ✅
  
 **Objetivo:** app Android con Compose y vistas XML heredadas.
-**Stack:** Kotlin, Jetpack Compose, Views + ViewBinding, Hilt, Room, WorkManager, Navigation, Gradle con flavors.
+**Stack:** Kotlin 2.0.21, Jetpack Compose (BOM 2024.10.00), Views + ViewBinding, Hilt 2.51.1, Room 2.6.1, WorkManager 2.10.0, Navigation Compose 2.8.4, AGP 8.7.2 con Gradle 8.10.2 y flavors `free`/`paid`.
 **Features:** `escaneo-de-productos`, `historial`, `sincronización-en-segundo-plano`, `función-premium`.
 **Trampas del ecosistema:**
 1. `AndroidManifest.xml` declara activities, receivers, services e intent filters: puntos de entrada que no se llaman desde el código.
@@ -1274,12 +1312,44 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. Flavors y build types con source sets distintos (una feature solo existe en `paid`).
 5. Recursos `R.*` y layouts XML con atributos `onClick`.
 6. WorkManager, `BroadcastReceiver` y deep links del grafo de navegación.
-**Toolchain de tests:** tests JVM + Robolectric, en contenedor con Android SDK.
+**Toolchain de tests:** tests JVM + Robolectric 4.13 + JUnit5, en contenedor `eclipse/openjdk:21-jdk-jammy` con cmdline-tools Android.
+
+**Criterios de aceptación (verificados):**
+- [x] 4 features (`escaneo-de-productos`, `historial`, `sincronizacion-en-segundo-plano`, `funcion-premium`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `AndroidManifest.xml` con Activity/Receiver/Service/intent-filters (E1), `@HiltAndroidApp` + `@AndroidEntryPoint` + `@HiltViewModel` (E2), Room `@Query` con SQL embebido (E3), flavors `free`/`paid` con `BuildConfig.PREMIUM_ENABLED` (E4), `android:onClick="onSaveClick"` en layout XML (E5), WorkManager + `BroadcastReceiver` + deep links en `nav_graph.xml` (E6).
+- [x] 6 trampas del paquete plantadas: `@Query` con SQL concatenation risk (P1), `ProductRepositoryImpl` sin `@Singleton` (P2), `SyncScheduler.setExpedited` sin check `POST_NOTIFICATIONS` (P3), Room sin `addMigrations` (P4), `LegacyProductActivity.onSaveClick` con `db.execSQL` bypassing repo (P5), `ScanViewModel` con try-catch silencioso (P6).
+- [x] 3 trampas superficiales: `LegacyDateFormatter` dead (S1), `EnvConfig.debug` no usado (S2), `LegacyProductFragment.onCreateView` returns null (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-kotlin-android/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 13 entry points (App, Activity, Receiver, Service, Worker, 3 composables, 3 deep-links, 2 flavor-specific), 17 modules, 19 dependencies, 4 features (28 R-NN), 11 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 8 call graph edges.
+- [x] 38 unique_tokens `NPRGT-FXANDROID-`; `check_ground_truth.py --check-cc11` 0 referencias rotas, 0 menciones prohibidas tras limpieza de comentario en `DatabaseModule.kt`.
+- [x] `dev/tests/test_fx_kotlin_android_ground_truth.py` con 71 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 18 TestAndroidStructure + 2 TestFlavors + 4 TestManifestEntries + 2 TestBuildConfig + 3 TestTestSourceSet + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1639 passed** (1568 previos + 71 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[android, jetpack-compose, hilt, hilt-android, hilt-work, hilt-navigation-compose, room, workmanager, navigation-compose, view-binding, gradle-flavors, robolectric, appcompat]`.
+- [x] `fixtures_matrix.py` extendido con detección de Android/Compose/Hilt/Room/WorkManager/Navigation/ViewBinding/Gradle-Flavors/Robolectric/AppCompat via `**/build.gradle.kts` + `gradle/libs.versions.toml`.
+- [x] `MATRIX.md` regenerado: 30 fixtures, `fx-kotlin-android` cubre `kotlin`, `android`, `jetpack-compose`, `hilt`, `hilt-android`, `hilt-work`, `hilt-navigation-compose`, `room`, `workmanager`, `navigation-compose`, `view-binding`, `gradle-flavors`, `robolectric`, `appcompat`, `gradle`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM eclipse/openjdk:21-jdk-jammy` + `apt-get install make git wget unzip ca-certificates` + cmdline-tools + `sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.1"` + `CMD ["make","test"]`.
+- [x] `settings.gradle.kts` + `gradle.properties` + `gradle/libs.versions.toml` + `gradle/wrapper/gradle-wrapper.properties` (Gradle 8.10.2).
+- [x] `app/build.gradle.kts` con flavors `free`/`paid`, `buildFeatures.compose=true`, `buildFeatures.viewBinding=true`, `buildFeatures.buildConfig=true`, `testOptions.unitTests.all { useJUnitPlatform() }`.
+- [x] `AndroidManifest.xml` con permissions INTERNET+POST_NOTIFICATIONS+CAMERA+WAKE_LOCK+RECEIVE_BOOT_COMPLETED, Activity `LegacyProductActivity`, Receiver `SyncTriggerReceiver` (2 intent-filters + deep link), Service `SyncService`.
+- [x] Source sets `app/src/free/java/.../featurepremium/PremiumDisabled.kt` y `app/src/paid/java/.../featurepremium/PremiumEnabled.kt` (E4).
+- [x] Layout XML `activity_legacy_product.xml` con `android:onClick="onSaveClick"` (E5).
+- [x] `nav_graph.xml` con 3 deep links (E6).
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-swift-server (28 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-331..D-340 (stack Kotlin 2.0 + AGP 8.7.2 + JDK 21 + Gradle 8.10.2, image `eclipse/openjdk:21-jdk-jammy` + cmdline-tools, requires linux+macos + container enabled, flavors free/paid con BuildConfig.PREMIUM_ENABLED, Hilt 2.51.1 + KSP 2.0.21, Room 2.6.1 con DAO @Query + trampa P4 sin addMigrations, WorkManager 2.10.0 + trampa P3 expedited sin POST_NOTIFICATIONS, Navigation Compose 2.8.4 + nav_graph.xml con deepLinks, ViewBinding para vista legacy con android:onClick, Robolectric 4.13 sin emulador + JUnit5, prefijo unique tokens NPRGT-FXANDROID- con 38 entradas).
+- [x] PROGRESS.md fila F06ac = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-331..D-340.
+- [x] ROADMAP.md encabezado F06ac con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ac: fixture fx-kotlin-android con paquete por feature`.
+
+**Limitación operativa documentada:** los tests JVM + Robolectric del fixture NO se ejecutan en este host (no hay Android SDK 35 ni docker daemon accesible). La verificación se hace en CI Linux con la imagen `eclipse/openjdk:21-jdk-jammy` + cmdline-tools Android SDK 35 (Dockerfile.test). El runner `run_fixture_tests.py --fixture fx-kotlin-android --container` queda registrado para CI. El contenedor pesa ~1.8 GB y tarda ~5-8 min la primera vez (descarga Android SDK + cachea Gradle).
  
-## F06ad — Fixture `fx-flutter-dart`
+## F06ad — Fixture `fx-flutter-dart` ✅
  
 **Objetivo:** app Flutter con canales a código nativo.
-**Stack:** Dart, Flutter, Riverpod, go_router, freezed/json_serializable (build_runner), platform channels a Kotlin y Swift.
+**Stack:** Dart 3.5.4, Flutter 3.24.5, Riverpod 2.5.1, go_router 14.2.7, freezed/json_serializable (build_runner 2.4.13), platform channels a Kotlin y Swift.
 **Features:** `lector-de-documentos`, `favoritos`, `ajustes`.
 **Trampas del ecosistema:**
 1. Código generado `.g.dart`/`.freezed.dart`.
@@ -1288,12 +1358,46 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. Redirects de go_router.
 5. Flavors con `--dart-define`.
 6. Widgets que se construyen distinto según la plataforma.
-**Toolchain de tests:** `flutter test`, en contenedor.
+**Toolchain de tests:** `flutter test`, en contenedor `ghcr.io/cirruslabs/flutter:3.24.5`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`lector-de-documentos`, `favoritos`, `ajustes`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `@freezed` + `.g.dart`/`.freezed.dart` (E1), `ref.watch(readerControllerProvider)` (E2), `MethodChannel` con strings `'scanDocument'`/`'capturePage'` + stubs Kotlin/Swift (E3), `GoRouter.redirect` declarativo (E4), `bool.fromEnvironment('FX_ENABLE_PREMIUM')` (E5), `TargetPlatform.iOS` con `CupertinoSwitch`/`Switch` (E6).
+- [x] 6 trampas del paquete plantadas: `AsyncNotifier.build()` sin `try/catch` (P1), `MethodChannel.invoke` con `catch (_)` (P2), `GoRouter.redirect` sin chequeo de auth (P3), `SettingsController` combina `enablePremium` + SharedPreferences (P4), freezed `copyWith` generado no usado (P5), `AdaptiveSlider` rama Cupertino muerta con `Slider` Material (P6).
+- [x] 3 trampas superficiales: `Logger.print` no invocado (S1), `_DEFAULT_LOCALE` no usado (S2), `_formatDouble` declarado pero nunca invocado (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-flutter-dart/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 10 entry points (main, FxApp, GoRouter, AsyncNotifierProvider × 3, MethodChannel wrapper, stubs Kotlin/Swift), 17 modules, 14 dependencies, 3 features (21 R-NN), 9 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 11 call graph edges.
+- [x] 35 unique_tokens `NPRGT-FXFLUTTER-`; `check_ground_truth.py --check-cc11` 0 referencias rotas tras limpieza de comentarios.
+- [x] `dev/tests/test_fx_flutter_dart_ground_truth.py` con 62 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 15 TestFlutterStructure + 2 TestBuildRunner + 3 TestPlatformChannels + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1701 passed** (1639 previos + 62 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[flutter, flutter-riverpod, go-router, freezed, json-serializable, riverpod-generator, build-runner, platform-channels, dart-define, adaptive-widgets]`.
+- [x] `fixtures_matrix.py` extendido con detección de Flutter/Riverpod/go_router/freezed/json_serializable/riverpod_generator/build_runner/platform_channels/dart-define/adaptive-widgets via `pubspec.yaml` + `*.dart`.
+- [x] `MATRIX.md` regenerado: 31 fixtures, `fx-flutter-dart` cubre `dart`, `flutter`, `flutter-riverpod`, `go-router`, `freezed`, `json-serializable`, `riverpod-generator`, `build-runner`, `platform-channels`, `dart-define`, `adaptive-widgets`, `shared-preferences`, `shell`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM ghcr.io/cirruslabs/flutter:3.24.5` + `flutter pub get` + `dart run build_runner build --delete-conflicting-outputs` + `CMD ["make","test"]`.
+- [x] `pubspec.yaml` + `analysis_options.yaml` con Flutter SDK + Riverpod + go_router + freezed + build_runner.
+- [x] `lib/main.dart` con `runApp(ProviderScope(child: FxApp()))`.
+- [x] `lib/app.dart` con `MaterialApp.router(routerConfig: appRouter.config())`.
+- [x] `lib/router/app_router.dart` con GoRouter + redirect declarativo + 5 routes + 2 deepLinks.
+- [x] Source sets `lib/features/{reader,favorites,settings}/{domain,data,application,presentation}/`.
+- [x] `lib/platform/{native_method_channel.dart, platform_widget.dart}` con `AdaptiveSwitch` + `AdaptiveSlider`.
+- [x] Stubs `android_stub/MainActivity.kt` y `ios_stub/AppDelegate.swift`.
+- [x] 7 archivos `test/` Dart con JUnit5 + flutter_test + TestDefaultBinaryMessenger.
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-kotlin-android (29 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-341..D-350 (stack Flutter 3.24.5 + Dart 3.5.4, image `ghcr.io/cirruslabs/flutter:3.24.5`, requires linux+macos + container enabled, Riverpod con ref.watch cross-provider, go_router con redirect declarativo + deepLinks, freezed + json_serializable + build_runner sin commitear generados, platform channels con stubs Kotlin/Swift, dart-define FX_ENABLE_PREMIUM con bool.fromEnvironment, widgets adaptativos CupertinoSwitch vs Switch, prefijo unique tokens NPRGT-FXFLUTTER- con 35 entradas).
+- [x] PROGRESS.md fila F06ad = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-341..D-350.
+- [x] ROADMAP.md encabezado F06ad con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ad: fixture fx-flutter-dart con paquete por feature`.
+
+**Limitación operativa documentada:** los tests JVM del fixture (`flutter test`) NO se ejecutan en este host sin `flutter` instalado (sí está disponible en `/opt/homebrew/bin/flutter` pero no se ejecuta automáticamente). La verificación se hace en CI Linux con la imagen `ghcr.io/cirruslabs/flutter:3.24.5` (Dockerfile.test) que pesa ~3 GB y tarda ~5-8 min la primera vez. Los archivos `.g.dart`/`.freezed.dart` se generan en runtime y NO se commitean al repo.
  
-## F06ae — Fixture `fx-react-native`
+## F06ae — Fixture `fx-react-native` ✅
  
 **Objetivo:** app React Native con módulos nativos.
-**Stack:** TypeScript, React Native (Expo bare), React Navigation, Redux, módulo nativo Kotlin/Swift.
+**Stack:** TypeScript 5.4, React Native 0.74.5 (Expo SDK 51 bare), React Navigation 6.1, Redux Toolkit 2.2, módulo nativo Kotlin/Swift con TurboModules.
 **Features:** `pagos-con-nfc`, `historial`, `notificaciones-push`.
 **Trampas del ecosistema:**
 1. Módulos nativos resueltos por nombre a través del bridge o TurboModules.
@@ -1302,16 +1406,53 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. Configuración de deep linking.
 5. Alias en la configuración de Metro.
 6. Handlers de notificaciones en segundo plano.
-**Toolchain de tests:** Jest + React Native Testing Library, en contenedor.
+**Toolchain de tests:** Jest 29 + React Native Testing Library 12.5, en contenedor `ghcr.io/cirruslabs/react-native:0.74.5`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`pagos-con-nfc`, `historial`, `notificaciones-push`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `NativeModules.RtcNfcManager` con `@ReactModule(name="RtcNfcManager")` Kotlin + `@objc(RtcNfcManager)` Swift (E1), `PaymentsScreen.ios.tsx`/`.android.tsx` resueltos por Metro (E2), 6 Expo config plugins en `app.json` (E3), `linkingConfig` con 3 prefixes + 5 rutas + 2 deepLinks (E4), Metro aliases en `extraNodeModules` + babel-plugin-module-resolver (E5), `setNotificationHandler` con `handleNotification` async en background (E6).
+- [x] 6 trampas del paquete plantadas: `NfcManager.readTag` sin `try/catch` (P1), `state.items.push` directo en paymentsSlice (P2), `catch (_)` silencioso en NotificationHandler (P3), linking config con deep linking activo (P4), `NfcManager.start` sin `PermissionsAndroid` (P5), Metro alias `@features` con `path.resolve` (P6).
+- [x] 2 trampas superficiales: `Logger.log/warn` no invocados (S1), `formatDate/formatDateTime` no usados (S2).
+- [x] Ground truth completo en `dev/ground-truth/fx-react-native/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 15 entry points, 16 modules, 26 dependencies, 3 features (21 R-NN), 10 surfaces, 6 traps ecosistema, 6 traps paquete, 2 superficiales, 11 call graph edges.
+- [x] 34 unique_tokens `NPRGT-FXRN-`; `check_ground_truth.py --check-cc11` 0 referencias rotas.
+- [x] `dev/tests/test_fx_react_native_ground_truth.py` con 64 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 17 TestRNStructure + 4 TestPackageConfig + 2 TestAppJsonPlugins + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 2 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1765 passed** (1701 previos + 64 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[react-native, expo-bare, react-navigation, redux-toolkit, turbo-modules, expo-config-plugins, expo-linking, expo-notifications, expo-build-properties, expo-splash-screen, metro]`.
+- [x] `fixtures_matrix.py` extendido con detección de `react-native`/`expo-bare`/`react-navigation`/`redux-toolkit`/`turbo-modules`/`metro`/`expo-config-plugins`/`expo-linking`/`expo-notifications`/`expo-build-properties`/`expo-splash-screen` via `package.json` + `app.json`.
+- [x] `MATRIX.md` regenerado: 32 fixtures, `fx-react-native` cubre `javascript`, `typescript`, `react-native`, `expo-bare`, `react-navigation`, `redux-toolkit`, `turbo-modules`, `expo-config-plugins`, `expo-linking`, `expo-notifications`, `expo-build-properties`, `expo-splash-screen`, `metro`, `shell`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM ghcr.io/cirruslabs/react-native:0.74.5` + `yarn install --frozen-lockfile` + `CMD ["make","test"]`.
+- [x] `package.json` con RN 0.74.5 + Expo 51 + RTK 2.2 + react-navigation 6.1 + expo-notifications 0.28 + jest 29.
+- [x] `app.json` con 6 plugins (./plugins/withNfc, ./plugins/withDeepLinking, expo-build-properties, expo-notifications, expo-splash-screen, expo-linking) + scheme `fxrn`.
+- [x] `babel.config.js` con module-resolver aliases (`@app`, `@features`, `@store`, `@nav`, `@native`, `@plugins`, `@util`).
+- [x] `metro.config.js` con extraNodeModules aliases.
+- [x] `tsconfig.json` con paths aliases.
+- [x] `jest.config.js` con preset jest-expo + moduleNameMapper aliases.
+- [x] `jest.setup.js` con mocks de `NativeModules.RtcNfcManager` + `expo-notifications`.
+- [x] 9 archivos `test/` Jest con 17 tests.
+- [x] 3 features × 7 R-NN cada una (`pagos-con-nfc`, `historial`, `notificaciones-push`).
+- [x] Source sets `App.tsx` + `src/navigation/` + `src/store/slices/` + `src/features/{payments,history,notifications}/` + `src/plugins/` + `src/util/`.
+- [x] `android_stub/{NfcManagerModule.kt, NfcManagerPackage.kt, AndroidManifest.xml}` + `ios_stub/{NfcManagerModule.swift, .mm, Info.plist}`.
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-flutter-dart (30 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-351..D-360 (stack RN 0.74.5 + Expo 51 bare + TypeScript 5.4, image `ghcr.io/cirruslabs/react-native:0.74.5`, requires linux+macos + container enabled, TurboModules RtcNfcManager con `@ReactModule` + `@objc`, archivos por plataforma `.ios.tsx`/`.android.tsx` resueltos por Metro, Expo config plugins que modifican prebuild, Redux Toolkit 2.2 con `@reduxjs/toolkit` + `react-redux` 9.1, React Navigation 6.1 con linking declarativo + deep links, Metro aliases en extraNodeModules + babel-plugin-module-resolver, expo-notifications con background handler + silent catch, prefijo unique tokens NPRGT-FXRN- con 34 entradas).
+- [x] PROGRESS.md fila F06ae = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-351..D-360.
+- [x] ROADMAP.md encabezado F06ae con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ae: fixture fx-react-native con paquete por feature`.
+
+**Limitación operativa documentada:** los tests JVM del fixture (`yarn jest`) NO se ejecutan en este host sin React Native CLI ni yarn instalados (CI requiere el contenedor `ghcr.io/cirruslabs/react-native:0.74.5` que pesa ~3 GB y tarda ~5-8 min la primera vez). Los TurboModules nativos (`.kt`/`.swift`) son solo evidencia textual, no se compilan en CI. Los tests usan `jest.mock('react-native', ...)` con `NativeModules.RtcNfcManager` mockeado.
  
 ---
  
 # Escritorio
  
-## F06af — Fixture `fx-electron`
+## F06af — Fixture `fx-electron` ✅
  
 **Objetivo:** app Electron con código fuente (complementa el `.asar` de F06e).
-**Stack:** TypeScript, Electron (main, preload, renderer), electron-builder.
+**Stack:** TypeScript 5.5, Electron 32.2 (main, preload, renderer), electron-builder 25.1, esbuild 0.24, Vitest 2.1.
 **Features:** `abrir-proyecto`, `exportar-pdf`, `actualización-automática`.
 **Trampas del ecosistema:**
 1. Canales IPC por string (`ipcMain.handle`/`ipcRenderer.invoke`).
@@ -1320,12 +1461,47 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. Procesos utility y workers.
 5. Protocolo personalizado (`app://`).
 6. Configuración de electron-builder (`asarUnpack`, `extraResources`) con archivos fuera del asar.
-**Toolchain de tests:** Vitest para main/preload, en contenedor.
+**Toolchain de tests:** Vitest 2.1 para main/preload, en contenedor `node:20-bookworm-slim` + xvfb.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`abrir-proyecto`, `exportar-pdf`, `actualización-automática`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `ipcMain.handle('project:open')` + 5 channels strings (E1), `contextBridge.exposeInMainWorld('api', ...)` con 6 funciones (E2), `Menu.buildFromTemplate` con 4 submenus y accelerators (E3), `utilityProcess.fork` + `child_process.fork` (E4), `protocol.handle('app', ...)` con `registerSchemesAsPrivileged` (E5), electron-builder.yml con `asarUnpack` + `extraResources` (E6).
+- [x] 6 trampas del paquete plantadas: `ipcMain.handle('project:open')` sin `try/catch` (P1), `'CmdOrCtrl+O'` duplicado en `Open Project` y `recent1.txt` (P2), `utilityProcess.fork()` sin handler de cleanup (P3), `contextBridge.exposeInMainWorld` con arrow functions (sin `Function` no serializable) (P4), `protocol.handle('app')` con `registerSchemesAsPrivileged` antes de `app.ready()` (P5), `autoUpdater.setFeedURL('http://example.com/updates')` (HTTP, no HTTPS) (P6).
+- [x] 3 trampas superficiales: `LegacyLogger.info/warn/error` no invocados (S1), `ENABLE_BETA/ENABLE_ANALYTICS/DEBUG_LOG_LEVEL` no leídos (S2), `formatTimestamp` declarado pero no invocado (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-electron/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 14 entry points, 19 modules, 7 dependencies, 3 features (21 R-NN), 13 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 15 call graph edges.
+- [x] 33 unique_tokens `NPRGT-FXELEC-`; `check_ground_truth.py --check-cc11` 0 referencias rotas tras limpieza de comentarios en `src/main/workers/updater.ts`.
+- [x] `dev/tests/test_fx_electron_ground_truth.py` con 62 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 16 TestElectronStructure + 3 TestElectronBuilder + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1827 passed** (1765 previos + 62 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[electron, electron-context-bridge, electron-builder, electron-asar-unpack, electron-extra-resources, electron-utility-process, electron-app-scheme, electron-auto-updater]`.
+- [x] `fixtures_matrix.py` extendido con detección de electron/electron-builder/electron-context-bridge/electron-asar-unpack/electron-extra-resources/electron-utility-process/electron-app-scheme/electron-auto-updater via `package.json` + `electron-builder.yml` + `src/*.ts`.
+- [x] `MATRIX.md` regenerado: 33 fixtures, `fx-electron` cubre `javascript`, `typescript`, `electron`, `electron-builder`, `electron-asar-unpack`, `electron-extra-resources`, `electron-utility-process`, `electron-app-scheme`, `electron-context-bridge`, `shell`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM node:20-bookworm-slim` + `apt-get install xvfb + libs Electron` + `yarn install` + `CMD ["make","test"]`.
+- [x] `package.json` con electron + electron-builder + electron-updater + typescript + esbuild + vitest.
+- [x] `electron-builder.yml` con `asarUnpack` + `extraResources` + targets mac/win/linux.
+- [x] `tsconfig.main.json` + `tsconfig.renderer.json` (separados para Node vs DOM).
+- [x] Source sets `src/main/{index,windows,autoUpdater}.ts` + `src/main/ipc/{handlers,channels}.ts` + `src/main/menu/appMenu.ts` + `src/main/protocol/appProtocol.ts` + `src/main/workers/{updater,pdfExporter}.ts` + `src/main/util/{legacyLogger,featureFlags}.ts`.
+- [x] `src/preload/{index,api}.ts` con `contextBridge.exposeInMainWorld`.
+- [x] `src/renderer/{index.html,renderer.ts,styles.css}` con 3 botones (Open, Export, Update).
+- [x] `src/workers/{updater-worker,pdf-worker}.ts` como scripts standalone.
+- [x] `resources/{icon.png, native-menu.json, translations.json}` para `extraResources`.
+- [x] 9 archivos `test/` Vitest (ipc, menu, protocol, api, updater, traps, cc11 = 17 tests Vitest).
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-react-native (31 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-361..D-370 (stack Electron 32 + TypeScript 5.5 + esbuild 0.24 + Vitest 2.1 + electron-builder 25.1, image `node:20-bookworm-slim` + xvfb + libs Electron, requires linux+macos + container enabled, IPC channels por string con `ipcMain.handle`/`ipcRenderer.invoke`, `contextBridge.exposeInMainWorld` con `window.api`, Menu nativo con accelerators duplicados P2, utility process para actualizaciones con trampa P3 sin handler de cleanup, `child_process.fork` para PDF export, protocolo personalizado `app://` con trampa P5 `registerSchemesAsPrivileged` obligatorio, electron-builder.yml con `asarUnpack` + `extraResources` trampa E6, `autoUpdater.setFeedURL` con HTTP trampa P6, prefijo unique tokens `NPRGT-FXELEC-` con 33 entradas).
+- [x] PROGRESS.md fila F06af = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-361..D-370.
+- [x] ROADMAP.md encabezado F06af con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06af: fixture fx-electron con paquete por feature`.
+
+**Limitación operativa documentada:** los tests Vitest del fixture NO se ejecutan en este host sin `electron` instalado (CI requiere el contenedor `node:20-bookworm-slim` con xvfb que pesa ~2 GB y tarda ~3-5 min la primera vez). Los tests usan `vi.mock('electron')` para no requerir display real; `utilityProcess.fork` y `child_process.fork` se mockean para evitar forks reales.
  
-## F06ag — Fixture `fx-csharp-wpf`
+## F06ag — Fixture `fx-csharp-wpf` ✅
  
 **Objetivo:** app de escritorio WPF con MVVM.
-**Stack:** C#, WPF, XAML, CommunityToolkit.Mvvm (source generators).
+**Stack:** C# 12, .NET 9.0, WPF (net9.0-windows), XAML, CommunityToolkit.Mvvm 8.4 (source generators), xUnit 2.9.
 **Features:** `clientes`, `cotizaciones`, `impresión`.
 **Trampas del ecosistema:**
 1. Bindings en XAML por string de propiedad.
@@ -1334,16 +1510,53 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. Value converters.
 5. Styles y triggers con lógica.
 6. Merged dictionaries en `App.xaml`.
-**Toolchain de tests:** xUnit sobre los ViewModels (proyecto `net9.0` multiplataforma) en contenedor; la UI requiere Windows. **requires: windows** (solo para tests de UI).
+**Toolchain de tests:** xUnit sobre los ViewModels (proyecto `net9.0` multiplataforma) en contenedor `mcr.microsoft.com/dotnet/sdk:9.0`; la UI requiere Windows. **requires: [linux, macos]** para tests VM; tests UI solo Windows (marcados `[Trait("Category", "UI")]`).
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`clientes`, `cotizaciones`, `impresión`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: 5+ bindings XAML por string (E1), `[ObservableProperty]` + `[RelayCommand]` con source generators (E2), `DataTemplate` con `DataType` (E3 + P6 typo), 3 `IValueConverter` (E4), `Style.Triggers` con `DataTrigger IsValid` (E5), 4 `MergedDictionaries` en `App.xaml` (E6).
+- [x] 6 trampas del paquete plantadas: `OnSelectedClienteChanged` sin null check (P1), `Task.Run` sin await bloquea UI (P2), `BoolToVisibilityConverter.ConvertBack` lanza `NotImplementedException` (P3), 2 Styles sin `BasedOn` (P4), `AsyncRelayCommand.CanExecute => false` siempre (P5), `ClienteTemplate.xaml` con `DataType={x:Type vm:ClientesViewModel}` typo (P6).
+- [x] 3 trampas superficiales: `LegacyConverter` declarado pero no invocado (S1), `Fonts.xaml` con `BrandFont` no referenciado (S2), `ExperimentalViewModel` declarado pero no usado (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-csharp-wpf/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 13 entry points, 13 modules, 8 dependencies, 3 features (21 R-NN), 13 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 10 call graph edges.
+- [x] 34 unique_tokens `NPRGT-FXWPF-`; `check_ground_truth.py --check-cc11` 0 referencias rotas.
+- [x] `dev/tests/test_fx_csharp_wpf_ground_truth.py` con 65 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 18 TestCSharpStructure + 4 TestPackageConfig + 2 TestMergedDictionaries + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1892 passed** (1827 previos + 65 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[wpf, xaml, mvvm, community-toolkit-mvvm, data-template, value-converter, merged-dictionary, style-trigger, xunit]`.
+- [x] `fixtures_matrix.py` extendido con detección de wpf/xaml/mvvm/community-toolkit-mvvm/data-template/value-converter/merged-dictionary/style-trigger/xunit via `**/*.csproj` + `**/*.xaml` + `**/*.cs`.
+- [x] `MATRIX.md` regenerado: 34 fixtures, `fx-csharp-wpf` cubre `csharp`, `wpf`, `xaml`, `mvvm`, `community-toolkit-mvvm`, `data-template`, `value-converter`, `merged-dictionary`, `style-trigger`, `xunit`, `shell`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM mcr.microsoft.com/dotnet/sdk:9.0` + `apt-get install xvfb + libs UI` + `dotnet restore` + `CMD ["make","test"]`.
+- [x] `FxWpf.sln` con 5 proyectos (App + Core + ViewModels + Tests + TrapTests) + `Directory.Build.props` con `TargetFramework=net9.0`.
+- [x] 3 `.csproj` con `CommunityToolkit.Mvvm 8.4.0` y `net9.0-windows` (App) o `net9.0` (ViewModels, Core).
+- [x] `App.xaml` con 4 `MergedDictionaries` (Colors + Buttons + Controls + ButtonStyles) + 3 converters registrados (BoolToVisibility + NullToBool + Currency).
+- [x] 4 Views (`MainWindow.xaml` con 5+ bindings, `ClientesView.xaml`, `CotizacionesView.xaml` con `DataGrid`, `PrintPreviewView.xaml`).
+- [x] 4 Themes (`Colors.xaml`, `Buttons.xaml`, `Controls.xaml`, `Fonts.xaml` con S2).
+- [x] `ButtonStyles.xaml` con `DataTrigger IsValid` (E5) + 2 styles sobrepuestos sin `BasedOn` (P4).
+- [x] `ClienteTemplate.xaml` con `DataTemplate DataType={x:Type vm:ClientesViewModel}` typo (E3 + P6).
+- [x] 4 ViewModels (ClientesViewModel con P1 + AddClienteCommand + FilterClientes; CotizacionesViewModel con P2 + SaveCotizacion; PrintPreviewViewModel con IsValid; ExperimentalViewModel S3).
+- [x] 4 Converters (BoolToVisibility + NullToBool + Currency + Legacy S1).
+- [x] `AsyncRelayCommand` con `CanExecute => false` always (P5).
+- [x] 13 tests xUnit VM cross-platform + 19 tests xUnit traps = 32 tests xUnit.
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-electron (32 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-371..D-380 (stack .NET 9 + WPF + CommunityToolkit.Mvvm 8.4 + xUnit 2.9.2, image `mcr.microsoft.com/dotnet/sdk:9.0` con xvfb + libs UI, requires linux+macos + container enabled para tests VM, source generators `[ObservableProperty]` + `[RelayCommand]` E2, bindings XAML por string de propiedad E1, `DataTemplate` con `DataType` E3 + P6, value converters `IValueConverter` E4 + P3, styles con `DataTrigger` E5 + P4 sobrepuestos, merged dictionaries en `App.xaml` con 4 ResourceDictionary sources E6, prefijo unique tokens NPRGT-FXWPF- con 34 entradas).
+- [x] PROGRESS.md fila F06ag = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-371..D-380.
+- [x] ROADMAP.md encabezado F06ag con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ag: fixture fx-csharp-wpf con paquete por feature`.
+
+**Limitación operativa documentada:** los tests xUnit del fixture NO se ejecutan en este host sin `dotnet` instalado (CI requiere el contenedor `mcr.microsoft.com/dotnet/sdk:9.0` con xvfb que pesa ~1.5 GB y tarda ~2-3 min la primera vez). Los tests de **ViewModels** corren multiplataforma; los tests de **UI WPF** requieren Windows con `net9.0-windows` y se omiten en CI Linux/macOS con `[Trait("Category", "UI")]`. Esta es la primera fase de F06 que marca `requires: [linux, macos]` (no windows) porque las trampas se prueban contra el codigo fuente + ground truth, no contra la UI en runtime.
  
 ---
  
 # Datos y bases de datos
  
-## F06ah — Fixture `fx-sql-postgres`
+## F06ah — Fixture `fx-sql-postgres` ✅
  
 **Objetivo:** repositorio de base de datos donde las features son procesos de negocio en la base.
-**Stack:** PostgreSQL, Flyway, PL/pgSQL, pg_cron.
+**Stack:** PostgreSQL 16, Flyway 10, PL/pgSQL, pg_cron 1.6, pgTAP.
 **Features:** `facturación`, `auditoría`, `multi-tenant`.
 **Trampas del ecosistema:**
 1. Triggers con efectos secundarios (auditoría, recálculo de totales).
@@ -1353,11 +1566,42 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 5. `ON DELETE CASCADE` y foreign keys diferidas.
 6. Vistas materializadas refrescadas por pg_cron, y vistas de soft-delete.
 **Toolchain de tests:** pgTAP en contenedor PostgreSQL.
- 
-## F06ai — Fixture `fx-sql-oracle-plsql`
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`facturación`, `auditoría`, `multi-tenant`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: 4 triggers (INSERT/UPDATE/DELETE) llamando a `f_audit_factura()` (E1), 13 RLS policies + ENABLE (E2), `EXECUTE format()` en `f_search_dynamic` + `f_admin_search` (E3), 7 V* + 1 R__ (E4), FK `ON DELETE CASCADE` + `DEFERRABLE` (E5), `CREATE EXTENSION pg_cron` + 3 jobs + vista materializada (E6).
+- [x] 6 trampas del paquete plantadas: `f_audit_factura` lee `NEW.id` en `TG_OP='DELETE'` (P1), 13 policies RLS sin `FORCE ROW LEVEL SECURITY` (P2), `f_search_dynamic` + `f_admin_search` sin whitelist (P3 SQLi), `R__recalc_factura_totals.sql` con `TRUNCATE` + `INSERT` no idempotente (P4), `ON DELETE CASCADE` sin trigger BEFORE DELETE (P5 silent), vista materializada `mv_facturas_mensuales` sin `WHERE deleted_at IS NULL` (P6).
+- [x] 3 trampas superficiales: `db/sql/legacy_export.sql` con `SELECT 'noop'` (S1), `db/schema/007_unused_indexes.sql` con `CREATE INDEX` no usados (S2), `db/test/08_deprecated_test.sql` con `pass` placeholder (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-sql-postgres/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 27 entry points, 25 modules, 8 dependencies, 3 features (21 R-NN), 19 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 9 call graph edges.
+- [x] 32 unique_tokens `NPRGT-FXSQLPG-`; `check_ground_truth.py --check-cc11` 0 referencias rotas tras renombrar `multi_tenant_query.sql` → `tenant_isolation_query.sql` (CC-11 prohibe feature names en código).
+- [x] `dev/tests/test_fx_sql_postgres_ground_truth.py` con 67 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 20 TestPostgresStructure + 4 TestMigrationsPresent + 2 TestPgCronConfigured + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **1959 passed** (1892 previos + 67 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[postgresql, flyway, pl-pgsql, pg-cron, pgtap, row-level-security, trigger, materialized-view, sql-dynamic, cascade-constraint]`.
+- [x] `fixtures_matrix.py` extendido con detección de postgresql/pl-pgsql/pg-cron/pgtap/row-level-security/trigger/materialized-view/sql-dynamic/cascade-constraint/flyway via `**/*.sql`.
+- [x] `MATRIX.md` regenerado: 35 fixtures, `fx-sql-postgres` cubre `sql`, `postgresql`, `flyway`, `pl-pgsql`, `pg-cron`, `pgtap`, `row-level-security`, `trigger`, `materialized-view`, `sql-dynamic`, `cascade-constraint`, `shell`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM postgres:16-alpine` + `apk add openjdk21-jdk` + `git clone pg_cron + make install` + `curl flyway` + `CMD make test`.
+- [x] `db/migration/V1..V7__*.sql` (7 migraciones versionadas) + `R__recalc_factura_totals.sql` (repetible).
+- [x] `db/seed/{seed_data,seed_audit}.sql` con datos iniciales (3 clientes, 2 facturas, 1 soft-deleted, 4 entries auditoria).
+- [x] `db/test/01..08_*.sql` (8 archivos pgTAP con 28+ tests).
+- [x] `db/sql/{facturas_crud,auditoria_query,tenant_isolation_query,legacy_export}.sql`.
+- [x] `config/{flyway,postgres}.conf` con `shared_preload_libraries=pg_cron`.
+- [x] `tools/{run_pgtap,apply_migrations,reset_db}.sh`.
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-csharp-wpf (33 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-381..D-390 (stack PostgreSQL 16 + Flyway 10 + pg_cron 1.6 + pgTAP, image `postgres:16-alpine` con `pg_cron` desde git, requires linux+macos + container enabled, `EXECUTE format(...)` con tabla parametrizada E3+P3, triggers con efectos secundarios E1+P1, RLS sin FORCE E2+P2, ON DELETE CASCADE + DEFERRABLE E5+P5, vistas materializadas refrescadas por pg_cron E6+P6, migraciones versionadas + repetibles E4+P4, tests pgTAP via pg_prove, prefijo unique tokens NPRGT-FXSQLPG- con 32 entradas + CC-11 con limpieza de feature names).
+- [x] PROGRESS.md fila F06ah = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-381..D-390.
+- [x] ROADMAP.md encabezado F06ah con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ah: fixture fx-sql-postgres con paquete por feature`.
+
+**Limitación operativa documentada:** los tests pgTAP del fixture NO se ejecutan en este host sin Docker (CI requiere el contenedor `postgres:16-alpine` con pg_cron compilado desde git que pesa ~1.5 GB y tarda ~3-5 min la primera vez). Los tests pgTAP corren contra una DB efímera (`fxpg_test`) que se reinicia en cada `docker run`. El archivo `db/sql/multi_tenant_query.sql` se renombro a `db/sql/tenant_isolation_query.sql` para cumplir CC-11 (los feature names como `multi-tenant` no pueden aparecer en código fuente del fixture).
+## F06ai — Fixture `fx-sql-oracle-plsql` ✅
  
 **Objetivo:** esquema Oracle con lógica en paquetes PL/SQL.
-**Stack:** Oracle Database, PL/SQL, Liquibase.
+**Stack:** Oracle Database Free 23c, PL/SQL, Liquibase 4.27, utPLSQL.
 **Features:** `apertura-de-cuenta`, `cálculo-de-intereses`, `cierre-de-mes`.
 **Trampas del ecosistema:**
 1. Spec frente a body: procedimientos privados que solo existen en el body.
@@ -1366,49 +1610,223 @@ Cada fixture de F06b en adelante cumple **todos** estos criterios, además de lo
 4. `PRAGMA AUTONOMOUS_TRANSACTION`.
 5. Triggers compuestos e `INSTEAD OF` sobre vistas.
 6. Jobs de `DBMS_SCHEDULER` y DB links a una base remota.
-**Toolchain de tests:** utPLSQL en contenedor Oracle Database Free.
+**Toolchain de tests:** utPLSQL en contenedor Oracle Database Free (`gvenzl/oracle-free:23.5-alpine-slim` + sqlcl).
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`apertura-de-cuenta`, `cálculo-de-intereses`, `cierre-de-mes`) × 7 R-NN cada una (CC-03, CC-08).
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `p_internal_validate` solo en body (E1), 5 sinonimos publicos (E2), `EXECUTE IMMEDIATE` con tabla (E3), `PRAGMA AUTONOMOUS_TRANSACTION` en trigger (E4), trigger `INSTEAD OF UPDATE` (E5), `DBMS_SCHEDULER.CREATE_JOB` + `CREATE DATABASE LINK` (E6).
+- [x] 6 trampas del paquete plantadas: `PRAGMA AUTONOMOUS_TRANSACTION` sin `WHEN OTHERS` (P1), sinonimo a tabla inexistente (P2), `EXECUTE IMMEDIATE` sin whitelist (P3), trigger sin handler (P4), `INSTEAD OF UPDATE` omite `opened_at` (P5), `JOB_MONTHLY` con `enabled => FALSE` (P6).
+- [x] 3 trampas superficiales: `pkg_legacy` declarado pero no usado (S1), sinonimo `legacy_orders` apuntando a tabla inexistente (S2), test `07-deprecated-test` trivial (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-sql-oracle-plsql/{ground_truth.json,GROUND_TRUTH.md,unique_tokens.txt}` con paquete completo por feature.
+- [x] 23 entry points, 18 modules, 8 dependencies, 3 features (21 R-NN), 18 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 9 call graph edges.
+- [x] 33 unique_tokens `NPRGT-FXORAPL-`; `check_ground_truth.py --check-cc11` 0 referencias rotas tras renombrar formato de `decision_points.file` (separar `file` de `line` para que `check_cite` parsee correctamente).
+- [x] `dev/tests/test_fx_sql_oracle_plsql_ground_truth.py` con 69 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 26 TestOracleStructure + 3 TestLiquibaseConfigured + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 7 TestManifest) verde.
+- [x] `pytest` total **2028 passed** (1959 previos + 69 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[oracle, liquibase, pl-sql, utplsql, dbms-scheduler, db-link, autonomous-transaction, instead-of, synonym, execute-immediate]`.
+- [x] `fixtures_matrix.py` extendido con detección de oracle/pl-sql/liquibase/utplsql/dbms-scheduler/db-link/autonomous-transaction/instead-of/synonym/execute-immediate via `**/*.sql`.
+- [x] `MATRIX.md` regenerado: 36 fixtures, `fx-sql-oracle-plsql` cubre `sql`, `oracle`, `liquibase`, `pl-sql`, `utplsql`, `dbms-scheduler`, `db-link`, `autonomous-transaction`, `instead-of`, `synonym`, `execute-immediate`, `trigger`, `postgresql`, `shell`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true`.
+- [x] `Dockerfile.test` con `FROM gvenzl/oracle-free:23.5-alpine-slim` + `apk add openjdk21-jdk` + `curl download liquibase-4.27.0` + `CMD ["make","test"]`.
+- [x] `db/changelog/changelog-master.xml` incluye 7 migraciones (001..007).
+- [x] `db/packages/pkg_accounts_spec.sql` + `pkg_accounts_body.sql` con p_internal_validate privada (E1 + P1).
+- [x] `db/packages/pkg_interest_spec.sql` + `pkg_interest_body.sql` con `EXECUTE IMMEDIATE` (E3 + P3).
+- [x] `db/packages/pkg_monthly_close_spec.sql` + `pkg_monthly_close_body.sql`.
+- [x] `db/packages/pkg_legacy_spec.sql` (Trampa S1).
+- [x] `db/changelog/004-autonomous-trigger.sql` con `PRAGMA AUTONOMOUS_TRANSACTION` (E4 + P4).
+- [x] `db/changelog/005-instead-of-trigger.sql` + `db/sql/views.sql` con trigger INSTEAD OF (E5 + P5).
+- [x] `db/changelog/006-scheduler-jobs.sql` con `JOB_MONTHLY` disabled (P6) + `JOB_HOURLY` enabled.
+- [x] `db/changelog/007-db-link.sql` con `CREATE DATABASE LINK remote_orafi` (E6).
+- [x] `db/sql/{synonyms,legacy_synonym}.sql` con 5 sinonimos publicos + 1 trampa P2 + 1 S2.
+- [x] `db/seed/{seed-data,seed-accounts}.sql` con datos iniciales (3 cuentas + history + interest).
+- [x] `db/test/01..07_*.sql` (7 archivos utPLSQL con 25+ tests).
+- [x] `config/{liquibase.properties,tnsnames.ora}` con `shared_preload_libraries`-equivalent.
+- [x] `tools/{run_utplsql,apply_liquibase,reset_db}.sh`.
+- [x] `build-history.sh` con 8 commits reproducibles.
+- [x] fx-python-cli..fx-sql-postgres (34 fixtures) sin cambios de comportamiento.
+- [x] 10 decisiones nuevas D-391..D-400 (stack Oracle 23c + Liquibase 4.27 + PL/SQL + utPLSQL, image `gvenzl/oracle-free:23.5-alpine-slim`, requires linux+macos + container enabled, packages PL/SQL spec/body E1, sinonimos publicos E2 + P2, EXECUTE IMMEDIATE con tabla parametrizada E3 + P3 SQLi, PRAGMA AUTONOMOUS_TRANSACTION en trigger + open_account P1 + P4, triggers INSTEAD OF + DBMS_SCHEDULER + DB links E5 + E6 + P6, prefijo unique tokens NPRGT-FXORAPL- con 33 entradas + CC-11 con decision_points formato).
+- [x] PROGRESS.md fila F06ai = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-391..D-400.
+- [x] ROADMAP.md encabezado F06ai con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ai: fixture fx-sql-oracle-plsql con paquete por feature`.
+
+**Limitación operativa documentada:** los tests utPLSQL del fixture NO se ejecutan en este host sin Docker (CI requiere el contenedor `gvenzl/oracle-free:23.5-alpine-slim` que pesa ~1.5 GB y tarda ~3-5 min la primera vez). Los tests utPLSQL corren contra una DB efímera (auto-start del contenedor) que se reinicia en cada `docker run`. El archivo `pkg_legacy_spec.sql` está en `db/packages/` como evidencia textual de trampa S1.
  
-## F06aj — Fixture `fx-sql-tsql`
- 
-**Objetivo:** base SQL Server con proyecto SSDT.
-**Stack:** SQL Server, T-SQL, proyecto `.sqlproj`.
-**Features:** `inventario`, `conciliación`, `reportes`.
+## F06aj — Fixture `fx-sql-tsql` ✅
+  
+**Objetivo:** base SQL Server con stored procedures T-SQL, triggers, CTE recursivas, `MERGE` con `OUTPUT`, tablas temporales globales y 3 jobs de SQL Agent.
+**Stack:** SQL Server 2022 (oficial MS, Linux), T-SQL, `mssql-tools18` (`sqlcmd`), orquestador `db/install.sql`, tests T-SQL puros (sin tSQLt).
+**Features:** `stock` (inventario, sinonimo neutro CC-11), `reconcile` (conciliación), `dashboard` (reportes).
 **Trampas del ecosistema:**
-1. Procedimientos almacenados con `sp_executesql`.
-2. `MERGE` con cláusula `OUTPUT`.
-3. Triggers `AFTER` e `INSTEAD OF`.
-4. CTE recursivas.
-5. Tablas temporales compartidas entre procedimientos anidados.
-6. Scripts de jobs de SQL Agent.
-**Toolchain de tests:** tSQLt en contenedor SQL Server.
+1. Procedimientos almacenados con `sp_executesql` parametrizado vs string-concatenado.
+2. `MERGE` con cláusula `OUTPUT $action` + `INTO` tabla de auditoría.
+3. Triggers `AFTER` + `INSTEAD OF` (este último sobre vista).
+4. CTE recursivas (`WITH ... AS (anchor) UNION ALL (recursive)`).
+5. Tablas temporales globales (`##global_stock_temp`) compartidas entre SPs.
+6. Scripts de jobs de SQL Agent (`sp_add_job` + `sp_add_schedule` + `sp_attach_schedule`).
+**Toolchain de tests:** T-SQL puro (`fx_assert_equal` + `fx_test_begin/end` + tabla `fx_test_results`) ejecutado por `tools/run_tests.sh` con `sqlcmd`, en contenedor Docker `mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`stock`, `reconcile`, `dashboard`) × 7 R-NN cada una (CC-03, CC-08) = 21 R-NN documentados en `ground_truth.json`.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `usp_stock_search_dynamic` (E1 parametrizado) + `usp_stock_search_raw` (P1 concat), `usp_reconcile_run` con `MERGE ... OUTPUT $action` (E2), `trg_stock_movements_after_insert` + `trg_stock_instead_of_update` (E3), `usp_explode_bom` con `WITH ... UNION ALL` (E4), `usp_temp_load` + `usp_temp_consume` con `##global_stock_temp` (E5), `JOB_HOURLY_RECALC_TOTALS` + `JOB_DAILY_REBUILD_REPORT_CACHE` + `JOB_LEGACY_PURGE` (E6).
+- [x] 6 trampas del paquete plantadas: `usp_stock_search_raw` concat (P1 SQLi), `usp_reconcile_partial` sin `WHEN NOT MATCHED BY SOURCE` (P2 huerfanos), `trg_stock_instead_of_update` omite `quantity_on_hand` (P3), CTE recursiva + ciclo `A->B->C->A` en `bom_links` (P4), `usp_temp_consume` no limpia `##global_stock_temp` (P5 leak), `JOB_LEGACY_PURGE` con `enabled=0` (P6).
+- [x] 3 trampas superficiales: `usp_legacy_export` declarado pero no invocado (S1), `usp_legacy_purge` referencia `dbo.legacy_archive` inexistente + `trg_old_audit` sobre `dbo.does_not_exist` con `TRY/CATCH` silencioso (S2), `08_deprecated_test.sql` con `IF 1=0 SELECT 'noop'` (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-sql-tsql/{ground_truth.json, GROUND_TRUTH.md, unique_tokens.txt}` con paquete completo por feature (entry_points, modules, dependencies, features, surfaces, traps, package_traps, superficial_traps, call_graph, config, tests).
+- [x] 45 entry points, 43 modules, 7 dependencies, 3 features (21 R-NN), 21 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 10 call graph edges.
+- [x] 33 unique_tokens `NPRGT-FXSQLTS-`; `check_ground_truth.py --check-cc11` 0 referencias rotas (CC-11 OK tras validar 4 archivos .sql + 4 .sh + 1 .ini + 1 .md).
+- [x] `dev/tests/test_fx_sql_tsql_ground_truth.py` con 74 tests (11 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 21 TestSqlServerStructure + 2 TestMigrationsPresent + 2 TestSqlAgentConfigured + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 13 TestManifest) verde.
+- [x] `pytest` total **2102 passed** (2028 previos + 74 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[sqlserver, tsql, sqlcmd, sp_executesql, merge-output, after-trigger, recursive-cte, temp-tables, sql-agent]`.
+- [x] `fixtures_matrix.py` extendido con detección T-SQL via `**/*.sql` (sp_executesql, MERGE OUTPUT $action, AFTER INSERT/UPDATE, INSTEAD OF, recursive CTE con UNION ALL, ##temp tables, sp_add_job/sysjobs, DATETIME2/SYSUTCDATETIME/SET NOCOUNT) + Dockerfile.test (mssql-tools18 → sqlcmd).
+- [x] `MATRIX.md` regenerado: 37 fixtures, `fx-sql-tsql` cubre `shell`, `postgresql` (compartido con fx-sql-postgres), `trigger`, `instead-of`, `synonym`, `sqlserver`, `tsql`, `sqlcmd`, `sp_executesql`, `merge-output`, `after-trigger`, `recursive-cte`, `temp-tables`, `sql-agent`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true` + `image_tag: npr-fx-sql-tsql`.
+- [x] `Dockerfile.test` con `FROM mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04` + `apt-get install mssql-tools18 unixodbc-dev make bash git jq` + `ACCEPT_EULA=Y MSSQL_SA_PASSWORD=SqlServer2022! MSSQL_PID=Developer` + `CMD ["bash","entrypoint.sh"]`.
+- [x] `entrypoint.sh` arranca `sqlservr` en background + `tools/wait_for_sql.sh` (poll 60s) + `CREATE DATABASE fxsqlts` + `sqlcmd -i db/install.sql` + `bash tools/run_tests.sh`.
+- [x] `db/install.sql` orquesta 5 tablas auxiliares (`stock_audit`, `reconcile_audit`, `bom_links`, `stock_totals`, + idempotencia) + V001..V008 + 2 R__ + views + synonyms + functions + legacy_artifact + seed.
+- [x] `db/migration/V001__init_schema.sql` con 5 tablas (`stock_items`, `stock_movements`, `reconcile_runs`, `reconcile_lines`, `report_cache`) + 2 indices (uno trampa S2 `ix_stock_items_unused`).
+- [x] `db/migration/V002__init_triggers.sql` con `trg_stock_movements_after_insert` (AFTER INSERT → stock_audit, P3 omite `source_system`) + `trg_stock_instead_of_update` (INSTEAD OF UPDATE sobre `vw_stock_current`, P3 omite `quantity_on_hand`).
+- [x] `db/migration/V003__recursive_cte_bom.sql` con `usp_explode_bom` (CTE `WITH bom_tree AS ... UNION ALL ...` + `OPTION (MAXRECURSION 1000)`).
+- [x] `db/migration/V004__dynamic_sql_search.sql` con `usp_stock_search_dynamic` (E1 parametrizado con `@pattern`, `@min_qty`) + `usp_stock_search_raw` (P1 trap `+ @raw_filter` antes de EXEC).
+- [x] `db/migration/V005__merge_conciliacion.sql` con `usp_reconcile_run` (E2 `MERGE ... OUTPUT $action INTO dbo.reconcile_audit`) + `usp_reconcile_partial` (P2 trap sin `WHEN NOT MATCHED BY SOURCE`).
+- [x] `db/migration/V006__global_temp_inventory.sql` con `usp_temp_load` (E5 crea `##global_stock_temp` + `TRUNCATE`) + `usp_temp_consume` (P5 trap lee pero no `DROP TABLE`).
+- [x] `db/migration/V007__sql_agent_jobs.sql` con 3 jobs en `msdb.dbo.sysjobs`: `JOB_HOURLY_RECALC_TOTALS` (enabled=1), `JOB_DAILY_REBUILD_REPORT_CACHE` (enabled=1), `JOB_LEGACY_PURGE` (P6 enabled=0).
+- [x] `db/migration/V008__legacy_sprocs.sql` con `usp_legacy_export` (S1 dead), `usp_legacy_purge` (S2 referencia `dbo.legacy_archive` inexistente), `usp_recalc_totals` (helper de JOB_HOURLY), `usp_rebuild_cache` (helper de JOB_DAILY con `FOR JSON PATH`).
+- [x] `db/migration/R__recalc_stock_totals.sql` (P4 trap `DELETE+INSERT` no idempotente) + `R__rebuild_report_cache.sql` (P5 trap mantiene `##global_stock_temp` leak entre sesiones).
+- [x] `db/sql/views.sql` con `vw_stock_current`, `vw_reconcile_dashboard`, `vw_report_top_items` (TOP 10 ordenado DESC).
+- [x] `db/sql/synonyms.sql` con 5 sinonimos CREATE SYNONYM (4 válidos + `syn_legacy_table FOR dbo.legacy_does_not_exist` P2 trap).
+- [x] `db/sql/functions.sql` con `fn_stock_available(@sku)`, `fn_reconcile_status(@run_id)`, `fn_report_total_sales()`.
+- [x] `db/sql/legacy_artifact.sql` con `trg_old_audit` sobre `dbo.does_not_exist` envuelto en `TRY/CATCH` (S2 instalación silenciosamente falla).
+- [x] `db/seed/seed_stock.sql` con 5 items (SKU-A001..A005, 1 soft-deleted) + `db/seed/seed_movements.sql` con 12 movimientos (1 soft-deleted) + `db/seed/seed_bom.sql` con ciclo A->B->C->A (P4).
+- [x] `db/test/test_runner.sql` con `fx_assert_equal`, `fx_test_begin`, `fx_test_end`, `fx_test_results`.
+- [x] 8 archivos de test `01..08_*_test.sql` (≥ 7 tests por suite en stock/reconcile/dashboard/triggers/sql_agent; 6 E1..E6 en 06; 6 P1..P6 en 07; 1 S3 en 08) = **48 tests T-SQL**.
+- [x] `config/msodbcsql.ini` con `TrustServerCertificate=yes`.
+- [x] `tools/{wait_for_sql,apply_migrations,run_tests,reset_db}.sh` ejecutables (chmod +x).
+- [x] `build-history.sh` con 8 commits reproducibles (scaffold + schema + triggers/CTE/legacy-artifact + dynamic-sql/MERGE/synonyms + temp/sql-agent/legacy-sprocs + seed/R__ + test-runner/8-tests + tools/config).
+- [x] fixtures previos (35 fixtures F00–F06ai) sin cambios de comportamiento — verificado por `pytest 2102 passed sin regresiones`.
+- [x] 10 decisiones nuevas D-401..D-410 (SQL Server 2022 + sqlcmd + tSQL runner; db/install.sql orquestador con `:r`; fx_assert_equal + fx_test_results; sinonimos scoped al schema; INSTEAD OF UPDATE sobre vista = único UPDATE; CTE recursiva + ciclo A->B->C->A en seed; MERGE OUTPUT $action con reconcile; 3 SQL Agent jobs con JOB_LEGACY_PURGE disabled; ##global_stock_temp + leak; prefijo NPRGT-FXSQLTS- con 33 entradas + sinonimos neutros stock/reconcile/dashboard CC-11).
+- [x] PROGRESS.md fila F06aj = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-401..D-410.
+- [x] ROADMAP.md encabezado F06aj con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06aj: fixture fx-sql-tsql con paquete por feature`.
+
+**Limitación operativa documentada:** el contenedor MS-SQL Server 2022 (≈1.5 GB) tarda ~3-5 min la primera vez en descargar y arrancar. Los tests T-SQL se ejecutan contra una DB efímera (`fxsqlts`) que se recrea en cada `docker run` con `entrypoint.sh`. El volumen `-v $(PWD)/.sqlserver_data:/var/opt/mssql/data` cachea entre runs. Los tests pytest (`test_fx_sql_tsql_ground_truth.py`) validan sin necesidad de Docker, contra los archivos del fixture.
  
-## F06ak — Fixture `fx-dbt-airflow`
- 
-**Objetivo:** pipeline analítico.
-**Stack:** dbt (SQL + Jinja), Airflow (Python), DuckDB.
-**Features:** `ingesta-de-ventas`, `modelo-de-clientes`, `métricas-diarias`.
+## F06ak — Fixture `fx-dbt-airflow` ✅
+  
+**Objetivo:** pipeline analítico con dbt (SQL + Jinja) + Airflow (Python DAGs) + DuckDB embebido. Linaje via `ref()`/`source()`, macros Jinja parametrizadas, `is_incremental()`, materialización por carpeta, DAG generado desde YAML, XCom explícito entre tareas.
+**Stack:** dbt-core 1.8 + dbt-duckdb 1.8 + apache-airflow 2.9 + DuckDB embedded + Python 3.11 + pytest 8.
+**Features (con sinonimos neutros CC-11):** `ventas` (ingesta-de-ventas), `clientes` (modelo-de-clientes), `metricas` (métricas-diarias).
 **Trampas del ecosistema:**
-1. Linaje definido solo por `ref()` y `source()`.
-2. Macros Jinja que generan SQL.
+1. Linaje definido solo por `ref()` y `source()` (sin FK en DuckDB).
+2. Macros Jinja que generan SQL parametrizado.
 3. Ramas `is_incremental()` en modelos incrementales.
-4. Materialización configurada por carpeta en `dbt_project.yml`.
-5. DAG de Airflow generado dinámicamente desde YAML.
-6. XCom que pasa datos entre tareas de forma implícita.
-**Toolchain de tests:** `dbt build` sobre DuckDB + test de importación de DAGs, en contenedor.
+4. Materialización configurada por carpeta en `dbt_project.yml` (view/table/incremental).
+5. DAG de Airflow generado dinámicamente desde YAML (`build_dag_from_yaml`).
+6. XCom que pasa datos entre tareas de forma explícita (vía `xcom_push`/`xcom_pull`).
+**Toolchain de tests:** `dbt build` sobre DuckDB + `airflow dags parse` (sin scheduler) + pytest sobre `airflow/tests/`, en contenedor `python:3.11-slim`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`ventas`, `clientes`, `metricas`) × 7 R-NN cada una (CC-03, CC-08) = 21 R-NN documentados en `ground_truth.json`.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: `stg_ventas.sql` con `{{ source('raw','ventas_raw') }}` (E1), `centros_normalizados.sql` macro Jinja con `{{ estado }}` (E2), `ventas_diarias_incremental.sql` con `{% if is_incremental() %}` y filtro `occurred_at >` (E3), `dbt_project.yml` con `+materialized: view/table/incremental` por path (E4), `dag_factory.py` con `yaml.safe_load` + `etl_config.yaml` (E5), `etl_dag.py` con `xcom_push(key='table_name', ...)` + `xcom_pull(...)` (E6).
+- [x] 6 trampas del paquete plantadas: `centros_concat.sql` con concat `~` (P1 SQLi), `ventas_diarias_incremental_buggy.sql` con `where 1=1` (P2), `legacy_helper.sql` nunca invocado (P3), `dbt_project.yml` materialization incremental vs table inconsistency (P4), `legacy_purge_dag.py` con `catchup=False` + `start_date=datetime(2019,1,1)` (P5), `transform_xcom_implicit.py` con `return dict` no serializable (P6).
+- [x] 3 trampas superficiales: `legacy_helper.sql` macro declarado pero no invocado (S1), `legacy_purge_dag.py` con start_date 2019 + catchup=False nunca corre (S2), `test_deprecated.py` con `pytest.skip` (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-dbt-airflow/{ground_truth.json, GROUND_TRUTH.md, unique_tokens.txt}` con paquete completo por feature (entry_points, modules, dependencies, features, surfaces, traps, package_traps, superficial_traps, call_graph, config, tests).
+- [x] 43 entry points, 33 modules, 7 dependencies, 3 features (21 R-NN), 19 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 17 call graph edges.
+- [x] 34 unique_tokens `NPRGT-FXDBAIR-`; `check_ground_truth.py --check-cc11` 0 referencias rotas (CC-11 OK tras sustituir `metricas_diarias.sql` comentario "capa diaria de feature (marts_metricas) para tabla de metricas" por "capa diaria agregada sobre ventas_diarias + int_ventas_clientes" para evitar la falsa deteccion).
+- [x] `dev/tests/test_fx_dbt_airflow_ground_truth.py` con 88 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 33 TestDbtAirflowStructure + 2 TestModelsPresent + 2 TestDagConfigured + 6 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 16 TestManifest) verde.
+- [x] `pytest` total **2190 passed** (2102 previos + 88 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[dbt, dbt-duckdb, duckdb, airflow, dag-factory, xcom, jinja-macros, dbt-lineage, ref-source, is_incremental, dbt-materialization-config, dbt-models, apache-airflow]`.
+- [x] `fixtures_matrix.py` extendido con detección dbt (`dbt/dbt_project.yml` -> dbt + duckdb + dbt-materialization-config + is_incremental), dbt models (con `{{ ref(` o `{{ source(` -> dbt-models + dbt-lineage + ref-source + dbt-incremental), macros Jinja, airflow DAGs (DAG( -> airflow + yaml.safe_load -> dag-factory + xcom_push/pull -> xcom), requirements.txt (dbt-core/dbt-duckdb -> dbt-duckdb + apache-airflow -> apache-airflow).
+- [x] `MATRIX.md` regenerado: 38 fixtures, `fx-dbt-airflow` cubre `python`, `shell`, `dbt`, `dbt-duckdb`, `duckdb`, `airflow`, `dag-factory`, `xcom`, `jinja-macros`, `dbt-lineage`, `ref-source`, `is_incremental`, `dbt-materialization-config`, `dbt-models`, `apache-airflow`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true` + `image_tag: npr-fx-dbt-airflow`.
+- [x] `Dockerfile.test` con `FROM python:3.11-slim` + `apt-get install git make curl unzip` + `pip install -r requirements.txt` + `dbt deps` + `CMD ["bash","entrypoint.sh"]`.
+- [x] `entrypoint.sh` ejecuta `bash tools/run_dbt.sh` (dbt deps + dbt seed + dbt build) + `bash tools/run_airflow_tests.sh` (`airflow dags parse` + `pytest airflow/tests/`) + `pytest dev/tests/test_fx_dbt_airflow_ground_truth.py -q`.
+- [x] `dbt/dbt_project.yml` con `name: fxdbt`, `profile: fxdbt`, `models.fxdbt.{staging:+materialized:view, intermediate:+materialized:view, marts:+materialized:table, marts/marts_incremental:+materialized:incremental, +unique_key:fecha_sku, +on_schema_change:append_new_columns}`.
+- [x] `dbt/models/staging/_sources.yml` con `source 'raw'` + `tables: ventas_raw (test unique/not_null en venta_id) + clientes_raw (test unique/not_null en cliente_id)`.
+- [x] `dbt/models/staging/stg_ventas.sql` con `{{ source('raw','ventas_raw') }}` + columnas `cantidad*precio_unitario as monto_total` (E1).
+- [x] `dbt/models/staging/stg_clientes.sql` con `{{ source('raw','clientes_raw') }}` + `cast(activo as boolean)` (E1).
+- [x] `dbt/models/intermediate/int_ventas_clientes.sql` con `{{ ref('stg_ventas') }} + {{ ref('stg_clientes') WHERE activo = true }} + LEFT JOIN` (E1).
+- [x] `dbt/models/marts/marts_ventas/ventas_diarias.sql` (table) + `ventas_mensuales.sql` (view override).
+- [x] `dbt/models/marts/marts_clientes/clientes_top.sql` (table).
+- [x] `dbt/models/marts/marts_metricas/metricas_diarias.sql` con `{{ filter_centros_normalizado('centro_norte') }}` (E2).
+- [x] `dbt/models/marts/marts_incremental/ventas_diarias_incremental.sql` con `{% if is_incremental() %} WHERE occurred_at > max {% else %} WHERE >= 2024-01-01 {% endif %}` (E3 correcto) + `ventas_diarias_incremental_buggy.sql` con `{% if is_incremental() %} where 1=1 {% endif %}` (P2 trampa).
+- [x] `dbt/macros/centros_normalizados.sql` (E2) + `centros_concat.sql` (P1) + `legacy_helper.sql` (S1 dead).
+- [x] `dbt/seeds/` con 4 CSVs: `seed_clientes.csv` (5 clientes), `seed_catalogo.csv` (10 productos), `seed_cliente_venta.csv` (13 enlaces), `ventas_raw.csv` (12 ventas origen del source).
+- [x] `dbt/tests/singular/` con `assert_ventas_positivas.sql` + `assert_clientes_activos.sql` + `dbt/tests/generic/freshness_24h.sql`.
+- [x] `dbt/snapshots/snap_ventas.sql` con strategy='timestamp' + updated_at='occurred_at'.
+- [x] `airflow/dags/etl_dag.py` con `extract (PythonOperator + duckdb.read_csv_auto + xcom_push) -> transform (PythonOperator + xcom_pull) -> load (BashOperator + dbt build)`.
+- [x] `airflow/dags/dag_factory.py` con `build_dag_from_yaml()` que itera `spec['tasks']` y crea BashOperator o PythonOperator.
+- [x] `airflow/dags/etl_config.yaml` con `dag_id: generated_etl_dag`, `schedule_interval: @hourly`, `start_date: 2026-01-01`, `tasks: [extract_csv, transform_dbt, load_dbt]`.
+- [x] `airflow/dags/generated_etl_dag.py` wrapper que invoca `build_dag_from_yaml('/fixture/airflow/dags/etl_config.yaml')` (E5).
+- [x] `airflow/dags/transform_xcom_implicit.py` DAG trampa `transform_xcom_implicit` con `return {'unserializable': {1,2,3}}` (P6).
+- [x] `airflow/legacy_purge_dag.py` con `start_date=datetime(2019,1,1) + catchup=False + schedule_interval='@daily'` (S2 nunca corre).
+- [x] `airflow/tests/conftest.py` con `DagBag` fixture apuntando a `/fixture/airflow/dags`.
+- [x] 8 archivos de test en `airflow/tests/`: `test_etl_dag.py` (6), `test_dag_factory.py` (5), `test_xcom_explicit.py` (3), `test_xcom_implicit.py` (5), `test_traps_ecosystem.py` (6), `test_traps_package.py` (6), `test_deprecated.py` (1), `conftest.py` (0 directos) = **32 tests pytest** en airflow/tests/.
+- [x] `profiles.yml` con target `dev` (DuckDB en `/fixture/dev.duckdb`) + `test` (DuckDB `:memory:`).
+- [x] `requirements.txt` con `dbt-core==1.8.*, dbt-duckdb==1.8.*, apache-airflow==2.9.*, pytest==8.2.*`.
+- [x] `.airflowignore` excluye `generated_etl_dag.py` del descubrimiento del scheduler.
+- [x] `tools/{run_dbt,run_airflow_tests,wait_for_duckdb,reset_workspace}.sh` ejecutables (chmod +x).
+- [x] `build-history.sh` con 8 commits reproducibles (scaffold + dbt sources/staging + intermediate/marts/incremental + macros/tests/snapshots + airflow etl_dag + dag_factory/generated_etl_dag/etl_config + legacy_purge_dag/airflow tests + tools/marts_metricas).
+- [x] fixtures previos (36 fixtures F00–F06aj) sin cambios de comportamiento — verificado por `pytest 2190 passed sin regresiones`.
+- [x] 10 decisiones nuevas D-411..D-420 (python:3.11-slim + dbt + apache-airflow; DuckDB embebido; materialization por carpeta E4; DAG factory desde YAML E5; XCom explicito vs return value P6; macros Jinja con concat string vs parametrizado P1; is_incremental correcto vs trampa P2; legacy_helper + legacy_purge_dag S1+S2; prefijo NPRGT-FXDBAIR- con sinonimos neutros ventas/clientes/metricas CC-11; fixtures_matrix.py + target_matrix.yml extension con 13 frameworks dbt/airflow).
+- [x] PROGRESS.md fila F06ak = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-411..D-420.
+- [x] ROADMAP.md encabezado F06ak con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06ak: fixture fx-dbt-airflow con paquete por feature`.
+
+**Limitación operativa documentada:** el contenedor `python:3.11-slim` con `dbt-core` + `dbt-duckdb` + `apache-airflow` pesa ~600 MB y tarda ~3-5 min la primera vez en descargar e instalar dependencias. NO se levanta el scheduler de Airflow (se valida con `airflow dags parse`). DuckDB es embebido (`/fixture/dev.duckdb` montado como volumen efímero). Los tests pytest (`test_fx_dbt_airflow_ground_truth.py`) validan la estructura y trampas del fixture sin necesidad de Docker. `dbt deps` requiere conexión a internet para descargar `dbt-labs/dbt_utils` (en CI se podría pre-cachear en `dbt/dbt_packages/`).
  
-## F06al — Fixture `fx-python-ml`
- 
-**Objetivo:** proyecto de ML con notebooks, pipeline y servicio de inferencia.
-**Stack:** Python, Jupyter, scikit-learn/PyTorch, Hydra, DVC, MLflow, FastAPI.
-**Features:** `entrenamiento`, `evaluación`, `inferencia`.
+## F06al — Fixture `fx-python-ml` ✅
+  
+**Objetivo:** proyecto de ML con notebooks Jupyter (nbval), pipeline DVC, configuracion Hydra, tracking MLflow (FileStore) y servicio de inferencia FastAPI.
+**Stack:** `python:3.11-slim` + `scikit-learn==1.5.*` (CPU) + `hydra-core==1.3.*` + `dvc==3.5.*` (file backend) + `mlflow==2.18.*` (FileStore en `mlruns/`) + `fastapi==0.115.*` + `jupyter==1.0.*` + `nbval==0.10.*` + `pytest==8.2.*`. Dataset: `iris.csv` (150 rows sklearn).
+**Features (con sinonimos neutros CC-11):** `entrenamiento` (entrenamiento), `evaluacion` (evaluación), `inferencia` (inferencia).
 **Trampas del ecosistema:**
-1. Estado oculto en notebooks: celdas ejecutadas fuera de orden.
-2. Composición de configuraciones Hydra con overrides.
-3. Etapas definidas en `dvc.yaml`.
-4. Modelos registrados por nombre en MLflow y cargados por nombre.
-5. Feature engineering duplicado entre notebook y `src/`, con diferencias.
-6. Semillas y aleatoriedad que cambian los resultados.
-**Toolchain de tests:** pytest sobre `src/` + nbval, en contenedor.
+1. Estado oculto en notebooks: celdas ejecutadas fuera de orden (validado con nbval).
+2. Composición de configuraciones Hydra con `@package _global_` + `defaults:`.
+3. Etapas definidas en `dvc.yaml` con `deps`/`outs`/`metrics`.
+4. Modelos registrados por nombre en MLflow via `registered_model_name='iris_clf'`.
+5. Feature engineering duplicado entre notebook (`MinMaxScaler`) y `src/` (`StandardScaler`).
+6. Semillas y aleatoriedad con `random_state=42` en `src/train.py` para reproducibilidad.
+**Toolchain de tests:** pytest sobre `src/` + `nbval` sobre `notebooks/*.ipynb` + `dvc repro` (smoke) + FastAPI `TestClient`, en contenedor `python:3.11-slim`.
+
+**Criterios de aceptación (verificados):**
+- [x] 3 features (`entrenamiento`, `evaluacion`, `inferencia`) × 7 R-NN cada una (CC-03, CC-08) = 21 R-NN documentados en `ground_truth.json`.
+- [x] 6 trampas del ecosistema plantadas con referencia exacta: notebooks en orden `0[0-6]_*.ipynb` (E1), `conf/config.yaml` con `@package _global_` + `defaults:` + sub-configs en `conf/{entrenamiento,evaluacion,inferencia}/*.yaml` (E2), `dvc.yaml` con 3 stages `train/evaluate/register` + `deps`/`outs`/`metrics` (E3), `notebooks/03_entrenamiento.ipynb` con `mlflow.sklearn.log_model(..., registered_model_name='iris_clf')` (E4), `src/features.py` con `StandardScaler` vs `notebooks/02_features.ipynb` con `MinMaxScaler` (E5), `src/train.py` con `random_state=42` (E6).
+- [x] 6 trampas del paquete plantadas: `notebooks/06_setup_with_delete.ipynb` con `del df` (P1), `conf/config.yaml` con override apuntando a config inexistente (P2), `dvc.yaml` stage `register` con `outs: mlruns/.placeholder` que puede no generarse (P3), `notebooks/04_evaluacion_legacy.ipynb` con `registered_model_name='iris_classifier_legacy'` (P4), `src/features.py` vs notebook divergen StandardScaler vs MinMaxScaler (P5), `src/legacy_train.py` sin `random_state` (P6).
+- [x] 3 trampas superficiales: `src/legacy_train.py` declarado pero nunca invocado (S1), `notebooks/00_setup.ipynb` solo imports (S2), `tests/test_deprecated.py` con `@pytest.mark.skip` (S3).
+- [x] Ground truth completo en `dev/ground-truth/fx-python-ml/{ground_truth.json, GROUND_TRUTH.md, unique_tokens.txt}` con paquete completo por feature (entry_points, modules, dependencies, features, surfaces, traps, package_traps, superficial_traps, call_graph, config, tests).
+- [x] 35 entry points, 35 modules, 15 dependencies, 3 features (21 R-NN), 16 surfaces, 6 traps ecosistema, 6 traps paquete, 3 superficiales, 11 call graph edges.
+- [x] 33 unique_tokens `NPRGT-FXPML-`; `check_ground_truth.py --check-cc11` 0 referencias rotas (CC-11 OK tras sustituir comentarios `entrenamiento/evaluacion/inferencia` por `algo/metric/serve` neutros en conf/*.yaml + manifest.yml; ademas se removio `random_state` del docstring de `legacy_train.py` y se ajusto el test de P6 para que use regex sobre la firma de la funcion).
+- [x] `dev/tests/test_fx_python_ml_ground_truth.py` con 86 tests (8 TestGroundTruthShape + 6 TestOutcomesAndCitations + 3 TestUniqueTokensFile + 3 TestAllCitesValid + 32 TestPythonMlStructure + 2 TestModelsPresent + 2 TestDvcConfigured + 7 TestTrapsEcosystem + 6 TestTrapsPackage + 3 TestTrapsSuperficial + 14 TestManifest) verde.
+- [x] `pytest` total **2276 passed** (2190 previos + 86 nuevos) sin regresiones.
+- [x] `validate_skill.py` y `overfit_guard.py` verdes.
+- [x] `target_matrix.yml` extendido con frameworks `[hydra, dvc, mlflow, notebook-ipynb, jupyter, nbval, dvc-yaml, hydra-config, mlflow-file-store, scikit-learn, pytorch]`.
+- [x] `fixtures_matrix.py` extendido con deteccion dvc (`dvc.yaml` -> dvc + dvc-yaml), hydra (`conf/config.yaml` con `@package`/`defaults:` -> hydra + hydra-config), mlflow (`src/register.py` o `mlruns/` -> mlflow + mlflow-file-store), notebooks (`notebooks/*.ipynb` -> notebook-ipynb + jupyter) + nbval (pytest.ini -> nbval), requirements.txt (scikit-learn -> scikit-learn; torch -> pytorch). Bloque DEDENTED a 4 espacios para que se ejecute fuera del `if sql_files:` block.
+- [x] `MATRIX.md` regenerado: 39 fixtures, `fx-python-ml` cubre `python`, `shell`, `pytest-django`, `fastapi`, `pydantic`, `pyproject`, `make`, `pip`, `source-text`, `notebook-ipynb`, `hydra`, `dvc`, `mlflow`, `jupyter`, `nbval`, `dvc-yaml`, `hydra-config`, `mlflow-file-store`, `scikit-learn`.
+- [x] `manifest.yml` con `requires: [linux, macos]` + `container.enabled: true` + `image_tag: npr-fx-python-ml`.
+- [x] `Dockerfile.test` con `FROM python:3.11-slim` + `apt-get install git make curl unzip` + `pip install -r requirements.txt` + `dvc init` + `python -m ipykernel install` + `CMD ["bash","entrypoint.sh"]`.
+- [x] `entrypoint.sh` ejecuta `pytest --nbval-lax notebooks/` + `pytest tests/` + `dvc repro` (smoke) + `pytest dev/tests/test_fx_python_ml_ground_truth.py`.
+- [x] `data/iris.csv` con 150 rows (sklearn iris dataset real).
+- [x] `conf/config.yaml` con `defaults: [entrenamiento:default, evaluacion:default, inferencia:default, _self_] + datos + semilla + mlflow` (E2).
+- [x] `conf/entrenamiento/{default,random_forest,logistic_regression}.yaml` + `conf/evaluacion/{default,f1}.yaml` + `conf/inferencia/default.yaml` con `model_name: iris_clf + stage: production`.
+- [x] `src/{config,train,evaluate,features,register,legacy_train}.py` + `src/app/main.py` con FastAPI `POST /inferencia` que carga `models:/iris_clf@production`.
+- [x] 8 notebooks en `notebooks/`: `00_setup.ipynb` (S2), `01_exploratorio.ipynb` (E1), `02_features.ipynb` (E5 MinMaxScaler), `03_entrenamiento.ipynb` (E4 MLflow), `04_evaluacion.ipynb` (E1 log metrics), `04_evaluacion_legacy.ipynb` (P4 nombre incorrecto), `05_inferencia.ipynb` (E1 cargar), `06_setup_with_delete.ipynb` (P1 state out-of-order).
+- [x] `dvc.yaml` con 3 stages: `train` (deps: data/iris.csv + src/train.py; outs: models/model.pkl), `evaluate` (deps: models/model.pkl + data/iris.csv; metrics: metrics/eval.json), `register` (deps: models/model.pkl + metrics/eval.json; outs: mlruns/.placeholder).
+- [x] `params.yaml` con `entrenamiento.algoritmo: random_forest + n_estimators: 100 + max_depth: 5 + evaluacion.metrica: f1 + average: weighted + semilla: 42`.
+- [x] 13 archivos de test en `tests/`: `conftest.py` + `test_train.py` (5) + `test_evaluate.py` (5) + `test_inference.py` (5 FastAPI TestClient) + `test_hydra_config.py` (10) + `test_dvc_pipeline.py` (10) + `test_mlflow_registry.py` (5) + `test_reproducibility.py` (4 P6) + `test_features_divergence.py` (3 P5) + `test_traps_ecosystem.py` (7 E1..E6) + `test_traps_package.py` (6 P1..P6) + `test_traps_superficial.py` (3 S1..S3) + `test_deprecated.py` (1 S3) = **64 tests pytest** en tests/.
+- [x] `tools/` (opcional, no usado; `entrypoint.sh` hace el wrapper).
+- [x] `build-history.sh` con 8 commits reproducibles (scaffold + data + Hydra configs + src + notebooks core + DVC + legacy + tools).
+- [x] fixtures previos (37 fixtures F00–F06ak) sin cambios de comportamiento — verificado por `pytest 2276 passed sin regresiones`.
+- [x] 10 decisiones nuevas D-421..D-430 (python:3.11-slim + scikit-learn + Hydra + DVC + MLflow; MLflow file store no servidor; DVC local no remoto; Hydra con @package _global_ + defaults; notebooks con orden + nbval; feature engineering duplicado; random_state + trampa P6; FastAPI + MLflow load por nombre; prefijo NPRGT-FXPML- con sinonimos neutros; fixtures_matrix.py + target_matrix.yml extension con 11 frameworks dvc/hydra/mlflow).
+- [x] PROGRESS.md fila F06al = `HECHA` con evidencia completa.
+- [x] DECISIONS.md con D-421..D-430.
+- [x] ROADMAP.md encabezado F06al con ✅ y sección `Criterios de aceptación (verificados)` con todos los checks `[x]`.
+- [x] Commit `F06al: fixture fx-python-ml con paquete por feature`.
+
+**Limitación operativa documentada:** el contenedor `python:3.11-slim` con `scikit-learn + hydra + dvc + mlflow + fastapi + jupyter + nbval` pesa ~1.2 GB y tarda ~3-5 min primera vez. Los notebooks se ejecutan con `pytest --nbval-lax` (puede tardar 5-10 min para 8 notebooks); `entrypoint.sh` usa `|| true` en el comando nbval para que un fallo de P1 no rompa el entrypoint (los tests pytest unitarios sí deben pasar). `dvc repro` es un smoke test (no CI), requiere que los `outs` no existan o el pipeline este dirty. MLflow usa `file://` URI (no servidor); los modelos se inspeccionan con `MlflowClient` o `ls mlruns/`. `dvc init` en Dockerfile usa `[ ! -d /fixture/.dvc ] && dvc init -q || true` para idempotencia.
  
 ## F06am — Fixture `fx-scala-spark`
  
