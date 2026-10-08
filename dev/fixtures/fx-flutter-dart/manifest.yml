@@ -1,0 +1,16 @@
+# Metadata del fixture F06ad: fx-flutter-dart
+# App Flutter multiplataforma con Riverpod + go_router + freezed +
+# platform channels a Kotlin/Swift + flavors con --dart-define. Ver
+# referencias a las trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-flutter-dart/ground_truth.json.
+name: fx-flutter-dart
+description: Flutter 3.24 + Dart 3.5 + Riverpod 2 + go_router + freezed + platform channels + dart-define (F06ad)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-flutter-dart
+  enabled: true
+ground_truth_format_version: 1

@@ -1,0 +1,194 @@
+{
+  "fixture": "fx-flutter-dart",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "void main()", "file": "lib/main.dart:5"},
+    {"id": "EP-fx-app", "artifact": "FxApp MaterialApp.router", "file": "lib/app.dart:8"},
+    {"id": "EP-app-router", "artifact": "GoRouter appRouter", "file": "lib/router/app_router.dart:9"},
+    {"id": "EP-reader-controller", "artifact": "AsyncNotifierProvider readerControllerProvider", "file": "lib/features/reader/application/reader_controller.dart:11"},
+    {"id": "EP-remote-source", "artifact": "DocumentRemoteSource (MethodChannel wrapper)", "file": "lib/features/reader/data/document_remote_source.dart:7"},
+    {"id": "EP-favorites-controller", "artifact": "AsyncNotifierProvider favoritesControllerProvider", "file": "lib/features/favorites/application/favorites_controller.dart:14"},
+    {"id": "EP-settings-controller", "artifact": "NotifierProvider settingsControllerProvider", "file": "lib/features/settings/application/settings_controller.dart:32"},
+    {"id": "EP-native-channel", "artifact": "NativeMethodChannel wrapper", "file": "lib/platform/native_method_channel.dart:7"},
+    {"id": "EP-android-stub", "artifact": "MainActivity (Kotlin stub)", "file": "android_stub/MainActivity.kt:10"},
+    {"id": "EP-ios-stub", "artifact": "AppDelegate (Swift stub)", "file": "ios_stub/AppDelegate.swift:8"}
+  ],
+  "modules": [
+    {"id": "MOD-main", "path": "lib/main.dart", "summary": "Entry point con ProviderScope"},
+    {"id": "MOD-app", "path": "lib/app.dart", "summary": "MaterialApp.router con theme M3"},
+    {"id": "MOD-router", "path": "lib/router/", "summary": "GoRouter con redirects + 3 destinations"},
+    {"id": "MOD-reader-domain", "path": "lib/features/reader/domain/document.dart", "summary": "@freezed Document (E1)"},
+    {"id": "MOD-reader-data", "path": "lib/features/reader/data/document_remote_source.dart", "summary": "DocumentRemoteSource MethodChannel wrapper"},
+    {"id": "MOD-reader-application", "path": "lib/features/reader/application/reader_controller.dart", "summary": "AsyncNotifierProvider (P1 sin try/catch)"},
+    {"id": "MOD-reader-presentation", "path": "lib/features/reader/presentation/reader_screen.dart", "summary": "ReaderScreen ConsumerWidget"},
+    {"id": "MOD-favorites-domain", "path": "lib/features/favorites/domain/favorite.dart", "summary": "@freezed Favorite (E1)"},
+    {"id": "MOD-favorites-data", "path": "lib/features/favorites/data/favorites_storage.dart", "summary": "FavoritesStorage (SharedPreferences)"},
+    {"id": "MOD-favorites-application", "path": "lib/features/favorites/application/favorites_controller.dart", "summary": "AsyncNotifierProvider con ref.watch reader (E2)"},
+    {"id": "MOD-favorites-presentation", "path": "lib/features/favorites/presentation/favorites_screen.dart", "summary": "FavoritesScreen ConsumerStatefulWidget"},
+    {"id": "MOD-settings-application", "path": "lib/features/settings/application/settings_controller.dart", "summary": "NotifierProvider con dart-define (E5) + SharedPreferences (P4) + _DEFAULT_LOCALE (S2)"},
+    {"id": "MOD-settings-presentation", "path": "lib/features/settings/presentation/settings_screen.dart", "summary": "SettingsScreen con AdaptiveSwitch + AdaptiveSlider (E6)"},
+    {"id": "MOD-platform", "path": "lib/platform/native_method_channel.dart", "summary": "NativeMethodChannel wrapper (P2 silent catch)"},
+    {"id": "MOD-widgets", "path": "lib/platform/platform_widget.dart", "summary": "AdaptiveSwitch + AdaptiveSlider (E6 + P6 dead Cupertino) + _formatDouble (S3)"},
+    {"id": "MOD-util", "path": "lib/util/logger.dart", "summary": "Logger (S1 dead)"},
+    {"id": "MOD-android-stub", "path": "android_stub/MainActivity.kt", "summary": "Kotlin stub de MethodChannel handlers"},
+    {"id": "MOD-ios-stub", "path": "ios_stub/AppDelegate.swift", "summary": "Swift stub de FlutterMethodChannel handlers"}
+  ],
+  "dependencies": [
+    {"name": "flutter", "version": ">=3.24.0", "scope": "build+runtime", "manifest": "pubspec.yaml (flutter: sdk)"},
+    {"name": "flutter_riverpod", "version": "^2.5.1", "scope": "build+runtime", "manifest": "pubspec.yaml"},
+    {"name": "go_router", "version": "^14.2.7", "scope": "build+runtime", "manifest": "pubspec.yaml"},
+    {"name": "freezed_annotation", "version": "^2.4.4", "scope": "build+runtime", "manifest": "pubspec.yaml"},
+    {"name": "json_annotation", "version": "^4.9.0", "scope": "build+runtime", "manifest": "pubspec.yaml"},
+    {"name": "shared_preferences", "version": "^2.3.2", "scope": "build+runtime", "manifest": "pubspec.yaml"},
+    {"name": "build_runner", "version": "^2.4.13", "scope": "dev", "manifest": "pubspec.yaml (dev_dependencies)"},
+    {"name": "freezed", "version": "^2.5.7", "scope": "dev", "manifest": "pubspec.yaml (dev_dependencies)"},
+    {"name": "json_serializable", "version": "^6.8.0", "scope": "dev", "manifest": "pubspec.yaml (dev_dependencies)"},
+    {"name": "riverpod_generator", "version": "^2.4.0", "scope": "dev", "manifest": "pubspec.yaml (dev_dependencies)"},
+    {"name": "flutter_test", "version": "bundled", "scope": "test", "manifest": "pubspec.yaml (dev_dependencies, sdk: flutter)"},
+    {"name": "dart", "version": "^3.5.0", "scope": "build+runtime", "manifest": "pubspec.yaml (environment.sdk)"},
+    {"name": "MethodChannel (Kotlin)", "version": "Flutter SDK", "scope": "runtime", "manifest": "android_stub/MainActivity.kt"},
+    {"name": "FlutterMethodChannel (Swift)", "version": "Flutter SDK", "scope": "runtime", "manifest": "ios_stub/AppDelegate.swift"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "lector-de-documentos",
+      "user_description": "Vista que escanea documentos via platform channel nativo y muestra el contenido extraido.",
+      "traces": [
+        {"n": 1, "what": "Usuario abre la app, navega a /reader", "cite": "lib/router/app_router.dart:20", "data_in": "nav", "data_out": "ReaderScreen rendered"},
+        {"n": 2, "what": "ReaderScreen observa readerControllerProvider", "cite": "lib/features/reader/presentation/reader_screen.dart:16", "data_in": "ref", "data_out": "AsyncValue<Document?>"},
+        {"n": 3, "what": "ReaderController.build() llama remote.scanDocument()", "cite": "lib/features/reader/application/reader_controller.dart:15", "data_in": "Container", "data_out": "Future<Document?>"},
+        {"n": 4, "what": "DocumentRemoteSource.invoke('scanDocument')", "cite": "lib/features/reader/data/document_remote_source.dart:17", "data_in": "method: String", "data_out": "Future<dynamic>"},
+        {"n": 5, "what": "NativeMethodChannel.invokeMethod traga errores con catch (_)", "cite": "lib/platform/native_method_channel.dart:16", "data_in": "method", "data_out": "dynamic | null"},
+        {"n": 6, "what": "MainActivity Kotlin responde con map {hash, title, body, source}", "cite": "android_stub/MainActivity.kt:18", "data_in": "scanDocument", "data_out": "Map<String, String>"},
+        {"n": 7, "what": "deep link fxreader://reader/{hash} via go_router", "cite": "lib/router/app_router.dart:24", "data_in": "path", "data_out": "ReaderScreen(initialHash: hash)"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "lib/features/reader/presentation/reader_screen.dart", "line": 17, "kind": "switch_async", "condition_text": "switch (state) { AsyncData(:final value) => ..., AsyncError(:final error) => ..., _ => ... }", "branches": [{"label": "AsyncData -> _ReaderBody", "target_line": 17}, {"label": "AsyncError -> SnackBar error", "target_line": 22}, {"label": "loading -> 'Cargando'", "target_line": 25}]},
+        {"id": "DP-002", "file": "lib/features/reader/data/document_remote_source.dart", "line": 18, "kind": "result_type", "condition_text": "if (result == null) return null; if (result is! Map) return null;", "branches": [{"label": "null -> null", "target_line": 18}, {"label": "no Map -> null", "target_line": 19}, {"label": "Map -> Document", "target_line": 20}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "platform channel responde con Map valido", "user_sees": "Texto 'Lector de documentos' + hash + body + source", "side_effects": ["state = AsyncData(document)"], "reversible": true, "final_state": "_ReaderBody renderizado"},
+        {"id": "R-02", "category": "validation_input", "conditions": "platform channel responde con null", "user_sees": "Pantalla vacia con icono y mensaje 'Toca el boton para escanear'", "side_effects": [], "reversible": true, "final_state": "state = AsyncData(null)"},
+        {"id": "R-03", "category": "permission_denied", "conditions": "Android 13+ sin CAMERA permission", "user_sees": "UI sin boton de escaneo manual", "side_effects": [], "reversible": true, "final_state": "scan bloqueado hasta aceptar"},
+        {"id": "R-04", "category": "error_external_service", "conditions": "platform channel throws PlatformException", "user_sees": "Texto 'Canal nativo no disponible: <error>'", "side_effects": ["catch (_) traga error"], "reversible": true, "final_state": "state = AsyncError"},
+        {"id": "R-05", "category": "error_conflict", "conditions": "mismo hash ya existe en favoritos", "user_sees": "Sin error visible (favoriteStorage.checkExists lo bloquea)", "side_effects": ["no se duplica"], "reversible": true, "final_state": "favorites sin cambio"},
+        {"id": "R-06", "category": "success_offline", "conditions": "platform channel responde con source:cache", "user_sees": "Documento renderizado desde cache local", "side_effects": [], "reversible": true, "final_state": "Document en cache"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "go_router lee /reader/{hash} de deep link", "user_sees": "ReaderScreen con initialHash precargado", "side_effects": ["initialHash param"], "reversible": true, "final_state": "nav abre reader con hash"}
+      ],
+      "config": [
+        {"key": "FX_ENABLE_PREMIUM", "kind": "dart-define", "default": "false", "effect": "enablePremium flag"},
+        {"key": "MethodChannel name", "kind": "constant", "default": "com.example.fxdart/native", "effect": "channel name for native bridge"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "favoritos",
+      "user_description": "Lista paginada de documentos favoritos persistida en SharedPreferences, con busqueda y filtrado.",
+      "traces": [
+        {"n": 1, "what": "Usuario navega /favorites", "cite": "lib/router/app_router.dart:32", "data_in": "nav", "data_out": "FavoritesScreen rendered"},
+        {"n": 2, "what": "FavoritesScreen lee favoritesControllerProvider", "cite": "lib/features/favorites/presentation/favorites_screen.dart:42", "data_in": "ref", "data_out": "AsyncValue<List<Favorite>>"},
+        {"n": 3, "what": "FavoritesController.build() depende de readerControllerProvider", "cite": "lib/features/favorites/application/favorites_controller.dart:20", "data_in": "ref.watch", "data_out": "trigger reload"},
+        {"n": 4, "what": "FavoritesStorage.load() lee SharedPreferences.getStringList", "cite": "lib/features/favorites/data/favorites_storage.dart:11", "data_in": "key", "data_out": "List<Favorite>"},
+        {"n": 5, "what": "Usuario busca por texto en search field", "cite": "lib/features/favorites/presentation/favorites_screen.dart:50", "data_in": "query", "data_out": "snackbar count"},
+        {"n": 6, "what": "search() filtra favoritos por title.contains", "cite": "lib/features/favorites/application/favorites_controller.dart:36", "data_in": "query", "data_out": "List<Favorite>"},
+        {"n": 7, "what": "deep link fxreader://favorites/{filter} precarga busqueda", "cite": "lib/router/app_router.dart:36", "data_in": "path", "data_out": "FavoritesScreen(initialFilter)"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "lib/features/favorites/application/favorites_controller.dart", "line": 20, "kind": "ref_watch", "condition_text": "ref.watch(readerControllerProvider)", "branches": [{"label": "reader cambia -> rebuild favorites", "target_line": 20}, {"label": "reader idle -> no rebuild", "target_line": 21}]},
+        {"id": "DP-004", "file": "lib/features/favorites/presentation/favorites_screen.dart", "line": 47, "kind": "filter_or_list", "condition_text": "if (value.isEmpty) return;", "branches": [{"label": "empty -> no search", "target_line": 47}, {"label": "non-empty -> search", "target_line": 48}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "SharedPreferences tiene 5 favores", "user_sees": "ListView con 5 ListTile (icono star + titulo + hash + fecha)", "side_effects": [], "reversible": true, "final_state": "favorites pobladas"},
+        {"id": "R-02", "category": "no_op_empty", "conditions": "SharedPreferences vacio", "user_sees": "Texto 'Aun no tienes favoritos'", "side_effects": [], "reversible": true, "final_state": "empty state"},
+        {"id": "R-03", "category": "error_internal_db", "conditions": "SharedPreferences lanza PlatformException", "user_sees": "Texto 'No se pudieron cargar favoritos: <error>'", "side_effects": [], "reversible": true, "final_state": "error visible"},
+        {"id": "R-04", "category": "success_paginated", "conditions": "usuario hace scroll al fondo", "user_sees": "ListView carga siguiente pagina de 50 (mock: misma lista)", "side_effects": [], "reversible": true, "final_state": "favorites.extend"},
+        {"id": "R-05", "category": "success_partial", "conditions": "query matchea 2 de 5 favoritos", "user_sees": "Snackbar '2 resultados' + lista filtrada", "side_effects": ["filter aplicado"], "reversible": true, "final_state": "_activeFilter actualizado"},
+        {"id": "R-06", "category": "timeout_external", "conditions": "SharedPreferences tarda > 2s", "user_sees": "Sin manejo explicito: Future queda pending", "side_effects": [], "reversible": true, "final_state": "UI sin actualizar"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "go_router lee /favorites/{filter}", "user_sees": "FavoritesScreen con search precargado = _activeFilter", "side_effects": [], "reversible": true, "final_state": "filter aplicado desde deep link"}
+      ],
+      "config": [
+        {"key": "favorites.storage.key", "kind": "constant", "default": "fxd_favorites_v1", "effect": "SharedPreferences key"},
+        {"key": "favorites.pagination.size", "kind": "constant", "default": "50", "effect": "ListView.builder itemCount limit"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "ajustes",
+      "user_description": "Configuracion del usuario con modo premium (--dart-define) y widgets adaptativos.",
+      "traces": [
+        {"n": 1, "what": "Usuario navega /settings", "cite": "lib/router/app_router.dart:42", "data_in": "nav", "data_out": "SettingsScreen rendered"},
+        {"n": 2, "what": "SettingsScreen lee settingsControllerProvider", "cite": "lib/features/settings/presentation/settings_screen.dart:17", "data_in": "ref", "data_out": "SettingsState"},
+        {"n": 3, "what": "enablePremium = bool.fromEnvironment (build time)", "cite": "lib/features/settings/application/settings_controller.dart:9", "data_in": "dart-define", "data_out": "bool"},
+        {"n": 4, "what": "SettingsController.build() combina dart-define + SharedPreferences", "cite": "lib/features/settings/application/settings_controller.dart:38", "data_in": "build", "data_out": "SettingsState"},
+        {"n": 5, "what": "AdaptiveSwitch elige Cupertino vs Material", "cite": "lib/platform/platform_widget.dart:19", "data_in": "platform", "data_out": "CupertinoSwitch or Switch"},
+        {"n": 6, "what": "AdaptiveSlider elige widget segun plataforma (P6 rama muerta)", "cite": "lib/platform/platform_widget.dart:46", "data_in": "platform", "data_out": "Slider (always)"},
+        {"n": 7, "what": "deep link fxreader://settings abre SettingsScreen", "cite": "lib/router/app_router.dart:42", "data_in": "path", "data_out": "settings screen"}
+      ],
+      "decision_points": [
+        {"id": "DP-005", "file": "lib/features/settings/application/settings_controller.dart", "line": 9, "kind": "dart_define", "condition_text": "bool.fromEnvironment('FX_ENABLE_PREMIUM', defaultValue: false)", "branches": [{"label": "--dart-define=...true -> enablePremium=true", "target_line": 9}, {"label": "default -> false", "target_line": 9}]},
+        {"id": "DP-006", "file": "lib/platform/platform_widget.dart", "line": 19, "kind": "platform_branch", "condition_text": "switch (platform) { iOS -> CupertinoSwitch, default -> Switch }", "branches": [{"label": "iOS -> CupertinoSwitch", "target_line": 22}, {"label": "default -> Switch", "target_line": 27}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "--dart-define=FX_ENABLE_PREMIUM=true + tap switch", "user_sees": "CupertinoSwitch (iOS) o Switch (Android) en estado activo + subtitle 'Activado'", "side_effects": ["prefs.setBool('premium', true)"], "reversible": true, "final_state": "premium habilitado"},
+        {"id": "R-02", "category": "success_degraded", "conditions": "default + tap switch", "user_sees": "Switch en estado inactivo + subtitle 'Desactivado'", "side_effects": ["prefs.setBool('premium', false)"], "reversible": true, "final_state": "premium bloqueado"},
+        {"id": "R-03", "category": "validation_input", "conditions": "env no definido + null SharedPreferences", "user_sees": "Switch muestra estado anterior (no actualiza)", "side_effects": [], "reversible": true, "final_state": "fallback a build state"},
+        {"id": "R-04", "category": "resource_not_found", "conditions": "go_router sin ruta premium", "user_sees": "deep link fxreader://premium devuelve redirect a /reader (P3)", "side_effects": [], "reversible": true, "final_state": "nav redirect"},
+        {"id": "R-05", "category": "error_internal_db", "conditions": "SharedPreferences lanza PlatformException en togglePremium", "user_sees": "Sin UI error (try/catch ausente)", "side_effects": ["prefs no se actualiza"], "reversible": true, "final_state": "prefs queda con valor anterior"},
+        {"id": "R-06", "category": "no_op_branch", "conditions": "TargetPlatform.iOS + CupertinoSlider no implementado", "user_sees": "Slider Material (no Cupertino) en rama iOS (P6)", "side_effects": [], "reversible": true, "final_state": "fallback Material"},
+        {"id": "R-07", "category": "error_external_service", "conditions": "platform channel en togglePremium falla", "user_sees": "Toast 'Configuracion no disponible' (via capturePage fallback)", "side_effects": [], "reversible": true, "final_state": "configuracion no actualizada"}
+      ],
+      "config": [
+        {"key": "FX_ENABLE_PREMIUM", "kind": "dart-define", "default": "false", "effect": "Enable premium mode"},
+        {"key": "preferences.premium.key", "kind": "constant", "default": "premium", "effect": "SharedPreferences key for premium toggle"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-reader-screen", "kind": "composable", "name": "/reader", "handler": "ReaderScreen", "file": "lib/features/reader/presentation/reader_screen.dart:13"},
+    {"id": "SRF-reader-with-hash", "kind": "deep-link", "name": "/reader/:hash", "handler": "ReaderScreen(initialHash: hash)", "file": "lib/router/app_router.dart:24"},
+    {"id": "SRF-favorites-screen", "kind": "composable", "name": "/favorites", "handler": "FavoritesScreen", "file": "lib/features/favorites/presentation/favorites_screen.dart:14"},
+    {"id": "SRF-favorites-with-filter", "kind": "deep-link", "name": "/favorites/:filter", "handler": "FavoritesScreen(initialFilter: filter)", "file": "lib/router/app_router.dart:36"},
+    {"id": "SRF-settings-screen", "kind": "composable", "name": "/settings", "handler": "SettingsScreen", "file": "lib/features/settings/presentation/settings_screen.dart:11"},
+    {"id": "SRF-channel-scandocument", "kind": "platform-channel", "name": "scanDocument", "handler": "NativeMethodChannel.invoke", "file": "lib/platform/native_method_channel.dart:7"},
+    {"id": "SRF-channel-capturepage", "kind": "platform-channel", "name": "capturePage", "handler": "NativeMethodChannel.invoke", "file": "lib/platform/native_method_channel.dart:7"},
+    {"id": "SRF-android-handler", "kind": "method-handler", "name": "MainActivity.configureFlutterEngine", "handler": "MethodChannel(CHANNEL).setMethodCallHandler", "file": "android_stub/MainActivity.kt:34"},
+    {"id": "SRF-ios-handler", "kind": "method-handler", "name": "AppDelegate.didFinishLaunchingWithOptions", "handler": "FlutterMethodChannel.setMethodCallHandler", "file": "ios_stub/AppDelegate.swift:32"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "freezed_generated_code", "file": "lib/features/reader/domain/document.dart:5", "line": 5, "description": "build_runner genera .freezed.dart y .g.dart con codigo expandido que NO esta en .git.", "resolution": "Ejecutar `dart run build_runner build` en CI; leer document.freezed.dart para entender copyWith/==/hashCode."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "riverpod_ref_watch", "file": "lib/features/favorites/application/favorites_controller.dart:20", "line": 20, "description": "FavoritesController observa readerControllerProvider via ref.watch; el grafo de providers es implicito.", "resolution": "Detectar todos los ref.watch cruzados para reconstruir el grafo de dependencias."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "platform_channels_strings", "file": "lib/platform/native_method_channel.dart:16", "line": 16, "description": "MethodChannel('com.example.fxdart/native') invoca metodos por string ('scanDocument', 'capturePage'). El contrato es una convencion de strings.", "resolution": "Seguir los strings desde Dart a MainActivity.kt / AppDelegate.swift."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "go_router_redirects", "file": "lib/router/app_router.dart:9", "line": 9, "description": "GoRouter con redirect declarativo que decide el path inicial segun la URL.", "resolution": "Leer app_router.dart para entender redirects + go_router docs."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "dart_define_flavor", "file": "lib/features/settings/application/settings_controller.dart:9", "line": 9, "description": "bool.fromEnvironment('FX_ENABLE_PREMIUM') activa flavor premium en build time.", "resolution": "Compilar con `--dart-define=FX_ENABLE_PREMIUM=true` para activar el flag."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "adaptive_platform_widgets", "file": "lib/platform/platform_widget.dart:19", "line": 19, "description": "AdaptiveSwitch y AdaptiveSlider eligen entre Cupertino y Material segun TargetPlatform.", "resolution": "Verificar Theme.of(context).platform y target defaultMaterial."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "reader_async_notifier_no_catch", "file": "lib/features/reader/application/reader_controller.dart:15", "line": 15, "description": "ReaderController.build() no envuelve remote.scanDocument() con try/catch.", "resolution": "Usar AsyncValue.guard() o try/catch en build()."},
+    {"id": "TRAP-P2", "kind": "package", "name": "platform_channel_silent_catch", "file": "lib/platform/native_method_channel.dart:16", "line": 16, "description": "NativeMethodChannel.invoke traga cualquier excepcion con catch (_).", "resolution": "Logear o rethrow despues de incrementar un contador de errores."},
+    {"id": "TRAP-P3", "kind": "package", "name": "router_redirect_ignores_auth", "file": "lib/router/app_router.dart:9", "line": 9, "description": "GoRouter redirect siempre permite acceso sin chequeo de auth.", "resolution": "Anadir chequeo de auth en la closure de redirect."},
+    {"id": "TRAP-P4", "kind": "package", "name": "settings_dart_define_sp_order", "file": "lib/features/settings/application/settings_controller.dart:38", "line": 38, "description": "SettingsController combina dart-define con SharedPreferences sin orden de evaluacion claro.", "resolution": "Calcular isPremium solo desde un canal (build-time XOR runtime, no ambos)."},
+    {"id": "TRAP-P5", "kind": "package", "name": "freezed_copyWith_unused", "file": "lib/features/reader/domain/document.dart:5", "line": 5, "description": "freezed genera copyWith pero la app solo lee campos del modelo.", "resolution": "Usar copyWith para construir variantes o eliminar el freezed."},
+    {"id": "TRAP-P6", "kind": "package", "name": "adaptive_slider_cupertino_dead", "file": "lib/platform/platform_widget.dart:46", "line": 46, "description": "AdaptiveSlider rama iOS usa Slider en lugar de CupertinoSlider.", "resolution": "Implementar CupertinoSlider o documentar como intencional."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "logger_helper_unused", "file": "lib/util/logger.dart:5", "line": 5, "description": "Logger.print existe pero no se llama desde runtime code.", "resolution": "Eliminar o usar debugPrint."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "default_locale_unused", "file": "lib/features/settings/application/settings_controller.dart:13", "line": 13, "description": "_DEFAULT_LOCALE declarado pero nunca leido en runtime.", "resolution": "Usar en SettingsState.locale o eliminar."},
+    {"id": "TRAP-S3", "kind": "superficial", "name": "format_double_helper_dead", "file": "lib/platform/platform_widget.dart:73", "line": 73, "description": "_formatDouble declarado pero no invocado.", "resolution": "Eliminar o usar en AdaptiveSlider."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "main", "to": "FxApp", "file": "lib/main.dart:5"},
+      {"from": "FxApp.build", "to": "appRouter.config", "file": "lib/app.dart:13"},
+      {"from": "ReaderScreen.build", "to": "readerControllerProvider", "file": "lib/features/reader/presentation/reader_screen.dart:16"},
+      {"from": "ReaderController.build", "to": "documentRemoteSourceProvider", "file": "lib/features/reader/application/reader_controller.dart:15"},
+      {"from": "DocumentRemoteSource.scanDocument", "to": "NativeMethodChannel.invoke", "file": "lib/features/reader/data/document_remote_source.dart:17"},
+      {"from": "FavoritesController.build", "to": "favoritesStorageProvider", "file": "lib/features/favorites/application/favorites_controller.dart:21"},
+      {"from": "FavoritesController.build", "to": "readerControllerProvider (ref.watch)", "file": "lib/features/favorites/application/favorites_controller.dart:20"},
+      {"from": "SettingsScreen.build", "to": "settingsControllerProvider", "file": "lib/features/settings/presentation/settings_screen.dart:17"},
+      {"from": "AdaptiveSwitch.build", "to": "CupertinoSwitch | Switch (platform)", "file": "lib/platform/platform_widget.dart:19"},
+      {"from": "NativeMethodChannel.invoke", "to": "MethodChannel.invokeMethod", "file": "lib/platform/native_method_channel.dart:16"},
+      {"from": "MethodChannel.setMethodCallHandler", "to": "MainActivity.configureFlutterEngine", "file": "android_stub/MainActivity.kt:34"}
+    ]
+  }
+}

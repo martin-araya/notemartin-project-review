@@ -1,0 +1,20 @@
+# Dockerfile.test del fixture F06ad (fx-flutter-dart).
+# Imagen oficial Flutter 3.24.5 con Dart 3.5.4 + Android SDK + build_runner.
+# Tests JVM via `flutter test` (sin emulador). El `--no-pub` permite
+# reutilizar pub cache si el volumen esta montado.
+FROM ghcr.io/cirruslabs/flutter:3.24.5
+
+WORKDIR /app
+
+# Cache de pub para acelerar builds subsecuentes via volumenes
+ENV PUB_CACHE=/app/.pub-cache
+
+# Copia todo el fixture (pubspec, lib, test, android_stub, ios_stub)
+COPY . /app/
+
+# Precompila: pub get + build_runner para generar .g.dart/.freezed.dart.
+# Solo se ejecuta si los sources cambiaron (cache de Docker layer).
+RUN flutter pub get 2>&1 | tail -5 || true \
+    && dart run build_runner build --delete-conflicting-outputs 2>&1 | tail -5 || true
+
+CMD ["make", "test"]
