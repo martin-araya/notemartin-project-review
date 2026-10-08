@@ -344,7 +344,439 @@ def _fixture_axes(fixture_dir: Path) -> Dict[str, Set[str]]:
                 covered["build_systems"].add("xcodebuild")
             break
 
+    # F06ab: Swift server-side (Vapor, Fluent, swift-argument-parser,
+    # swift-syntax, swift-macro, spm-build-tool-plugin). Detectamos:
+    # - Vapor en Package.swift
+    # - Fluent y swift-argument-parser en Package.swift
+    # - swift-syntax -> swift-syntax + swift-macro
+    # - Plugins/<X>/Package.swift con .pluginTarget -> spm-build-tool-plugin
+    # - "RouteCollection" en .swift -> fluent (Vapor routing layer)
+    package_swift = fixture_dir / "Package.swift"
+    if package_swift.is_file():
+        try:
+            ps_content = package_swift.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            ps_content = ""
+        if "vapor" in ps_content.lower() and "Vapor" in ps_content:
+            covered["frameworks"].add("vapor")
+        if "Fluent" in ps_content:
+            covered["frameworks"].add("fluent")
+        if "swift-argument-parser" in ps_content.lower() or "ArgumentParser" in ps_content:
+            covered["frameworks"].add("swift-argument-parser")
+        if "swift-syntax" in ps_content.lower():
+            covered["frameworks"].add("swift-syntax")
+        if "SwiftSyntaxMacros" in ps_content or "@attached" in ps_content or "@freestanding" in ps_content:
+            covered["frameworks"].add("swift-macro")
+    # Swift macros adicionales: buscar archivos que definan macros en Sources/*Macros*
+    for macros_dir in fixture_dir.rglob("*Macros*"):
+        if not macros_dir.is_dir():
+            continue
+        for swift_file in macros_dir.rglob("*.swift"):
+            try:
+                content = swift_file.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                continue
+            if "@attached" in content or "@freestanding" in content or "Macro" in content:
+                covered["frameworks"].add("swift-macro")
+                covered["frameworks"].add("swift-syntax")
+                break
+    # Build tool plugin: presencia de Plugins/<X>/Package.swift con .pluginTarget.
+    for plugin_pkg in (fixture_dir / "Plugins").rglob("Package.swift") if (fixture_dir / "Plugins").is_dir() else []:
+        try:
+            pp_content = plugin_pkg.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            continue
+        if ".pluginTarget" in pp_content or "capability: .buildTool()" in pp_content:
+            covered["frameworks"].add("spm-build-tool-plugin")
+            break
+
+    # F06ac: Android Kotlin (Compose, Hilt, Room, WorkManager, Navigation,
+    # ViewBinding, Gradle flavors, Robolectric). Detectamos via build.gradle*:
+    # - com.android.application -> android
+    # - dagger.hilt.android -> hilt (+ hilt-android)
+    # - androidx.hilt:hilt-work -> hilt-work
+    # - androidx.hilt:hilt-navigation-compose -> hilt-navigation-compose
+    # - androidx.room -> room
+    # - androidx.work -> workmanager
+    # - androidx.navigation -> navigation-compose
+    # - android:onClick o buildFeatures.viewBinding -> view-binding
+    # - productFlavors -> gradle-flavors
+    # - org.robolectric -> robolectric
+    # - androidx.appcompat -> appcompat
+    android_root = fixture_dir / "app"
+    gradle_files = []
+    if android_root.is_dir():
+        gradle_files.extend(android_root.rglob("build.gradle.kts"))
+        gradle_files.extend(android_root.rglob("build.gradle"))
+    gradle_files.append(fixture_dir / "build.gradle.kts")
+    if (fixture_dir / "build.gradle.kts").is_file():
+        gradle_files.append(fixture_dir / "build.gradle.kts")
+    gradle_text = ""
+    for gf in gradle_files:
+        if gf.is_file():
+            try:
+                gradle_text += "\n" + gf.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                pass
+    if gradle_text:
+        if "com.android.application" in gradle_text or "android {\n" in gradle_text or 'id("com.android.application")' in gradle_text:
+            covered["frameworks"].add("android")
+        if "dagger.hilt.android" in gradle_text.lower() or "hilt.android" in gradle_text.lower():
+            covered["frameworks"].add("hilt")
+            covered["frameworks"].add("hilt-android")
+        if "androidx.hilt:hilt-work" in gradle_text or "hilt-work" in gradle_text.lower():
+            covered["frameworks"].add("hilt-work")
+        if "androidx.hilt:hilt-navigation-compose" in gradle_text or "hilt-navigation-compose" in gradle_text.lower():
+            covered["frameworks"].add("hilt-navigation-compose")
+        if "androidx.room" in gradle_text or '"room"' in gradle_text.lower():
+            covered["frameworks"].add("room")
+        if "androidx.work" in gradle_text or "workmanager" in gradle_text.lower():
+            covered["frameworks"].add("workmanager")
+        if "androidx.navigation" in gradle_text or "navigation-compose" in gradle_text.lower():
+            covered["frameworks"].add("navigation-compose")
+        if "android:onClick" in gradle_text or "viewBinding = true" in gradle_text:
+            covered["frameworks"].add("view-binding")
+        if "productFlavors" in gradle_text or 'create("free")' in gradle_text:
+            covered["frameworks"].add("gradle-flavors")
+        if "androidx.appcompat" in gradle_text:
+            covered["frameworks"].add("appcompat")
+    # Compose + Robolectric via gradle/libs.versions.toml o dependencias en build.gradle
+    version_catalog = fixture_dir / "gradle/libs.versions.toml"
+    if version_catalog.is_file():
+        try:
+            catalog = version_catalog.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            catalog = ""
+        if "compose-bom" in catalog or "androidx.compose" in catalog:
+            covered["frameworks"].add("jetpack-compose")
+        if "robolectric" in catalog:
+            covered["frameworks"].add("robolectric")
+    if "jetpack-compose" not in covered["frameworks"]:
+        if "androidx.compose" in gradle_text:
+            covered["frameworks"].add("jetpack-compose")
+    if "robolectric" not in covered["frameworks"]:
+        if "robolectric" in gradle_text.lower():
+            covered["frameworks"].add("robolectric")
+
+    # F06ad: Flutter / Dart (Riverpod, go_router, freezed, json_serializable,
+    # riverpod_generator, build_runner, platform channels, dart-define,
+    # adaptive widgets). Detected via pubspec.yaml + .dart files.
+    pubspec = fixture_dir / "pubspec.yaml"
+    if pubspec.is_file():
+        try:
+            ps_text = pubspec.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            ps_text = ""
+        if ps_text:
+            if "flutter:" in ps_text and "sdk: flutter" in ps_text:
+                covered["frameworks"].add("flutter")
+            if "flutter_riverpod" in ps_text or "riverpod" in ps_text.lower():
+                covered["frameworks"].add("flutter-riverpod")
+            if "go_router" in ps_text:
+                covered["frameworks"].add("go-router")
+            if "freezed_annotation" in ps_text or "freezed:" in ps_text:
+                covered["frameworks"].add("freezed")
+            if "json_serializable" in ps_text or "json_annotation" in ps_text:
+                covered["frameworks"].add("json-serializable")
+            if "riverpod_generator" in ps_text:
+                covered["frameworks"].add("riverpod-generator")
+            if "build_runner" in ps_text:
+                covered["frameworks"].add("build-runner")
+            if "shared_preferences" in ps_text:
+                covered["frameworks"].add("shared-preferences")
+
+    # Scan .dart files for platform channels, dart-define, adaptive widgets
+    dart_sources = list(fixture_dir.rglob("*.dart"))
+    dart_text = ""
+    for df in dart_sources:
+        if df.is_file():
+            try:
+                dart_text += "\n" + df.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                pass
+    if dart_text:
+        if "MethodChannel" in dart_text or "FlutterMethodChannel" in dart_text:
+            covered["frameworks"].add("platform-channels")
+        if "bool.fromEnvironment" in dart_text or "String.fromEnvironment" in dart_text or "int.fromEnvironment" in dart_text:
+            covered["frameworks"].add("dart-define")
+        if "TargetPlatform.iOS" in dart_text and ("Cupertino" in dart_text or "Material" in dart_text):
+            covered["frameworks"].add("adaptive-widgets")
+
+    # F06af: Electron (main, preload, renderer, IPC channels, contextBridge,
+    # electron-builder, utility process, custom protocol app://).
+    el_text = ""
+    el_pkg = fixture_dir / "package.json"
+    if el_pkg.is_file():
+        try:
+            el_text = el_pkg.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            el_text = ""
+        if el_text and '"electron"' in el_text and '"electron-builder"' in el_text:
+            covered["frameworks"].add("electron")
+            covered["frameworks"].add("electron-builder")
+        src_root = fixture_dir / "src"
+        if src_root.exists():
+            el_ts_files = [str(p) for p in src_root.rglob("*.ts")]
+            if any("contextBridge" in t for t in el_ts_files) or "contextBridge" in el_text:
+                covered["frameworks"].add("electron-context-bridge")
+    # electron-builder.yml asarUnpack + extraResources
+    eb = fixture_dir / "electron-builder.yml"
+    if eb.is_file():
+        try:
+            eb_content = eb.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            eb_content = ""
+        if "asarUnpack" in eb_content:
+            covered["frameworks"].add("electron-asar-unpack")
+        if "extraResources" in eb_content:
+            covered["frameworks"].add("electron-extra-resources")
+    # utilityProcess.fork + child_process.fork + protocol.handle
+    el_sources = []
+    src_root = fixture_dir / "src"
+    if src_root.exists():
+        for ext in ("*.ts", "*.js"):
+            for p in src_root.rglob(ext):
+                if p.is_file():
+                    try:
+                        el_sources.append(p.read_text(encoding="utf-8", errors="replace"))
+                    except (OSError, UnicodeDecodeError):
+                        pass
+    el_src_text = "\n".join(el_sources)
+    if "utilityProcess.fork" in el_src_text:
+        covered["frameworks"].add("electron-utility-process")
+    if "protocol.handle" in el_src_text and "registerSchemesAsPrivileged" in el_src_text:
+        covered["frameworks"].add("electron-app-scheme")
+    if "autoUpdater" in el_src_text or "electron-updater" in el_text:
+        covered["frameworks"].add("electron-auto-updater")
+
+    # F06ag: WPF (XAML bindings, source generators, MVVM, data templates,
+    # value converters, merged dictionaries, style triggers, xunit tests).
+    csproj_files = list(fixture_dir.rglob("*.csproj"))
+    sln_files = list(fixture_dir.rglob("*.sln"))
+    xaml_files = list(fixture_dir.rglob("*.xaml"))
+    cs_files = list(fixture_dir.rglob("*.cs"))
+    xaml_text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in xaml_files if p.is_file())
+    cs_text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in cs_files if p.is_file())
+    csproj_text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in csproj_files if p.is_file())
+    if csproj_text and "UseWPF" in csproj_text:
+        covered["frameworks"].add("wpf")
+        covered["frameworks"].add("xaml")
+    if "[ObservableProperty]" in cs_text or "[RelayCommand]" in cs_text or "CommunityToolkit.Mvvm" in csproj_text:
+        covered["frameworks"].add("mvvm")
+        covered["frameworks"].add("community-toolkit-mvvm")
+    if "DataTemplate" in xaml_text:
+        covered["frameworks"].add("data-template")
+    if "IValueConverter" in cs_text:
+        covered["frameworks"].add("value-converter")
+    if "MergedDictionaries" in xaml_text:
+        covered["frameworks"].add("merged-dictionary")
+    if "<Style.Triggers>" in xaml_text or "<DataTrigger" in xaml_text:
+        covered["frameworks"].add("style-trigger")
+    if sln_files and any('xunit' in csproj_text for csproj_file in csproj_files if csproj_file.is_file()):
+        covered["frameworks"].add("xunit")
+
+    # F06ah: PostgreSQL (Flyway, PL/pgSQL, pg_cron, pgTAP, RLS, triggers,
+    # materialized views, EXECUTE format, CASCADE constraints).
+    sql_files = list(fixture_dir.rglob("*.sql"))
+    sql_text = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in sql_files if p.is_file())
+    if sql_files:
+        if "EXECUTE format" in sql_text:
+            covered["frameworks"].add("sql-dynamic")
+        if "ROW LEVEL SECURITY" in sql_text:
+            covered["frameworks"].add("row-level-security")
+        if "ON DELETE CASCADE" in sql_text:
+            covered["frameworks"].add("cascade-constraint")
+        if "CREATE TRIGGER" in sql_text or "BEFORE INSERT" in sql_text:
+            covered["frameworks"].add("trigger")
+        if "MATERIALIZED VIEW" in sql_text:
+            covered["frameworks"].add("materialized-view")
+        if "LANGUAGE plpgsql" in sql_text or "RETURNS TRIGGER" in sql_text:
+            covered["frameworks"].add("pl-pgsql")
+        if "pg_cron" in sql_text or "cron.schedule" in sql_text:
+            covered["frameworks"].add("pg-cron")
+        if "flyway.locations" in sql_text.lower() or "V1__" in str(fixture_dir):
+            covered["frameworks"].add("flyway")
+        if "pgtap" in sql_text.lower() or "pg_prove" in sql_text.lower() or "pg_test" in sql_text.lower():
+            covered["frameworks"].add("pgtap")
+        # PostgreSQL itself
+        if "CREATE TABLE" in sql_text or "CREATE EXTENSION" in sql_text:
+            covered["frameworks"].add("postgresql")
+        # Oracle detection: PL/SQL + Liquibase + utPLSQL
+        if "PRAGMA" in sql_text or "CREATE PACKAGE" in sql_text or "EXECUTE IMMEDIATE" in sql_text:
+            covered["frameworks"].add("pl-sql")
+            covered["frameworks"].add("oracle")
+        if "liquibase" in sql_text.lower() or "changelog-master.xml" in sql_text or "<databaseChangeLog" in sql_text:
+            covered["frameworks"].add("liquibase")
+        if "ut.run" in sql_text.lower() or "ut.expect" in sql_text.lower() or "utplsql" in sql_text.lower():
+            covered["frameworks"].add("utplsql")
+        if "DBMS_SCHEDULER" in sql_text:
+            covered["frameworks"].add("dbms-scheduler")
+        if "CREATE DATABASE LINK" in sql_text or "DATABASE LINK" in sql_text:
+            covered["frameworks"].add("db-link")
+        if "AUTONOMOUS_TRANSACTION" in sql_text:
+            covered["frameworks"].add("autonomous-transaction")
+        if "INSTEAD OF" in sql_text:
+            covered["frameworks"].add("instead-of")
+        if "CREATE PUBLIC SYNONYM" in sql_text or "SYNONYM" in sql_text:
+            covered["frameworks"].add("synonym")
+        if "EXECUTE IMMEDIATE" in sql_text:
+            covered["frameworks"].add("execute-immediate")
+
+        # F06ak: dbt + Airflow + DuckDB detection.
+
+    # F06al: Python ML detection.
+    dvc_yaml = fixture_dir / "dvc.yaml"
+    if dvc_yaml.is_file():
+        covered["frameworks"].add("dvc")
+        covered["frameworks"].add("dvc-yaml")
+    hydra_conf = fixture_dir / "conf" / "config.yaml"
+    if hydra_conf.is_file():
+        try:
+            hc = hydra_conf.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            hc = ""
+        if "@package" in hc or "defaults:" in hc:
+            covered["frameworks"].add("hydra")
+            covered["frameworks"].add("hydra-config")
+    if (fixture_dir / "src" / "register.py").is_file() or (fixture_dir / "mlruns").exists():
+        covered["frameworks"].add("mlflow")
+        covered["frameworks"].add("mlflow-file-store")
+    notebooks_dir = fixture_dir / "notebooks"
+    if notebooks_dir.is_dir() and list(notebooks_dir.glob("*.ipynb")):
+        covered["frameworks"].add("notebook-ipynb")
+        covered["frameworks"].add("jupyter")
+        if (fixture_dir / "pytest.ini").is_file():
+            covered["frameworks"].add("nbval")
+    req_txt = fixture_dir / "requirements.txt"
+    if req_txt.is_file():
+        try:
+            req = req_txt.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            req = ""
+        if "scikit-learn" in req:
+            covered["frameworks"].add("scikit-learn")
+        if "torch" in req:
+            covered["frameworks"].add("pytorch")
+
+        dbt_project_yml = fixture_dir / "dbt" / "dbt_project.yml"
+        if dbt_project_yml.is_file():
+            covered["frameworks"].add("dbt")
+            covered["frameworks"].add("duckdb")
+            dbt_text = dbt_project_yml.read_text(encoding="utf-8", errors="replace")
+            if "+materialized:" in dbt_text:
+                covered["frameworks"].add("dbt-materialization-config")
+            if "incremental" in dbt_text:
+                covered["frameworks"].add("is_incremental")
+        dbt_models = fixture_dir / "dbt" / "models"
+        if dbt_models.is_dir():
+            dbt_sql_text = "\n".join(
+                p.read_text(encoding="utf-8", errors="replace")
+                for p in dbt_models.rglob("*.sql")
+            )
+            if "{{ ref(" in dbt_sql_text or "{{ source(" in dbt_sql_text:
+                covered["frameworks"].add("dbt-models")
+                covered["frameworks"].add("dbt-lineage")
+                covered["frameworks"].add("ref-source")
+            if "is_incremental()" in dbt_sql_text:
+                covered["frameworks"].add("dbt-incremental")
+        dbt_macros = fixture_dir / "dbt" / "macros"
+        if dbt_macros.is_dir():
+            macro_text = "\n".join(
+                p.read_text(encoding="utf-8", errors="replace")
+                for p in dbt_macros.rglob("*.sql")
+            )
+            if "{% macro" in macro_text or "{%- macro" in macro_text:
+                covered["frameworks"].add("jinja-macros")
+        airflow_dags = fixture_dir / "airflow" / "dags"
+        if airflow_dags.is_dir():
+            af_py = "\n".join(
+                p.read_text(encoding="utf-8", errors="replace")
+                for p in airflow_dags.rglob("*.py")
+            )
+            if "DAG(" in af_py:
+                covered["frameworks"].add("airflow")
+            if "yaml.safe_load" in af_py:
+                covered["frameworks"].add("dag-factory")
+            if "xcom_push" in af_py or "xcom_pull" in af_py:
+                covered["frameworks"].add("xcom")
+        req_txt = fixture_dir / "requirements.txt"
+        if req_txt.is_file():
+            try:
+                req = req_txt.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                req = ""
+            if "dbt-core" in req or "dbt-duckdb" in req:
+                covered["frameworks"].add("dbt-duckdb")
+            if "apache-airflow" in req:
+                covered["frameworks"].add("apache-airflow")
+
+        # F06aj: SQL Server / T-SQL detection.
+        if "sp_executesql" in sql_text:
+            covered["frameworks"].add("sp_executesql")
+            covered["frameworks"].add("sqlserver")
+        if "MERGE" in sql_text and "OUTPUT $action" in sql_text:
+            covered["frameworks"].add("merge-output")
+        if "AFTER INSERT" in sql_text or "AFTER UPDATE" in sql_text:
+            covered["frameworks"].add("after-trigger")
+        if re.search(r"WITH\s+\w+\s+AS\s*\(", sql_text) and "UNION ALL" in sql_text:
+            # Heuristica: CTE recursiva (anchor + recursive UNION ALL)
+            covered["frameworks"].add("recursive-cte")
+        if "##" in sql_text or "tempdb.." in sql_text:
+            covered["frameworks"].add("temp-tables")
+        if "sp_add_job" in sql_text or "sysjobs" in sql_text.lower():
+            covered["frameworks"].add("sql-agent")
+        if "DATETIME2" in sql_text or "SYSUTCDATETIME()" in sql_text or "SET NOCOUNT ON" in sql_text:
+            covered["frameworks"].add("tsql")
+        # sqlcmd: detectado a nivel de Dockerfile.test
+        dockerfile = fixture_dir / "Dockerfile.test"
+        if dockerfile.is_file():
+            try:
+                df_text = dockerfile.read_text(encoding="utf-8", errors="replace")
+            except (OSError, UnicodeDecodeError):
+                df_text = ""
+            if "mssql-tools18" in df_text:
+                covered["frameworks"].add("sqlcmd")
+                covered["frameworks"].add("sqlserver")
+
+    # F06ae: React Native (Expo bare, React Navigation, Redux Toolkit,
+    # TurboModules, Metro aliases, expo config plugins).
+    rn_pkg = fixture_dir / "package.json"
+    if rn_pkg.is_file():
+        try:
+            rn_text = rn_pkg.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            rn_text = ""
+        if rn_text and '"react-native"' in rn_text and '"expo"' in rn_text:
+            covered["frameworks"].add("react-native")
+            covered["frameworks"].add("expo-bare")
+        if "@react-navigation/native" in rn_text:
+            covered["frameworks"].add("react-navigation")
+        if "@reduxjs/toolkit" in rn_text:
+            covered["frameworks"].add("redux-toolkit")
+        if "metro.config.js" in rn_text or "metro" in rn_text.lower():
+            covered["frameworks"].add("metro")
+        if "NativeModules" in rn_text:
+            covered["frameworks"].add("turbo-modules")
+    # app.json with expo config plugins
+    app_json = fixture_dir / "app.json"
+    if app_json.is_file():
+        try:
+            app_text = app_json.read_text(encoding="utf-8", errors="replace")
+        except (OSError, UnicodeDecodeError):
+            app_text = ""
+        if '"plugins"' in app_text:
+            covered["frameworks"].add("expo-config-plugins")
+        if "expo-linking" in app_text:
+            covered["frameworks"].add("expo-linking")
+        if "expo-notifications" in app_text:
+            covered["frameworks"].add("expo-notifications")
+        if "expo-build-properties" in app_text:
+            covered["frameworks"].add("expo-build-properties")
+        if "expo-splash-screen" in app_text:
+            covered["frameworks"].add("expo-splash-screen")
+
     # Detectar deps de NuGet via *.csproj (MediatR, EF Core, ASP.NET Core).
+    for csproj in fixture_dir.rglob("*.csproj"):
         if not csproj.is_file():
             continue
         # Cualquier *.csproj implica MSBuild como build system.
