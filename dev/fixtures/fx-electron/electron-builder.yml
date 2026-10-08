@@ -1,0 +1,36 @@
+appId: com.example.fxelec
+productName: FxElectron
+copyright: F06ae fixture
+directories:
+  output: dist
+  buildResources: resources
+
+files:
+  - package.json
+  - dist/**/*
+  - resources/native-menu.json
+  - resources/translations.json
+
+# Trampa E6: archivos fuera del .asar
+asar: true
+asarUnpack:
+  - "**/*.node"
+  - "workers/**"
+  - "resources/translations.json"
+
+extraResources:
+  - from: "resources/native-menu.json"
+    to: "native-menu.json"
+  - from: "resources/translations.json"
+    to: "translations.json"
+
+mac:
+  target: dir
+  category: public.app-category.developer-tools
+
+win:
+  target: dir
+
+linux:
+  target: dir
+  category: Development

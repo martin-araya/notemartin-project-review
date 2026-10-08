@@ -1,0 +1,34 @@
+# Dockerfile.test del fixture F06af (fx-electron).
+# Node 20 + xvfb + dependencias de runtime Linux para tests de Electron.
+FROM node:20-bookworm-slim
+
+# Xvfb y librerias del sistema para Electron headless
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    libnss3 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libgtk-3-0 \
+    libasound2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Cache de Yarn
+ENV YARN_CACHE_FOLDER=/app/.yarn-cache
+
+# Copia todo el fixture
+COPY . /app/
+
+# Precompila dependencias (cache de Docker layer)
+RUN yarn install --frozen-lockfile --silent 2>&1 | tail -5 || true
+
+CMD ["make", "test"]

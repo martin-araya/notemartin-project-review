@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self';" />
+  <title>FxElectron</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>FxElectron</h1>
+    <p id="status">Listo</p>
+  </header>
+  <main>
+    <button id="open-btn">Open Project (Cmd+O)</button>
+    <button id="pdf-btn">Export PDF (Cmd+E)</button>
+    <button id="update-btn">Check Update (Cmd+U)</button>
+    <pre id="output">(esperando interaccion)</pre>
+  </main>
+  <script src="./renderer.js"></script>
+</body>
+</html>

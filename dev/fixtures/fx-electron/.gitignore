@@ -1,0 +1,13 @@
+node_modules/
+.yarn-cache/
+dist/
+release/
+out/
+app.asar
+__MACOSX/
+.DS_Store
+*.log
+.cache/
+tmp/
+coverage/
+Generated/*.generated*

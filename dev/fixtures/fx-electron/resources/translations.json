@@ -1,0 +1,14 @@
+{
+  "en": {
+    "app_name": "FxElectron",
+    "open": "Open Project",
+    "export": "Export PDF",
+    "update": "Check for Updates"
+  },
+  "es": {
+    "app_name": "FxElectron",
+    "open": "Abrir proyecto",
+    "export": "Exportar PDF",
+    "update": "Buscar actualizaciones"
+  }
+}

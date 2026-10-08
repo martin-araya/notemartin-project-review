@@ -1,0 +1,15 @@
+# Metadata del fixture F06af: fx-electron
+# App Electron con TypeScript, IPC channels, contextBridge, electron-builder,
+# utility process y protocolo app://. Ver referencias a las trampas del
+# ecosistema y del paquete en dev/ground-truth/fx-electron/ground_truth.json.
+name: fx-electron
+description: Electron 32 + TypeScript 5.5 + IPC + contextBridge + electron-builder + utility process (F06af)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-electron
+  enabled: true
+ground_truth_format_version: 1

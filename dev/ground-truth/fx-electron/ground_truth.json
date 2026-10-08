@@ -1,0 +1,203 @@
+{
+  "fixture": "fx-electron",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-main", "artifact": "src/main/index.ts entrypoint", "file": "src/main/index.ts:1"},
+    {"id": "EP-window", "artifact": "BrowserWindow createMainWindow", "file": "src/main/windows.ts:4"},
+    {"id": "EP-protocol", "artifact": "registerAppProtocol", "file": "src/main/protocol/appProtocol.ts:18"},
+    {"id": "EP-menu", "artifact": "buildAppMenu", "file": "src/main/menu/appMenu.ts:11"},
+    {"id": "EP-ipc-handlers", "artifact": "registerIpcHandlers", "file": "src/main/ipc/handlers.ts:38"},
+    {"id": "EP-ipc-channels", "artifact": "IPC_CHANNELS interface", "file": "src/main/ipc/channels.ts:13"},
+    {"id": "EP-updater-worker", "artifact": "spawnUpdater", "file": "src/main/workers/updater.ts:9"},
+    {"id": "EP-pdf-worker", "artifact": "exportPdfForWindow", "file": "src/main/workers/pdfExporter.ts:7"},
+    {"id": "EP-updater-utility-process", "artifact": "updater-worker.ts", "file": "src/workers/updater-worker.ts:5"},
+    {"id": "EP-pdf-child-process", "artifact": "pdf-worker.ts", "file": "src/workers/pdf-worker.ts:10"},
+    {"id": "EP-auto-updater", "artifact": "autoUpdater instance", "file": "src/main/autoUpdater.ts:6"},
+    {"id": "EP-preload", "artifact": "contextBridge.exposeInMainWorld", "file": "src/preload/index.ts:24"},
+    {"id": "EP-renderer", "artifact": "renderer.ts DOMContentLoaded", "file": "src/renderer/renderer.ts:18"},
+    {"id": "EP-builder", "artifact": "electron-builder.yml config", "file": "electron-builder.yml:1"}
+  ],
+  "modules": [
+    {"id": "MOD-main-entry", "path": "src/main/index.ts", "summary": "App entrypoint + registerAppProtocol + buildAppMenu + registerIpcHandlers"},
+    {"id": "MOD-windows", "path": "src/main/windows.ts", "summary": "createMainWindow with preload + contextIsolation"},
+    {"id": "MOD-protocol", "path": "src/main/protocol/appProtocol.ts", "summary": "registerAppProtocol + registerSchemesAsPrivileged (E5)"},
+    {"id": "MOD-menu", "path": "src/main/menu/appMenu.ts", "summary": "buildAppMenu with File/Edit/View/Help submenus (E3)"},
+    {"id": "MOD-ipc-handlers", "path": "src/main/ipc/handlers.ts", "summary": "registerIpcHandlers with 6 channels (E1)"},
+    {"id": "MOD-ipc-channels", "path": "src/main/ipc/channels.ts", "summary": "IPC_CHANNELS interface + ExposedApi type (E2)"},
+    {"id": "MOD-workers-updater", "path": "src/main/workers/updater.ts", "summary": "utilityProcess.fork for updater worker (E4)"},
+    {"id": "MOD-workers-pdf", "path": "src/main/workers/pdfExporter.ts", "summary": "child_process.fork for PDF export (E4)"},
+    {"id": "MOD-worker-updater-process", "path": "src/workers/updater-worker.ts", "summary": "Standalone utility process script"},
+    {"id": "MOD-worker-pdf-process", "path": "src/workers/pdf-worker.ts", "summary": "Standalone child process for PDF rendering"},
+    {"id": "MOD-auto-updater", "path": "src/main/autoUpdater.ts", "summary": "electron-updater integration (P6)"},
+    {"id": "MOD-preload", "path": "src/preload/index.ts", "summary": "contextBridge.exposeInMainWorld('api', ...) (E2)"},
+    {"id": "MOD-preload-api", "path": "src/preload/api.ts", "summary": "ExposedApi type + formatTimestamp helper (S3)"},
+    {"id": "MOD-renderer-html", "path": "src/renderer/index.html", "summary": "HTML with CSP + 3 buttons"},
+    {"id": "MOD-renderer-ts", "path": "src/renderer/renderer.ts", "summary": "Renderer logic with window.api + onMenuDispatch"},
+    {"id": "MOD-util-legacy", "path": "src/main/util/legacyLogger.ts", "summary": "LegacyLogger dead code (S1)"},
+    {"id": "MOD-util-flags", "path": "src/main/util/featureFlags.ts", "summary": "ENABLE_BETA/ENABLE_ANALYTICS/DEBUG_LOG_LEVEL (S2)"},
+    {"id": "MOD-resources-menu", "path": "resources/native-menu.json", "summary": "Native menu configuration externalized"},
+    {"id": "MOD-resources-translations", "path": "resources/translations.json", "summary": "i18n strings externalized as extraResource"}
+  ],
+  "dependencies": [
+    {"name": "electron", "version": "^32.2.0", "scope": "build+runtime", "manifest": "package.json (devDependencies)"},
+    {"name": "electron-builder", "version": "^25.1.8", "scope": "build", "manifest": "package.json (devDependencies)"},
+    {"name": "electron-updater", "version": "^6.3.9", "scope": "build+runtime", "manifest": "package.json (dependencies)"},
+    {"name": "typescript", "version": "^5.5.4", "scope": "build", "manifest": "package.json (devDependencies)"},
+    {"name": "esbuild", "version": "^0.24.0", "scope": "build", "manifest": "package.json (devDependencies)"},
+    {"name": "vitest", "version": "^2.1.0", "scope": "test", "manifest": "package.json (devDependencies)"},
+    {"name": "node", "version": "20.x (integrated with Electron 32)", "scope": "runtime", "manifest": "Dockerfile.test (FROM node:20-bookworm-slim)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "abrir-proyecto",
+      "user_description": "Apertura de archivos via menu nativo (Cmd+O) o window.api.openProject() con IPC.",
+      "traces": [
+        {"n": 1, "what": "User pulsa Cmd+O o tap 'Open Project'", "cite": "src/main/menu/appMenu.ts:24", "data_in": "CmdOrCtrl+O", "data_out": "sendToRenderer('menu:project-open')"},
+        {"n": 2, "what": "Renderer recibe menu dispatch via window.api.onMenuDispatch", "cite": "src/renderer/renderer.ts:38", "data_in": "callback", "data_out": "UI feedback"},
+        {"n": 3, "what": "Renderer llama window.api.openProject()", "cite": "src/renderer/renderer.ts:18", "data_in": "click", "data_out": "ipcRenderer.invoke('project:open-dialog')"},
+        {"n": 4, "what": "Main handler abre dialog.showOpenDialog", "cite": "src/main/ipc/handlers.ts:42", "data_in": "channel", "data_out": "path o null"},
+        {"n": 5, "what": "User selecciona archivo, dialog retorna path", "cite": "src/main/ipc/handlers.ts:42", "data_in": "OS dialog", "data_out": "/path/to/file.txt"},
+        {"n": 6, "what": "Renderer llama window.api.openProject({ path })", "cite": "src/renderer/renderer.ts:22", "data_in": "path", "data_out": "ipcRenderer.invoke('project:open', { path })"},
+        {"n": 7, "what": "Main handler lee archivo (trampa P1: sin try/catch)", "cite": "src/main/ipc/handlers.ts:54", "data_in": "path", "data_out": "{ path, content, size, modified, name }"},
+        {"n": 8, "what": "deep link app://app/open?path=/Users/... desde fuera", "cite": "src/main/protocol/appProtocol.ts:18", "data_in": "uri", "data_out": "app:// handler dispatches"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/main/ipc/handlers.ts", "line": 54, "kind": "no_try_catch", "condition_text": "await fs.readFile(args.path, 'utf-8') sin try/catch", "branches": [{"label": "success -> retorna {path, content, ...}", "target_line": 56}, {"label": "exception -> propagates to renderer (P1)", "target_line": 56}]},
+        {"id": "DP-002", "file": "src/main/menu/appMenu.ts", "line": 24, "kind": "accelerator_duplicated", "condition_text": "Open Project (CmdOrCtrl+O) y recent1.txt (CmdOrCtrl+O)", "branches": [{"label": "open project", "target_line": 25}, {"label": "open recent (P2 duplicated)", "target_line": 31}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "dialog.showOpenDialog retorna path valido + readFile OK", "user_sees": "Contenido del archivo en <pre id=\"output\">", "side_effects": ["ipcRenderer.invoke OK"], "reversible": true, "final_state": "renderer muestra proyecto"},
+        {"id": "R-02", "category": "user_cancel", "conditions": "User cierra dialog sin seleccionar", "user_sees": "Sin cambio visible (status='Cancelado')", "side_effects": [], "reversible": true, "final_state": "sin carga"},
+        {"id": "R-03", "category": "validation_input", "conditions": "Extension no soportada", "user_sees": "Snackbar 'Tipo de archivo no soportado'", "side_effects": ["validateExtension() rejects"], "reversible": true, "final_state": "renderer muestra error"},
+        {"id": "R-04", "category": "permission_denied", "conditions": "Permiso OS denegado para leer", "user_sees": "Dialog 'Permiso requerido'", "side_effects": [], "reversible": true, "final_state": "open failed"},
+        {"id": "R-05", "category": "error_external_service", "conditions": "Renderer crashea antes de recibir respuesta", "user_sees": "Promise rechazada con 'Error: No response'", "side_effects": [], "reversible": false, "final_state": "estado inconsistente"},
+        {"id": "R-06", "category": "noop_disabled", "conditions": "Menu nativo deshabilita item durante proceso", "user_sees": "Item del menu gris + webContents.send('menu:busy')", "side_effects": [], "reversible": true, "final_state": "menu.setMenuEnabled(false)"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "app://app/open?path=/Users/... desde fuera", "user_sees": "App abre con archivo precargado", "side_effects": [], "reversible": true, "final_state": "openProject({ path }) automatico"}
+      ],
+      "config": [
+        {"key": "preload.path", "kind": "BrowserWindow webPreferences", "default": "../preload/index.js", "effect": "Carga el preload que expone window.api"},
+        {"key": "contextIsolation", "kind": "webPreferences", "default": "true", "effect": "Aisla el renderer del preload"},
+        {"key": "nodeIntegration", "kind": "webPreferences", "default": "false", "effect": "Desactiva Node en renderer"},
+        {"key": "sandbox", "kind": "webPreferences", "default": "true", "effect": "Aisla el renderer del SO"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "exportar-pdf",
+      "user_description": "Export del proyecto a PDF via menu Cmd+E o window.api.exportPdf() con child process.",
+      "traces": [
+        {"n": 1, "what": "User pulsa Cmd+E o tap 'Export PDF'", "cite": "src/main/menu/appMenu.ts:46", "data_in": "CmdOrCtrl+E", "data_out": "sendToRenderer('menu:pdf-export')"},
+        {"n": 2, "what": "Renderer captura menu dispatch", "cite": "src/renderer/renderer.ts:38", "data_in": "callback", "data_out": "status='Exportando...'"},
+        {"n": 3, "what": "Renderer llama window.api.exportPdf({ content })", "cite": "src/renderer/renderer.ts:28", "data_in": "content", "data_out": "ipcRenderer.invoke('pdf:export', { content })"},
+        {"n": 4, "what": "Main handler abre dialog.showSaveDialog", "cite": "src/main/ipc/handlers.ts:64", "data_in": "channel", "data_out": "outputPath o null"},
+        {"n": 5, "what": "User elige ruta, dialog retorna path", "cite": "src/main/ipc/handlers.ts:64", "data_in": "OS dialog", "data_out": "/tmp/export.pdf"},
+        {"n": 6, "what": "Main delega a child_process.fork(pdf-worker)", "cite": "src/main/workers/pdfExporter.ts:11", "data_in": "outputPath", "data_out": "pdf file"},
+        {"n": 7, "what": "pdf-worker renderiza PDF stub", "cite": "src/workers/pdf-worker.ts:12", "data_in": "render msg", "data_out": "PDF file"},
+        {"n": 8, "what": "child.send({ kind: 'done' }) back to main", "cite": "src/workers/pdf-worker.ts:22", "data_in": "path", "data_out": "ipcRenderer.invoke resolved"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/main/workers/pdfExporter.ts", "line": 11, "kind": "child_process", "condition_text": "child = fork(workerPath, [outputPath])", "branches": [{"label": "success -> resolve path", "target_line": 21}, {"label": "error -> reject(err)", "target_line": 27}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "dialog.showSaveDialog retorna path + worker OK", "user_sees": "PDF generado en outputPath + status='Exportado'", "side_effects": ["PDF file created"], "reversible": true, "final_state": "pdf exportado"},
+        {"id": "R-02", "category": "user_cancel", "conditions": "User cierra dialog sin guardar", "user_sees": "Sin cambio visible (status='Cancelado')", "side_effects": [], "reversible": true, "final_state": "sin export"},
+        {"id": "R-03", "category": "error_external_service", "conditions": "child_process falla", "user_sees": "Snackbar 'Error generando PDF'", "side_effects": ["child.on('error')"], "reversible": true, "final_state": "error propagado al renderer"},
+        {"id": "R-04", "category": "timeout_external", "conditions": "Generacion > 30s", "user_sees": "Cancel automatico + mensaje", "side_effects": [], "reversible": true, "final_state": "timeout dispara cancel"},
+        {"id": "R-05", "category": "permission_denied", "conditions": "PDF ya existe + readonly", "user_sees": "Error 'No se puede sobreescribir'", "side_effects": [], "reversible": true, "final_state": "fs.writeFile EACCES"},
+        {"id": "R-06", "category": "resource_exhausted", "conditions": "disk full", "user_sees": "Error 'Disco lleno'", "side_effects": [], "reversible": false, "final_state": "fs.writeFile ENOSPC"},
+        {"id": "R-07", "category": "success_bulk", "conditions": "Multiples archivos via menu:update-check", "user_sees": "ZIP con PDFs en outputPath/zip", "side_effects": [], "reversible": true, "final_state": "ZIP con PDFs"}
+      ],
+      "config": [
+        {"key": "pdf.worker.path", "kind": "worker_path", "default": "../../workers/pdf-worker.js", "effect": "Path al child process"},
+        {"key": "pdf.format", "kind": "default", "default": "a4", "effect": "Formato PDF (a4|letter)"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "actualización-automática",
+      "user_description": "Verificacion e instalacion de updates via menu Cmd+U o window.api.checkUpdate() con utility process.",
+      "traces": [
+        {"n": 1, "what": "User pulsa Cmd+U o tap 'Check Update'", "cite": "src/main/menu/appMenu.ts:95", "data_in": "CmdOrCtrl+U", "data_out": "sendToRenderer('menu:update-check')"},
+        {"n": 2, "what": "Renderer llama window.api.checkUpdate()", "cite": "src/renderer/renderer.ts:34", "data_in": "click", "data_out": "ipcRenderer.invoke('update:check')"},
+        {"n": 3, "what": "Main handler llama spawnUpdater()", "cite": "src/main/ipc/handlers.ts:78", "data_in": "channel", "data_out": "utilityProcess.fork"},
+        {"n": 4, "what": "updater-worker responde con version", "cite": "src/workers/updater-worker.ts:7", "data_in": "check-update", "data_out": "update-result { available, version }"},
+        {"n": 5, "what": "User pulsa Install", "cite": "src/renderer/renderer.ts:35", "data_in": "click", "data_out": "installUpdate"},
+        {"n": 6, "what": "autoUpdater.downloadUpdate crashea por HTTP (P6)", "cite": "src/main/autoUpdater.ts:13", "data_in": "https request", "data_out": "Protocol error"},
+        {"n": 7, "what": "User baja app desde web si update automatica falla", "cite": "src/renderer/index.html:13", "data_in": "click", "data_out": "shell.openExternal web URL"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "src/main/workers/updater.ts", "line": 13, "kind": "no_exit_handler", "condition_text": "utilityProcess.fork() sin cachedChild.on('exit', ...)", "branches": [{"label": "worker alive -> messages flow", "target_line": 26}, {"label": "worker killed -> main no sabe (P3)", "target_line": 27}]},
+        {"id": "DP-005", "file": "src/main/autoUpdater.ts", "line": 13, "kind": "http_not_https", "condition_text": "setFeedURL('http://example.com/updates')", "branches": [{"label": "HTTPS -> download OK", "target_line": 13}, {"label": "HTTP -> protocol error (P6)", "target_line": 13}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "update-result.available=true + user pulsa Instalar", "user_sees": "Dialog 'Nueva version disponible' + boton 'Instalar'", "side_effects": ["download begins"], "reversible": true, "final_state": "update descargado"},
+        {"id": "R-02", "category": "noop_already_updated", "conditions": "update-result.available=false", "user_sees": "Dialog 'Estas al dia'", "side_effects": [], "reversible": true, "final_state": "sin actualizacion"},
+        {"id": "R-03", "category": "error_external_service", "conditions": "Update server 404", "user_sees": "Snackbar 'Error verificando updates'", "side_effects": [], "reversible": true, "final_state": "worker error propagado"},
+        {"id": "R-04", "category": "success_in_progress", "conditions": "User pulsa Instalar + download comienza", "user_sees": "Progress bar + restart requerido", "side_effects": ["app.exit() en futuro"], "reversible": false, "final_state": "update aplicado"},
+        {"id": "R-05", "category": "error_internal", "conditions": "utilityProcess kill mid-download", "user_sees": "Resume automatico desde partial download", "side_effects": ["child.on('exit') handles"], "reversible": true, "final_state": "download resumed (P3 trap: en realidad NO hay handler)"},
+        {"id": "R-06", "category": "noop_disabled", "conditions": "NODE_ENV=development", "user_sees": "Mensaje 'Updates deshabilitados'", "side_effects": [], "reversible": true, "final_state": "setFeedURL skipped"},
+        {"id": "R-07", "category": "resource_not_found", "conditions": "User baja .zip desde web (update automatica falla)", "user_sees": "Snackbar 'Instalar manualmente'", "side_effects": ["shell.openExternal"], "reversible": true, "final_state": "manual install"}
+      ],
+      "config": [
+        {"key": "FXELEC_DISABLE_UPDATER", "kind": "env", "default": "false", "effect": "Salta setFeedURL en dev"},
+        {"key": "autoUpdater.feedURL", "kind": "constant", "default": "http://example.com/updates (P6 trampa)", "effect": "URL del update server (HTTP, no HTTPS)"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-ipc-project-open-dialog", "kind": "ipc", "name": "project:open-dialog", "handler": "ipcMain.handle('project:open-dialog')", "file": "src/main/ipc/handlers.ts:42"},
+    {"id": "SRF-ipc-project-open", "kind": "ipc", "name": "project:open", "handler": "ipcMain.handle('project:open')", "file": "src/main/ipc/handlers.ts:54"},
+    {"id": "SRF-ipc-pdf-export", "kind": "ipc", "name": "pdf:export", "handler": "ipcMain.handle('pdf:export')", "file": "src/main/ipc/handlers.ts:64"},
+    {"id": "SRF-ipc-update-check", "kind": "ipc", "name": "update:check", "handler": "ipcMain.handle('update:check')", "file": "src/main/ipc/handlers.ts:78"},
+    {"id": "SRF-ipc-update-install", "kind": "ipc", "name": "update:install", "handler": "ipcMain.handle('update:install')", "file": "src/main/ipc/handlers.ts:83"},
+    {"id": "SRF-ipc-menu-dispatch", "kind": "ipc", "name": "menu:dispatch", "handler": "ipcMain.handle('menu:dispatch')", "file": "src/main/ipc/handlers.ts:90"},
+    {"id": "SRF-preload-api", "kind": "context-bridge", "name": "window.api", "handler": "contextBridge.exposeInMainWorld('api', ...)", "file": "src/preload/index.ts:24"},
+    {"id": "SRF-menu-open-project", "kind": "menu-accelerator", "name": "File > Open Project (CmdOrCtrl+O)", "handler": "Menu.buildFromTemplate", "file": "src/main/menu/appMenu.ts:24"},
+    {"id": "SRF-menu-export-pdf", "kind": "menu-accelerator", "name": "File > Export PDF (CmdOrCtrl+E)", "handler": "Menu.buildFromTemplate", "file": "src/main/menu/appMenu.ts:46"},
+    {"id": "SRF-menu-update-check", "kind": "menu-accelerator", "name": "Help > Check for Updates (CmdOrCtrl+U)", "handler": "Menu.buildFromTemplate", "file": "src/main/menu/appMenu.ts:96"},
+    {"id": "SRF-protocol-app", "kind": "protocol", "name": "app://app/{path}", "handler": "protocol.handle('app', ...)", "file": "src/main/protocol/appProtocol.ts:18"},
+    {"id": "SRF-worker-updater", "kind": "utility-process", "name": "updater-worker (utilityProcess.fork)", "handler": "process.parentPort.on('message')", "file": "src/workers/updater-worker.ts:5"},
+    {"id": "SRF-worker-pdf", "kind": "child-process", "name": "pdf-worker (fork)", "handler": "process.on('message')", "file": "src/workers/pdf-worker.ts:10"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "ipc_channels_strings", "file": "src/main/ipc/handlers.ts:11", "line": 11, "description": "IPC channels declarados como strings: 'project:open', 'pdf:export', 'update:check', 'update:install', 'menu:dispatch'.", "resolution": "Seguir los strings desde main hasta preload y renderer."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "context_bridge_api", "file": "src/preload/index.ts:24", "line": 24, "description": "contextBridge.exposeInMainWorld('api', ...) expone 6 funciones tipadas al renderer.", "resolution": "Leer preload/index.ts para mapear window.api -> IPC channels."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "menu_native_accelerators", "file": "src/main/menu/appMenu.ts:11", "line": 11, "description": "Menu.buildFromTemplate con 4 submenus (File/Edit/View/Help) y accelerators (CmdOrCtrl+O/E/U).", "resolution": "Leer appMenu.ts para entender los entry points via menu."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "utility_process_and_child_process", "file": "src/main/workers/updater.ts:13", "line": 13, "description": "utilityProcess.fork para updater (live IPC via parentPort) + child_process.fork para PDF (one-shot IPC).", "resolution": "Seguir workers/updater.ts y workers/pdfExporter.ts para entender los procesos separados."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "app_protocol_custom_scheme", "file": "src/main/protocol/appProtocol.ts:18", "line": 18, "description": "protocol.handle('app', ...) con registerSchemesAsPrivileged previo (orden critico).", "resolution": "Verificar que registerSchemesAsPrivileged se llama antes de app.ready()."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "electron_builder_asar_unpack", "file": "electron-builder.yml:18", "line": 18, "description": "asarUnpack para *.node y workers/** + extraResources para resources/*.json.", "resolution": "Leer electron-builder.yml para entender que archivos quedan fuera del .asar."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "ipc_no_try_catch", "file": "src/main/ipc/handlers.ts:54", "line": 54, "description": "ipcMain.handle('project:open') sin try/catch alrededor de fs.readFile.", "resolution": "Envuelver en try/catch o usar una capa de error."},
+    {"id": "TRAP-P2", "kind": "package", "name": "menu_accelerator_duplicated", "file": "src/main/menu/appMenu.ts:24", "line": 24, "description": "Open Project (CmdOrCtrl+O) y Open Recent > recent1.txt (CmdOrCtrl+O) duplicados. Electron registra solo el primero.", "resolution": "Usar accelerators unicos o reorganizar menu."},
+    {"id": "TRAP-P3", "kind": "package", "name": "utility_process_no_exit_handler", "file": "src/main/workers/updater.ts:13", "line": 13, "description": "utilityProcess.fork() sin child.on('exit', ...) handler. Si el worker muere, main no lo sabe.", "resolution": "Registrar child.on('exit', ...) con cleanup."},
+    {"id": "TRAP-P4", "kind": "package", "name": "context_bridge_function_trap", "file": "src/preload/index.ts:24", "line": 24, "description": "contextBridge.exposeInMainWorld expone solo funciones serializables; pasar Function no es valido.", "resolution": "Exponer solo strings, numbers, arrays y objetos planos."},
+    {"id": "TRAP-P5", "kind": "package", "name": "protocol_no_register_privileged", "file": "src/main/protocol/appProtocol.ts:18", "line": 18, "description": "protocol.handle('app', ...) requiere registerSchemesAsPrivileged ANTES de app.ready().", "resolution": "Llamar registerSchemesAsPrivileged en el top-level del main."},
+    {"id": "TRAP-P6", "kind": "package", "name": "autoupdater_http_not_https", "file": "src/main/autoUpdater.ts:13", "line": 13, "description": "setFeedURL('http://example.com/updates') falla en runtime porque solo HTTPS es soportado.", "resolution": "Usar HTTPS URL o configurar feedURL con protocolo valido."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "legacy_logger_unused", "file": "src/main/util/legacyLogger.ts:5", "line": 5, "description": "LegacyLogger.info/warn/error declarados pero no se llaman desde runtime code.", "resolution": "Eliminar o usar DebugPrint."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "feature_flags_unread", "file": "src/main/util/featureFlags.ts:5", "line": 5, "description": "ENABLE_BETA/ENABLE_ANALYTICS/DEBUG_LOG_LEVEL declarados pero no se leen.", "resolution": "Usar en conditional o eliminar."},
+    {"id": "TRAP-S3", "kind": "superficial", "name": "format_timestamp_unused", "file": "src/preload/api.ts:8", "line": 8, "description": "formatTimestamp helper declarado pero no invocado.", "resolution": "Usar en handler o eliminar."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "main/index", "to": "registerAppProtocol", "file": "src/main/index.ts:13"},
+      {"from": "main/index", "to": "buildAppMenu", "file": "src/main/index.ts:18"},
+      {"from": "main/index", "to": "registerIpcHandlers", "file": "src/main/index.ts:17"},
+      {"from": "preload/index", "to": "contextBridge.exposeInMainWorld", "file": "src/preload/index.ts:24"},
+      {"from": "renderer/renderer", "to": "window.api.openProject", "file": "src/renderer/renderer.ts:18"},
+      {"from": "renderer/renderer", "to": "window.api.exportPdf", "file": "src/renderer/renderer.ts:28"},
+      {"from": "renderer/renderer", "to": "window.api.checkUpdate", "file": "src/renderer/renderer.ts:34"},
+      {"from": "ipc/handlers", "to": "dialog.showOpenDialog", "file": "src/main/ipc/handlers.ts:42"},
+      {"from": "ipc/handlers", "to": "fs.readFile (PROJECT_OPEN)", "file": "src/main/ipc/handlers.ts:54"},
+      {"from": "ipc/handlers", "to": "exportPdfForWindow (PDF_EXPORT)", "file": "src/main/ipc/handlers.ts:73"},
+      {"from": "ipc/handlers", "to": "spawnUpdater (UPDATE_CHECK)", "file": "src/main/ipc/handlers.ts:78"},
+      {"from": "workers/updater", "to": "utilityProcess.fork", "file": "src/main/workers/updater.ts:13"},
+      {"from": "workers/pdfExporter", "to": "child_process.fork", "file": "src/main/workers/pdfExporter.ts:11"},
+      {"from": "menu/appMenu", "to": "sendToRenderer", "file": "src/main/menu/appMenu.ts:7"},
+      {"from": "autoUpdater", "to": "setFeedURL (HTTP)", "file": "src/main/autoUpdater.ts:13"}
+    ]
+  }
+}

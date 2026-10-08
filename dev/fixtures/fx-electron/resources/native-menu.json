@@ -1,0 +1,20 @@
+[
+  {
+    "id": "open_project",
+    "label": "Open Project",
+    "accelerator": "CmdOrCtrl+O",
+    "enabled_when": "always"
+  },
+  {
+    "id": "export_pdf",
+    "label": "Export PDF",
+    "accelerator": "CmdOrCtrl+E",
+    "enabled_when": "has_document"
+  },
+  {
+    "id": "check_update",
+    "label": "Check for Updates",
+    "accelerator": "CmdOrCtrl+U",
+    "enabled_when": "always"
+  }
+]

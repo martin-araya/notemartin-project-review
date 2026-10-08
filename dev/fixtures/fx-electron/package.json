@@ -1,0 +1,29 @@
+{
+  "name": "fxelec",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main/index.js",
+  "description": "FxElectron fixture F06af",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:preload": "tsc -p tsconfig.main.json",
+    "build:renderer": "esbuild src/renderer/renderer.ts --bundle --outfile=dist/renderer/renderer.js --platform=browser --format=iife --minify",
+    "build:workers": "tsc -p tsconfig.main.json && chmod +x dist/workers/*.js",
+    "build": "yarn build:main && yarn build:renderer && yarn build:workers",
+    "package": "electron-builder --dir",
+    "dist": "electron-builder",
+    "start": "electron .",
+    "test": "vitest --run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.5.4",
+    "esbuild": "^0.24.0",
+    "vitest": "^2.1.0"
+  }
+}
