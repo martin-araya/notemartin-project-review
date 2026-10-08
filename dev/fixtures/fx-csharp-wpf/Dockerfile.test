@@ -1,0 +1,28 @@
+# Dockerfile.test del fixture F06ag (fx-csharp-wpf).
+# .NET SDK 9 + xvfb + libs UI para tests xUnit cross-platform.
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+
+# xvfb + libs UI para tests WPF headless (opcional, no obligatorio para VM tests)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    libnss3 \
+    libatk1.0-0 \
+    libgtk-3-0 \
+    libfontconfig1 \
+    libfreetype6 \
+    libgdiplus \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Cache de NuGet para acelerar builds subsecuentes
+ENV NUGET_PACKAGES=/app/.nuget-cache
+
+# Copia todo el fixture
+COPY . /app/
+
+# Precompila dependencias (cache de Docker layer)
+RUN dotnet restore 2>&1 | tail -5 || true
+
+CMD ["make", "test"]

@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:FxWpf.ViewModels;assembly=FxWpf.ViewModels">
+    <!-- Trampa E3: DataTemplate con DataType.
+         Trampa P6: el DataType NO coincide con el VM real (es "ClientesViewModel"
+         en lugar de "ClienteViewModel"). El template nunca se aplica. -->
+    <DataTemplate DataType="{x:Type vm:ClientesViewModel}">
+        <StackPanel>
+            <TextBlock Text="{Binding Title}" FontSize="16" />
+            <TextBlock Text="Template no coincide con el VM real (trampa P6)" />
+        </StackPanel>
+    </DataTemplate>
+</ResourceDictionary>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <RootNamespace>FxWpf.App</RootNamespace>
+    <AssemblyName>FxWpf.App</AssemblyName>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FxWpf.Core\FxWpf.Core.csproj" />
+    <ProjectReference Include="..\FxWpf.ViewModels\FxWpf.ViewModels.csproj" />
+  </ItemGroup>
+</Project>

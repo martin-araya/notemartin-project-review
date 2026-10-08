@@ -1,0 +1,15 @@
+<Window x:Class="FxWpf.App.Views.ClientesView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Clientes" Height="400" Width="600">
+    <StackPanel>
+        <TextBlock Text="Lista de clientes" FontSize="18" Margin="8" />
+        <ItemsControl>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Nombre}" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</Window>

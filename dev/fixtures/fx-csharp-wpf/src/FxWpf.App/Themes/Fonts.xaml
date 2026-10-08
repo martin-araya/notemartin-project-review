@@ -1,0 +1,6 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Trampa S2: FontFamily declarado pero no referenciado en runtime.
+         La skill debe verificar que no aparece en ningun control. -->
+    <FontFamily x:Key="BrandFont">Segoe UI</FontFamily>
+</ResourceDictionary>

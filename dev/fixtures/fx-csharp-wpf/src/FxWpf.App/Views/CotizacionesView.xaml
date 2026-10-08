@@ -1,0 +1,11 @@
+<Window x:Class="FxWpf.App.Views.CotizacionesView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cotizaciones" Height="500" Width="700">
+    <DataGrid>
+        <DataGrid.Columns>
+            <DataGridTextColumn Header="Titulo" Binding="{Binding Titulo}" />
+            <DataGridTextColumn Header="Total" Binding="{Binding Total, Converter={StaticResource Currency}}" />
+        </DataGrid.Columns>
+    </DataGrid>
+</Window>

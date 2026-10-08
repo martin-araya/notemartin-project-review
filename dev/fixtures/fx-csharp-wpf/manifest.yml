@@ -1,0 +1,17 @@
+# Metadata del fixture F06ag: fx-csharp-wpf
+# App de escritorio WPF con MVVM, bindings XAML, source generators de
+# CommunityToolkit.Mvvm, DataTemplates, value converters, styles con
+# triggers y merged dictionaries en App.xaml. Ver referencias a las
+# trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-csharp-wpf/ground_truth.json.
+name: fx-csharp-wpf
+description: WPF + .NET 9 + CommunityToolkit.Mvvm + XAML bindings + DataTemplates + converters + styles (F06ag)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-csharp-wpf
+  enabled: true
+ground_truth_format_version: 1

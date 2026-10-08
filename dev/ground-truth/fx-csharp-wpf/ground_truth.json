@@ -1,0 +1,185 @@
+{
+  "fixture": "fx-csharp-wpf",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-app", "artifact": "FxWpf.App App entrypoint", "file": "src/FxWpf.App/App.xaml.cs:5"},
+    {"id": "EP-main-window", "artifact": "MainWindow", "file": "src/FxWpf.App/Views/MainWindow.xaml:10"},
+    {"id": "EP-clientes-view", "artifact": "ClientesView Window", "file": "src/FxWpf.App/Views/ClientesView.xaml:5"},
+    {"id": "EP-cotizaciones-view", "artifact": "CotizacionesView DataGrid", "file": "src/FxWpf.App/Views/CotizacionesView.xaml:5"},
+    {"id": "EP-print-preview", "artifact": "PrintPreviewView", "file": "src/FxWpf.App/Views/PrintPreviewView.xaml:5"},
+    {"id": "EP-clientes-vm", "artifact": "ClientesViewModel", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs:15"},
+    {"id": "EP-cotizaciones-vm", "artifact": "CotizacionesViewModel", "file": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:9"},
+    {"id": "EP-print-vm", "artifact": "PrintPreviewViewModel", "file": "src/FxWpf.ViewModels/PrintPreviewViewModel.cs:5"},
+    {"id": "EP-shell-vm", "artifact": "ShellViewModel", "file": "src/FxWpf.ViewModels/ShellViewModel.cs:5"},
+    {"id": "EP-async-command", "artifact": "AsyncRelayCommand ICommand", "file": "src/FxWpf.ViewModels/Commands/AsyncRelayCommand.cs:11"},
+    {"id": "EP-bool-vis", "artifact": "BoolToVisibilityConverter", "file": "src/FxWpf.App/Converters/BoolToVisibilityConverter.cs:8"},
+    {"id": "EP-currency", "artifact": "CurrencyConverter", "file": "src/FxWpf.App/Converters/CurrencyConverter.cs:7"},
+    {"id": "EP-cliente-template", "artifact": "ClienteTemplate DataTemplate", "file": "src/FxWpf.App/Views/Templates/ClienteTemplate.xaml:7"}
+  ],
+  "modules": [
+    {"id": "MOD-core-models", "path": "src/FxWpf.Core/Models", "summary": "Cliente + Cotizacion + Producto POCOs"},
+    {"id": "MOD-core-interfaces", "path": "src/FxWpf.Core/Interfaces", "summary": "IClienteService interface"},
+    {"id": "MOD-viewmodels", "path": "src/FxWpf.ViewModels", "summary": "Clientes + Cotizaciones + PrintPreview + Shell + Experimental VMs"},
+    {"id": "MOD-async-command", "path": "src/FxWpf.ViewModels/Commands/AsyncRelayCommand.cs", "summary": "ICommand custom (P5 trap)"},
+    {"id": "MOD-converters", "path": "src/FxWpf.App/Converters", "summary": "BoolToVisibility + NullToBool + Currency + Legacy converters (E4 + P3 + S1)"},
+    {"id": "MOD-themes", "path": "src/FxWpf.App/Themes", "summary": "Colors + Buttons + Controls + Fonts ResourceDictionaries (E6)"},
+    {"id": "MOD-styles", "path": "src/FxWpf.App/Styles/ButtonStyles.xaml", "summary": "Style con Triggers (E5) + 2 estilos sobrepuestos (P4)"},
+    {"id": "MOD-views", "path": "src/FxWpf.App/Views", "summary": "MainWindow + ClientesView + CotizacionesView + PrintPreviewView"},
+    {"id": "MOD-templates", "path": "src/FxWpf.App/Views/Templates/ClienteTemplate.xaml", "summary": "DataTemplate con DataType typo (E3 + P6)"},
+    {"id": "MOD-app-xaml", "path": "src/FxWpf.App/App.xaml", "summary": "MergedDictionaries (E6) + ConverterResources (E4) + StartupUri"},
+    {"id": "MOD-asm-info", "path": "src/FxWpf.App/AssemblyInfo.cs", "summary": "Assembly metadata"},
+    {"id": "MOD-tests-vm", "path": "tests/FxWpf.Tests", "summary": "xUnit tests de ViewModels (cross-platform)"},
+    {"id": "MOD-tests-traps", "path": "tests/FxWpf.TrapTests", "summary": "xUnit tests de trampas (CC-04, CC-05, CC-06)"}
+  ],
+  "dependencies": [
+    {"name": "dotnet-sdk", "version": "9.0", "scope": "build", "manifest": "Dockerfile.test (FROM mcr.microsoft.com/dotnet/sdk:9.0)"},
+    {"name": "wpf", "version": "net9.0-windows", "scope": "build+runtime", "manifest": "src/FxWpf.App/FxWpf.App.csproj (TargetFramework=net9.0-windows, UseWPF=true)"},
+    {"name": "communitytoolkit-mvvm", "version": "8.4.0", "scope": "build+runtime", "manifest": "src/FxWpf.Core/FxWpf.Core.csproj + ViewModels + App"},
+    {"name": "xunit", "version": "2.9.2", "scope": "test", "manifest": "tests/FxWpf.Tests/FxWpf.Tests.csproj + FxWpf.TrapTests"},
+    {"name": "xunit.runner.visualstudio", "version": "2.8.2", "scope": "test", "manifest": "tests/FxWpf.Tests/FxWpf.Tests.csproj + FxWpf.TrapTests"},
+    {"name": "Microsoft.NET.Test.Sdk", "version": "17.11.1", "scope": "test", "manifest": "tests/FxWpf.Tests + FxWpf.TrapTests"},
+    {"name": "CommunityToolkit.Mvvm.SourceGenerators", "version": "embedded in 8.4.0", "scope": "build", "manifest": "Source generators for [ObservableProperty] + [RelayCommand]"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "clientes",
+      "user_description": "Lista, seleccion, agregacion y filtrado de clientes con bindings XAML por string a CommunityToolkit.Mvvm.",
+      "traces": [
+        {"n": 1, "what": "Usuario abre MainWindow con ClientesViewModel", "cite": "src/FxWpf.App/Views/MainWindow.xaml:11", "data_in": "view render", "data_out": "Title binding"},
+        {"n": 2, "what": "ContentControl auto-selecciona ClienteTemplate", "cite": "src/FxWpf.App/Views/MainWindow.xaml:17", "data_in": "Content", "data_out": "template por DataType"},
+        {"n": 3, "what": "TextBox con Text={Binding Title} (TwoWay)", "cite": "src/FxWpf.App/Views/MainWindow.xaml:13", "data_in": "PropertyChanged", "data_out": "Title en VM"},
+        {"n": 4, "what": "User teclea en SearchBox", "cite": "src/FxWpf.ViewModels/ClientesViewModel.cs:66", "data_in": "Filter property", "data_out": "FilterClientes string"},
+        {"n": 5, "what": "VM notifica cambio en FilteredClientes", "cite": "src/FxWpf.ViewModels/ClientesViewModel.cs:34", "data_in": "Filter string", "data_out": "ObservableCollection filtered"},
+        {"n": 6, "what": "User tap 'Agregar' → RelayCommand AddCliente", "cite": "src/FxWpf.ViewModels/ClientesViewModel.cs:72", "data_in": "click", "data_out": "new Cliente added"},
+        {"n": 7, "what": "deep link fxwpf://clientes/{id} desde fuera", "cite": "src/FxWpf.App/App.xaml.cs:6", "data_in": "uri", "data_out": "navigate to ClientesView"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs", "line": 42, "kind": "on_changed_partial", "condition_text": "partial void OnSelectedClienteChanged(Cliente? oldValue, Cliente? newValue)", "branches": [{"label": "newValue != null -> DisplayCliente", "target_line": 45}, {"label": "newValue == null -> trampa P1 NullReferenceException", "target_line": 45}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "User tap 'Agregar' + datos validos", "user_sees": "Nuevo Cliente en lista + StatusMessage 'Agregado Cliente 1'", "side_effects": ["Clientes.Count++"], "reversible": true, "final_state": "lista actualizada"},
+        {"id": "R-02", "category": "validation_input", "conditions": "Email vacio o caracteres invalidos", "user_sees": "SaveCommand.CanExecute = false (boton gris)", "side_effects": [], "reversible": true, "final_state": "no submit"},
+        {"id": "R-03", "category": "error_external_service", "conditions": "IClienteService lanza excepcion", "user_sees": "StatusMessage 'Error al cargar'", "side_effects": [], "reversible": true, "final_state": "lista no actualizada"},
+        {"id": "R-04", "category": "noop_selected_null", "conditions": "User clickea cliente con SelectedCliente = null", "user_sees": "StatusMessage 'Seleccion nula' + trampa P1 NRE en DisplayCliente(null)", "side_effects": ["crash potencial"], "reversible": false, "final_state": "estado inconsistente"},
+        {"id": "R-05", "category": "success_partial", "conditions": "User teclea texto en SearchBox", "user_sees": "Lista filtrada en tiempo real", "side_effects": ["OnPropertyChanged FilteredClientes"], "reversible": true, "final_state": "filter aplicado"},
+        {"id": "R-06", "category": "success_export", "conditions": "User tap 'Exportar'", "user_sees": "SaveFileDialog + CSV generado", "side_effects": [], "reversible": true, "final_state": "CSV en disco"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxwpf://clientes/{id} desde fuera", "user_sees": "ClientesView con cliente precargado", "side_effects": [], "reversible": true, "final_state": "SelectedCliente set"}
+      ],
+      "config": [
+        {"key": "title", "kind": "string constant", "default": "Clientes", "effect": "Header text"},
+        {"key": "filter", "kind": "string", "default": "empty", "effect": "Filtro en tiempo real"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "cotizaciones",
+      "user_description": "Cotizaciones con items, currency converter, validacion y SavedCotizacion con SaveCotizacion.",
+      "traces": [
+        {"n": 1, "what": "Usuario navega CotizacionesView", "cite": "src/FxWpf.App/Views/CotizacionesView.xaml:5", "data_in": "nav", "data_out": "CotizacionesView rendered"},
+        {"n": 2, "what": "DataGrid bindea a Cotizaciones collection", "cite": "src/FxWpf.App/Views/CotizacionesView.xaml:8", "data_in": "ItemsSource", "data_out": "rows"},
+        {"n": 3, "what": "DataGridTextColumn usa CurrencyConverter para Total", "cite": "src/FxWpf.App/Views/CotizacionesView.xaml:9", "data_in": "decimal", "data_out": "string $1.130,00"},
+        {"n": 4, "what": "User selecciona moneda USD/EUR", "cite": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:23", "data_in": "Moneda selection", "data_out": "Cotizacion.Moneda updated"},
+        {"n": 5, "what": "User tap 'Agregar' → AddCotizacionCommand (CanExecute valida Moneda)", "cite": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:51", "data_in": "click", "data_out": "new Cotizacion"},
+        {"n": 6, "what": "User tap 'Guardar' → SaveCotizacion con Task.Run (P2 trampa)", "cite": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:39", "data_in": "click", "data_out": "UI bloqueada 2s"},
+        {"n": 7, "what": "deep link fxwpf://cotizaciones/new desde fuera", "cite": "src/FxWpf.App/App.xaml.cs:6", "data_in": "uri", "data_out": "CotizacionesView with new"}
+      ],
+      "decision_points": [
+        {"id": "DP-002", "file": "src/FxWpf.ViewModels/CotizacionesViewModel.cs", "line": 39, "kind": "task_run_no_await", "condition_text": "Task.Run(() => Thread.Sleep(2000)) sin await (P2)", "branches": [{"label": "UI no bloquea (correcto)", "target_line": 42}, {"label": "UI bloquea 2s (trampa P2)", "target_line": 42}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "User crea cotizacion + items validos", "user_sees": "DataGrid con rows + subtotal calculado", "side_effects": ["Cotizaciones.Count++"], "reversible": true, "final_state": "lista actualizada"},
+        {"id": "R-02", "category": "validation_input", "conditions": "Cantidad <= 0", "user_sees": "Row con background rojo + SaveCommand.CanExecute = false", "side_effects": [], "reversible": true, "final_state": "no submit"},
+        {"id": "R-03", "category": "error_external_service", "conditions": "API precios falla", "user_sees": "StatusMessage 'Precio no disponible'", "side_effects": [], "reversible": true, "final_state": "Subtotal = 0"},
+        {"id": "R-04", "category": "success_currency", "conditions": "User selecciona Moneda != USD", "user_sees": "CurrencyConverter actualiza todas las celdas", "side_effects": ["Cotizacion.Moneda updated"], "reversible": true, "final_state": "display actualizado"},
+        {"id": "R-05", "category": "validation_date", "conditions": "Fecha pasada", "user_sees": "Background rojo + tooltip 'Fecha invalida'", "side_effects": [], "reversible": true, "final_state": "no submit"},
+        {"id": "R-06", "category": "success_export_pdf", "conditions": "User tap 'Guardar PDF'", "user_sees": "SaveFileDialog + PDF en disco", "side_effects": [], "reversible": true, "final_state": "PDF file"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxwpf://cotizaciones/new", "user_sees": "CotizacionesView con nueva cotizacion en edicion", "side_effects": [], "reversible": true, "final_state": "Cotizacion editada"}
+      ],
+      "config": [
+        {"key": "moneda", "kind": "string", "default": "USD", "effect": "Currency code"},
+        {"key": "CotizacionItem.cantidad", "kind": "int", "default": "1", "effect": "Cantidad de items"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "impresión",
+      "user_description": "Impresion de cotizaciones con PrintPreview, dialogo de impresion y PDF.",
+      "traces": [
+        {"n": 1, "what": "User tap 'Imprimir' desde CotizacionesView", "cite": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:39", "data_in": "click", "data_out": "Print dialog"},
+        {"n": 2, "what": "Print dialog muestra Printers + Options", "cite": "src/FxWpf.App/Views/PrintPreviewView.xaml:5", "data_in": "options", "data_out": "PrintQueue"},
+        {"n": 3, "what": "User selecciona printer y presiona Print", "cite": "src/FxWpf.App/Views/PrintPreviewView.xaml:7", "data_in": "click", "data_out": "print job submitted"},
+        {"n": 4, "what": "DocumentViewer renderiza preview", "cite": "src/FxWpf.App/Views/PrintPreviewView.xaml:8", "data_in": "DocumentPath", "data_out": "rendered document"},
+        {"n": 5, "what": "User tap 'Exportar PDF'", "cite": "src/FxWpf.ViewModels/PrintPreviewViewModel.cs:5", "data_in": "click", "data_out": "PDF file"},
+        {"n": 6, "what": "IsValid=true activa triggers", "cite": "src/FxWpf.App/Styles/ButtonStyles.xaml:11", "data_in": "IsValid=true", "data_out": "Opacity=1.0"},
+        {"n": 7, "what": "deep link fxwpf://print/{documentId}", "cite": "src/FxWpf.App/App.xaml.cs:6", "data_in": "uri", "data_out": "PrintPreviewView with doc"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "src/FxWpf.App/Styles/ButtonStyles.xaml", "line": 11, "kind": "data_trigger", "condition_text": "<DataTrigger Binding=\"{Binding IsValid}\" Value=\"True\">", "branches": [{"label": "IsValid=true -> Opacity=1.0", "target_line": 12}, {"label": "IsValid=false -> Opacity=0.5", "target_line": 14}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "User tap 'Imprimir' + Print dialog OK + printer online", "user_sees": "Documento en cola de impresion", "side_effects": ["PrintJob submitted"], "reversible": false, "final_state": "impresion en proceso"},
+        {"id": "R-02", "category": "user_cancel", "conditions": "User cancela Print dialog", "user_sees": "Sin cambio (status='Listo')", "side_effects": [], "reversible": true, "final_state": "sin impresion"},
+        {"id": "R-03", "category": "error_external_service", "conditions": "Printer offline o driver no instalado", "user_sees": "Dialog 'Driver no disponible'", "side_effects": [], "reversible": true, "final_state": "impresion fallida"},
+        {"id": "R-04", "category": "timeout_external", "conditions": "Printer no responde > 30s", "user_sees": "Cancel automatico + retry", "side_effects": [], "reversible": true, "final_state": "timeout dispara cancel"},
+        {"id": "R-05", "category": "success_export", "conditions": "User tap 'Exportar PDF'", "user_sees": "SaveFileDialog + PDF en disco", "side_effects": ["PDF file created"], "reversible": true, "final_state": "PDF exported"},
+        {"id": "R-06", "category": "success_preview", "conditions": "User tap 'Vista previa'", "user_sees": "PrintPreviewView con documento renderizado", "side_effects": [], "reversible": true, "final_state": "preview visible"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxwpf://print/{documentId} desde fuera", "user_sees": "PrintPreviewView con doc especificado", "side_effects": [], "reversible": true, "final_state": "preview con doc"}
+      ],
+      "config": [
+        {"key": "DocumentPath", "kind": "string", "default": "empty", "effect": "Path al documento a imprimir"},
+        {"key": "IsValid", "kind": "bool", "default": "true", "effect": "Activa triggers de Style"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-screen-main", "kind": "screen", "name": "MainWindow", "handler": "MainWindow", "file": "src/FxWpf.App/Views/MainWindow.xaml:10"},
+    {"id": "SRF-screen-clientes", "kind": "screen", "name": "ClientesView", "handler": "ClientesView", "file": "src/FxWpf.App/Views/ClientesView.xaml:5"},
+    {"id": "SRF-screen-cotizaciones", "kind": "screen", "name": "CotizacionesView", "handler": "CotizacionesView", "file": "src/FxWpf.App/Views/CotizacionesView.xaml:5"},
+    {"id": "SRF-screen-print-preview", "kind": "screen", "name": "PrintPreviewView", "handler": "PrintPreviewView", "file": "src/FxWpf.App/Views/PrintPreviewView.xaml:5"},
+    {"id": "SRF-template-cliente", "kind": "data-template", "name": "ClienteTemplate", "handler": "DataTemplate DataType", "file": "src/FxWpf.App/Views/Templates/ClienteTemplate.xaml:7"},
+    {"id": "SRF-conv-bool-vis", "kind": "converter", "name": "BoolToVisibilityConverter", "handler": "IValueConverter.Convert", "file": "src/FxWpf.App/Converters/BoolToVisibilityConverter.cs:8"},
+    {"id": "SRF-conv-currency", "kind": "converter", "name": "CurrencyConverter", "handler": "IValueConverter.Convert", "file": "src/FxWpf.App/Converters/CurrencyConverter.cs:7"},
+    {"id": "SRF-style-primary-button", "kind": "style", "name": "ButtonStylePrimary con Triggers", "handler": "DataTrigger IsValid", "file": "src/FxWpf.App/Styles/ButtonStyles.xaml:11"},
+    {"id": "SRF-theme-colors", "kind": "resource-dictionary", "name": "Colors.xaml", "handler": "MergedDictionary", "file": "src/FxWpf.App/Themes/Colors.xaml:4"},
+    {"id": "SRF-theme-buttons", "kind": "resource-dictionary", "name": "Buttons.xaml", "handler": "MergedDictionary", "file": "src/FxWpf.App/Themes/Buttons.xaml:4"},
+    {"id": "SRF-theme-controls", "kind": "resource-dictionary", "name": "Controls.xaml", "handler": "MergedDictionary", "file": "src/FxWpf.App/Themes/Controls.xaml:4"},
+    {"id": "SRF-command-add-cliente", "kind": "command", "name": "AddClienteCommand", "handler": "[RelayCommand]", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs:72"},
+    {"id": "SRF-command-save-cotizacion", "kind": "command", "name": "SaveCotizacionCommand (Task.Run sin await)", "handler": "[RelayCommand]", "file": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:39"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "xaml_bindings_string_path", "file": "src/FxWpf.App/Views/MainWindow.xaml:13", "line": 13, "description": "Bindings declarativos por string a propiedades del VM: {Binding Title}, {Binding Nombre}, etc.", "resolution": "Seguir los strings de Binding a las propiedades del VM (generadas por [ObservableProperty])."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "mvvm_source_generators", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs:36", "line": 36, "description": "[ObservableProperty] y [RelayCommand] generan codigo C# parcial en obj/Debug/.../generated/.", "resolution": "Ejecutar dotnet build con EmitCompilerGeneratedFiles para inspeccionar el codigo generado."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "data_template_with_datatype", "file": "src/FxWpf.App/Views/Templates/ClienteTemplate.xaml:7", "line": 7, "description": "DataTemplate con DataType para que ContentControl auto-seleccione el template segun el VM.", "resolution": "Seguir el DataType y verificar que coincida con el VM real."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "value_converters", "file": "src/FxWpf.App/Converters/BoolToVisibilityConverter.cs:8", "line": 8, "description": "3 IValueConverter (BoolToVisibility + NullToBool + Currency) declarados en App.xaml.", "resolution": "Verificar que ConvertBack este implementado si el binding es TwoWay."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "style_triggers", "file": "src/FxWpf.App/Styles/ButtonStyles.xaml:11", "line": 11, "description": "Style con DataTrigger reactivo al VM (IsValid).", "resolution": "Seguir el DataTrigger Binding al VM y verificar la condicion."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "merged_dictionaries", "file": "src/FxWpf.App/App.xaml:11", "line": 11, "description": "App.xaml declara MergedDictionaries con 3 ResourceDictionary (Colors + Buttons + Controls).", "resolution": "Seguir los Source en cascada para entender la composicion de temas."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "on_selected_changed_no_null_check", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs:42", "line": 42, "description": "OnSelectedClienteChanged llama DisplayCliente(newValue) sin null check; con null lanza NRE.", "resolution": "Validar newValue is not null antes de DisplayCliente."},
+    {"id": "TRAP-P2", "kind": "package", "name": "save_cotizacion_task_run_no_await", "file": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:39", "line": 39, "description": "SaveCotizacion usa Task.Run(Thread.Sleep(2000)) sin await; bloquea UI thread.", "resolution": "Usar async/await o Task.Run con ContinueWith."},
+    {"id": "TRAP-P3", "kind": "package", "name": "converter_convert_back_not_impl", "file": "src/FxWpf.App/Converters/BoolToVisibilityConverter.cs:25", "line": 25, "description": "BoolToVisibilityConverter.ConvertBack lanza NotImplementedException; bindings TwoWay fallan.", "resolution": "Implementar ConvertBack."},
+    {"id": "TRAP-P4", "kind": "package", "name": "style_overlapping_no_basedon", "file": "src/FxWpf.App/Styles/ButtonStyles.xaml:13", "line": 13, "description": "Dos Style TargetType Button sin BasedOn; el segundo sobreescribe al primero.", "resolution": "Usar BasedOn=\"{StaticResource ButtonStylePrimary}\" en el segundo."},
+    {"id": "TRAP-P5", "kind": "package", "name": "async_relay_command_never_enabled", "file": "src/FxWpf.ViewModels/Commands/AsyncRelayCommand.cs:24", "line": 24, "description": "AsyncRelayCommand.CanExecute retorna false siempre; el comando nunca se habilita.", "resolution": "Retornar _canExecute?.Invoke() ?? true."},
+    {"id": "TRAP-P6", "kind": "package", "name": "template_datatype_typo", "file": "src/FxWpf.App/Views/Templates/ClienteTemplate.xaml:7", "line": 7, "description": "DataType={x:Type vm:ClientesViewModel} pero el VM real es Cliente; el template nunca se aplica.", "resolution": "Corregir DataType a ClienteViewModel o crear el VM que coincide."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "legacy_converter_unused", "file": "src/FxWpf.App/Converters/LegacyConverter.cs:9", "line": 9, "description": "LegacyConverter declarado pero no invocado en XAML.", "resolution": "Eliminar o usar como StaticResource."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "fonts_xaml_unused", "file": "src/FxWpf.App/Themes/Fonts.xaml:5", "line": 5, "description": "Fonts.xaml con BrandFont FontFamily pero no referenciado en controles.", "resolution": "Eliminar Fonts.xaml del MergedDictionaries."},
+    {"id": "TRAP-S3", "kind": "superficial", "name": "experimental_viewmodel_unused", "file": "src/FxWpf.ViewModels/ExperimentalViewModel.cs:6", "line": 6, "description": "ExperimentalViewModel declarado pero no usado en runtime.", "resolution": "Eliminar o usar en una View experimental."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "App", "to": "MainWindow", "file": "src/FxWpf.App/App.xaml.cs:6"},
+      {"from": "MainWindow.xaml", "to": "ClientesViewModel via DataContext (SourceGenerator)", "file": "src/FxWpf.App/Views/MainWindow.xaml:11"},
+      {"from": "ClientesViewModel.OnSelectedClienteChanged", "to": "DisplayCliente (sin null check)", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs:42"},
+      {"from": "ClientesViewModel.AddCliente (RelayCommand)", "to": "IClienteService.CreateAsync", "file": "src/FxWpf.ViewModels/ClientesViewModel.cs:72"},
+      {"from": "CotizacionesViewModel.SaveCotizacion (RelayCommand)", "to": "Task.Run sin await (trampa P2)", "file": "src/FxWpf.ViewModels/CotizacionesViewModel.cs:39"},
+      {"from": "CotizacionesView.xaml DataGrid", "to": "CurrencyConverter.Convert", "file": "src/FxWpf.App/Views/CotizacionesView.xaml:9"},
+      {"from": "App.xaml.MergedDictionaries", "to": "Colors.xaml + Buttons.xaml + Controls.xaml + ButtonStyles.xaml", "file": "src/FxWpf.App/App.xaml:11"},
+      {"from": "BoolToVisibilityConverter.ConvertBack", "to": "throw NotImplementedException (trampa P3)", "file": "src/FxWpf.App/Converters/BoolToVisibilityConverter.cs:25"},
+      {"from": "ClienteTemplate DataTemplate", "to": "DataType ClientesViewModel (typo trampa P6)", "file": "src/FxWpf.App/Views/Templates/ClienteTemplate.xaml:7"},
+      {"from": "AsyncRelayCommand.CanExecute", "to": "return false always (trampa P5)", "file": "src/FxWpf.ViewModels/Commands/AsyncRelayCommand.cs:24"}
+    ]
+  }
+}

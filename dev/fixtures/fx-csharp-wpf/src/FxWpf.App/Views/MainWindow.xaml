@@ -1,0 +1,35 @@
+<Window x:Class="FxWpf.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:FxWpf.ViewModels;assembly=FxWpf.ViewModels"
+        xmlns:core="clr-namespace:FxWpf.Core.Models;assembly=FxWpf.Core"
+        Title="FxWpf" Height="600" Width="900">
+    <!-- Trampa E1: Bindings por string de propiedad a un VM. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="20" Margin="8" />
+
+        <!-- Trampa E3: DataTemplate con DataType para Cliente.
+             El ContentControl auto-selecciona el template segun el VM. -->
+        <ContentControl Grid.Row="1" Content="{Binding SelectedCliente}">
+            <ContentControl.ContentTemplate>
+                <DataTemplate DataType="{x:Type core:Cliente}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding Nombre}" FontSize="16" />
+                        <TextBlock Text="{Binding Telefono}" />
+                        <TextBlock
+                            Text="{Binding CreatedAt, StringFormat=yyyy-MM-dd}"
+                            Visibility="{Binding IsValid, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ContentControl.ContentTemplate>
+        </ContentControl>
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Margin="8" />
+    </Grid>
+</Window>
