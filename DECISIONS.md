@@ -3305,3 +3305,766 @@ Las decisiones se numeran correlativamente y nunca se reutilizan.
   completo, todo el pipeline corre. En maquinas con solo
   CommandLineTools, swift test falla con `no such module 'Testing'`
   (documentado como limitacion en el README).
+
+### D-321 — Stack Swift server-side F06ab (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: F06ab requiere ejercitar macros Swift (`@attached`/`@freestanding`), build tool plugins de SPM, Vapor routing + Fluent, CLI swift-argument-parser, `actor`/`Sendable`, y `#if canImport(FoundationNetworking)`.
+- Decision: Swift 6.0+ con `swift-tools-version: 6.0`, Vapor 4.92+, Fluent + FluentSQLiteDriver, swift-argument-parser 1.3+, swift-syntax 510+. Dependencias remotas via SPM en `Package.swift`. Plugin en sub-package `Plugins/AuditCodesPlugin/Package.swift` separado del consumidor para forzar a la skill a resolver dependencias transitivas.
+- Consecuencias: `swift build` tarda 3-5 min la primera vez (descarga + compila Vapor); tests corren con `swift test --parallel` en contenedor oficial `swift:6.0.3-jammy`.
+
+### D-322 — Imagen Docker `swift:6.0.3-jammy` (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: la imagen oficial `swift:6.0.3-jammy` (Ubuntu 22.04) trae Swift 6.0.3 + `swift build` + `swift test`. Necesita `make` y `git` adicionales.
+- Decision: `Dockerfile.test` parte de `swift:6.0.3-jammy` + `apt-get install -y --no-install-recommends make git ca-certificates` + `WORKDIR /app` + `COPY . /app/` + `CMD ["swift", "test", "--parallel"]`. Cache de `.build` via `-v $(pwd)/.build-cache:/app/.build`.
+- Consecuencias: el fixture compila y ejecuta tests en Linux sin requerir Swift local instalado en el host; el contenedor pesa ~1.2 GB.
+
+### D-323 — `requires: [linux, macos]` con container enabled (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: el fixture corre en Linux (Vapor + FoundationNetworking) y en macOS (Vapor + Foundation). Sin embargo, los runtimes de CI locales suelen ser macOS donde Swift esta preinstalado.
+- Decision: `manifest.yml` declara `requires: [linux, macos]` + `container.enabled: true`. El runner usa contenedor en macOS por defecto para reproducibilidad; los desarrolladores pueden saltarse el contenedor ejecutando `swift test` local con Swift 6.0+.
+- Consecuencias: el fixture es portable entre Linux y macOS; los tests son identicos en ambos sistemas excepto `UrlSessionProviderTests` que usa `#if canImport(FoundationNetworking)` para diferenciar ramas.
+
+### D-324 — Plugin en sub-package SPM separado (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: un build tool plugin en SPM puede declararse como target plugin dentro del mismo Package.swift o como sub-package separado. Los plugins que generan codigo extenso suelen empaquetarse aparte para evitar ciclos y para que el consumidor los declare via `.plugin(name:, package:)`.
+- Decision: `Plugins/AuditCodesPlugin/Package.swift` declara el producto `.plugin(name: "AuditCodesPlugin", targets: ["AuditCodesPlugin"])` con `capability: .buildTool()`. El consumidor (`Sources/FxSwiftServer/`) lo consume con `.plugin(name: "AuditCodesPlugin", package: "FxSwiftImporterPlugin")` (resuelto como sub-package).
+- Consecuencias: la skill debe saber que los plugins SPM pueden estar en sub-packages; `fixtures_matrix.py` detecta `.pluginTarget` o `capability: .buildTool()` en cualquier `Package.swift` bajo `Plugins/`.
+
+### D-325 — Macros `@FxRoute` (PeerMacro) y `@ImportModuleDecl` (DeclarationMacro) (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: el fixture debe plantar trampas E1 (macros `@attached(member)`) y P1 (macros `@freestanding(declaration)`).
+- Decision: `@FxRoute` se implementa como `PeerMacro` con `@attached(peer, names: \`ExternalModule\`, conformances: \`RegisterableRoute\`)` que genera una extension con `registerRoute(_ app:)` y `path` en la expansion. `@ImportModuleDecl` se implementa como `DeclarationMacro` con `@freestanding(declaration, names: arbitrary)` que genera un `import <module>` en la expansion. Ambos viven en `Sources/FxSwiftMacros/` (SwiftSyntax + SwiftSyntaxMacros).
+- Consecuencias: la skill debe seguir el codigo expandido por el macro (`.build/<archivo>.swift`) para entender el wiring real de las rutas y para ver el `import` real que `@ImportModuleDecl` inyecta.
+
+### D-326 — `AuditCodesPlugin` fallback `// noop` con `#if canImport` (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: la trampa P4 exige que el plugin no falle cuando una dependencia falta, sino que genere codigo minimo. Esto simula el caso real de plugins que degradan su salida segun la plataforma.
+- Decision: el cuerpo de `AuditCodes.generated.swift` se emite con un `cat <<'GEN_EOF' ... GEN_EOF` que contiene `#if canImport(FoundationNetworking) ... #else // noop ... #endif`. En Linux genera 4 cases (unverified/stale/orphaned/archived); en macOS genera 1 case (noop). El plugin no reporta error en ningun caso.
+- Consecuencias: `GET /audit/codes` devuelve listas distintas segun la plataforma, demostrando que el plugin es sensible al entorno sin fallar; `FixturesPluginTest` verifica que el archivo siempre existe.
+
+### D-327 — Migraciones en `Sources/FxSwiftServer/Migrations/` (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: Fluent permite colocar migraciones en cualquier path; Vapor recomienda `Sources/App/Migrations/`. La trampa P5 (UNIQUE index no idempotente) se planta intencionalmente.
+- Decision: las migraciones viven en `Sources/FxSwiftServer/Migrations/CreateNote.swift` (Note + AuditEntry). El `Package.swift` declara `exclude: ["Migrations/Migrations.ts"]` para ignorar el placeholder. La migracion `CreateNote` usa `.unique(on: "title")` sin guard `IF NOT EXISTS`.
+- Consecuencias: la skill debe notar que `.unique(on:)` sin `if !database.doesSchemaExist(...)` falla en re-ejecucion; `app.autoMigrate()` ejecutarse dos veces produce `UNIQUE constraint failed: notes.title`.
+
+### D-328 — Exit codes CLI 64/65/70/130 (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: la CLI `fxsimport` debe plantar trampas P_exit por categoria de error (archivo no existe, formato invalido, server inalcanzable, cancelacion por usuario).
+- Decision: `Sources/FxSwiftCLI/Subcommands/ImportNotes.swift` usa exit codes estandar de BSD: `64` (EX_USAGE, archivo no encontrado), `65` (EX_DATAERR, formato invalido), `70` (EX_SOFTWARE, server inalcanzable), `130` (cancelado por SIGINT, 128+SIGINT=2).
+- Consecuencias: la skill debe leer el `ExitCode(64|65|70|130)` y entender que cada uno corresponde a una categoria de error documentada en el ground truth (R-02..R-06 de la feature `cli-de-importacion`).
+
+### D-329 — Prefijo unique tokens `NPRGT-FXSWIFTSRV-` (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens con un prefijo unico para que el guardián anti-sobreajuste (`overfit_guard.py`) pueda detectar filtraciones entre fixtures.
+- Decision: prefijo `NPRGT-FXSWIFTSRV-` con 38 entradas (PACKAGE-NAME, PLATFORM-MACOS, PLATFORM-LINUX, VAPOR-VERSION, FLUENT-SQLITE, ARGPARSER-VERSION, MACRO-ATTACHED, MACRO-FREESTANDING, IMPORT-MACRO, BUILD-PLUGIN, PLUGIN-NOOP, ROUTE-COLLECTION, REGISTER-ROUTE, ACTOR-RECORDER, SENDABLE-DTO, UNCHECKED-SENDABLE, CANIMPORT-FN, URL-SESSION, CATCH-ALL, CONTENT-DTO, FLUENT-MIGRATION, UNIQUE-INDEX, CSV-IMPORTER, ASYNC-COMMAND, EXIT-64/65/70/130, TIMEOUT, LEGACY-HELPER, ENV-LEGACY, GENERATED-AUDIT, ABORT-ERROR, NOTE-SCHEMA, AUDIT-ACTOR, FEATURE-API/CLI/AUDIT).
+- Consecuencias: ningun archivo del codigo fuente del fixture (excluyendo `unique_tokens.txt`) puede mencionar estos strings; `check_ground_truth.py --check-cc11` lo verifica.
+
+### D-330 — Tests XCTest + variable de entorno `FIXTURE_ROOT` (F06ab)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ab · vigente
+- Contexto: los tests XCTest necesitan acceder a archivos fuente del fixture (Routes, Services, Migrations) para verificar trampas (e.g. "trampa E1: macro debe estar en RouteMacro.swift"). En SwiftPM, el test target vive en `Tests/` que no resuelve automaticamente `../`.
+- Decision: cada test resuelve las rutas relativas via `ProcessInfo.processInfo.environment["FIXTURE_ROOT"] ?? "../.."`. El `Makefile` y `Dockerfile.test` no necesitan exportar la variable porque `swift test` corre con el working directory = raiz del paquete (donde `FIXTURE_ROOT` relativo es valido). Los tests usan `XCTest` (no Swift Testing) para compatibilidad con Swift 6.0 estable.
+- Consecuencias: los tests son robustos independientemente de donde se monten; cualquier sub-agente puede ejecutar `swift test` desde la raiz del fixture y los asserts de trampas funcionan.
+
+### D-331 — Stack Kotlin Android F06ac (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: F06ac requiere ejercitar `AndroidManifest.xml` declarativo, Hilt, Room, WorkManager, Compose + Views XML heredadas con ViewBinding, flavors free/paid, Navigation Component con deep links.
+- Decision: Kotlin 2.0.21 + AGP 8.7.2 + Gradle 8.10.2 + JDK 21 + KSP 2.0.21-1.0.27. Hilt 2.51.1 (DI) + Room 2.6.1 (SQLite) + WorkManager 2.10.0 (background) + Navigation Compose 2.8.4 (con nav_graph.xml). `compileSdk=35`, `minSdk=24`, `targetSdk=35`. Compose BOM 2024.10.00 + Material 3.
+- Consecuencias: requiere Android SDK 35 + JDK 21 para compilar; tests JVM con Robolectric 4.13 evitan emulador y tardan ~2-3 min la primera vez (descarga Compose + Hilt processors).
+
+### D-332 — Imagen Docker `eclipse/openjdk:21-jdk-jammy` con cmdline-tools (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: el fixture compila un proyecto Android que necesita Android SDK 35 + JDK 21 + Gradle 8.10.2. No hay imagen oficial Android SDK en Docker Hub estable.
+- Decision: `Dockerfile.test` parte de `eclipse/openjdk:21-jdk-jammy` + `apt-get install make git wget unzip ca-certificates` + descarga `commandlinetools-linux-11076708_latest.zip` + `sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.1"` + `yes | sdkmanager --licenses`. `GRADLE_USER_HOME=/app/.gradle` para cachear dependencias entre invocaciones.
+- Consecuencias: el contenedor pesa ~1.8 GB; la primera ejecucion tarda ~5-8 min descargando + aceptando licencias + cacheando dependencias. Las siguientes, cada una, tardan ~2-3 min.
+
+### D-333 — `requires: [linux, macos]` con container enabled (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: el fixture compila en Linux (CI) y en macOS (desarrollo con Android Studio). Sin embargo, los runtimes de CI locales suelen ser macOS donde Android Studio esta instalado.
+- Decision: `manifest.yml` declara `requires: [linux, macos]` + `container.enabled: true`. El runner usa contenedor por defecto para reproducibilidad. Los tests son JVM + Robolectric (no requieren emulador).
+- Consecuencias: el fixture corre identico en Linux y macOS sin modificacion; los tests no necesitan GPU ni KVM.
+
+### D-334 — Flavors `free`/`paid` con `BuildConfig.PREMIUM_ENABLED` (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: la trampa E4 (CC-06) exige que `funcion-premium` solo exista en el flavor `paid`. La skill debe notar la diferencia entre source sets.
+- Decision: `productFlavors { free { buildConfigField "Boolean", "PREMIUM_ENABLED", "false" }; paid { ... "true" } }`. `app/src/free/java/.../PremiumDisabled.kt` solo expone `cta()`. `app/src/paid/java/.../PremiumEnabled.kt` expone `advancedExport()`. `BuildConfig.PREMIUM_ENABLED` se lee en `PremiumGateScreen` para renderizar segun flavor.
+- Consecuencias: `PremiumEnabled` solo se compila en `paid`; si se inyecta en `free`, Hilt falla con `MissingBinding`; la skill debe listar source sets para entender la disponibilidad.
+
+### D-335 — Hilt 2.51.1 + KSP 2.0.21 (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: Hilt con KSP (no KAPT) requiere KSP 2 para Kotlin 2.0+. Hilt genera codigo en `app/build/generated/hilt/`.
+- Decision: `alias(libs.plugins.ksp)` + `alias(libs.plugins.hilt)` en `app/build.gradle.kts`. Dependencias `implementation(libs.hilt.android)` + `ksp(libs.hilt.compiler)` + `implementation(libs.hilt.work)` + `ksp(libs.hilt.androidx.compiler)`. `@HiltAndroidApp` en `FxAndroidApp`, `@AndroidEntryPoint` en `LegacyProductActivity`, `@HiltViewModel` en `ScanViewModel`/`HistoryViewModel`, `@HiltWorker` en `SyncWorker`.
+- Consecuencias: la skill debe entender que las clases `Hilt_*` y `*_HiltModules` viven en `app/build/generated/hilt/`; los tests usan `@HiltAndroidTest` con `HiltAndroidRule` o `TestInstallIn`.
+
+### D-336 — Room 2.6.1 con `@Query` + trampa P4 sin `addMigrations` (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: Room permite declaracion de DAOs con `@Query` SQL embebido. La trampa P4 exige que NO se llamen `addMigrations(MIGRATION_1_2)` en `DatabaseModule`.
+- Decision: DAOs (`ProductDao`, `HistoryDao`, `ScanDao`) usan `@Query("SELECT ... FROM products WHERE ean = :ean")`, `@Insert(onConflict = IGNORE)`, `@Update`, `@Delete` con SQL strings. `DatabaseModule.provideDatabase()` llama `Room.databaseBuilder(...).fallbackToDestructiveMigrationOnDowngrade(true).build()` SIN `addMigrations`.
+- Consecuencias: la skill debe notar la ausencia de `addMigrations(MIGRATION_1_2)` y la version=1; cualquier upgrade a version 2 sin migracion crashea la app con `IllegalStateException`.
+
+### D-337 — WorkManager 2.10.0 + trampa P3 expedited silenciosa (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: WorkManager permite `OneTimeWorkRequest` con `setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)`. En Android 13+ sin `POST_NOTIFICATIONS` permission, expedited workers fallan silenciosamente.
+- Decision: `SyncScheduler.scheduleOnce()` configura el request con `setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)` + `setConstraints(NetworkType.CONNECTED)` + `enqueueUniqueWork("sync", REPLACE, request)`. NO verifica `POST_NOTIFICATIONS` en API 33+ (trampa P3).
+- Consecuencias: en Android 13+ sin permisos de notificacion, el worker expedited falla sin notificacion al usuario; la skill debe detectar este riesgo.
+
+### D-338 — Navigation Compose 2.8.4 + `nav_graph.xml` con deepLinks (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: Navigation Compose admite `deepLink` URI strings. `nav_graph.xml` permite declararlos en XML con `<deepLink app:uri="fxandroid://product/{id}"/>`.
+- Decision: `app/src/main/res/navigation/nav_graph.xml` declara 3 destinos con deepLinks (`fxandroid://scan/{ean}`, `fxandroid://history/{filter}`, `fxandroid://premium`). `FxNavGraph.kt` los registra con `navDeepLink { uriPattern = "fxandroid://scan/{ean}" }`. El `AndroidManifest.xml` adicionalmente declara un intent-filter VIEW + scheme `fxandroid` en `SyncTriggerReceiver` para deep links externos.
+- Consecuencias: la skill debe leer `nav_graph.xml` + `FxNavGraph.kt` + manifest para entender que los entry points de deep links viven tanto en XML como en el manifest.
+
+### D-339 — ViewBinding para vista legacy con `android:onClick` (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: el fixture coexiste Compose (moderno) y AppCompat/ViewBinding (legacy). El layout XML usa `android:onClick="onSaveClick"` que Android resuelve a un metodo del Activity.
+- Decision: `activity_legacy_product.xml` declara `<Button android:onClick="onSaveClick">`. `LegacyProductActivity.onSaveClick(view: View)` lo implementa con `db.execSQL("INSERT INTO legacy_products(ean) VALUES('$ean')")` (trampa P5 bypassing repository). `buildFeatures.viewBinding = true` genera `ActivityLegacyProductBinding`.
+- Consecuencias: la skill debe notar que `onClick` se resuelve por string; el flujo de guardado legacy bypassa Hilt y Room.
+
+### D-340 — Robolectric 4.13 sin emulador + tests JUnit5 (F06ac)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ac · vigente
+- Contexto: el fixture corre en CI sin GPU ni KVM. Robolectric permite tests JVM de Activities, Fragments y WorkManager sin emulador.
+- Decision: `testImplementation(libs.robolectric)` + `testOptions { unitTests.isIncludeAndroidResources = true; isReturnDefaultValues = true; all { useJUnitPlatform() } }`. Tests usan `@Test` de `org.junit.jupiter.api` (JUnit5) en vez de `@RunWith(AndroidJUnit4::class)`. `app/src/test/resources/robolectric.properties` con `sdk=34`. `app/src/test/AndroidManifest.xml` declara ScanActivity como LAUNCHER.
+- Consecuencias: los tests corren en `gradlew test` sin emulador; el contenedor tarda ~2-3 min la primera vez (descarga Android resources) y ~30s las siguientes con cache.
+
+### D-341 — Stack Flutter 3.24.5 + Dart 3.5.4 F06ad (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: F06ad requiere ejercitar codigo generado por `build_runner` (freezed/json_serializable), Riverpod con `ref.watch` cross-provider, go_router con redirects + deepLinks, widgets adaptativos iOS/Android, flavors via `--dart-define=FX_ENABLE_PREMIUM`, y platform channels a Kotlin/Swift.
+- Decision: Flutter 3.24.5 con Dart 3.5.4 (canal stable). Dependencias: `flutter_riverpod ^2.5.1`, `go_router ^14.2.7`, `freezed_annotation ^2.4.4`, `json_annotation ^4.9.0`, `shared_preferences ^2.3.2`. Dev-deps: `build_runner ^2.4.13`, `freezed ^2.5.7`, `json_serializable ^6.8.0`, `riverpod_generator ^2.4.0`, `flutter_test` (SDK), `flutter_lints ^4.0.0`.
+- Consecuencias: el fixture requiere `flutter pub get` + `dart run build_runner build` antes de `flutter test`. Los archivos `.g.dart`/`.freezed.dart` NO se commitean al repo (estan en `.gitignore`) para evitar CC-11 con tokens en archivos generados.
+
+### D-342 — Imagen Docker `ghcr.io/cirruslabs/flutter:3.24.5` (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: el fixture necesita Flutter SDK + Dart + Android SDK (transitivamente). No hay imagen oficial Android + Flutter estable en Docker Hub.
+- Decision: `Dockerfile.test` parte de `ghcr.io/cirruslabs/flutter:3.24.5` (oficial Cirrus Labs, basada en Debian bookworm con Flutter SDK + Dart 3.5.4 + Android SDK). Precompila con `flutter pub get` + `dart run build_runner build --delete-conflicting-outputs` en el Dockerfile layer.
+- Consecuencias: el contenedor pesa ~3 GB; la primera ejecucion tarda ~5-8 min descargando dependencias + cacheando Gradle; las siguientes, ~2-3 min con cache.
+
+### D-343 — `requires: [linux, macos]` con container enabled (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: el fixture compila y testea en Linux (CI) y macOS (desarrollo con Flutter instalado). Los tests son JVM `flutter test` (sin emulador).
+- Decision: `manifest.yml` declara `requires: [linux, macos]` + `container.enabled: true`. El runner usa el contenedor por defecto para reproducibilidad.
+- Consecuencias: el fixture corre identico en Linux y macOS; los tests no requieren GPU ni KVM ni emulador.
+
+### D-344 — Riverpod 2.5.1 con `ref.watch` cross-provider (E2) (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: la trampa E2 exige que un provider observe otro via `ref.watch` para que el grafo de dependencias sea implicito.
+- Decision: `FavoritesController.build()` declara `final _ = ref.watch(readerControllerProvider);` (uso descartado) para forzar la reactividad sin usar el valor directamente. Esto hace que cualquier cambio en el readerController invalide la cache de favoritos.
+- Consecuencias: la skill debe detectar todos los `ref.watch` cruzados para reconstruir el grafo de dependencias entre providers; el `_` anonimo es una pista visual de que el watch es intencional.
+
+### D-345 — go_router 14.2.7 con redirect declarativo + deepLinks (E4) (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: go_router permite declarar rutas + redirects + deep links en un solo lugar. La trampa P3 exige que el redirect NO chequee autenticacion.
+- Decision: `appRouter = GoRouter(initialLocation: Routes.reader, redirect: (ctx, state) => state.matchedLocation == '/' ? Routes.reader : null, routes: [...])` con 5 rutas y 2 deepLinks `/reader/:hash` + `/favorites/:filter`.
+- Consecuencias: la skill debe leer `app_router.dart` para entender el routing + redirects; el redirect sin chequeo de auth es una trampa intencional que rompe el flujo de auth en runtime.
+
+### D-346 — freezed + json_serializable + build_runner (E1) sin commitear generados (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: freezed genera `.freezed.dart` con `copyWith`, `==`, `hashCode`, `toString`. json_serializable genera `.g.dart` con `_$XFromJson`/`_$XToJson`. Estos viven en disco pero NO en `Sources/`.
+- Decision: `lib/features/reader/domain/document.dart` declara `@freezed class Document with _$Document { factory Document(...) = _Document; factory Document.fromJson(...) = _$DocumentFromJson(...); }` + `part 'document.freezed.dart';` + `part 'document.g.dart';`. El `.gitignore` excluye `**/*.g.dart` y `**/*.freezed.dart`. CI genera en runtime con `dart run build_runner build`.
+- Consecuencias: la skill debe ejecutar `build_runner` o leer los `.freezed.dart` commiteados en CI; en el repo solo ve los `part` directives y las anotaciones `@freezed`.
+
+### D-347 — Platform channels MethodChannel('com.example.fxdart/native') + stubs Kotlin/Swift (E3) (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: el contrato del platform channel vive solo como string convencion. La trampa E3 exige que la skill siga los strings desde Dart hasta los stubs nativos.
+- Decision: `lib/platform/native_method_channel.dart` envuelve `MethodChannel('com.example.fxdart/native')` con `try { ... } catch (_) { return null; }` (trampa P2). `lib/features/reader/data/document_remote_source.dart` invoca `'scanDocument'` y `'capturePage'`. `android_stub/MainActivity.kt` y `ios_stub/AppDelegate.swift` documentan los handlers en Kotlin/Swift.
+- Consecuencias: los stubs son evidencia textual (no compilables sin Android Studio/Xcode); los tests usan `TestDefaultBinaryMessenger` para simular el canal.
+
+### D-348 — `--dart-define=FX_ENABLE_PREMIUM` con `bool.fromEnvironment` (E5) (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: Dart 3 soporta `--dart-define=KEY=value` en build time. La trampa E5 obliga a la skill a detectar el `bool.fromEnvironment` con un branch condicional.
+- Decision: `const bool enablePremium = bool.fromEnvironment('FX_ENABLE_PREMIUM', defaultValue: false);` en `settings_controller.dart`. `SettingsController.build()` combina `enablePremium` con SharedPreferences runtime: `final isPremium = enablePremium || (stateOrNull?.premiumUnlocked ?? false);` (trampa P4 con orden de evaluacion).
+- Consecuencias: el flag se evalua en build time; el runtime lo consulta via SharedPreferences; la combinacion puede dar resultados inesperados si se cambia la logica sin entender la precedencia.
+
+### D-349 — Widgets adaptativos CupertinoSwitch vs Switch (E6) + rama CupertinoSlider muerta (P6) (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: Flutter permite widgets adaptativos segun `Theme.of(context).platform`. La trampa E6 + P6 obliga a la skill a notar el branching condicional.
+- Decision: `lib/platform/platform_widget.dart` declara `AdaptiveSwitch` que elige `CupertinoSwitch` (iOS/macOS) vs `Switch` (Android/desktop), y `AdaptiveSlider` que DEBERIA elegir `CupertinoSlider` (iOS) pero intencionalmente usa `Slider` Material (P6 rama muerta con `TODO: CupertinoSlider no esta implementado todavia`).
+- Consecuencias: la skill debe detectar el branching condicional + la rama muerta de CupertinoSlider; el helper `_formatDouble` (S3) nunca se invoca.
+
+### D-350 — Prefijo unique tokens `NPRGT-FXFLUTTER-` + CC-11 sin `.g.dart`/`.freezed.dart` commiteados (F06ad)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ad · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens con prefijo unico para que `overfit_guard.py` pueda detectar filtraciones. Ademas, los archivos generados por `build_runner` (`.g.dart`/`.freezed.dart`) NO deben contener tokens del fixture para evitar CC-11 con codigo generado.
+- Decision: prefijo `NPRGT-FXFLUTTER-` con 35 entradas (PACKAGE-NAME, FLUTTER-VERSION, DART-VERSION, RIVERPOD, ROUTER, DEEPLINK, CHANNEL, METHOD, ANDROID-STUB, IOS-STUB, DART-DEFINE, PREMIUM-FEATURE, FREE-MODE, PAID-MODE, BUILD-RUNNER, FREEZED, JSON-SERIALIZABLE, etc.). `.gitignore` excluye `**/*.g.dart` y `**/*.freezed.dart` para que CI los genere en runtime.
+- Consecuencias: ningun archivo commiteado del codigo fuente (excluyendo `unique_tokens.txt`) puede mencionar estos strings; `check_ground_truth.py --check-cc11` lo verifica.
+
+### D-351 — Stack React Native 0.74.5 + Expo SDK 51 bare F06ae (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: F06ae requiere ejercitar TurboModules Kotlin/Swift, archivos por plataforma `.ios.tsx`/`.android.tsx`, Expo config plugins que modifican `prebuild`, deep linking con Linking, Metro aliases, Redux Toolkit y notificaciones push.
+- Decision: React Native 0.74.5 + Expo SDK 51 bare workflow + TypeScript 5.4. Dependencias: `@reduxjs/toolkit ^2.2.7`, `react-redux ^9.1.2`, `@react-navigation/native ^6.1.18`, `@react-navigation/native-stack ^6.11.0`, `expo-linking ~6.3.1`, `expo-notifications ~0.28.19`, `expo-build-properties ~0.12.5`, `expo-splash-screen ~0.27.7`. Dev-deps: `jest ^29.7.0`, `jest-expo ~51.0.4`, `@testing-library/react-native ^12.5.0`, `react-test-renderer 18.2.0`, `babel-plugin-module-resolver ^5.0.2`, `typescript ~5.4.0`.
+- Consecuencias: el fixture corre con `yarn install` + `yarn jest` sin emulador gracias a `jest.mock('react-native', ...)`. Los TurboModules nativos (`.kt`/`.swift`) son solo evidencia textual.
+
+### D-352 — Imagen Docker `ghcr.io/cirruslabs/react-native:0.74.5` (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: el fixture necesita React Native + Node + Yarn + Android SDK (transitivamente).
+- Decision: `Dockerfile.test` parte de `ghcr.io/cirruslabs/react-native:0.74.5` (oficial Cirrus Labs, basada en Debian bookworm con Node 20 + Yarn + React Native CLI + Android SDK). Precompila con `yarn install --frozen-lockfile --silent`.
+- Consecuencias: el contenedor pesa ~3 GB; la primera ejecucion tarda ~5-8 min descargando dependencias + cacheando Gradle.
+
+### D-353 — TurboModules `RtcNfcManager` con `@ReactModule` + `@objc` (E1) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: la trampa E1 exige que un modulo nativo se resuelva por nombre a traves del bridge. Kotlin usa `@ReactModule(name = "RtcNfcManager")` y Swift usa `@objc(RtcNfcManager)` para que `NativeModules.RtcNfcManager` resuelva correctamente.
+- Decision: `src/features/payments/data/NfcManager.ts` accede a `NativeModules.RtcNfcManager` con tipo `RtcNfcManagerNative | undefined`. `android_stub/NfcManagerModule.kt` declara `@ReactModule(name = "RtcNfcManager")` con `start/stop/readTag/requestPermissions`. `ios_stub/NfcManagerModule.swift` declara `@objc(RtcNfcManager) class RtcNfcManager`. `ios_stub/NfcManagerModule.mm` declara `RCT_EXPORT_MODULE(RtcNfcManager)`.
+- Consecuencias: la skill debe seguir el string `RtcNfcManager` desde JS hasta los stubs nativos en Kotlin y Swift; la falta de linkeo en runtime crashea la app.
+
+### D-354 — Archivos `.ios.tsx`/`.android.tsx` resueltos por Metro (E2) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: Metro selecciona el archivo `.ios.tsx` o `.android.tsx` segun la plataforma. Esto permite UI diferente sin un wrapper manual.
+- Decision: `src/features/payments/presentation/PaymentsScreen.tsx` (comun fallback) + `PaymentsScreen.ios.tsx` (NSNFCReaderUsageDescription) + `PaymentsScreen.android.tsx` (verifica `PermissionsAndroid.NFC` antes de `NfcManager.start`). Metro resuelve segun `Platform.OS` automaticamente via `sourceExts`.
+- Consecuencias: la skill debe notar las extensiones `.ios.tsx`/`.android.tsx` y entender que Metro las selecciona; el archivo comun `PaymentsScreen.tsx` es el fallback si ninguna extension coincide.
+
+### D-355 — Expo config plugins que modifican `prebuild` (E3) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: la trampa E3 exige que la skill entienda que cada plugin Expo transforma la salida de `expo prebuild`. Esto añade complejidad al analisis estatico porque el codigo real vive en `ios/` y `android/` despues de prebuild.
+- Decision: `app.json` declara 6 plugins: `./plugins/withNfc` (con `withInfoPlist` para NSNFCReaderUsageDescription), `./plugins/withDeepLinking` (con `withInfoPlist` para CFBundleURLTypes + `withAndroidManifest` para intent-filter VIEW), `expo-build-properties`, `expo-notifications`, `expo-splash-screen`, `expo-linking`.
+- Consecuencias: la skill debe leer `app.json` + los archivos en `src/plugins/` para entender las transformaciones que sufria `expo prebuild`.
+
+### D-356 — Redux Toolkit con slice que muta state directamente (P2) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: RTK usa immer implicitamente, asi que `state.items.push(action.payload)` funciona en runtime pero la trampa P2 exige que la skill detecte este patron.
+- Decision: `src/store/slices/paymentsSlice.ts` declara `addPayment(state, action) { state.items.push(action.payload); }` con mutacion directa. La skill debe detectar el push sin `prepare` callback ni copia explicita.
+- Consecuencias: en RTK + immer, la mutacion funciona; pero rompe la consistencia conceptual y hace que `state.items.push` sea dificil de rastrear en code review.
+
+### D-357 — `NotificationHandler` con `catch (_)` silencioso (P3) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: la trampa P3 exige que `expo-notifications.setNotificationHandler` trague errores con `catch (_) { return {} }`.
+- Decision: `src/features/notifications/application/NotificationHandler.ts` envuelve tanto `getExpoPushTokenAsync` como `handleNotification` en `try { ... } catch (_) { ... }`. El handler en background retorna `PresentationOptions` vacias en error.
+- Consecuencias: la skill debe detectar el `catch (_)` en ambos sitios; los push notifications fallidos se procesan como `{}` sin log ni rethrow.
+
+### D-358 — Metro aliases en `extraNodeModules` + babel-plugin-module-resolver (E5) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: la trampa E5 exige que la skill note aliases como `@app`, `@store`, `@nav`, `@native`, `@plugins`, `@util` que apuntan a directorios especificos via Metro + Babel.
+- Decision: `metro.config.js` declara `resolver.extraNodeModules` con 7 aliases; `babel.config.js` usa `babel-plugin-module-resolver` con los mismos aliases para que las transformaciones Babel las respeten. `tsconfig.json` declara `paths` con los mismos aliases para TypeScript.
+- Consecuencias: la skill debe seguir los aliases hasta los archivos reales; `jest.config.js` declara `moduleNameMapper` para que Jest tambien los resuelva.
+
+### D-359 — Deep linking con 3 prefixes + 5 rutas + 2 deepLinks (E4) (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: la trampa E4 exige que la skill entienda el deep linking con multiples schemes (fxrn:// custom + https:// Universal Links) y screens nested en routing.
+- Decision: `src/navigation/linkingConfig.ts` declara `prefixes: [Linking.createURL('/'), 'fxrn://', 'https://fxrn.app/']` y `config.screens` con 5 entradas (`payments`, `payments/pay`, `history`, `history/filter`, `notifications`). El AppManifest declara el intent-filter VIEW con scheme `fxrn`. El Info.plist declara CFBundleURLTypes con scheme `fxrn`.
+- Consecuencias: la skill debe seguir los prefixes y screens; la trampa P4 (linking config android disabled) NO se planta (el linking funciona en ambas plataformas).
+
+### D-360 — Prefijo unique tokens `NPRGT-FXRN-` + tests con mocks del bridge (F06ae)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ae · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens con prefijo unico para `overfit_guard.py`. Ademas, los tests del fixture usan `jest.mock('react-native', ...)` para mockear `NativeModules.RtcNfcManager` ya que no se compilan TurboModules reales.
+- Decision: prefijo `NPRGT-FXRN-` con 34 entradas (PACKAGE-NAME, REACT-NATIVE-VERSION, EXPO-VERSION, ANDROID-STUB, IOS-STUB, DEEPLINK-SCHEME/PAY/HISTORY/NOTIFICATIONS, BRIDGE-MODULE, NFC-MANAGER, RTC-MODULE, ANDROID-MANIFEST, INFO-PLIST, PLATFORM-FILE, METRO-CONFIG, BABEL-CONFIG, ALIAS, EXPO-PLUGIN, PREBUILD, PUSH-TOKEN, BACKGROUND-HANDLER, REDUX, SLICE, IMMER, NAVIGATION, DEEP-LINK, FEATURE-PAYMENTS/HISTORY/NOTIFICATIONS, LOGGER, DATE-FORMAT). `jest.setup.js` mockea `NativeModules.RtcNfcManager.start/stop/readTag/requestPermissions` y `expo-notifications.setNotificationHandler/getPermissionsAsync/getExpoPushTokenAsync`.
+- Consecuencias: ningun archivo commiteado del codigo fuente (excluyendo `unique_tokens.txt`) puede mencionar estos strings; `check_ground_truth.py --check-cc11` lo verifica.
+
+### D-361 — Stack Electron 32 + TypeScript 5.5 F06af (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: F06af requiere ejercitar IPC channels por string, contextBridge exponiendo window.api, Menu nativo con accelerators, utility process para actualizaciones, protocolo app://, y electron-builder con asarUnpack + extraResources.
+- Decision: Electron 32.2 + Node 20 + TypeScript 5.5. Dependencias: `electron-updater ^6.3.9`. Dev-deps: `electron ^32.2.0`, `electron-builder ^25.1.8`, `typescript ^5.5.4`, `esbuild ^0.24.0`, `vitest ^2.1.0`. Renderer bundler: esbuild con output IIFE minificado. Toolchain tests: Vitest con `vi.mock('electron')`.
+- Consecuencias: el fixture corre con `yarn install` + `yarn vitest --run`. En Linux requiere xvfb para tests sin display fisico. `ipcMain`/`ipcRenderer` se mockean; el `utilityProcess` se mockea para evitar fork real.
+
+### D-362 — Imagen Docker `node:20-bookworm-slim` + xvfb + libs Electron (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: el fixture necesita Node 20 + xvfb + librerias de runtime Electron (libnss3, libatk1.0-0, libgtk-3-0, libasound2) para tests sin display fisico.
+- Decision: `Dockerfile.test` parte de `node:20-bookworm-slim` + `apt-get install -y --no-install-recommends xvfb libnss3 libatk1.0-0 libatk-bridge2.0-0 libgtk-3-0 libasound2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libgbm1 ca-certificates` + `yarn install --frozen-lockfile --silent` + `CMD ["make","test"]`.
+- Consecuencias: el contenedor pesa ~2 GB; la primera ejecucion tarda ~3-5 min descargando dependencias + cacheando Yarn.
+
+### D-363 — IPC channels por string `ipcMain.handle` + `ipcRenderer.invoke` (E1) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa E1 exige que la skill entienda el contrato IPC como strings. No hay un schema declarado; el TypeScript interface solo cubre tipos, no nombres de canales.
+- Decision: `src/main/ipc/handlers.ts` declara `IPC_CHANNELS` como `as const` con 6 channels string (`'project:open-dialog'`, `'project:open'`, `'pdf:export'`, `'update:check'`, `'update:install'`, `'menu:dispatch'`). `src/preload/index.ts` invoca `ipcRenderer.invoke(IPC_CHANNELS.PROJECT_OPEN, args)` con la misma referencia.
+- Consecuencias: la skill debe seguir los strings entre main y preload; el contrato solo es por convencion.
+
+### D-364 — contextBridge exponiendo `window.api` con superficie tipada (E2) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa E2 exige que la skill note que la superficie IPC con renderer se expone via `contextBridge.exposeInMainWorld`.
+- Decision: `src/preload/index.ts` declara `contextBridge.exposeInMainWorld('api', { openProjectDialog, openProject, exportPdf, checkUpdate, installUpdate, onMenuDispatch })`. `src/renderer/renderer.ts` accede via `window.api.{fn}(...)`. El `ExposedApi` type esta en `src/preload/api.ts` (trampa S3 con `formatTimestamp` no usado).
+- Consecuencias: la skill debe notar el bridge y la superficie expuesta; `nodeIntegration=false` y `contextIsolation=true` en `BrowserWindow.webPreferences`.
+
+### D-365 — Menu nativo con accelerators duplicados (E3 + P2) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa E3 exige que la skill lea `Menu.buildFromTemplate` y la trampa P2 exige que al menos un accelerator este duplicado.
+- Decision: `src/main/menu/appMenu.ts` declara 4 submenus (File/Edit/View/Help) con accelerators `'CmdOrCtrl+O'` (Open Project), `'CmdOrCtrl+E'` (Export PDF) y `'CmdOrCtrl+U'` (Check Update). La trampa P2 planta `'CmdOrCtrl+O'` tambien en `Open Recent > recent1.txt` — Electron registra solo el primero y el segundo se ignora silenciosamente.
+- Consecuencias: la skill debe seguir los accelerators; la trampa P2 rompe `Open Recent` que es inalcanzable.
+
+### D-366 — Utility process + child_process para workers (E4) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa E4 exige que la skill entienda que Electron permite procesos separados del main process.
+- Decision: `src/main/workers/updater.ts` usa `utilityProcess.fork(workerPath)` para actualizaciones live con `process.parentPort.postMessage`. `src/main/workers/pdfExporter.ts` usa `child_process.fork(workerPath, [outputPath])` para one-shot PDF export. Ambos workers son scripts standalone en `src/workers/`.
+- Consecuencias: la skill debe notar que `workers/updater-worker.ts` y `workers/pdf-worker.ts` corren como procesos separados con IPC dedicado.
+
+### D-367 — Protocolo personalizado `app://` con `registerSchemesAsPrivileged` (E5 + P5) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa E5 + P5 exige que `protocol.handle('app', ...)` requiera `protocol.registerSchemesAsPrivileged` ANTES de `app.ready()`.
+- Decision: `src/main/protocol/appProtocol.ts` declara `protocol.registerSchemesAsPrivileged([{ scheme: 'app', privileges: { standard: true, secure: true, supportFetchAPI: true } }])` al top-level del modulo. `main/index.ts` llama `registerAppProtocol()` antes de `app.whenReady().then(...)`.
+- Consecuencias: la skill debe notar el orden critico; sin `registerSchemesAsPrivileged` previo, `protocol.handle` falla en runtime.
+
+### D-368 — electron-builder con `asarUnpack` + `extraResources` (E6) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa E6 exige que la skill lea `electron-builder.yml` para entender que archivos quedan fuera del .asar.
+- Decision: `electron-builder.yml` declara `asarUnpack: ['**/*.node', 'workers/**']` (binarios nativos y workers separados) + `extraResources: [{ from: 'resources/native-menu.json' }, { from: 'resources/translations.json' }]` (config externalizada). Targets mac/win/linux con `target: dir`.
+- Consecuencias: la skill debe leer `electron-builder.yml` para entender la distribucion final; los archivos en `extraResources` quedan en `app.asar.unpacked/` o `/usr/share/fxelec/`.
+
+### D-369 — `autoUpdater.setFeedURL` con HTTP (no HTTPS) (P6) (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: la trampa P6 exige que el autoUpdater use HTTP en lugar de HTTPS, lo cual falla en runtime.
+- Decision: `src/main/autoUpdater.ts` declara `autoUpdater.setFeedURL('http://example.com/updates')` (HTTP, no HTTPS). `FXELEC_DISABLE_UPDATER` env var permite saltar la llamada en dev.
+- Consecuencias: la skill debe detectar la URL HTTP; en runtime real `downloadUpdate` falla con `Protocol error`.
+
+### D-370 — Prefijo unique tokens `NPRGT-FXELEC-` + Vitest con mocks de electron (F06af)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06af · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens con prefijo unico para `overfit_guard.py`. Ademas, los tests usan `vi.mock('electron')` para mockear el modulo electron.
+- Decision: prefijo `NPRGT-FXELEC-` con 33 entradas (PACKAGE-NAME, ELECTRON-VERSION, NODE-VERSION, IPC-CHANNEL, CONTEXT-BRIDGE, WINDOW-API, MAIN-PROCESS, PRELOAD-SCRIPT, RENDERER-PROCESS, UTILITY-PROCESS, APP-SCHEME, ASAR-UNPACK, EXTRA-RESOURCES, ELECTRON-BUILDER, MENU-TEMPLATE, ACCELERATOR, AUTO-UPDATER, PROTOCOL-HANDLE, OPEN-DIALOG, SAVE-DIALOG, PDF-WORKER, UPDATE-WORKER, CHILD-PROCESS, LICENSE, VERSION, LEGACY-LOGGER, FEATURE-FLAG, FORMAT-TIMESTAMP, FEATURE-OPEN, FEATURE-PDF, FEATURE-UPDATE). `test/main/ipc.spec.ts` y otros mockean `electron` module con `vi.mock('electron', ...)` para evitar requerir un display real.
+- Consecuencias: ningun archivo commiteado del codigo fuente (excluyendo `unique_tokens.txt`) puede mencionar estos strings; `check_ground_truth.py --check-cc11` lo verifica.
+
+### D-371 — Stack .NET 9 + WPF + CommunityToolkit.Mvvm 8.4 + xUnit F06ag (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: F06ag requiere ejercitar bindings XAML por string de propiedad, source generators `[ObservableProperty]` + `[RelayCommand]`, `DataTemplate` con `DataType`, value converters `IValueConverter`, styles con `DataTrigger`, y merged dictionaries en `App.xaml`.
+- Decision: .NET 9.0 LTS con SDK `mcr.microsoft.com/dotnet/sdk:9.0`. Target frameworks: `net9.0-windows` para UI WPF + `net9.0` para ViewModels + tests. Dependencias: `CommunityToolkit.Mvvm 8.4.0` con source generators. Tests: `xunit 2.9.2` + `xunit.runner.visualstudio 2.8.2`.
+- Consecuencias: los tests de ViewModels corren multiplataforma (Linux/macOS/Windows); los tests de UI WPF requieren Windows con `net9.0-windows` runtime. CI Linux usa contenedor con SDK + xvfb + libs UI headless; los tests UI se omiten con `[Trait("Category", "UI")]`.
+
+### D-372 — Imagen Docker `mcr.microsoft.com/dotnet/sdk:9.0` + xvfb + libs UI (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: el fixture necesita .NET 9 SDK + librerias UI para tests WPF headless (aunque los tests VM no las requieren, los tests UI opcionales sí).
+- Decision: `Dockerfile.test` parte de `mcr.microsoft.com/dotnet/sdk:9.0` + `apt-get install -y --no-install-recommends xvfb libnss3 libatk1.0-0 libgtk-3-0 libfontconfig1 libfreetype6 libgdiplus ca-certificates` + `dotnet restore` + `CMD ["make","test"]`.
+- Consecuencias: el contenedor pesa ~1.5 GB (solo SDK .NET sin las libs UI es ~700 MB; con libs UI ~1.5 GB); la primera ejecucion tarda ~2-3 min descargando dependencias + cacheando NuGet.
+
+### D-373 — Tests de ViewModels cross-platform + tests de UI solo Windows (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la UI de WPF solo se testea en Windows. Los ViewModels son POCO con CommunityToolkit.Mvvm y pueden correr multiplataforma.
+- Decision: dos proyectos xUnit: `FxWpf.Tests` (target `net9.0`, VM tests multiplataforma) + `FxWpf.TrapTests` (target `net9.0`, trap tests que leen archivos). Tests de UI marcados `[Trait("Category", "UI")]` se omiten en CI Linux/macOS via xunit filters.
+- Consecuencias: 32 tests xUnit corren en cualquier OS; los tests UI opcionales (no incluidos en este fixture) requieren Windows. La skill debe entender la separacion VM/UI y la limitacion de WPF.
+
+### D-374 — Source generators `[ObservableProperty]` + `[RelayCommand]` (E2) (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la trampa E2 exige que la skill entienda los source generators que emiten codigo C# parcial en build.
+- Decision: los 4 VMs (`ClientesViewModel`, `CotizacionesViewModel`, `PrintPreviewViewModel`, `ShellViewModel`) usan `[ObservableProperty]` y `[RelayCommand]` de CommunityToolkit.Mvvm. El codigo generado vive en `obj/Debug/net9.0/generated/FxWpf.ViewModels/FxWpf.ViewModels.ViewModels.ClientesViewModel.g.cs`.
+- Consecuencias: la skill debe ejecutar `dotnet build /p:EmitCompilerGeneratedFiles=true` para inspeccionar el codigo generado; las propiedades `_title`, `_clientes` se convierten en `Title`, `Clientes` con `INotifyPropertyChanged` automatico.
+
+### D-375 — Bindings XAML por string de propiedad (E1) (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la trampa E1 exige que la skill entienda que los bindings XAML son strings que referencian propiedades del VM.
+- Decision: `MainWindow.xaml` declara 5+ bindings: `{Binding Title}`, `{Binding SelectedCliente}`, `{Binding Nombre}`, `{Binding Telefono}`, `{Binding CreatedAt StringFormat=yyyy-MM-dd}`. `CotizacionesView.xaml` usa `DataGrid` con `{Binding Titulo}` + `{Binding Total Converter={StaticResource Currency}}`.
+- Consecuencias: la skill debe seguir las cadenas `{Binding ...}` hasta las propiedades del VM (generadas por source generators) y verificar el modo (`OneWay`, `TwoWay`) y los converters.
+
+### D-376 — `DataTemplate` con `DataType` para auto-seleccion (E3 + P6) (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la trampa E3 + P6 exige que la skill entienda el `DataTemplate` con `DataType` para que `ContentControl` auto-seleccione el template segun el VM.
+- Decision: `ClienteTemplate.xaml` declara `<DataTemplate DataType="{x:Type vm:ClientesViewModel}">`. La trampa P6 es que el `DataType` usa `ClientesViewModel` (el VM de la lista) en lugar de `Cliente` (el tipo del item); el template nunca se aplica correctamente.
+- Consecuencias: la skill debe notar el typo en `DataType` y proponer corregirlo a `Cliente` o crear un `ClienteViewModel` dedicado.
+
+### D-377 — `IValueConverter` con `ConvertBack` lanza `NotImplementedException` (E4 + P3) (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la trampa E4 + P3 exige que la skill detecte converters sin `ConvertBack` implementado.
+- Decision: `BoolToVisibilityConverter` implementa `Convert` (bool -> Visibility) pero `ConvertBack` lanza `NotImplementedException`. Si un binding es `Mode=TwoWay`, falla en runtime.
+- Consecuencias: la skill debe verificar que cualquier binding TwoWay tenga su `ConvertBack` implementado; en este caso, `Mode=OneWay` es seguro pero `Mode=TwoWay` falla.
+
+### D-378 — Merged dictionaries en `App.xaml` (E6) (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la trampa E6 exige que la skill entienda la composicion de temas via `MergedDictionaries`.
+- Decision: `App.xaml` declara `<ResourceDictionary.MergedDictionaries>` con 4 sources: `Themes/Colors.xaml` (PrimaryColor, AccentColor, BackgroundColor), `Themes/Buttons.xaml` (PrimaryBrush, AccentBrush), `Themes/Controls.xaml` (PrimaryButton Style), `Styles/ButtonStyles.xaml` (ButtonStylePrimary + ButtonStyleOverriding).
+- Consecuencias: la skill debe seguir la cascada de `Source="..."` para entender la composicion final de recursos.
+
+### D-379 — `Style.Triggers` con `DataTrigger` reactivo al VM (E5 + P4) (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: la trampa E5 + P4 exige que la skill entienda styles con triggers y la trampa P4 con styles sobrepuestos sin `BasedOn`.
+- Decision: `ButtonStyles.xaml` declara `<Style TargetType="Button" x:Key="ButtonStylePrimary">` con `<Style.Triggers>` que reaccionan a `Binding="{Binding IsValid}"`. La trampa P4 planta un segundo Style `ButtonStyleOverriding` sin `BasedOn` que sobreescribe al primero.
+- Consecuencias: la skill debe notar que el segundo Style gana por orden de declaracion; `BasedOn={StaticResource ButtonStylePrimary}` lo haria heredar.
+
+### D-380 — Prefijo unique tokens `NPRGT-FXWPF-` + tests xUnit cross-platform (F06ag)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ag · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens con prefijo unico para `overfit_guard.py`. Ademas, los tests de ViewModels usan `xunit` (no `pytest`) porque corren sobre .NET.
+- Decision: prefijo `NPRGT-FXWPF-` con 34 entradas (PACKAGE-NAME, DOTNET-VERSION, WPF-VERSION, XAML-VERSION, MVVM-TOOLKIT, SOURCE-GENERATOR, OBSERVABLE-PROPERTY, RELAY-COMMAND, MVVM-PATTERN, XAML-BINDING, DATA-TEMPLATE, VALUE-CONVERTER, STYLE-TRIGGER, MERGED-DICTIONARY, RESOURCE-DICTIONARY, XAML-CODE-BEHIND, DEEP-LINK, VIEW-MODEL, MAIN-WINDOW, CLIENTES-VIEW, COTIZACIONES-VIEW, PRINT-PREVIEW, CLIENTE-SERVICE, ASYNC-COMMAND, XUNIT-TEST, LEGACY-CONVERTER, EXPERIMENTAL-VM, FONT-FAMILY, NAVIGATION, BOOLEAN-CONVERTER, CURRENCY-CONVERTER, FEATURE-CLIENTES, FEATURE-COTIZACIONES, FEATURE-IMPRESION). Los tests xUnit corren multiplataforma; los tests pytest (`test_fx_csharp_wpf_ground_truth.py`) leen archivos y verifican el ground truth.
+- Consecuencias: ningun archivo commiteado del codigo fuente (excluyendo `unique_tokens.txt`) puede mencionar estos strings; `check_ground_truth.py --check-cc11` lo verifica.
+
+### D-381 — Stack PostgreSQL 16 + Flyway 10 + pg_cron 1.6 + pgTAP F06ah (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: F06ah requiere ejercitar migraciones versionadas y repetibles (Flyway), triggers con efectos secundarios (PL/pgSQL), Row-Level Security por tenant, SQL dinámico con `EXECUTE format()`, ON DELETE CASCADE con DEFERRABLE, vistas materializadas refrescadas por pg_cron, y soft-delete.
+- Decision: PostgreSQL 16 (alpine en Docker) + Flyway 10.20.1 (maven) + pg_cron REL1_6_STABLE (git source) + pgTAP via cpan + openjdk-21. Migraciones: `db/migration/V1..V7__*.sql` (versionadas) + `R__recalc_factura_totals.sql` (repetible). Tests pgTAP: `db/test/01..08_*.sql`.
+- Consecuencias: el contenedor pesa ~1.5 GB (postgres + pg_cron source + JDK + pg_prove + flyway). La primera ejecucion tarda ~3-5 min descargando + compilando pg_cron. Las V* se aplican una vez; las R__ en cada deploy.
+
+### D-382 — Imagen Docker `postgres:16-alpine` + `pg_cron` desde git (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: el fixture necesita PostgreSQL 16 con pg_cron 1.6 habilitada via `shared_preload_libraries`. La imagen oficial `postgres:16-alpine` no incluye pg_cron por defecto.
+- Decision: `Dockerfile.test` parte de `postgres:16-alpine` + `apk add openjdk21-jdk + bash + git + make + curl + build-base + autoconf + perl + cpan TAP::Parser::SourceHandler::pgTAP` + `git clone --depth=1 --branch=REL1_6_STABLE https://github.com/citusdata/pg_cron.git /tmp/pg_cron && make && make install`. `postgres.conf` declara `shared_preload_libraries = 'pg_cron'` + `cron.database_name = 'fxpg_test'`.
+- Consecuencias: el contenedor pesa ~1.5 GB; la primera ejecucion tarda ~3-5 min compilando pg_cron desde source. Las siguientes son ~30s con cache.
+
+### D-383 — `EXECUTE format(...)` con tabla parametrizada (E3 + P3) (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: la trampa E3 exige SQL dinámico con `EXECUTE format(...)`. La trampa P3 exige que el nombre de tabla no tenga whitelist, exponiendo SQLi.
+- Decision: `V4__add_dynamic_sql_fn.sql` declara `f_search_dynamic(p_tabla TEXT, p_id UUID)` que ejecuta `EXECUTE format('SELECT row_to_json(t) FROM %I t WHERE id = $1', p_tabla)`. `f_admin_search(p_query TEXT)` ejecuta `RETURN QUERY EXECUTE p_query` directamente. Sin whitelist, sin `RAISE EXCEPTION`.
+- Consecuencias: la skill debe detectar el riesgo SQLi en ambos functions; en produccion se debe validar `p_tabla IN (...)` y `p_query` solo contra queries permitidas.
+
+### D-384 — Triggers con efectos secundarios (E1 + P1) (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: la trampa E1 exige triggers INSERT/UPDATE/DELETE que escriban en `auditoria`. La trampa P1 exige que `NEW.campo` se lea en `TG_OP='DELETE'` (no válido).
+- Decision: `V2__add_audit_triggers.sql` declara `f_audit_factura()` con IF/ELSIF para INSERT/UPDATE/DELETE. La rama DELETE accede a `NEW.id` + `NEW.cliente_id` (trampa P1: `NEW` no esta asignado en DELETE). Triggers adicionales para `factura_items` (correctos) en la misma funcion.
+- Consecuencias: la skill debe detectar que el trigger DELETE crasheara en runtime con `record NEW is not assigned yet`; en produccion se debe separar `f_audit_insert`/`f_audit_update`/`f_audit_delete` o usar `OLD` en DELETE.
+
+### D-385 — Row-Level Security sin FORCE (E2 + P2) (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: la trampa E2 exige policies RLS por tenant. La trampa P2 exige que las policies NO incluyan `FORCE ROW LEVEL SECURITY`, asi postgres superuser bypassea.
+- Decision: `V3__add_rls_policies.sql` declara 13 policies (`pol_<tabla>_<rol>_<operacion>`) usando `current_setting('app.tenant_id', true)::UUID`. Solo `ENABLE ROW LEVEL SECURITY` (no `FORCE`). `CREATE POLICY pol_auditoria_select` con bypass via `app.bypass_rls = 'true'`.
+- Consecuencias: la skill debe detectar que postgres superuser bypassea RLS por defecto; en produccion se debe usar `ALTER TABLE ... FORCE ROW LEVEL SECURITY` para que incluso el owner respete la policy.
+
+### D-386 — `ON DELETE CASCADE` + `DEFERRABLE INITIALLY DEFERRED` (E5 + P5) (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: la trampa E5 exige `ON DELETE CASCADE` con `DEFERRABLE INITIALLY DEFERRED`. La trampa P5 es la falta de trigger BEFORE DELETE en `facturas` que avise al usuario.
+- Decision: `V6__add_cascade_constraints.sql` modifica la FK de `factura_items.factura_id` con `ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED`. NO se agrega trigger BEFORE DELETE en `facturas`.
+- Consecuencias: la skill debe notar que `DELETE FROM facturas WHERE id = X` borra silenciosamente los items relacionados sin notificar al usuario.
+
+### D-387 — Vistas materializadas refrescadas por pg_cron (E6 + P6) (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: la trampa E6 exige que pg_cron refresque vistas materializadas. La trampa P6 exige que la vista NO incluya `WHERE deleted_at IS NULL` (muestra soft-deleted).
+- Decision: `V7__add_pg_cron_jobs.sql` declara `CREATE EXTENSION pg_cron` + `CREATE MATERIALIZED VIEW mv_facturas_mensuales AS SELECT ... FROM facturas` (sin WHERE deleted_at IS NULL) + `cron.schedule('refresh-mv-facturas-mensuales', '0 * * * *', 'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_facturas_mensuales')` + 2 jobs mas (`cleanup-auditoria` diario + `refresh-factura-totals` 6h).
+- Consecuencias: la skill debe detectar que la vista materializada incluye registros soft-deleted; en produccion se debe agregar `WHERE deleted_at IS NULL` o crear vista separada para soft-deleted.
+
+### D-388 — Migraciones versionadas + repetibles (E4 + P4) (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: la trampa E4 exige migraciones versionadas (`V<NUM>__<name>.sql`) y repetibles (`R__<name>.sql`). La trampa P4 exige que la repetible NO sea idempotente.
+- Decision: 7 migraciones versionadas (`V1__init_schema.sql` a `V7__add_pg_cron_jobs.sql`) + 1 repetible (`R__recalc_factura_totals.sql`) que hace `TRUNCATE TABLE factura_totals; INSERT INTO factura_totals SELECT ... FROM ...`. No usa UPSERT (`ON CONFLICT`).
+- Consecuencias: la skill debe detectar que el `TRUNCATE + INSERT` no es idempotente (destruye filas modificadas manualmente entre deploys); en produccion se debe usar `INSERT ... ON CONFLICT (factura_id) DO UPDATE`.
+
+### D-389 — Tests pgTAP via `pg_prove` (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: el fixture requiere tests SQL contra una DB efímera. pgTAP es el estandar de la comunidad Postgres para tests in-database.
+- Decision: 8 archivos pgTAP en `db/test/01..08_*.sql` con `BEGIN; SELECT plan(N); ... SELECT * FROM finish(); ROLLBACK;`. Ejecucion via `pg_prove -h localhost -U postgres -d fxpg_test db/test/*.sql`. El Dockerfile.test instala `TAP::Parser::SourceHandler::pgTAP` via cpan.
+- Consecuencias: los tests pgTAP corren ~10s (crear DB efímera, aplicar migraciones, ejecutar pg_prove). En CI el contenedor se reinicia en cada `docker run` (`.pg_data` se monta como volumen).
+
+### D-390 — Prefijo unique tokens `NPRGT-FXSQLPG-` + CC-11 con limpieza de feature names (F06ah)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ah · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens con prefijo unico para `overfit_guard.py`. Ademas, CC-11 prohibe que el código fuente mencione el feature name (e.g., 'multi-tenant') para evitar que la skill haga match por keyword.
+- Decision: prefijo `NPRGT-FXSQLPG-` con 32 entradas (PACKAGE-NAME, POSTGRES-VERSION, FLYWAY-VERSION, PL-PGSQL, PG-CRON, PGTAP-VERSION, TRIGGER, AUDIT-TRIGGER, ROW-LEVEL-SECURITY, RLS-POLICY, DYNAMIC-SQL, EXECUTE-FORMAT, REPEATABLE-MIGRATION, VERSIONED-MIGRATION, CASCADE, DEFERRED-CONSTRAINT, MATERIALIZED-VIEW, CRON-SCHEDULE, SOFT-DELETE, TENANT-ID, FACTURA-SCHEMA, ITEM-SCHEMA, AUDIT-SCHEMA, VIEW-SCHEMA, FUNCTION-SCHEMA, LEGACY-EXPORT, UNUSED-INDEX, DEPRECATED-TEST, FEATURE-FACTURACION, FEATURE-AUDITORIA, FEATURE-MULTITENANT). Para cumplir CC-11, el archivo `db/sql/multi_tenant_query.sql` se renombro a `db/sql/tenant_isolation_query.sql` y todos los comentarios que mencionaban 'multi-tenant' se reformularon.
+- Consecuencias: ningun archivo commiteado del codigo fuente (excluyendo `unique_tokens.txt`) puede mencionar estos strings. `check_ground_truth.py --check-cc11` lo verifica; el `umbler` normaliza el path y lo limpia usando chr(255) (substituir separadores de path por espacios) antes de comparar.
+
+### D-391 — Stack Oracle Database Free 23c + PL/SQL + Liquibase 4.27 + utPLSQL F06ai (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: F06ai requiere ejercitar packages PL/SQL con spec/body, sinonimos publicos, `EXECUTE IMMEDIATE`, `PRAGMA AUTONOMOUS_TRANSACTION`, triggers `INSTEAD OF`, `DBMS_SCHEDULER` y DB links.
+- Decision: Oracle Database Free 23c (imagen `gvenzl/oracle-free:23.5-alpine-slim`) + Liquibase 4.27 (descargado en Dockerfile.test) + PL/SQL + utPLSQL via SQLcl. Migraciones: `db/changelog/changelog-master.xml` incluye 7 V*. Tests: `db/test/01..07_*.sql` con ut.run + ut.expect.
+- Consecuencias: el contenedor pesa ~1.5 GB; la primera ejecucion tarda ~3-5 min en arrancar Oracle + aplicar migrations + tests. En CI Linux se monta `.oracle_data` como volumen.
+
+### D-392 — Imagen Docker `gvenzl/oracle-free:23.5-alpine-slim` (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: el fixture necesita Oracle Free + Liquibase + sqlcl para tests utPLSQL.
+- Decision: `Dockerfile.test` parte de `gvenzl/oracle-free:23.5-alpine-slim` + `apk add openjdk21-jdk bash curl git make` + `curl download liquibase-4.27.0` + `extract` a `/opt/liquibase` + `CMD make test`.
+- Consecuencias: el contenedor pesa ~1.5 GB; la primera ejecucion tarda ~3-5 min descargando y arrancando el listener Oracle. Las siguientes ejecuciones son ~30s.
+
+### D-393 — Liquibase 4.27 como herramienta de migraciones (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: la trampa E4 (versionado) requiere migraciones con V*; el fixture tambien podria usar archivos `R__` para repetibles.
+- Decision: `db/changelog/changelog-master.xml` declara 7 `<include file="V*.sql"/>` (001..007). Cada archivo V* es idempotente y se aplica una vez. `tools/apply_liquibase.sh` ejecuta `liquibase update` con las properties de `config/liquibase.properties`.
+- Consecuencias: la skill debe entender que Liquibase es el motor de migraciones; las V* se aplican una vez en orden; las R__ en cada deploy.
+
+### D-394 — Packages PL/SQL con spec + body (E1) (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: la trampa E1 exige que la skill entienda la separacion entre spec (interfaz publica) y body (implementacion + procedures privadas).
+- Decision: `db/packages/pkg_accounts_spec.sql` declara solo `get_balance`, `open_account`, `close_account` (3 procedures publicas). `db/packages/pkg_accounts_body.sql` implementa esas 3 + declara la `FUNCTION p_internal_validate` (privada, NO en spec). `ALL_PROCEDURES` mostrara 4 en el body vs 3 en el spec.
+- Consecuencias: la skill debe notar que `p_internal_validate` no esta documentado en el spec; en produccion se debe exponer explicitamente via doc-comment.
+
+### D-395 — Sinonimos publicos que redirigen objetos (E2 + P2) (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: la trampa E2 exige sinonimos publicos (e.g., `PUBLIC SYNONYM accounts FOR ORAFI.accounts`). La trampa P2 exige un sinonimo a una tabla inexistente.
+- Decision: `db/sql/synonyms.sql` declara 5 sinonimos validos + 1 sinonimo trampa (`legacy_table FOR ORAFI.legacy_does_not_exist`). `GRANT SELECT ON accounts TO PUBLIC` permite SELECT a traves del sinonimo. `legacy_orders` (S2) apunta a una tabla que nunca se creo.
+- Consecuencias: la skill debe notar que `SELECT * FROM legacy_table` falla con ORA-00942 en runtime; en produccion se debe `DROP SYNONYM IF EXISTS` antes de crear.
+
+### D-397 — `EXECUTE IMMEDIATE` con tabla parametrizada (E3 + P3 SQLi) (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: la trampa E3 exige SQL dinamico; la trampa P3 exige que la tabla venga como parametro sin whitelist, exponiendo SQLi.
+- Decision: `pkg_interest_body.calculate_for_table(p_table, p_id)` ejecuta `EXECUTE IMMEDIATE 'SELECT SUM(amount) FROM ' || DBMS_ASSERT.SIMPLE_SQL_NAME(p_table) || ' WHERE history_id = :id'`. `DBMS_ASSERT.SIMPLE_SQL_NAME` valida el identifier (no agrega DROP/PEXEC en transacciones).
+- Consecuencias: la skill debe detectar que esta funcion permite SQLi via DROP/SELECT de cualquier tabla del schema ORAFI; en produccion se debe usar whitelist: `IF p_table NOT IN (...) THEN RAISE EXCEPTION`.
+
+### D-398 — `PRAGMA AUTONOMOUS_TRANSACTION` en trigger + open_account (E4 + P1 + P4) (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: la trampa E4 exige `PRAGMA AUTONOMOUS_TRANSACTION` que rompe el modelo atomic. La trampa P1 es que `open_account` tambien usa autonomous. La trampa P4 es que el trigger NO tiene `WHEN OTHERS`.
+- Decision: `004-autonomous-trigger.sql` declara `PRAGMA AUTONOMOUS_TRANSACTION` en el trigger BEFORE INSERT/UPDATE. `002-accounts-package.sql` lo declara en `open_account`. Ambos sin handler de excepcion.
+- Consecuencias: la skill debe notar que la autonomia hace que los INSERT en audit_log persistan aunque el INSERT principal se rollbackee. En produccion se debe `EXCEPTION WHEN OTHERS THEN NULL` para silenciar errores y `RAISE_APPLICATION_ERROR` para fallar duro.
+
+### D-399 — Triggers `INSTEAD OF` sobre vista + `DBMS_SCHEDULER` jobs (E5 + E6) (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: la trampa E5 exige trigger `INSTEAD OF` sobre vista; la trampa E6 exige jobs de `DBMS_SCHEDULER`. La trampa P6 es `enabled => FALSE` en el job principal.
+- Decision: `db/sql/views.sql` define `v_accounts_summary` con trigger `INSTEAD OF UPDATE` (E5 + trampa P5 omite opened_at). `006-scheduler-jobs.sql` declara `JOB_MONTHLY_CLOSE_AUTOMATION` con `enabled => FALSE` (P6) y `JOB_HOURLY_REFRESH` con `enabled => TRUE`. `007-db-link.sql` crea `remote_orafi` con silent fail.
+- Consecuencias: la skill debe notar que la vista no es directamente modificable (ORA-01702 sin el trigger); el job mensual queda deshabilitado; el job hourly corre cada hora.
+
+### D-400 — Prefijo unique tokens `NPRGT-FXORAPL-` + CC-11 con decision_points formato (F06ai)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06ai · vigente
+- Contexto: cada fixture debe declarar ≥ 30 unique tokens. CC-11 prohibe feature names en codigo.
+- Decision: prefijo `NPRGT-FXORAPL-` con 33 entradas (PACKAGE-NAME, ORACLE-VERSION, LIQUIBASE-VERSION, PL-SQL, UTPLSQL-VERSION, PACKAGE-SPEC, PACKAGE-BODY, PRIVATE-PROC, SYNONYM, EXECUTE-IMMEDIATE, AUTONOMOUS-TX, INSTEAD-OF, COMPOUND-TRIGGER, DBMS-SCHEDULER, DB-LINK, ACCOUNTS-SCHEMA, INTEREST-SCHEMA, AUDIT-SCHEMA, VIEW-SCHEMA, LEGACY-PACKAGE, LEGACY-SYNONYM, DEPRECATED-TEST, FEATURE-ACCOUNTS, FEATURE-INTEREST, FEATURE-CLOSE, etc.). Ademas, el formato de `decision_points.file` debe NO incluir `:line` (separa `file` y `line` en GT para que `check_cite` lo parsee correctamente).
+- Consecuencias: ningun archivo commiteado del codigo fuente puede mencionar estos strings; `check_ground_truth.py --check-cc11` lo verifica.
+
+### D-401 — Stack SQL Server 2022 + sqlcmd + tSQL runner (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: la trampa E6 exige scripts de SQL Agent (jobs); las trampas E1..E5 exigen T-SQL puro (sp_executesql, MERGE OUTPUT, triggers, recursive CTE, temp tables). Se descarta SSDT/.sqlproj (no portable a Linux sin Visual Studio) y se descarta tSQLt (requiere CLR habilitada en SQL Server Linux).
+- Decision: imagen oficial `mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04` + `apt-get install mssql-tools18` (sqlcmd) + `unixodbc-dev`. Migraciones con un orquestador `db/install.sql` que llama a V00X en orden (estilo Flyway adaptado, sin requerir Flyway porque SQL Server + Flyway necesita driver JDBC extra). Tests T-SQL puro con stored procedures `fx_assert_equal`, `fx_test_begin/end` que reportan via `PRINT [PASS]/[FAIL]` + tabla `fx_test_results`. Imagen base `brand=NPRGT-FXSQLTS-*` con prefijo `NPRGT-FXSQLTS-`.
+- Consecuencias: la skill debe entender T-SQL puro (sin `IF/THEN/END` de PL/SQL, sin `OUT` parameters, sin `BEFORE` triggers, sin `MATERIALIZED VIEW` nativo, sin `PUBLIC SYNONYM`). El orquestador `entrypoint.sh` arranca `sqlservr` en background + espera con `sqlcmd -C TrustServerCertificate` + aplica `db/install.sql` + corre tests.
+
+### D-402 — Migraciones con `db/install.sql` orquestador + `:r` (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: paridad conceptual con F06ah (Flyway) y F06ai (Liquibase) pero sin dependencias externas. SQL Server no tiene Flyway nativo.
+- Decision: prefijo `V00N__descripcion.sql` para versionadas + `R__descripcion.sql` para repetibles (mismo estilo Flyway pero **sin guion bajo doble extra** porque SQL Server interpreta `--` como comentario). Orquestador `db/install.sql` que llama `:r db/migration/V001__init_schema.sql` etc. Tablas auxiliares (`stock_audit`, `reconcile_audit`, `bom_links`, `stock_totals`) se crean en `db/install.sql` antes de los `:r` para evitar dependencias circulares con V002..V008.
+- Consecuencias: la skill debe notar que `db/install.sql` orquesta la instalacion completa (no usar `sqlcmd -i` por separado para cada V00X). El orquestador permite re-instalacion idempotente con `IF OBJECT_ID() IS NULL` en cada V00X.
+
+### D-403 — Tests T-SQL puro con fx_assert_equal + fx_test_results (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: en F06ah se usa pgTAP; en F06ai se usa utPLSQL. SQL Server Linux no soporta tSQLt sin habilitar CLR.
+- Decision: stored procedure `dbo.fx_assert_equal(@actual SQL_VARIANT, @expected SQL_VARIANT, @msg NVARCHAR(MAX))` que acumula errores en `dbo.fx_test_results (id INT IDENTITY, name NVARCHAR(200), passed BIT, message NVARCHAR(MAX))`. Al final, `dbo.fx_test_end(@suite)` cuenta failures y `THROW 51000` si hay. El orquestador `tools/run_tests.sh` itera 8 archivos `0[1-8]_*_test.sql` con `sqlcmd -b` y parsea la salida `[SUITE_PASS]`.
+- Consecuencias: la skill debe entender el patron de test runner T-SQL puro (sin frameworks externos). Tests imprimen `[PASS]` o `[FAIL]` para que `tools/run_tests.sh` los detecte via exit code.
+
+### D-404 — Sinonimos SQL Server scoped al schema (E2 adaptado) (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: SQL Server soporta sinonimos via `CREATE SYNONYM`, pero son scoped al schema (no hay `PUBLIC SYNONYM`).
+- Decision: 5 sinonimos CREATE SYNONYM apuntando a `dbo.*` (validos) + `syn_legacy_table FOR dbo.legacy_does_not_exist` (P2 trap, falla en runtime). `db/sql/synonyms.sql` los declara todos en un solo archivo.
+- Consecuencias: la skill debe notar que `syn_legacy_table` falla con `Invalid object name 'dbo.legacy_does_not_exist'` en cualquier operacion, pero su creacion no falla (la verificacion es diferida).
+
+### D-405 — Trigger `INSTEAD OF` sobre vista = unico UPDATE (E3 + P3) (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: la trampa E3 exige trigger INSTEAD OF; la trampa P3 exige que omita columna `quantity_on_hand`.
+- Decision: `trg_stock_instead_of_update` INSTEAD OF UPDATE sobre `dbo.vw_stock_current`. El UPDATE directo sobre la vista falla con "View or function is not updatable..."; el trigger es el unico camino. La trampa P3: el trigger propaga solo `description` (`UPDATE si SET si.description = i.description`), NO propaga `quantity_on_hand` (omite columna critica).
+- Consecuencias: la skill debe verificar que `UPDATE dbo.vw_stock_current SET quantity_on_hand = X WHERE sku = Y` no produce cambio en `dbo.stock_items.quantity_on_hand` (queda con el valor original). En produccion se debe propagar todas las columnas del INSERTED.
+
+### D-406 — CTE recursiva + ciclo A->B->C->A en seed (E4 + P4) (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: la trampa E4 exige CTE recursiva; la trampa P4 exige ciclo detectable.
+- Decision: `usp_explode_bom` usa CTE con `WITH bom_tree AS (anchor SELECT) UNION ALL (recursive SELECT)` + `WHERE depth < 1000` + `OPTION (MAXRECURSION 1000)`. El seed `db/seed/seed_bom.sql` contiene el ciclo `SKU-A001 -> SKU-A002 -> SKU-A003 -> SKU-A001` para que `usp_explode_bom @root_sku = SKU-A001` falle con `Msg 530: The maximum recursion 1000 has been exhausted before statement completion`.
+- Consecuencias: la skill debe atrapar la excepcion con `BEGIN TRY ... END TRY BEGIN CATCH ... END CATCH` y verificar el error 530. En produccion se debe validar el grafo de `bom_links` para detectar ciclos antes de ejecutar la CTE.
+
+### D-407 — MERGE OUTPUT $action con reconciliation (E2 + P2) (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: la trampa E2 exige MERGE con OUTPUT; la trampa P2 exige MERGE sin WHEN NOT MATCHED BY SOURCE.
+- Decision: `usp_reconcile_run` usa `MERGE dbo.reconcile_lines AS target USING (...) AS source ON ... WHEN MATCHED THEN UPDATE ... WHEN NOT MATCHED BY TARGET THEN INSERT ... OUTPUT $action, inserted.* INTO dbo.reconcile_audit (...)`. La trampa P2: `usp_reconcile_partial` solo incluye `WHEN NOT MATCHED BY TARGET` (sin `WHEN NOT MATCHED BY SOURCE`), asi que SKUs borrados de `stock_items` quedan en `reconcile_lines` como huerfanos.
+- Consecuencias: la skill debe notar que `usp_reconcile_partial` no limpia `reconcile_lines` cuando se borra un SKU de `stock_items`. En produccion se debe agregar `WHEN NOT MATCHED BY SOURCE THEN DELETE`.
+
+### D-408 — SQL Agent 3 jobs con JOB_LEGACY_PURGE disabled (E6 + P6) (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: la trampa E6 exige scripts de SQL Agent; la trampa P6 exige job deshabilitado.
+- Decision: 3 jobs en `msdb.dbo.sysjobs`: `JOB_HOURLY_RECALC_TOTALS` (enabled=1, freq hourly), `JOB_DAILY_REBUILD_REPORT_CACHE` (enabled=1, freq daily 02:00), `JOB_LEGACY_PURGE` (enabled=0, freq weekly Sunday 03:00, **nunca corre**). Cada job se crea con `msdb.dbo.sp_add_job` + step con `EXEC fxsqlts.dbo.usp_*`.
+- Consecuencias: la skill debe notar que `JOB_LEGACY_PURGE` existe en `msdb.dbo.sysjobs` pero `enabled = 0` y nunca se ejecutara. En produccion se debe `EXEC msdb.dbo.sp_update_job @job_name = 'JOB_LEGACY_PURGE', @enabled = 1` si se quiere ejecutar.
+
+### D-409 — Tabla `##global_stock_temp` compartida + leak (E5 + P5) (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: la trampa E5 exige tabla temporal global compartida; la trampa P5 exige leak entre sesiones.
+- Decision: `usp_temp_load` crea `##global_stock_temp (sku, qty, ts)` con `TRUNCATE + INSERT`. `usp_temp_consume` lee de `##global_stock_temp` con `WHERE qty < @threshold` pero **NO limpia la tabla** al final (DROP TABLE no presente). La tabla persiste en `tempdb` entre desconexiones de sesion, accesible desde nuevos clientes SQL.
+- Consecuencias: la skill debe notar que `##global_stock_temp` no se limpia entre sesiones (leak). En produccion se debe `DROP TABLE IF EXISTS ##global_stock_temp` al final del SP o usar tabla `##` con prefijo unico (e.g. `##stock_temp_<connection_id>`).
+
+### D-410 — Prefijo unique tokens `NPRGT-FXSQLTS-` + CC-11 con sinonimos neutros (F06aj)
+
+- Fecha · Fase · Estado: 2026-10-07 · F06aj · vigente
+- Contexto: CC-11 prohibe feature names (`inventario`, `conciliacion`, `reportes`) en codigo. La skill debe reconocer sinonimos neutros.
+- Decision: prefijo `NPRGT-FXSQLTS-` con 33 tokens (PACKAGE-NAME, SQLSERVER-VERSION, IMAGE-TAG, DATABASE-NAME, SA-PASSWORD, TSQL, SQLCMD, STORE-PROC, SP-EXECUTESQL, MERGE-OUTPUT, AFTER-TRIGGER, INSTEAD-OF-TRIGGER, RECURSIVE-CTE, MAXRECURSION, TEMP-TABLE-LOCAL, TEMP-TABLE-GLOBAL, SQL-AGENT, JOB-SERVER, SP-ADD-JOB, SCHEDULE, SYNONYM, RECOMPILE, WITH-ENCRYPTION, FOR-XML-PATH, JSON-VALUE, OPENJSON, PERSISTED-COLUMN, IDENTITY-COLUMN, SYSUTCDATETIME, SET-NOCOUNT, DATETIME2, NVARCHAR-MAX, CHECK-CONSTRAINT). Sinonimos neutros: `stock` = inventario, `reconcile` = conciliacion, `dashboard` = reportes.
+- Consecuencias: `check_ground_truth.py --check-cc11` valida que ninguno de los 33 tokens aparece en archivos `.sql`, `.sh`, `.md`, `.txt`, `.yml`, `.conf`, `.ini` del fixture (excluyendo `unique_tokens.txt`, `build-history.sh`, `Makefile`, `manifest.yml`, `Dockerfile.test`, `entrypoint.sh`, `README.md`, `.gitignore`, `tools/`, `config/`).
+
+### D-411 — Stack python:3.11-slim + dbt-core + dbt-duckdb + apache-airflow (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: el fixture exige dbt (SQL + Jinja) + Airflow (Python DAGs) + DuckDB. `astro-runtime` pesa ~2 GB y arrastra providers innecesarios.
+- Decision: imagen `python:3.11-slim` + `pip install dbt-core==1.8.* dbt-duckdb==1.8.* apache-airflow==2.9.* pytest==8.2.*`. NO se usa el scheduler; los DAGs se validan offline con `airflow dags parse` y pytest sobre `airflow/tests/`.
+- Consecuencias: la skill debe entender que Airflow se puede ejecutar sin scheduler (solo DAG parsing + tests). El contenedor pesa ~600 MB en lugar de ~2 GB.
+
+### D-412 — DuckDB embebido como target de dbt (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: dbt necesita una base de datos. Postgres requiere servidor; SQLite es limitado para SQL analitico.
+- Decision: DuckDB embebido via `dbt-duckdb`. Profiles.yml target `dev` apunta a `/fixture/dev.duckdb`; target `test` apunta a `:memory:`. Los seeds son CSVs en `dbt/seeds/`; los modelos escriben en `dev.duckdb`; los tests `dbt test` validan `not_null`, `unique`, `accepted_values`, `relationships` (built-in).
+- Consecuencias: la skill debe notar que DuckDB corre nativo en Linux/macOS sin servicios externos. El archivo `dev.duckdb` se monta como volumen efimero (`.duckdb/` excluido de git).
+
+### D-413 — dbt project layout con materialization por carpeta (E4) (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: la trampa E4 exige materializacion configurada por carpeta en `dbt_project.yml`.
+- Decision: estructura estandar dbt labs: `models/staging/` (view), `models/intermediate/` (view), `models/marts/` (table), `models/marts/marts_incremental/` (incremental con `+unique_key: fecha_sku`). Override explicito en `ventas_mensuales.sql` con `config(materialized='view')` para mostrar la jerarquia override.
+- Consecuencias: la skill debe parsear dbt_project.yml y leer el bloque `models.*.+materialized`. Si una carpeta no tiene override explicito, usa el default del padre.
+
+### D-414 — Airflow DAG factory desde YAML (E5) (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: la trampa E5 exige DAG de Airflow generado dinamicamente desde YAML.
+- Decision: `airflow/dags/dag_factory.py` define `build_dag_from_yaml(yaml_path)` que lee `etl_config.yaml` con `yaml.safe_load` y crea `BashOperator` o `PythonOperator` por task. `generated_etl_dag.py` (en `.airflowignore`) invoca el factory al importarse.
+- Consecuencias: la skill debe notar que el DAG no existe estaticamente en el codigo; se materializa en runtime al importarse el modulo que invoca el factory.
+
+### D-415 — XCom explicito vs `return value` (E6 + P6) (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: la trampa E6 exige XCom explicito entre tareas; la trampa P6 exige `return dict` no serializable.
+- Decision: `etl_dag.py` extrae `extract` task hace `xcom_push(key='table_name', value='main.ventas_raw')`; `transform` task hace `xcom_pull(key='table_name', task_ids='extract')` (camino correcto E6). El DAG `transform_xcom_implicit.py` (en archivo separado) hace `return {unserializable: {1,2,3}}` que falla con AirflowException al serializar (trampa P6).
+- Consecuencias: la skill debe distinguir xcom_push explicito (E6 OK) vs `return dict` (P6 falla). El DAG P6 esta en archivo separado para que el DAG principal funcione.
+
+### D-416 — Macros Jinja con concat string vs parametrizado (E2 + P1) (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: la trampa E2 exige macros Jinja; la trampa P1 exige concat string (mismo patron que usp_stock_search_raw en F06aj).
+- Decision: `dbt/macros/centros_normalizados.sql` define `{% macro filter_centros_normalizado(estado) %} WHERE estado = {{ estado }} {% endmacro %}` (camino correcto E2). `dbt/macros/centros_concat.sql` define `{% set where_clause = 'estado = ' ~ estado %} WHERE {{ where_clause }} {% endmacro %}` (trampa P1 con SQLi via `--vars '{estado_filtro: "1 OR 1=1"}'`).
+- Consecuencias: la skill debe notar que `~` en macros dbt genera string SQL vulnerable. En produccion se debe usar Jinja escaping `{{ estado }}` o wrapper de parametrizacion.
+
+### D-417 — `is_incremental()` correcto vs trampa P2 (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: la trampa E3 exige `is_incremental()` branch; la trampa P2 exige rama sin filtro.
+- Decision: `ventas_diarias_incremental.sql` usa `{% if is_incremental() %} WHERE occurred_at > (SELECT MAX(occurred_at) FROM {{ this }}) {% else %} WHERE occurred_at >= DATE '2024-01-01' {% endif %}` (E3 correcto). `ventas_diarias_incremental_buggy.sql` usa `{% if is_incremental() %} WHERE 1=1 {% endif %}` (P2 trampa, re-procesa todo).
+- Consecuencias: la skill debe buscar bloques `{% if is_incremental() %}` en los modelos incrementales y verificar que el filtro tenga una condicion util (NO `WHERE 1=1`).
+
+### D-418 — `legacy_helper` macro nunca invocado + `legacy_purge_dag` nunca corre (S1 + S2) (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: CC-11 prohibe feature names; las trampas superficiales deben estar plantadas pero no afectar funcionalidad.
+- Decision: `dbt/macros/legacy_helper.sql` define un macro que no se invoca en ningun modelo (S1 dead). `airflow/legacy_purge_dag.py` define un DAG con `start_date=datetime(2019, 1, 1) + catchup=False` que nunca se ejecuta (S2 never runs).
+- Consecuencias: la skill debe buscar `legacy_helper` en todos los archivos `.sql` del proyecto (excluyendo el archivo de definicion) y verificar que no se invoca. Tambien debe validar la combinacion `catchup=False + start_date pasado` para detectar DAGs inactivos.
+
+### D-419 — Prefijo unique tokens `NPRGT-FXDBAIR-` + sinonimos neutros (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: CC-11 prohibe feature names (`ingesta-de-ventas`, `modelo-de-clientes`, `metricas-diarias`) en codigo. La skill debe reconocer sinonimos neutros.
+- Decision: prefijo `NPRGT-FXDBAIR-` con 34 tokens (PACKAGE-NAME, DBT-VERSION, DUCKDB-VERSION, AIRFLOW-VERSION, IMAGE-TAG, PROFILE-NAME, PROJECT-NAME, DBT-MODELS, DBT-SOURCES, DBT-MACROS, DBT-SNAPSHOTS, DBT-SEEDS, DBT-TESTS, DBT-DEPRECATED, JINJA-MACROS, DBT-LINEAGE, REF-SOURCE, IS-INCREMENTAL, MATERIALIZATION, MATERIALIZE-CONFIG, DBT-BUILD, DBT-TEST, DBT-RUN, DBT-DEP, DBT-PROJECT-YML, DBT-PROFILES-YML, AIRFLOW-DAG, DAG-FACTORY, XCOM-PUSH, XCOM-PULL, XCOM-IMPLICIT, ETL-CONFIG-YAML, SCHEDULE-INTERVAL, DEPENDS-ON-PAST). Sinonimos neutros: `ventas` = ingesta-de-ventas, `clientes` = modelo-de-clientes, `metricas` = metricas-diarias.
+- Consecuencias: `check_ground_truth.py --check-cc11` valida que ninguno de los 34 tokens aparece en archivos `.sql`, `.py`, `.sh`, `.yml`, `.md`, `.txt`, `.csv` del fixture (excluyendo `unique_tokens.txt`, `build-history.sh`, `Makefile`, `manifest.yml`, `Dockerfile.test`, `entrypoint.sh`, `README.md`, `.gitignore`, `tools/`, `profiles.yml`, `requirements.txt`, `.airflowignore`, dbt_packages target, logs).
+
+### D-420 — `fixtures_matrix.py` extension + target_matrix.yml dbt/airflow (F06ak)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06ak · vigente
+- Contexto: la skill debe detectar automaticamente dbt + Airflow + DuckDB en fixtures futuros.
+- Decision: `fixtures_matrix.py` extendido con deteccion via `dbt/dbt_project.yml` (dbt + duckdb + dbt-materialization-config + is_incremental), `dbt/models/` con `{{ ref(` o `{{ source(` (dbt-models + dbt-lineage + ref-source), `dbt/macros/` con `{% macro` (jinja-macros), `airflow/dags/` con `DAG(` (airflow), `yaml.safe_load` (dag-factory), `xcom_push/push` (xcom), y `requirements.txt` con `dbt-core`/`dbt-duckdb` (dbt-duckdb) + `apache-airflow` (apache-airflow). `target_matrix.yml` extendido con frameworks `[dbt, dbt-duckdb, duckdb, airflow, dag-factory, xcom, jinja-macros, dbt-lineage, ref-source, is_incremental, dbt-materialization-config, dbt-models, apache-airflow]`.
+- Consecuencias: cualquier fixture futuro que use dbt + Airflow + DuckDB sera detectado automaticamente en MATRIX.md.
+
+### D-421 — Stack python:3.11-slim + scikit-learn + Hydra + DVC + MLflow (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: el fixture exige notebooks Jupyter + Hydra + DVC + MLflow + FastAPI. PyTorch requiere GPU; Anaconda pesa ~4 GB.
+- Decision: imagen `python:3.11-slim` + `pip install scikit-learn==1.5.* hydra-core==1.3.* dvc==3.5.* mlflow==2.18.* fastapi==0.115.* uvicorn jupyter nbval pytest`. scikit-learn CPU (no GPU) usa iris dataset (150 rows, <5s para entrenar).
+- Consecuencias: la skill debe entender que scikit-learn es CPU-only, DVC usa file backend local, MLflow usa FileStore (no servidor), FastAPI se valida con TestClient (sin uvicorn).
+
+### D-422 — MLflow file store (no servidor) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E4 exige "modelos registrados por nombre en MLflow"; levantar mlflow server requiere DB + puerto.
+- Decision: MLflow FileStore en `mlruns/` (file://). `mlflow.set_tracking_uri('file:///fixture/mlruns')` + `mlflow.sklearn.log_model(model, 'model', registered_model_name='iris_clf')` registra el modelo en filesystem. Tests usan `MlflowClient(tracking_uri=...)` para validar.
+- Consecuencias: la skill debe notar que el registry vive en filesystem (no en una DB) y se puede inspeccionar con `ls mlruns/`.
+
+### D-423 — DVC local (no remoto) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E3 exige "etapas definidas en dvc.yaml".
+- Decision: `dvc init` crea `.dvc/` + `.dvcignore`. `dvc.yaml` define 3 stages (train, evaluate, register) con `deps`/`outs`/`metrics`/`params`. Remote local en `/tmp/dvc-storage` o s3 (opcional). Tests validan estructura de dvc.yaml.
+- Consecuencias: la skill debe parsear dvc.yaml y leer el bloque stages; cada stage tiene cmd + deps + outs (o metrics). No se requiere remote.
+
+### D-424 — Hydra con @package _global_ + defaults (E2) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E2 exige composicion de configuraciones Hydra con overrides.
+- Decision: `conf/config.yaml` define `defaults: [entrenamiento:default, evaluacion:default, inferencia:default, _self_]`. Sub-configs en `conf/{entrenamiento,evaluacion,inferencia}/*.yaml`. El pipeline usa `Hydra Compose` API o `@hydra.main()` decorator.
+- Consecuencias: la skill debe parsear conf/config.yaml y leer el bloque defaults; cada override apunta a un archivo existente.
+
+### D-425 — Notebooks con orden + nbval (E1) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E1 exige "estado oculto en notebooks" (celdas ejecutadas fuera de orden).
+- Decision: los notebooks `notebooks/0[0-6]_*.ipynb` tienen prefijo numerico para orden. `nbval` los ejecuta en orden en `pytest --nbval-lax`. Cada notebook declara explicitamente su state al inicio.
+- Consecuencias: la skill debe leer los notebooks y verificar el orden numerico. La trampa P1 (notebook 06 con `del df`) rompe el state si se ejecuta fuera de orden.
+
+### D-426 — Feature engineering duplicado (E5 + P5) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E5 exige "feature engineering duplicado entre notebook y src/, con diferencias".
+- Decision: `src/features.py::engineer_features_v1` usa StandardScaler; `notebooks/02_features.ipynb` usa MinMaxScaler. La divergencia produce metricas diferentes (P5). La unica fuente de verdad deberia ser src/.
+- Consecuencias: la skill debe leer ambos archivos y comparar los scalers. Documentar como trampa P5 de inconsistencia.
+
+### D-427 — Random state + trampa P6 (legacy_train sin seed) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E6 exige "semillas y aleatoriedad que cambian los resultados"; P6 requiere una funcion sin random_state.
+- Decision: `src/train.py::train_model(algorithm, X, y, random_state=42)` reproduce modelos. `src/legacy_train.py::legacy_train(X, y)` (S1 dead) NO acepta random_state y produce modelos no reproducibles. El test `test_reproducibility.py` valida que dos llamadas con misma seed producen el mismo modelo.
+- Consecuencias: la skill debe verificar que todas las funciones de entrenamiento aceptan random_state. Si alguna no lo hace, flaggear como P6.
+
+### D-428 — FastAPI inference + MLflow load por nombre (E4 + P4) (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la trampa E4 exige modelos cargados por nombre; P4 requiere un modelo con nombre incorrecto.
+- Decision: `src/app/main.py` define `POST /inferencia` que carga `mlflow.pyfunc.load_model('models:/iris_clf@production')`. La trampa P4: `notebooks/04_evaluacion_legacy.ipynb` registra con nombre `iris_classifier_legacy`, que la API no encuentra (404).
+- Consecuencias: la skill debe buscar el argumento `registered_model_name=` en el codigo y verificar que el nombre aparece en FastAPI. La P4 rompe la integracion notebook -> API.
+
+### D-429 — Prefijo unique tokens `NPRGT-FXPML-` + sinonimos neutros (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: CC-11 prohibe feature names (`entrenamiento`, `evaluacion`, `inferencia`) en codigo.
+- Decision: prefijo `NPRGT-FXPML-` con 33 tokens (PACKAGE-NAME, SKLEARN-VERSION, HYDRA-VERSION, DVC-VERSION, MLFLOW-VERSION, FASTAPI-VERSION, UVICORN-VERSION, PYTORCH-VERSION, IMAGE-TAG, DATASET-NAME, NOTEBOOK-EXECUTE, NBVAL, IPYKERNEL, PANDAS, NUMPY, JOBLIB, RANDOM-STATE, RANDOM-FOREST, LOGISTIC-REGRESSION, DECISION-TREE, PIPELINE, MLFLOW-REGISTRY, MLFLOW-FILE-STORE, DVC-YAML, DVC-INIT, HYDRA-CONFIG, HYDRA-COMPOSE, HYDRA-OVERRIDE, FEATURE-ENGINEERING, FEATURE-MINMAX, FEATURE-STANDARD, METRICS-EVAL, NOTEBOOK-CELL). Sinonimos neutros: `entrenamiento` = `entrenamiento`, `evaluacion` = `evaluacion`, `inferencia` = `inferencia` (los sinonimos coinciden con los nombres reales para evitar confusion con scikit-learn que ya tiene `train_test_split` etc.).
+- Consecuencias: `check_ground_truth.py --check-cc11` valida que ninguno de los 33 tokens aparece en archivos `.py`, `.yml`, `.md`, `.txt`, `.ipynb` del fixture (excluyendo `unique_tokens.txt`, `build-history.sh`, `Makefile`, `manifest.yml`, `Dockerfile.test`, `entrypoint.sh`, `README.md`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `pytest.ini`).
+
+### D-430 — fixtures_matrix.py extension + target_matrix.yml dvc/hydra/mlflow (F06al)
+
+- Fecha · Fase · Estado: 2026-10-08 · F06al · vigente
+- Contexto: la skill debe detectar automaticamente dvc + hydra + mlflow + jupyter + nbval + scikit-learn en fixtures futuros.
+- Decision: `fixtures_matrix.py` extendido con deteccion via `dvc.yaml` (dvc + dvc-yaml), `conf/config.yaml` con `@package`/`defaults:` (hydra + hydra-config), `src/register.py` o `mlruns/` (mlflow + mlflow-file-store), `notebooks/*.ipynb` (notebook-ipynb + jupyter) + `pytest.ini` (nbval), `requirements.txt` con `scikit-learn` (scikit-learn) o `torch` (pytorch). Bloque DEDENTED a 4 espacios para que se ejecute fuera del `if sql_files:` block (las F06ah/ak/aj lo estaban dentro).
+- Consecuencias: cualquier fixture futuro que use dvc + hydra + mlflow + jupyter sera detectado automaticamente. MATRIX.md ahora cubre los 11 frameworks nuevos (hydra, dvc, mlflow, notebook-ipynb, jupyter, nbval, dvc-yaml, hydra-config, mlflow-file-store, scikit-learn, pytorch).
