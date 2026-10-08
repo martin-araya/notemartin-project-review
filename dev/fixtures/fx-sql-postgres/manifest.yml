@@ -1,0 +1,16 @@
+# Metadata del fixture F06ah: fx-sql-postgres
+# Repositorio PostgreSQL con Flyway, PL/pgSQL, pg_cron, RLS, vistas
+# materializadas, ON DELETE CASCADE y SQL dinamico. Ver referencias a las
+# trampas del ecosistema y del paquete en
+# dev/ground-truth/fx-sql-postgres/ground_truth.json.
+name: fx-sql-postgres
+description: PostgreSQL 16 + Flyway 10 + PL/pgSQL + pg_cron + pgTAP + RLS + materialized views (F06ah)
+requires:
+  - linux
+  - macos
+test_cmd: make test
+container:
+  dockerfile: Dockerfile.test
+  image_tag: npr-fx-sql-postgres
+  enabled: true
+ground_truth_format_version: 1

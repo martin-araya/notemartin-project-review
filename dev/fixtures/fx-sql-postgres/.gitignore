@@ -1,0 +1,5 @@
+.pg_data/
+*.log
+.env
+Generated/*.generated*
+flyway.conf.bak

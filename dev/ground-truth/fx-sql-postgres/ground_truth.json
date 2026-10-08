@@ -1,0 +1,220 @@
+{
+  "fixture": "fx-sql-postgres",
+  "version": "1.0.0",
+  "entry_points": [
+    {"id": "EP-migration-V1", "artifact": "V1__init_schema.sql (clientes + facturas + items + auditoria)", "file": "db/migration/V1__init_schema.sql:1"},
+    {"id": "EP-migration-V2", "artifact": "V2__add_audit_triggers.sql (triggers con NEW.campo en DELETE)", "file": "db/migration/V2__add_audit_triggers.sql:1"},
+    {"id": "EP-migration-V3", "artifact": "V3__add_rls_policies.sql (RLS por tenant_id)", "file": "db/migration/V3__add_rls_policies.sql:1"},
+    {"id": "EP-migration-V4", "artifact": "V4__add_dynamic_sql_fn.sql (EXECUTE format trap)", "file": "db/migration/V4__add_dynamic_sql_fn.sql:1"},
+    {"id": "EP-migration-V5", "artifact": "V5__add_repeatable_migrations.sql (init factura_totals)", "file": "db/migration/V5__add_repeatable_migrations.sql:1"},
+    {"id": "EP-migration-V6", "artifact": "V6__add_cascade_constraints.sql (ON DELETE CASCADE DEFERRABLE)", "file": "db/migration/V6__add_cascade_constraints.sql:1"},
+    {"id": "EP-migration-V7", "artifact": "V7__add_pg_cron_jobs.sql (cron.schedule + pg_cron)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "EP-migration-R", "artifact": "R__recalc_factura_totals.sql (repetible)", "file": "db/migration/R__recalc_factura_totals.sql:1"},
+    {"id": "EP-function-create", "artifact": "f_create_factura function", "file": "db/sql/facturas_crud.sql:1"},
+    {"id": "EP-function-get", "artifact": "f_get_factura function", "file": "db/sql/facturas_crud.sql:24"},
+    {"id": "EP-function-delete", "artifact": "f_delete_factura function (E5 CASCADE)", "file": "db/sql/facturas_crud.sql:38"},
+    {"id": "EP-function-search-dynamic", "artifact": "f_search_dynamic (E3 + P3 SQLi)", "file": "db/migration/V4__add_dynamic_sql_fn.sql:1"},
+    {"id": "EP-function-admin-search", "artifact": "f_admin_search (P3 raw query)", "file": "db/migration/V4__add_dynamic_sql_fn.sql:25"},
+    {"id": "EP-function-tenant", "artifact": "f_tenant_facturas multi-tenant query", "file": "db/sql/tenant_isolation_query.sql:1"},
+    {"id": "EP-function-auditoria-recent", "artifact": "f_auditoria_recent (RLS)", "file": "db/sql/auditoria_query.sql:1"},
+    {"id": "EP-view-activas", "artifact": "v_facturas_activas view (soft-delete OK)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "EP-view-mensuales", "artifact": "mv_facturas_mensuales MATERIALIZED VIEW (P6 sin WHERE deleted_at)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "EP-cron-refresh-mv", "artifact": "cron job refresh-mv-facturas-mensuales (hourly)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "EP-cron-cleanup-auditoria", "artifact": "cron job cleanup-auditoria (daily)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "EP-cron-refresh-totals", "artifact": "cron job refresh-factura-totals (6h)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "EP-test-schema", "artifact": "01_schema_test.sql (pgTAP)", "file": "db/test/01_schema_test.sql:1"},
+    {"id": "EP-test-triggers", "artifact": "02_triggers_test.sql (E1)", "file": "db/test/02_triggers_test.sql:1"},
+    {"id": "EP-test-rls", "artifact": "03_rls_test.sql (E2 + P2)", "file": "db/test/03_rls_test.sql:1"},
+    {"id": "EP-test-dynamic-sql", "artifact": "04_dynamic_sql_test.sql (E3 + P3)", "file": "db/test/04_dynamic_sql_test.sql:1"},
+    {"id": "EP-test-repeatable", "artifact": "05_repeatable_test.sql (E4 + P4)", "file": "db/test/05_repeatable_test.sql:1"},
+    {"id": "EP-test-cascade", "artifact": "06_cascade_test.sql (E5 + P5)", "file": "db/test/06_cascade_test.sql:1"},
+    {"id": "EP-test-pg-cron", "artifact": "07_pg_cron_test.sql (E6 + P6)", "file": "db/test/07_pg_cron_test.sql:1"},
+    {"id": "EP-test-deprecated", "artifact": "08_deprecated_test.sql (S3)", "file": "db/test/08_deprecated_test.sql:1"}
+  ],
+  "modules": [
+    {"id": "MOD-schema-clientes", "path": "db/schema/001_clientes.sql", "summary": "Tabla clientes con email unico"},
+    {"id": "MOD-schema-unused-indexes", "path": "db/schema/007_unused_indexes.sql", "summary": "Trampa S2: indices declarados pero no usados"},
+    {"id": "MOD-migration-V1", "path": "db/migration/V1__init_schema.sql", "summary": "Schema base con 4 tablas"},
+    {"id": "MOD-migration-V2", "path": "db/migration/V2__add_audit_triggers.sql", "summary": "Triggers de auditoria (E1 + trampa P1)"},
+    {"id": "MOD-migration-V3", "path": "db/migration/V3__add_rls_policies.sql", "summary": "Row-Level Security por tenant (E2 + trampa P2)"},
+    {"id": "MOD-migration-V4", "path": "db/migration/V4__add_dynamic_sql_fn.sql", "summary": "EXECUTE format() con SQL dinamico (E3 + trampa P3)"},
+    {"id": "MOD-migration-V5", "path": "db/migration/V5__add_repeatable_migrations.sql", "summary": "Init de factura_totals"},
+    {"id": "MOD-migration-V6", "path": "db/migration/V6__add_cascade_constraints.sql", "summary": "ON DELETE CASCADE + DEFERRABLE (E5 + trampa P5)"},
+    {"id": "MOD-migration-V7", "path": "db/migration/V7__add_pg_cron_jobs.sql", "summary": "pg_cron + materialized view + jobs (E6 + trampa P6)"},
+    {"id": "MOD-migration-R", "path": "db/migration/R__recalc_factura_totals.sql", "summary": "Repetible con TRUNCATE + INSERT (E4 + trampa P4)"},
+    {"id": "MOD-seed-data", "path": "db/seed/seed_data.sql", "summary": "Datos iniciales (3 clientes, 2 facturas, 3 items, 1 soft-deleted)"},
+    {"id": "MOD-seed-audit", "path": "db/seed/seed_audit.sql", "summary": "Auditoria inicial con tenant_id"},
+    {"id": "MOD-test-schema", "path": "db/test/01_schema_test.sql", "summary": "pgTAP: 7 tests de schema"},
+    {"id": "MOD-test-triggers", "path": "db/test/02_triggers_test.sql", "summary": "pgTAP: 4 tests de triggers"},
+    {"id": "MOD-test-rls", "path": "db/test/03_rls_test.sql", "summary": "pgTAP: 4 tests de RLS"},
+    {"id": "MOD-test-dynamic-sql", "path": "db/test/04_dynamic_sql_test.sql", "summary": "pgTAP: 4 tests de SQL dinamico"},
+    {"id": "MOD-test-repeatable", "path": "db/test/05_repeatable_test.sql", "summary": "pgTAP: 3 tests de R__"},
+    {"id": "MOD-test-cascade", "path": "db/test/06_cascade_test.sql", "summary": "pgTAP: 3 tests de CASCADE"},
+    {"id": "MOD-test-pg-cron", "path": "db/test/07_pg_cron_test.sql", "summary": "pgTAP: 4 tests de pg_cron"},
+    {"id": "MOD-test-deprecated", "path": "db/test/08_deprecated_test.sql", "summary": "Trampa S3: test trivial"},
+    {"id": "MOD-sql-crud", "path": "db/sql/facturas_crud.sql", "summary": "f_create_factura + f_get_factura + f_delete_factura (E5)"},
+    {"id": "MOD-sql-auditoria", "path": "db/sql/auditoria_query.sql", "summary": "f_auditoria_recent + f_auditoria_by_actor"},
+    {"id": "MOD-sql-multi-tenant", "path": "db/sql/tenant_isolation_query.sql", "summary": "f_tenant_facturas + f_tenant_active_users con SET LOCAL app.tenant_id"},
+    {"id": "MOD-config-flyway", "path": "config/flyway.conf", "summary": "Flyway config con locations=filesystem:./db/migration"},
+    {"id": "MOD-config-postgres", "path": "config/postgres.conf", "summary": "PostgreSQL config con shared_preload_libraries=pg_cron"},
+    {"id": "MOD-tools", "path": "tools/", "summary": "run_pgtap.sh + apply_migrations.sh + reset_db.sh"}
+  ],
+  "dependencies": [
+    {"name": "postgresql", "version": "16-alpine", "scope": "build+runtime", "manifest": "Dockerfile.test (FROM postgres:16-alpine)"},
+    {"name": "pg_cron", "version": "REL1_6_STABLE", "scope": "runtime", "manifest": "Dockerfile.test (git clone + make install)"},
+    {"name": "flyway", "version": "10.20.1", "scope": "build", "manifest": "Dockerfile.test (download flyway-commandline)"},
+    {"name": "pgtap", "version": "1.x", "scope": "test", "manifest": "Dockerfile.test (cpan TAP::Parser::SourceHandler::pgTAP)"},
+    {"name": "postgresql-jdbc", "version": "bundled with flyway", "scope": "runtime", "manifest": "config/flyway.conf"},
+    {"name": "pgcrypto", "version": "bundled with postgres", "scope": "runtime", "manifest": "db/migration/V1__init_schema.sql (CREATE EXTENSION pgcrypto)"},
+    {"name": "openjdk-21", "version": "system", "scope": "build", "manifest": "Dockerfile.test (apk add openjdk21-jdk)"},
+    {"name": "perl-prove", "version": "system", "scope": "test", "manifest": "Dockerfile.test (apk add perl + TAP)"}
+  ],
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "facturación",
+      "user_description": "CRUD de facturas con RLS multi-tenant, ON DELETE CASCADE en items, y triggers de auditoria.",
+      "traces": [
+        {"n": 1, "what": "User SET app.tenant_id = X", "cite": "db/sql/facturas_crud.sql:1", "data_in": "tenant UUID", "data_out": "RLS habilitado"},
+        {"n": 2, "what": "User llama f_create_factura(cliente_id, titulo, total)", "cite": "db/sql/facturas_crud.sql:4", "data_in": "cliente_id, titulo, total", "data_out": "factura UUID"},
+        {"n": 3, "what": "INSERT en facturas dispara trigger trg_audit_facturas_insert", "cite": "db/migration/V2__add_audit_triggers.sql:18", "data_in": "row", "data_out": "row en auditoria"},
+        {"n": 4, "what": "User llama f_get_factura(id)", "cite": "db/sql/facturas_crud.sql:24", "data_in": "id UUID", "data_out": "JSONB con factura"},
+        {"n": 5, "what": "RLS filtra automaticamente por tenant", "cite": "db/migration/V3__add_rls_policies.sql:25", "data_in": "id", "data_out": "solo filas del tenant activo"},
+        {"n": 6, "what": "User llama f_delete_factura(id)", "cite": "db/sql/facturas_crud.sql:38", "data_in": "id", "data_out": "DELETE FROM facturas + items CASCADE"},
+        {"n": 7, "what": "Trampa P5: items se borran silenciosamente sin notificacion", "cite": "db/migration/V6__add_cascade_constraints.sql:1", "data_in": "DELETE", "data_out": "items borrados sin trigger BEFORE DELETE"}
+      ],
+      "decision_points": [
+        {"id": "DP-001", "file": "db/migration/V2__add_audit_triggers.sql", "line": 27, "kind": "new_in_delete", "condition_text": "NEW.id en TG_OP = 'DELETE' (trampa P1)", "branches": [{"label": "ok -> INSERT en auditoria", "target_line": 27}, {"label": "exception -> record NEW is not assigned", "target_line": 27}]},
+        {"id": "DP-002", "file": "db/migration/V6__add_cascade_constraints.sql", "line": 6, "kind": "on_delete_cascade", "condition_text": "DELETE FROM facturas WHERE id = X", "branches": [{"label": "ok -> items tambien borrados (P5 trap)", "target_line": 6}, {"label": "exception -> FK constraint", "target_line": 6}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "SET tenant + INSERT valido", "user_sees": "UUID de nueva factura + row en auditoria", "side_effects": ["INSERT en facturas", "INSERT en auditoria via trigger"], "reversible": true, "final_state": "factura creada"},
+        {"id": "R-02", "category": "validation_input", "conditions": "INSERT con total < 0", "user_sees": "trampa P1: trigger crashea con NEW.campo en DELETE", "side_effects": ["trigger failure en runtime"], "reversible": false, "final_state": "error en trigger"},
+        {"id": "R-03", "category": "error_constraint", "conditions": "INSERT con cliente_id inexistente", "user_sees": "Foreign Key Violation", "side_effects": [], "reversible": true, "final_state": "INSERT falla"},
+        {"id": "R-04", "category": "permission_denied", "conditions": "SELECT sin SET app.tenant_id", "user_sees": "0 rows (RLS policy oculta otras tenants)", "side_effects": [], "reversible": true, "final_state": "resultado vacio"},
+        {"id": "R-05", "category": "noop_silent", "conditions": "DELETE de factura con items", "user_sees": "DELETE sin notificacion, items se borran silenciosamente", "side_effects": ["items borrados via CASCADE (P5 trap)"], "reversible": false, "final_state": "items perdidos"},
+        {"id": "R-06", "category": "error_external_service", "conditions": "f_search_dynamic con tabla invalida", "user_sees": "NULL (catch silencioso)", "side_effects": [], "reversible": true, "final_state": "resultado null"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxpg://tenant/{id}", "user_sees": "SET app.tenant_id = X + SELECT solo filas del tenant", "side_effects": [], "reversible": true, "final_state": "tenant X seleccionado"}
+      ],
+      "config": [
+        {"key": "app.tenant_id", "kind": "SET LOCAL", "default": "uuid", "effect": "RLS filter"},
+        {"key": "app.actor", "kind": "SET LOCAL", "default": "string", "effect": "Auditoria actor"},
+        {"key": "app.bypass_rls", "kind": "SET LOCAL", "default": "false", "effect": "Admin bypass"}
+      ]
+    },
+    {
+      "id": "FEAT-002",
+      "name": "auditoría",
+      "user_description": "Triggers INSERT/UPDATE/DELETE en facturas e items crean rows en auditoria con payload JSONB y actor.",
+      "traces": [
+        {"n": 1, "what": "INSERT en facturas dispara trigger INSERT", "cite": "db/migration/V2__add_audit_triggers.sql:18", "data_in": "factura row", "data_out": "INSERT en auditoria"},
+        {"n": 2, "what": "Trigger lee NEW.total y NEW.cliente_id", "cite": "db/migration/V2__add_audit_triggers.sql:6", "data_in": "NEW row", "data_out": "jsonb_build_object"},
+        {"n": 3, "what": "UPDATE en facturas crea audit con old_total + new_total", "cite": "db/migration/V2__add_audit_triggers.sql:11", "data_in": "NEW+OLD", "data_out": "audit UPDATE"},
+        {"n": 4, "what": "DELETE en facturas crashea (P1: NEW.campo en DELETE)", "cite": "db/migration/V2__add_audit_triggers.sql:21", "data_in": "OLD row", "data_out": "trigger failure"},
+        {"n": 5, "what": "f_auditoria_recent retorna ultimos eventos", "cite": "db/sql/auditoria_query.sql:5", "data_in": "desde fecha", "data_out": "SET auditoria"},
+        {"n": 6, "what": "RLS en auditoria filtra por tenant_id", "cite": "db/migration/V3__add_rls_policies.sql:42", "data_in": "tenant_id", "data_out": "solo eventos del tenant"},
+        {"n": 7, "what": "pg_cron job cleanup-auditoria-archiva cada 24h", "cite": "db/migration/V7__add_pg_cron_jobs.sql:1", "data_in": "0 0 * * *", "data_out": "DELETE archivado > 30 dias"}
+      ],
+      "decision_points": [
+        {"id": "DP-003", "file": "db/migration/V2__add_audit_triggers.sql", "line": 6, "kind": "new_campo_access", "condition_text": "NEW.total vs NEW.id en TG_OP=INSERT vs DELETE", "branches": [{"label": "INSERT/UPDATE -> ok con NEW.campo", "target_line": 6}, {"label": "DELETE -> NEW no asignado (trampa P1)", "target_line": 21}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "INSERT/UPDATE en facturas", "user_sees": "row en auditoria con payload JSONB", "side_effects": ["trigger crea row en auditoria"], "reversible": true, "final_state": "auditoria persistente"},
+        {"id": "R-02", "category": "error_internal", "conditions": "DELETE en facturas con trigger defectuoso (P1)", "user_sees": "Error 'record NEW is not assigned yet'", "side_effects": ["trigger failure"], "reversible": false, "final_state": "delete cancelado"},
+        {"id": "R-03", "category": "success_partial", "conditions": "f_auditoria_recent WHERE created_at > X", "user_sees": "Lista de eventos de los ultimos N dias", "side_effects": [], "reversible": true, "final_state": "auditoria consultable"},
+        {"id": "R-04", "category": "permission_denied", "conditions": "SELECT auditoria sin SET tenant", "user_sees": "0 rows (RLS policy)", "side_effects": [], "reversible": true, "final_state": "auditoria filtrada"},
+        {"id": "R-05", "category": "noop_persisted", "conditions": "DELETE en facturas NO borra de auditoria (independiente)", "user_sees": "Auditoria persiste tras delete", "side_effects": ["auditoria persiste"], "reversible": false, "final_state": "auditoria archivada"},
+        {"id": "R-06", "category": "success_scheduled", "conditions": "pg_cron job cleanup-auditoria corre a medianoche", "user_sees": "Auditoria > 30 dias archivada", "side_effects": ["DELETE archivado"], "reversible": false, "final_state": "auditoria limpia"},
+        {"id": "R-07", "category": "success_archive", "conditions": "pg_cron archiva rows > 1 año", "user_sees": "Tabla auditoria_archive poblada", "side_effects": ["INSERT en auditoria_archive"], "reversible": false, "final_state": "auditoria histórica"}
+      ],
+      "config": [
+        {"key": "cron.cleanup-auditoria", "kind": "cron.schedule", "default": "0 0 * * *", "effect": "Cleanup diario"},
+        {"key": "auditoria.retention", "kind": "integer days", "default": "30", "effect": "Threshold archivado"}
+      ]
+    },
+    {
+      "id": "FEAT-003",
+      "name": "multi-tenant",
+      "user_description": "RLS por tenant + funciones con SET LOCAL app.tenant_id + vistas materializadas refrescadas por pg_cron.",
+      "traces": [
+        {"n": 1, "what": "User llama f_tenant_facturas(tenant_id)", "cite": "db/sql/tenant_isolation_query.sql:3", "data_in": "tenant UUID", "data_out": "SET LOCAL app.tenant_id"},
+        {"n": 2, "what": "SET LOCAL solo afecta la transaction actual", "cite": "db/sql/tenant_isolation_query.sql:5", "data_in": "tenant_id", "data_out": "session-scoped config"},
+        {"n": 3, "what": "RLS filtra automaticamente por tenant", "cite": "db/migration/V3__add_rls_policies.sql:21", "data_in": "tenant_id", "data_out": "solo filas del tenant"},
+        {"n": 4, "what": "SELECT mv_facturas_mensuales retorna agregados", "cite": "db/migration/V7__add_pg_cron_jobs.sql:15", "data_in": "tenant_id, mes", "data_out": "aggregate row"},
+        {"n": 5, "what": "Trampa P6: mv incluye soft-deleted rows", "cite": "db/migration/V7__add_pg_cron_jobs.sql:1", "data_in": "REFRESH MATERIALIZED VIEW", "data_out": "datos con deleted_at"},
+        {"n": 6, "what": "pg_cron refresca cada hora", "cite": "db/migration/V7__add_pg_cron_jobs.sql:1", "data_in": "0 * * * *", "data_out": "MV actualizada"},
+        {"n": 7, "what": "Deep link fxpg://tenant/X", "cite": "db/sql/tenant_isolation_query.sql:3", "data_in": "uri", "data_out": "tenant X seleccionado"}
+      ],
+      "decision_points": [
+        {"id": "DP-004", "file": "db/migration/V3__add_rls_policies.sql", "line": 21, "kind": "current_setting_cast", "condition_text": "tenant_id = current_setting('app.tenant_id', true)::UUID", "branches": [{"label": "ok -> SHOW row", "target_line": 21}, {"label": "no tenant -> 0 rows (RLS deny)", "target_line": 21}]}
+      ],
+      "outcomes": [
+        {"id": "R-01", "category": "success_full", "conditions": "SET tenant + SELECT", "user_sees": "Solo filas del tenant activo", "side_effects": [], "reversible": true, "final_state": "resultado filtrado"},
+        {"id": "R-02", "category": "noop_denied", "conditions": "SELECT sin SET tenant", "user_sees": "0 rows (RLS deny)", "side_effects": [], "reversible": true, "final_state": "resultado vacio"},
+        {"id": "R-03", "category": "error_constraint", "conditions": "INSERT con tenant_id de otro tenant", "user_sees": "RLS policy violation", "side_effects": [], "reversible": false, "final_state": "INSERT rejected"},
+        {"id": "R-04", "category": "success_aggregated", "conditions": "SELECT en mv_facturas_mensuales", "user_sees": "Datos agregados por tenant y mes", "side_effects": [], "reversible": true, "final_state": "aggregate rows"},
+        {"id": "R-05", "category": "noop_stale", "conditions": "Datos cambiaron sin refresh de la MV", "user_sees": "Datos del ultimo refresh (stale)", "side_effects": [], "reversible": true, "final_state": "datos hasta ultimo refresh"},
+        {"id": "R-06", "category": "success_scheduled", "conditions": "pg_cron job corre cada hora", "user_sees": "MV actualizada", "side_effects": ["REFRESH MATERIALIZED VIEW"], "reversible": false, "final_state": "MV fresh"},
+        {"id": "R-07", "category": "success_deep_link", "conditions": "fxpg://tenant/{id} desde fuera", "user_sees": "SET tenant automatico", "side_effects": [], "reversible": true, "final_state": "tenant seleccionado"}
+      ],
+      "config": [
+        {"key": "cron.refresh-mv-facturas-mensuales", "kind": "cron.schedule", "default": "0 * * * *", "effect": "Refresh horario"},
+        {"key": "cron.refresh-factura-totals", "kind": "cron.schedule", "default": "0 */6 * * *", "effect": "Refresh cada 6h"}
+      ]
+    }
+  ],
+  "surfaces": [
+    {"id": "SRF-table-clientes", "kind": "table", "name": "clientes", "handler": "SELECT/INSERT/UPDATE/DELETE", "file": "db/migration/V1__init_schema.sql:3"},
+    {"id": "SRF-table-facturas", "kind": "table", "name": "facturas", "handler": "SELECT/INSERT/UPDATE/DELETE con RLS + CASCADE", "file": "db/migration/V1__init_schema.sql:14"},
+    {"id": "SRF-table-items", "kind": "table", "name": "factura_items", "handler": "SELECT/INSERT/UPDATE/DELETE", "file": "db/migration/V1__init_schema.sql:25"},
+    {"id": "SRF-table-auditoria", "kind": "table", "name": "auditoria", "handler": "INSERT via triggers", "file": "db/migration/V1__init_schema.sql:35"},
+    {"id": "SRF-trigger-insert", "function": "f_audit_factura", "name": "trg_audit_facturas_insert", "handler": "AFTER INSERT", "file": "db/migration/V2__add_audit_triggers.sql:18"},
+    {"id": "SRF-trigger-update", "function": "f_audit_factura", "name": "trg_audit_facturas_update", "handler": "AFTER UPDATE", "file": "db/migration/V2__add_audit_triggers.sql:21"},
+    {"id": "SRF-trigger-delete", "function": "f_audit_factura", "name": "trg_audit_facturas_delete", "handler": "AFTER DELETE (con trampa P1 NEW.campo)", "file": "db/migration/V2__add_audit_triggers.sql:24"},
+    {"id": "SRF-policy-clientes-select", "kind": "policy", "name": "pol_clientes_tenant_select", "handler": "RLS USING (tenant_id = current_setting('app.tenant_id', true)::UUID)", "file": "db/migration/V3__add_rls_policies.sql:10"},
+    {"id": "SRF-policy-facturas-insert", "kind": "policy", "name": "pol_facturas_tenant_insert", "handler": "RLS WITH CHECK", "file": "db/migration/V3__add_rls_policies.sql:25"},
+    {"id": "SRF-function-create", "function": "f_create_factura", "name": "CREATE factura con RLS", "handler": "INSERT INTO facturas", "file": "db/sql/facturas_crud.sql:4"},
+    {"id": "SRF-function-search-dynamic", "function": "f_search_dynamic", "name": "EXECUTE format() SQL dinamico", "handler": "EXECUTE format('SELECT ...', p_tabla)", "file": "db/migration/V4__add_dynamic_sql_fn.sql:1"},
+    {"id": "SRF-function-admin-search", "function": "f_admin_search", "name": "EXECUTE con query arbitraria", "handler": "RETURN QUERY EXECUTE", "file": "db/migration/V4__add_dynamic_sql_fn.sql:25"},
+    {"id": "SRF-view-mensuales", "kind": "view", "name": "mv_facturas_mensuales (MATERIALIZED)", "handler": "REFRESH MATERIALIZED VIEW CONCURRENTLY", "file": "db/migration/V7__add_pg_cron_jobs.sql:15"},
+    {"id": "SRF-view-activas", "kind": "view", "name": "v_facturas_activas", "handler": "SELECT WHERE deleted_at IS NULL", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "SRF-cron-refresh-mv", "kind": "cron-job", "name": "refresh-mv-facturas-mensuales", "handler": "REFRESH MATERIALIZED VIEW CONCURRENTLY (hourly)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "SRF-cron-cleanup-auditoria", "kind": "cron-job", "name": "cleanup-auditoria", "handler": "DELETE archivado > 30 dias (daily)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "SRF-cron-refresh-totals", "kind": "cron-job", "name": "refresh-factura-totals", "handler": "TRUNCATE + INSERT (6h)", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+    {"id": "SRF-fk-cascade", "kind": "constraint", "name": "fk_items_factura ON DELETE CASCADE", "handler": "DEFERRABLE INITIALLY DEFERRED", "file": "db/migration/V6__add_cascade_constraints.sql:6"}
+  ],
+  "traps": [
+    {"id": "TRAP-E1", "kind": "ecosystem", "name": "audit_triggers_side_effects", "file": "db/migration/V2__add_audit_triggers.sql:1", "line": 1, "description": "Triggers INSERT/UPDATE/DELETE en facturas llaman a f_audit_factura() que inserta en auditoria.", "resolution": "Seguir el trigger al insertar/actualizar/borrar; verificar que el JSONB payload incluye NEW.total y OLD.total."},
+    {"id": "TRAP-E2", "kind": "ecosystem", "name": "row_level_security", "file": "db/migration/V3__add_rls_policies.sql:1", "line": 1, "description": "RLS habilitado en 4 tablas con 13 policies que filtran por tenant_id via current_setting.", "resolution": "SET LOCAL app.tenant_id antes de cualquier operacion; verificar que RLS deniega sin SET."},
+    {"id": "TRAP-E3", "kind": "ecosystem", "name": "dynamic_sql_execute_format", "file": "db/migration/V4__add_dynamic_sql_fn.sql:1", "line": 1, "description": "EXECUTE format() con tabla parametrizada en f_search_dynamic y f_admin_search.", "resolution": "Seguir la string template 'SELECT ... FROM %I WHERE id = $1' y entender que el identifier se escapa pero la query puede incluir logica adicional."},
+    {"id": "TRAP-E4", "kind": "ecosystem", "name": "repeatable_migrations", "file": "db/migration/R__recalc_factura_totals.sql:1", "line": 1, "description": "R__recalc_factura_totals.sql corre despues de cada V* y recalcula totales.", "resolution": "Verificar el prefijo R__ que distingue repetibles de versionadas; el TRUNCATE+INSERT es destructivo (P4)."},
+    {"id": "TRAP-E5", "kind": "ecosystem", "name": "on_delete_cascade", "file": "db/migration/V6__add_cascade_constraints.sql:1", "line": 1, "description": "FK de factura_items.factura_id tiene ON DELETE CASCADE + DEFERRABLE INITIALLY DEFERRED.", "resolution": "Verificar la constraint pg_constraint + entender que DEFERRABLE permite validar al COMMIT."},
+    {"id": "TRAP-E6", "kind": "ecosystem", "name": "pg_cron_and_materialized_views", "file": "db/migration/V7__add_pg_cron_jobs.sql:1", "line": 1, "description": "pg_cron programa 3 jobs (refresh-mv, cleanup-auditoria, refresh-totals) + vista materializada mv_facturas_mensuales.", "resolution": "Verificar pg_extension pg_cron + cron.job table; REFRESH MATERIALIZED VIEW solo refresca datos, no es tiempo real."}
+  ],
+  "package_traps": [
+    {"id": "TRAP-P1", "kind": "package", "name": "trigger_new_in_delete", "file": "db/migration/V2__add_audit_triggers.sql:21", "line": 21, "description": "f_audit_factura() lee NEW.id en TG_OP='DELETE'; NEW no esta asignado en DELETE.", "resolution": "Usar OLD.id en DELETE o separar la funcion en tres: f_audit_insert, f_audit_update, f_audit_delete."},
+    {"id": "TRAP-P2", "kind": "package", "name": "rls_no_force_approach", "file": "db/migration/V3__add_rls_policies.sql:1", "line": 1, "description": "ALTER TABLE ... ENABLE ROW LEVEL SECURITY sin FORCE ROW LEVEL SECURITY: postgres superuser bypassea.", "resolution": "Anadir ALTER TABLE ... FORCE ROW LEVEL SECURITY para que incluso el owner respete la policy."},
+    {"id": "TRAP-P3", "kind": "package", "name": "dynamic_sql_no_whitelist", "file": "db/migration/V4__add_dynamic_sql_fn.sql:1", "line": 1, "description": "f_search_dynamic y f_admin_search aceptan tabla/query como parametro sin whitelist; SQLi potencial.", "resolution": "Anadir whitelist: IF p_tabla NOT IN (...) THEN RAISE EXCEPTION; usar SECURITY DEFINER + REVOKE EXECUTE FROM PUBLIC."},
+    {"id": "TRAP-P4", "kind": "package", "name": "repeatable_non_idempotent", "file": "db/migration/R__recalc_factura_totals.sql:1", "line": 1, "description": "R__ hace TRUNCATE factura_totals + INSERT; no es idempotente (destruye filas modificadas manualmente).", "resolution": "Usar INSERT ... ON CONFLICT (factura_id) DO UPDATE SET total_calculado = EXCLUDED.total_calculado."},
+    {"id": "TRAP-P5", "kind": "package", "name": "cascade_silent_delete", "file": "db/migration/V6__add_cascade_constraints.sql:6", "line": 6, "description": "DELETE de factura borra items silenciosamente sin trigger BEFORE DELETE que avise al usuario.", "resolution": "Anadir trigger BEFORE DELETE ON facturas que inserte en auditoria o notifique antes del DELETE."},
+    {"id": "TRAP-P6", "kind": "package", "name": "materialized_view_no_soft_delete_filter", "file": "db/migration/V7__add_pg_cron_jobs.sql:15", "line": 15, "description": "mv_facturas_mensuales NO incluye WHERE deleted_at IS NULL; muestra soft-deleted records.", "resolution": "Anadir WHERE deleted_at IS NULL a la definicion de la vista materializada; o crear vista separada v_facturas_mensuales para soft-deleted."}
+  ],
+  "superficial_traps": [
+    {"id": "TRAP-S1", "kind": "superficial", "name": "legacy_export_unused", "file": "db/sql/legacy_export.sql:1", "line": 1, "description": "Archivo legacy_export.sql declarado pero no referenciado por ningun flujo.", "resolution": "Eliminar o usar en un script de migracion historica."},
+    {"id": "TRAP-S2", "kind": "superficial", "name": "unused_indexes", "file": "db/schema/007_unused_indexes.sql:1", "line": 1, "description": "Indices legacy no usados por queries actuales.", "resolution": "Eliminar CREATE INDEX para indices que ninguna query usa."},
+    {"id": "TRAP-S3", "kind": "superficial", "name": "deprecated_test_placeholder", "file": "db/test/08_deprecated_test.sql:1", "line": 1, "description": "Test placeholder trivial que siempre pasa sin verificar nada.", "resolution": "Eliminar o reemplazar con un test real."}
+  ],
+  "graph": {
+    "calls": [
+      {"from": "f_create_factura", "to": "INSERT INTO facturas con RLS policy", "file": "db/sql/facturas_crud.sql:8"},
+      {"from": "INSERT INTO facturas", "to": "trg_audit_facturas_insert (trigger)", "file": "db/migration/V2__add_audit_triggers.sql:18"},
+      {"from": "trg_audit_facturas_insert", "to": "INSERT INTO auditoria (jsonb_build_object)", "file": "db/migration/V2__add_audit_triggers.sql:5"},
+      {"from": "f_delete_factura", "to": "DELETE FROM facturas (con CASCADE)", "file": "db/sql/facturas_crud.sql:39"},
+      {"from": "DELETE FROM facturas", "to": "DELETE FROM factura_items (ON DELETE CASCADE)", "file": "db/migration/V6__add_cascade_constraints.sql:6"},
+      {"from": "f_search_dynamic", "to": "EXECUTE format('SELECT ... FROM %I ...')", "file": "db/migration/V4__add_dynamic_sql_fn.sql:8"},
+      {"from": "f_tenant_facturas", "to": "SET LOCAL app.tenant_id + SELECT", "file": "db/sql/tenant_isolation_query.sql:4"},
+      {"from": "cron.refresh-mv-facturas-mensuales", "to": "REFRESH MATERIALIZED VIEW CONCURRENTLY", "file": "db/migration/V7__add_pg_cron_jobs.sql:1"},
+      {"from": "pgTAP tests", "to": "pg_prove contra fxpg_test DB", "file": "tools/run_pgtap.sh:11"}
+    ]
+  }
+}
